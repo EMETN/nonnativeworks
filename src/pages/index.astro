@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import InfographicGrid from '../components/infographic/InfographicGrid.tsx';
+import { getCountryStats, getGlobalStats } from '../lib/queries';
+import type { CountryStats, GlobalStats } from '../lib/types';
+
+let stats: GlobalStats | null = null;
+let countries: CountryStats[] = [];
+let loadError = false;
+
+try {
+  stats = await getGlobalStats(Astro.request, Astro.cookies);
+  const allCountries = await getCountryStats(Astro.request, Astro.cookies);
+  countries = allCountries.filter((c) => c.total_positions > 0);
+} catch (err) {
+  console.error('Homepage data load error:', err);
+  loadError = true;
+}
+---
+
+<BaseLayout
+  title="Home"
+  description="NonNativeWorks tracks open positions where English is enough — no local language required. Browse by country to find your next opportunity abroad."
+  stats={stats ?? undefined}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-16">
+    <!-- Intro -->
+    <div class="max-w-3xl mx-auto text-center mb-16">
+      <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
+        <span class="text-gray-900">No native language?</span><br />
+        <span class="text-blue-600">NonNativeWorks!</span>
+      </h1>
+      <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
+        Discover companies that welcome non-native language speakers.
+        Track open positions across countries worldwide.
+      </p>
+    </div>
+
+    <!-- Country list -->
+    {loadError ? (
+      <div class="text-center py-8 text-gray-400">
+        <p class="text-lg mb-2">Something went wrong loading the data.</p>
+        <p class="text-sm">Please try again later.</p>
+      </div>
+    ) : countries.length === 0 ? (
+      <div class="text-center py-8 text-gray-400">
+        <p class="text-lg mb-2">No positions tracked yet.</p>
+        <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
+      </div>
+    ) : (
+      <InfographicGrid countries={countries} client:load />
+    )}
+  </div>
+</BaseLayout>

@@ -1,0 +1,51 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import PromptGenerator from '../../components/admin/PromptGenerator.tsx';
+import JsonUploader from '../../components/admin/JsonUploader.tsx';
+import DataManager from '../../components/admin/DataManager.tsx';
+---
+
+<AdminLayout title="Dashboard">
+  <div class="space-y-10">
+
+    <!-- Step 1: Generate prompt -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">1. Generate extraction prompt</h2>
+        <p class="text-sm text-gray-500 mt-1">
+          Enter a company's career page URL to generate a prompt. Paste it into your LLM of choice
+          and it will return structured JSON ready to upload.
+        </p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5">
+        <PromptGenerator client:load />
+      </div>
+    </section>
+
+    <!-- Step 2: Upload JSON -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">2. Upload JSON output</h2>
+        <p class="text-sm text-gray-500 mt-1">
+          Paste the LLM's JSON response or load a <code class="text-xs bg-gray-100 px-1 rounded">.json</code> file.
+          Validate first, then upload — existing positions for that company will be replaced.
+        </p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5">
+        <JsonUploader client:load />
+      </div>
+    </section>
+
+    <!-- Step 3: Manage data -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">3. Manage data</h2>
+        <p class="text-sm text-gray-500 mt-1">
+          View all tracked companies. Deleting a company removes all its positions too.
+        </p>
+      </div>
+      <DataManager client:load />
+    </section>
+
+  </div>
+</AdminLayout>

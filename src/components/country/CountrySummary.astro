@@ -1,0 +1,26 @@
+---
+import type { CountryStats } from '../../lib/types';
+
+interface Props {
+  country: CountryStats;
+  companyCount: number;
+}
+
+const { country, companyCount } = Astro.props;
+
+const stats = [
+  { label: 'Companies',        value: companyCount,                   color: 'text-gray-900' },
+  { label: 'Total positions',  value: country.total_positions,        color: 'text-gray-900' },
+  { label: 'Non-native',       value: country.english_positions,      color: 'text-blue-600' },
+  { label: 'Non-native ratio', value: `${country.english_percentage}%`, color: 'text-blue-600' },
+];
+---
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+  {stats.map((s) => (
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <div class={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+      <div class="text-sm text-gray-500 mt-0.5">{s.label}</div>
+    </div>
+  ))}
+</div>
