@@ -30,4 +30,5 @@ pnpm-debug.log*
 
 # Python virtual environment
 */.venv/
+/.venv/
 
