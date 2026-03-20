@@ -74,7 +74,11 @@ for domain in \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com" \
     "lubcqmviewdnjgpkfzin.supabase.co" \
-    "aws-0-eu-central-1.pooler.supabase.com"; do
+    "aws-0-eu-central-1.pooler.supabase.com" \
+    "boards-api.greenhouse.io" \
+    "api.lever.co" \
+    "api.ashbyhq.com" \
+    "gofore.com" ; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

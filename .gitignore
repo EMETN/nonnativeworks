@@ -27,3 +27,7 @@ pnpm-debug.log*
 
 # claude local settings
 .claude/
+
+# Python virtual environment
+*/.venv/
+
