@@ -1,4 +1,4 @@
-export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'python';
+export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'company-api' | 'python';
 
 export interface RawJob {
   title: string;

@@ -57,6 +57,7 @@ export function atsLabel(ats: string | null): string {
     case 'greenhouse': return 'Greenhouse';
     case 'lever': return 'Lever';
     case 'ashby': return 'Ashby';
+    case 'company-api': return 'Company API';
     case 'python': return 'Page scraper';
     default: return 'Unknown';
   }

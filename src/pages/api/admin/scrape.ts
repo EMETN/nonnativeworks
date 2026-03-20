@@ -9,6 +9,8 @@ import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
 import { lookupCountryFromLocation } from '../../../lib/ats/country-lookup';
 import { classifyJob } from '../../../lib/classifier';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
+import { COMPANY_APIS } from '../../../lib/ats/company-apis';
+import { fetchCompanyApiJobs } from '../../../lib/ats/company-api-fetcher';
 import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
 
 const PYTHON_TIMEOUT_MS = 60_000;
@@ -77,7 +79,24 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
     }
   }
 
-  // Layer 2: Python scraper (fallback if Layer 1 yielded nothing)
+  // Layer 1.5: per-company API config (fallback if Layer 1 yielded nothing)
+  if (rawJobs.length === 0) {
+    const hostname = (() => { try { return new URL(careerUrl).hostname.toLowerCase(); } catch { return ''; } })();
+    const companyApiConfig = COMPANY_APIS[hostname];
+    if (companyApiConfig) {
+      try {
+        rawJobs = await fetchCompanyApiJobs(companyApiConfig);
+        if (rawJobs.length > 0) {
+          companyName = companyApiConfig.companyName ?? hostname;
+          ats = 'company-api';
+        }
+      } catch (err) {
+        console.warn(`Layer 1.5 (company API) failed for ${hostname}:`, err instanceof Error ? err.message : err);
+      }
+    }
+  }
+
+  // Layer 2: Python scraper (fallback if Layer 1 and 1.5 yielded nothing)
   if (rawJobs.length === 0) {
     const scraperPath = join(process.cwd(), 'scraper', 'main.py');
     if (!existsSync(scraperPath)) {
@@ -153,6 +172,9 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
   return new Promise((resolve, reject) => {
     const venvPython = join(process.cwd(), 'scraper', '.venv', 'bin', 'python3');
     const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+
+    console.log('[python-scraper] command:', pythonBin, scraperPath, url);
+
     const py = spawn(pythonBin, [scraperPath, url], {
       timeout: PYTHON_TIMEOUT_MS,
     });
@@ -164,19 +186,28 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
     py.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
 
     py.on('close', (code) => {
+      console.log('[python-scraper] exit code:', code);
+      console.log('[python-scraper] stderr:', stderr.trim() || '(empty)');
+      console.log('[python-scraper] stdout:', stdout.trim() || '(empty)');
+
       if (code !== 0) {
         reject(new Error(`Python scraper exited with code ${code}. ${stderr.trim()}`));
         return;
       }
       try {
         const jobs = JSON.parse(stdout) as RawJob[];
-        resolve(Array.isArray(jobs) ? jobs : []);
+        const result = Array.isArray(jobs) ? jobs : [];
+        console.log('[python-scraper] parsed jobs:', result.length);
+        resolve(result);
       } catch {
         reject(new Error(`Python scraper returned invalid JSON. ${stderr.trim()}`));
       }
     });
 
-    py.on('error', (err) => reject(new Error(`Could not start Python scraper: ${err.message}`)));
+    py.on('error', (err) => {
+      console.log('[python-scraper] spawn error:', err.message);
+      reject(new Error(`Could not start Python scraper: ${err.message}`));
+    });
   });
 }
 
