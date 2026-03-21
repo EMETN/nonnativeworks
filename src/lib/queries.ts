@@ -160,6 +160,7 @@ export async function getPositionsByCountry(
       title,
       url,
       requires_native_language,
+      local_language_advantage,
       category:categories(name),
       company:companies!inner(country_id)
     `)
@@ -174,6 +175,7 @@ export async function getPositionsByCountry(
     url: row.url ?? null,
     category_name: row.category?.name ?? 'Other',
     requires_native_language: row.requires_native_language,
+    local_language_advantage: row.local_language_advantage ?? false,
   }));
 }
 

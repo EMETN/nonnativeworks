@@ -253,27 +253,87 @@ export function classifyCategory(title: string, descriptionText?: string): strin
 // Native language detector
 // ---------------------------------------------------------------------------
 
+/**
+ * Builds compound "advantage" signals for a given language keyword.
+ * These phrases indicate the language is preferred/nice-to-have, not required.
+ */
+function buildAdvantageSignals(lang: string): string[] {
+  const langMentions = [
+    lang,
+    `${lang} skills`,
+    `${lang} language`,
+    `${lang} language skills`,
+    `${lang} proficiency`,
+    `proficiency in ${lang}`,
+    `knowledge of ${lang}`,
+    `${lang} knowledge`,
+    `${lang} communication`,
+  ];
+
+  const advantageModifiers = [
+    ' is an advantage',
+    ' is a plus',
+    ' is a bonus',
+    ' is preferred',
+    ' is desirable',
+    ' is nice to have',
+    ' is beneficial',
+    ' would be an advantage',
+    ' would be a plus',
+    ' would be beneficial',
+    ' would be an asset',
+    ' is considered an advantage',
+    ' is considered a plus',
+    ' is considered a bonus',
+    ' as a plus',
+    ' as an advantage',
+    ' seen as an advantage',
+  ];
+
+  const signals: string[] = [];
+  for (const mention of langMentions) {
+    for (const modifier of advantageModifiers) {
+      signals.push(`${mention}${modifier}`);
+    }
+  }
+  signals.push(`nice to have: ${lang}`);
+  signals.push(`nice to have ${lang}`);
+  return signals;
+}
+
 export function detectNativeLanguage(
   title: string,
   descriptionHtml: string | undefined,
   countryCode: string,
-): { value: boolean; confidence: 'high' | 'low' } {
+): { value: boolean; local_language_advantage: boolean; confidence: 'high' | 'low' } {
   // Non-English title → high confidence true
   if (titleAppearsNonEnglish(title)) {
-    return { value: true, confidence: 'high' };
+    return { value: true, local_language_advantage: false, confidence: 'high' };
   }
 
   const descText = descriptionHtml ? stripHtml(descriptionHtml) : '';
   const combined = `${title} ${descText}`.toLowerCase();
 
+  const languages = COUNTRY_LANGUAGE_MAP[countryCode.toUpperCase()] ?? [];
+
+  // Check for explicit "advantage/plus" signals FIRST — before tinyld language detection.
+  // This handles the case where fetchPageHtml returns a full page (navigation, footer, etc.)
+  // in the local language, which would cause tinyld to fire even when the job description
+  // itself says "Finnish is a plus". An explicit advantage phrase is a stronger signal.
+  for (const lang of languages) {
+    for (const signal of buildAdvantageSignals(lang)) {
+      if (combined.includes(signal)) {
+        return { value: false, local_language_advantage: true, confidence: 'high' };
+      }
+    }
+  }
+
   // Any paragraph of the description detected as the country's language → high confidence true
   // Handles mixed ads where the intro is English but the body is in the local language
   const langCodes = COUNTRY_LANG_CODES[countryCode.toUpperCase()] ?? [];
   if (anyChunkInLanguage(descText, langCodes)) {
-    return { value: true, confidence: 'high' };
+    return { value: true, local_language_advantage: false, confidence: 'high' };
   }
-
-  const languages = COUNTRY_LANGUAGE_MAP[countryCode.toUpperCase()] ?? [];
 
   // Explicit mention of a local language requirement → high confidence true
   for (const lang of languages) {
@@ -332,19 +392,26 @@ export function detectNativeLanguage(
       `working language: ${lang}`,
       `the working language is ${lang}`,
       `${lang} working language`,
+      // "Both X and English" — local language is co-required alongside English
+      `both ${lang} and`,
+      `in both ${lang}`,
+      `${lang} and english`,
+      `english and ${lang}`,
+      `${lang}/english`,
+      `english/${lang}`,
     ];
     for (const signal of signals) {
-      if (combined.includes(signal)) return { value: true, confidence: 'high' };
+      if (combined.includes(signal)) return { value: true, local_language_advantage: false, confidence: 'high' };
     }
   }
 
   // Explicit confirmation that English is the working language → high confidence false
   for (const phrase of ENGLISH_ONLY_PHRASES) {
-    if (combined.includes(phrase)) return { value: false, confidence: 'high' };
+    if (combined.includes(phrase)) return { value: false, local_language_advantage: false, confidence: 'high' };
   }
 
   // Default: assume English is sufficient — low confidence, admin can review
-  return { value: false, confidence: 'low' };
+  return { value: false, local_language_advantage: false, confidence: 'low' };
 }
 
 // ---------------------------------------------------------------------------
@@ -357,7 +424,7 @@ export function classifyJob(job: RawJob, countryCode: string): ClassifiedJob {
     : job.descriptionText;
 
   const category = classifyCategory(job.title, descText);
-  const { value: requires_native_language, confidence } = detectNativeLanguage(
+  const { value: requires_native_language, local_language_advantage, confidence } = detectNativeLanguage(
     job.title,
     job.descriptionHtml,
     countryCode,
@@ -368,6 +435,7 @@ export function classifyJob(job: RawJob, countryCode: string): ClassifiedJob {
     url: job.url,
     category,
     requires_native_language,
+    local_language_advantage,
     confidence,
   };
 }

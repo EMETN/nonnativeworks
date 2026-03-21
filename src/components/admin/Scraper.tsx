@@ -11,6 +11,7 @@ interface ReviewJob {
   url?: string;
   category: string;
   requires_native_language: boolean;
+  local_language_advantage: boolean;
   confidence: 'high' | 'low';
 }
 
@@ -130,7 +131,7 @@ export default function Scraper() {
   function setJobField(
     countryCode: string,
     jobIndex: number,
-    field: 'category' | 'requires_native_language',
+    field: 'category' | 'requires_native_language' | 'local_language_advantage',
     value: string | boolean,
   ) {
     setReviewData((d) => ({
@@ -171,6 +172,7 @@ export default function Scraper() {
         title: job.title,
         url: job.url,
         requires_native_language: job.requires_native_language,
+        local_language_advantage: job.local_language_advantage,
         category: job.category,
       })),
     }));
@@ -328,7 +330,7 @@ interface ReviewPanelProps {
   onJobField: (
     countryCode: string,
     jobIndex: number,
-    field: 'category' | 'requires_native_language',
+    field: 'category' | 'requires_native_language' | 'local_language_advantage',
     value: string | boolean,
   ) => void;
   onUpload: () => void;
@@ -453,7 +455,7 @@ interface CountryGroupProps {
   group: ReviewCountryGroup;
   onJobField: (
     jobIndex: number,
-    field: 'category' | 'requires_native_language',
+    field: 'category' | 'requires_native_language' | 'local_language_advantage',
     value: string | boolean,
   ) => void;
 }
@@ -475,6 +477,9 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
               <th class="text-left px-4 py-2 font-medium text-gray-500 whitespace-nowrap">
                 Native lang?
               </th>
+              <th class="text-left px-4 py-2 font-medium text-gray-500 whitespace-nowrap">
+                Lang advantage?
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -484,6 +489,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                 job={job}
                 onCategory={(v) => onJobField(i, 'category', v)}
                 onNative={(v) => onJobField(i, 'requires_native_language', v)}
+                onAdvantage={(v) => onJobField(i, 'local_language_advantage', v)}
               />
             ))}
           </tbody>
@@ -501,9 +507,10 @@ interface JobRowProps {
   job: ReviewJob;
   onCategory: (v: string) => void;
   onNative: (v: boolean) => void;
+  onAdvantage: (v: boolean) => void;
 }
 
-function JobRow({ job, onCategory, onNative }: JobRowProps) {
+function JobRow({ job, onCategory, onNative, onAdvantage }: JobRowProps) {
   const isLowConf = job.confidence === 'low';
   return (
     <tr class={`border-b border-gray-50 last:border-0 ${isLowConf ? 'bg-amber-50' : 'bg-white'}`}>
@@ -546,6 +553,16 @@ function JobRow({ job, onCategory, onNative }: JobRowProps) {
           checked={job.requires_native_language}
           onChange={(e) => onNative((e.target as HTMLInputElement).checked)}
           class="rounded"
+        />
+      </td>
+      <td class="px-4 py-2">
+        <input
+          type="checkbox"
+          checked={job.local_language_advantage}
+          disabled={job.requires_native_language}
+          onChange={(e) => onAdvantage((e.target as HTMLInputElement).checked)}
+          class="rounded disabled:opacity-40"
+          title={job.requires_native_language ? 'Not applicable when native language is required' : ''}
         />
       </td>
     </tr>

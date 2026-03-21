@@ -7,6 +7,8 @@ export interface RawJob {
   location?: string;
   url?: string;
   department?: string;
+  /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
+  sourceId?: string;
 }
 
 export interface AtsDetectionResult {
@@ -19,6 +21,7 @@ export interface ClassifiedJob {
   url?: string;
   category: string;
   requires_native_language: boolean;
+  local_language_advantage: boolean;
   confidence: 'high' | 'low';
 }
 

@@ -16,6 +16,7 @@ export const PositionSchema = z.object({
   requires_native_language: z.boolean({
     required_error: 'requires_native_language must be true or false',
   }),
+  local_language_advantage: z.boolean().default(false),
   category: z
     .string()
     .refine(

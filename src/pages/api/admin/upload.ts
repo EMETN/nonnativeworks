@@ -137,6 +137,7 @@ async function upsertEntry(
     url: p.url || null,
     category_id: categoryMap.get(p.category) ?? categoryMap.get('other'),
     requires_native_language: p.requires_native_language,
+    local_language_advantage: p.local_language_advantage ?? false,
     extracted_at: new Date().toISOString(),
   }));
 
