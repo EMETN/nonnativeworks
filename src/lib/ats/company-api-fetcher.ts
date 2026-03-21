@@ -14,11 +14,12 @@ function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
-/** Extract a string from a dot-path. Arrays return their first string element. */
+/** Extract a string from a dot-path. Arrays return their first string element. Numbers are coerced to strings. */
 function getString(obj: unknown, path: string | undefined): string | undefined {
   if (!path) return undefined;
   const val = getPath(obj, path);
   if (typeof val === 'string') return val || undefined;
+  if (typeof val === 'number') return String(val);
   if (Array.isArray(val)) {
     const first = val.find((v) => typeof v === 'string' && v.trim());
     return typeof first === 'string' ? first : undefined;
@@ -49,6 +50,7 @@ function mapItem(item: unknown, fields: CompanyApiConfig['fields'], urlTemplate?
     location: getString(item, fields.location),
     url: url || undefined,
     department: getString(item, fields.department),
+    sourceId: fields.id ? getString(item, fields.id) : undefined,
   };
 }
 
@@ -88,12 +90,12 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
 }
 
 /**
- * For each job whose title is in English and has a URL, fetch the job page and
- * attach its HTML as descriptionHtml. Jobs with non-English titles are skipped
- * because the title alone is already a high-confidence signal.
+ * For each job whose title is in English, has a URL, and does not already have a description
+ * (e.g. from a secondary merge), fetch the job page and attach its HTML as descriptionHtml.
+ * Jobs with non-English titles are skipped — the title alone is already a high-confidence signal.
  */
 async function enrichDescriptions(jobs: RawJob[]): Promise<void> {
-  const targets = jobs.filter((j) => j.url && !titleAppearsNonEnglish(j.title));
+  const targets = jobs.filter((j) => j.url && !titleAppearsNonEnglish(j.title) && !j.descriptionHtml);
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
@@ -111,51 +113,168 @@ function buildGetUrl(template: string, param: string, value: number): string {
   return `${template}${sep}${param}=${value}`;
 }
 
-export async function fetchCompanyApiJobs(config: CompanyApiConfig): Promise<RawJob[]> {
-  const method = config.method ?? 'GET';
-  const headers = config.headers ?? {};
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function randomDelay(min = 500, max = 1200) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+interface FetchSpec {
+  url: string;
+  method: 'GET' | 'POST';
+  body?: Record<string, unknown>;
+  headers: Record<string, string>;
+  pagination: CompanyApiConfig['pagination'];
+  fields: CompanyApiConfig['fields'];
+  itemsPath?: string;
+  urlTemplate?: string;
+}
+
+/** Fetches all jobs from a single endpoint, handling all pagination types. */
+async function fetchAllJobsRaw(spec: FetchSpec): Promise<RawJob[]> {
+  const { url, method, body, headers, pagination, fields, itemsPath, urlTemplate } = spec;
   const jobs: RawJob[] = [];
 
-  if (config.pagination.type === 'none') {
-    const data = await fetchPage(config.url, method, config.body, headers);
-    for (const item of extractItems(data, config.itemsPath)) {
-      const job = mapItem(item, config.fields);
+  if (pagination.type === 'none') {
+    const data = await fetchPage(url, method, body, headers);
+    if (!data) {
+      console.warn('Empty response (no pagination)', { url });
+      return jobs;
+    }
+    for (const item of extractItems(data, itemsPath)) {
+      const job = mapItem(item, fields, urlTemplate);
       if (job) jobs.push(job);
     }
-  } else if (config.pagination.type === 'page') {
-    const param = config.pagination.param ?? 'page';
-    let page = config.pagination.startPage ?? 1;
+  } else if (pagination.type === 'page') {
+    const param = pagination.param ?? 'page';
+    let page = pagination.startPage ?? 0;
 
     for (let i = 0; i < MAX_PAGES; i++, page++) {
-      const url = method === 'GET' ? buildGetUrl(config.url, param, page) : config.url;
-      const body = method === 'POST' ? { ...config.body, [param]: page } : undefined;
-      const data = await fetchPage(url, method, body, headers);
-      const items = extractItems(data, config.itemsPath);
+      const pageUrl = method === 'GET' ? buildGetUrl(url, param, page) : url;
+      const pageBody = method === 'POST' ? { ...body, [param]: page } : undefined;
+      const data = await fetchPage(pageUrl, method, pageBody, headers);
+
+      if (!data) {
+        console.warn('Empty response (page)', { url: pageUrl, page });
+        break;
+      }
+
+      const items = extractItems(data, itemsPath);
       if (items.length === 0) break;
       for (const item of items) {
-        const job = mapItem(item, config.fields, config.urlTemplate);
+        const job = mapItem(item, fields, urlTemplate);
         if (job) jobs.push(job);
       }
+
+      await sleep(randomDelay());
     }
-  } else if (config.pagination.type === 'offset') {
-    const param = config.pagination.param ?? 'offset';
-    const pageSize = config.pagination.pageSize;
+  } else if (pagination.type === 'offset') {
+    const param = pagination.param ?? 'offset';
+    const pageSize = pagination.pageSize;
     let offset = 0;
 
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
-      const url = method === 'GET' ? buildGetUrl(config.url, param, offset) : config.url;
-      const body = method === 'POST' ? { ...config.body, [param]: offset } : undefined;
-      const data = await fetchPage(url, method, body, headers);
-      const items = extractItems(data, config.itemsPath);
+      const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
+      const pageBody = method === 'POST' ? { ...body, [param]: offset } : undefined;
+      const data = await fetchPage(pageUrl, method, pageBody, headers);
+
+      if (!data) {
+        console.warn('Empty response (offset)', { url: pageUrl, offset });
+        break;
+      }
+
+      const items = extractItems(data, itemsPath);
       if (items.length === 0) break;
       for (const item of items) {
-        const job = mapItem(item, config.fields, config.urlTemplate);
+        const job = mapItem(item, fields, urlTemplate);
         if (job) jobs.push(job);
       }
       if (items.length < pageSize) break;
+
+      await sleep(randomDelay());
     }
   }
 
-  if (config.fetchDescription) await enrichDescriptions(jobs);
   return jobs;
+}
+
+export async function fetchCompanyApiJobs(config: CompanyApiConfig): Promise<RawJob[]> {
+  const method = config.method ?? 'GET';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0',
+    'Accept': 'application/json',
+    ...config.headers,
+  };
+
+  const primarySpec: FetchSpec = {
+    url: config.url,
+    method,
+    body: config.body,
+    headers,
+    pagination: config.pagination,
+    fields: config.fields,
+    itemsPath: config.itemsPath,
+    urlTemplate: config.urlTemplate,
+  };
+
+  const jobs = await fetchAllJobsRaw(primarySpec);
+
+  if (config.secondaryUrl && config.fields.id) {
+    const secondarySpec: FetchSpec = {
+      url: config.secondaryUrl,
+      method,
+      body: { ...config.body, ...config.secondaryBody },
+      headers,
+      pagination: config.pagination,
+      fields: config.fields,
+      itemsPath: config.itemsPath,
+      urlTemplate: config.secondaryUrlTemplate ?? config.urlTemplate,
+    };
+
+    const secondaryJobs = await fetchAllJobsRaw(secondarySpec);
+
+    if (config.fetchDescription) {
+      await enrichDescriptions(secondaryJobs);
+    }
+
+    // Index primary jobs by sourceId for O(1) lookup
+    const primaryById = new Map<string, RawJob>();
+    for (const job of jobs) {
+      if (job.sourceId) primaryById.set(job.sourceId, job);
+    }
+
+    for (const secondary of secondaryJobs) {
+      if (!secondary.sourceId) continue;
+      const primary = primaryById.get(secondary.sourceId);
+      if (primary) {
+        // Matched: inject English description and URL into the primary job
+        primary.descriptionHtml = secondary.descriptionHtml;
+        primary.descriptionText = secondary.descriptionText;
+        if (secondary.url) primary.url = secondary.url;
+      } else {
+        // No match in primary: add as a new job
+        jobs.push(secondary);
+        primaryById.set(secondary.sourceId, secondary);
+      }
+    }
+  }
+
+  // Enrich descriptions for any remaining jobs without one
+  // (English-titled jobs not covered by secondary, or when secondaryUrl is not configured).
+  // Already-enriched jobs are skipped automatically.
+  if (config.fetchDescription) {
+    await enrichDescriptions(jobs);
+  }
+
+  // Final deduplication. Uses sourceId when available, falls back to title+location
+  // for any jobs the API returned without an ID (e.g. pagination overlap on the last page).
+  const seen = new Set<string>();
+  return jobs.filter((job) => {
+    const key = job.sourceId ?? `${job.title}|${job.location ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

@@ -57,6 +57,11 @@ export interface CompanyApiConfig {
     /** Use url OR urlTemplate, not both. */
     url?: string;
     department?: string;
+    /**
+     * Stable ID field used to deduplicate jobs when merging a primary and secondary fetch.
+     * Required when secondaryUrl is set.
+     */
+    id?: string;
   };
   /**
    * Template for constructing the job URL from multiple fields.
@@ -77,6 +82,25 @@ export interface CompanyApiConfig {
    * Useful when the language requirement is buried in the job description body.
    */
   fetchDescription?: boolean;
+  /**
+   * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
+   * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
+   * language classification. The primary fetch provides the complete position list for statistics;
+   * the secondary fetch provides richer English descriptions for accurate advantage detection.
+   * Requires fields.id to be set.
+   */
+  secondaryUrl?: string;
+  /**
+   * Body overrides for the secondary request. Merged on top of the primary body, so you only
+   * need to specify what differs (e.g. { locale: 'en_EN' }).
+   */
+  secondaryBody?: Record<string, unknown>;
+  /**
+   * URL template for constructing individual job page URLs for secondary jobs.
+   * Use when the secondary locale has language-specific page URLs (e.g. ending in -en_EN
+   * instead of -fi_FI). Falls back to urlTemplate if omitted.
+   */
+  secondaryUrlTemplate?: string;
 }
 
 // ─── Company registry ────────────────────────────────────────────────────────
@@ -86,6 +110,15 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
   'op-careers.fi': {
     url: 'https://op-careers.fi/services/recruiting/v1/jobs',
     method: 'POST',
+
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Origin': 'https://op-careers.fi',
+      'Referer': 'https://op-careers.fi/search',
+    },
+    
     body: {
       locale: 'fi_FI',
       sortBy: '',
@@ -103,12 +136,20 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     itemsPath: 'jobSearchResult',
     fields: {
       title: 'response.unifiedStandardTitle',
-      // jobLocationShort is an array like ["FIN, "]; first element is used
+      // jobLocationShort is an array like ["FIN"]; first element is used
       location: 'response.jobLocationShort',
+      // id is the stable job ID used to deduplicate across primary and secondary fetches
+      id: 'id',
     },
     // URL pattern: /job/{urlTitle}/{id}-fi_FI
     urlTemplate: 'https://op-careers.fi/job/{response.urlTitle}/{response.id}-fi_FI',
     companyName: 'OP Financial Group',
     fetchDescription: true,
+    // Secondary fetch: same API endpoint with English locale — returns a subset of jobs
+    // whose descriptions mention things like "Finnish is a plus". Jobs are matched by ID
+    // and their English descriptions replace the Finnish ones before language classification.
+    secondaryUrl: 'https://op-careers.fi/services/recruiting/v1/jobs',
+    secondaryBody: { locale: 'en_GB' },
+    secondaryUrlTemplate: 'https://op-careers.fi/job/{response.urlTitle}/{response.id}-en_GB',
   },
 };
