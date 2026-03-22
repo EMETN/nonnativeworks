@@ -107,7 +107,7 @@ export interface CompanyApiConfig {
 // Key: lowercase hostname of the career page URL (e.g. "op-careers.fi")
 
 export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
-  'op-careers.fi': {
+    'op-careers.fi': {
     url: 'https://op-careers.fi/services/recruiting/v1/jobs',
     method: 'POST',
 
@@ -151,5 +151,61 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     secondaryUrl: 'https://op-careers.fi/services/recruiting/v1/jobs',
     secondaryBody: { locale: 'en_GB' },
     secondaryUrlTemplate: 'https://op-careers.fi/job/{response.urlTitle}/{response.id}-en_GB',
+  },
+
+  'jobs.nokia.com': {
+    // Oracle HCM Recruiting Cloud endpoint (Nokia's career site is jobs.nokia.com)
+    url: 'https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,lastSelectedFacet=CATEGORIES,selectedCategoriesFacet=300000009357764%3B300000009357791%3B300000009357800%3B300000009357785%3B300000009357755%3B300000009357752%3B300000009357776%3B300000009357803%3B300000009357809%3B300000009357797,sortBy=POSTING_DATES_DESC',
+    method: 'GET',
+    headers: {
+      'accept': '*/*',
+      'accept-language': 'en',
+      'content-type': 'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+      'ora-irc-language': 'en',
+      'origin': 'https://jobs.nokia.com',
+      'referer': 'https://jobs.nokia.com/',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    },
+    // Oracle HCM paginates via top-level ?offset= query param; each page returns up to 200 items
+    pagination: { type: 'offset', param: 'offset', pageSize: 200 },
+    itemsPath: 'items',
+    fields: {
+      title: 'Title',
+      location: 'PrimaryLocation',
+      id: 'Id',
+    },
+    urlTemplate: 'https://jobs.nokia.com/en/jobs/{Id}',
+    companyName: 'Nokia',
+    fetchDescription: true,
+  },
+
+    // TODO: verify Nordea API shape before enabling.
+  // Embed all query params in the URL — the CompanyApiConfig type has no queryParams field.
+  // Replace urlTemplate once the actual item field structure is confirmed.
+  'nordea.com': {
+    url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
+    method: 'GET',
+
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+      'Referer': 'https://www.nordea.com/en/careers/open-jobs',
+    },
+
+    pagination: { type: 'none' },
+
+    itemsPath: 'results',
+
+    fields: {
+      title: 'title',
+      location: 'location_name',
+      id: 'nid',
+      url: 'field_ad_url',
+    },
+
+    urlTemplate: '{field_ad_url}',
+
+    companyName: 'Nordea',
+    fetchDescription: true,
   },
 };

@@ -88,6 +88,12 @@ for domain in \
     "api.ashbyhq.com" \
     "gofore.com" \
     "op-careers.fi" \
+    "jobs.nokia.com" \
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "careers.tieto.com" \
+    "nordea.com" \
+    "www.nordea.com" \
+    "careers.vaisala.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

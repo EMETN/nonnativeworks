@@ -47,9 +47,14 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
   let ats: AtsType | null = null;
   let layer1Error: string | null = null;
 
-  // Resolve ATS: use detected ATS or probe known APIs when only a slug was found
+  // Layer 1.5 hostname — compute early so we can skip probeAts when a company API is configured
+  const careerHostname = (() => { try { return new URL(careerUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch { return ''; } })();
+  const hasCompanyApiConfig = careerHostname in COMPANY_APIS;
+
+  // Resolve ATS: use detected ATS or probe known APIs when only a slug was found.
+  // Skip probing if we already have a dedicated company API config for this hostname.
   let resolvedAts = detection.ats;
-  if (!resolvedAts && detection.companySlug) {
+  if (!resolvedAts && detection.companySlug && !hasCompanyApiConfig) {
     resolvedAts = await probeAts(detection.companySlug);
   }
 
@@ -81,17 +86,16 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
 
   // Layer 1.5: per-company API config (fallback if Layer 1 yielded nothing)
   if (rawJobs.length === 0) {
-    const hostname = (() => { try { return new URL(careerUrl).hostname.toLowerCase(); } catch { return ''; } })();
-    const companyApiConfig = COMPANY_APIS[hostname];
+    const companyApiConfig = COMPANY_APIS[careerHostname];
     if (companyApiConfig) {
       try {
         rawJobs = await fetchCompanyApiJobs(companyApiConfig);
         if (rawJobs.length > 0) {
-          companyName = companyApiConfig.companyName ?? hostname;
+          companyName = companyApiConfig.companyName ?? careerHostname;
           ats = 'company-api';
         }
       } catch (err) {
-        console.warn(`Layer 1.5 (company API) failed for ${hostname}:`, err instanceof Error ? err.message : err);
+        console.warn(`Layer 1.5 (company API) failed for ${careerHostname}:`, err instanceof Error ? err.message : err);
       }
     }
   }
@@ -132,29 +136,36 @@ function buildScrapeResult(
   let lowConfidenceCount = 0;
 
   for (const job of rawJobs) {
-    const countryInfo = lookupCountryFromLocation(job.location ?? '');
-    if (!countryInfo) {
+    const countries = lookupCountryFromLocation(job.location ?? '');
+    const trackedCountries = countries.filter((c) => TRACKED_COUNTRY_CODES.has(c.code));
+
+    if (countries.length === 0) {
       skipped++;
       continue;
     }
-
-    if (!TRACKED_COUNTRY_CODES.has(countryInfo.code)) {
+    if (trackedCountries.length === 0) {
       skippedUntracked++;
       continue;
     }
 
-    const classified = classifyJob(job, countryInfo.code);
-    if (classified.confidence === 'low') lowConfidenceCount++;
+    let lowCounted = false;
+    for (const countryInfo of trackedCountries) {
+      const classified = classifyJob(job, countryInfo.code);
+      if (classified.confidence === 'low' && !lowCounted) {
+        lowConfidenceCount++;
+        lowCounted = true;
+      }
 
-    if (!groups.has(countryInfo.code)) {
-      groups.set(countryInfo.code, {
-        country: countryInfo.slug,
-        country_name: countryInfo.name,
-        country_code: countryInfo.code,
-        jobs: [],
-      });
+      if (!groups.has(countryInfo.code)) {
+        groups.set(countryInfo.code, {
+          country: countryInfo.slug,
+          country_name: countryInfo.name,
+          country_code: countryInfo.code,
+          jobs: [],
+        });
+      }
+      groups.get(countryInfo.code)!.jobs.push(classified);
     }
-    groups.get(countryInfo.code)!.jobs.push(classified);
   }
 
   return {

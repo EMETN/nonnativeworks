@@ -191,25 +191,32 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
-export function lookupCountryFromLocation(location: string): CountryInfo | null {
-  if (!location || !location.trim()) return null;
+export function lookupCountryFromLocation(location: string): CountryInfo[] {
+  if (!location || !location.trim()) return [];
 
   // Check skip patterns against full location
   for (const pattern of SKIP_LOCATION_PATTERNS) {
-    if (pattern.test(location.trim())) return null;
+    if (pattern.test(location.trim())) return [];
   }
 
   const segments = location.split(',').map((s) => s.trim()).filter(Boolean);
 
-  // Try from last segment inward (most specific to least)
-  for (let i = segments.length - 1; i >= 0; i--) {
-    const key = normalizeKey(segments[i]);
-    if (COUNTRY_MAP[key]) return COUNTRY_MAP[key];
+  // Collect all unique countries found in any segment
+  const seen = new Set<string>();
+  const results: CountryInfo[] = [];
+  for (const segment of segments) {
+    const key = normalizeKey(segment);
+    const info = COUNTRY_MAP[key];
+    if (info && !seen.has(info.code)) {
+      seen.add(info.code);
+      results.push(info);
+    }
   }
+  if (results.length > 0) return results;
 
   // Try full string as a single key
   const fullKey = normalizeKey(location);
-  if (COUNTRY_MAP[fullKey]) return COUNTRY_MAP[fullKey];
+  if (COUNTRY_MAP[fullKey]) return [COUNTRY_MAP[fullKey]];
 
-  return null;
+  return [];
 }

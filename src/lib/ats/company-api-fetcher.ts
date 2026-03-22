@@ -39,12 +39,22 @@ function buildUrlFromTemplate(item: unknown, template: string): string {
   });
 }
 
-function mapItem(item: unknown, fields: CompanyApiConfig['fields'], urlTemplate?: string): RawJob | null {
+function mapItem(
+  item: unknown,
+  fields: CompanyApiConfig['fields'],
+  urlTemplate?: string
+): RawJob | null {
   const title = getString(item, fields.title);
   if (!title) return null;
-  const url = urlTemplate
+  
+  let url = urlTemplate
     ? buildUrlFromTemplate(item, urlTemplate)
     : getString(item, fields.url);
+  
+  if (url) {
+    url = cleanJobUrl(url);
+  }
+
   return {
     title,
     location: getString(item, fields.location),
@@ -81,7 +91,7 @@ function titleAppearsNonEnglish(title: string): boolean {
 async function fetchPageHtml(url: string): Promise<string | undefined> {
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0' },
     });
     return res.ok ? await res.text() : undefined;
   } catch {
@@ -131,6 +141,29 @@ interface FetchSpec {
   itemsPath?: string;
   urlTemplate?: string;
 }
+
+export const cleanJobUrl = (rawUrl: string): string => {
+  if (!rawUrl) return '';
+
+  let url = rawUrl;
+
+  // 1. Decode common HTML entities.
+  // Two passes: first handles single-encoded (&amp; → &),
+  // second handles double-encoded (&amp;amp; → &amp; → &).
+  url = url.replace(/&amp;/g, '&');
+  url = url.replace(/&amp;/g, '&');
+
+  // 2. Remove tracking/query params (keep only base URL)
+  url = url.split('?')[0];
+
+  // 3. Normalize slashes (avoid https://domain.com//job)
+  url = url.replace(/([^:]\/)\/+/g, '$1');
+
+  // 4. Trim whitespace just in case
+  url = url.trim();
+
+  return url;
+};
 
 /** Fetches all jobs from a single endpoint, handling all pagination types. */
 async function fetchAllJobsRaw(spec: FetchSpec): Promise<RawJob[]> {
@@ -219,10 +252,20 @@ export async function fetchCompanyApiJobs(config: CompanyApiConfig): Promise<Raw
     urlTemplate: config.urlTemplate,
   };
 
-  const jobs = await fetchAllJobsRaw(primarySpec);
+  const primaryJobs = await fetchAllJobsRaw(primarySpec);
 
+  // ── Dual-site merge ────────────────────────────────────────────────────────
+  // Some companies run parallel career sites: one in the local language
+  // (complete job list) and one in English (richer descriptions, same jobs).
+  // Strategy:
+  //   1. Primary (native-language) site is the source of truth for the job list.
+  //   2. English site is fetched and its descriptions are injected into the
+  //      matching primary jobs by sourceId, giving the language classifier
+  //      English-language content to analyse.
+  //   3. English-only jobs (no match in primary) are added as new entries.
+  // Requires `fields.id` to be set so jobs can be matched across sites.
   if (config.secondaryUrl && config.fields.id) {
-    const secondarySpec: FetchSpec = {
+    const englishSpec: FetchSpec = {
       url: config.secondaryUrl,
       method,
       body: { ...config.body, ...config.secondaryBody },
@@ -233,45 +276,46 @@ export async function fetchCompanyApiJobs(config: CompanyApiConfig): Promise<Raw
       urlTemplate: config.secondaryUrlTemplate ?? config.urlTemplate,
     };
 
-    const secondaryJobs = await fetchAllJobsRaw(secondarySpec);
+    const englishJobs = await fetchAllJobsRaw(englishSpec);
 
     if (config.fetchDescription) {
-      await enrichDescriptions(secondaryJobs);
+      await enrichDescriptions(englishJobs);
     }
 
     // Index primary jobs by sourceId for O(1) lookup
     const primaryById = new Map<string, RawJob>();
-    for (const job of jobs) {
+    for (const job of primaryJobs) {
       if (job.sourceId) primaryById.set(job.sourceId, job);
     }
 
-    for (const secondary of secondaryJobs) {
-      if (!secondary.sourceId) continue;
-      const primary = primaryById.get(secondary.sourceId);
-      if (primary) {
-        // Matched: inject English description and URL into the primary job
-        primary.descriptionHtml = secondary.descriptionHtml;
-        primary.descriptionText = secondary.descriptionText;
-        if (secondary.url) primary.url = secondary.url;
+    for (const englishJob of englishJobs) {
+      if (!englishJob.sourceId) continue;
+      const primaryJob = primaryById.get(englishJob.sourceId);
+      if (primaryJob) {
+        // Matched: replace native-language description with the English one
+        // so the language classifier receives English content to analyse.
+        primaryJob.descriptionHtml = englishJob.descriptionHtml;
+        primaryJob.descriptionText = englishJob.descriptionText;
+        if (englishJob.url) primaryJob.url = englishJob.url;
       } else {
-        // No match in primary: add as a new job
-        jobs.push(secondary);
-        primaryById.set(secondary.sourceId, secondary);
+        // No match: this job only exists on the English site — add it.
+        primaryJobs.push(englishJob);
+        primaryById.set(englishJob.sourceId, englishJob);
       }
     }
   }
 
   // Enrich descriptions for any remaining jobs without one
-  // (English-titled jobs not covered by secondary, or when secondaryUrl is not configured).
-  // Already-enriched jobs are skipped automatically.
+  // (English-titled jobs not covered by the English site, or when secondaryUrl
+  // is not configured). Already-enriched jobs are skipped automatically.
   if (config.fetchDescription) {
-    await enrichDescriptions(jobs);
+    await enrichDescriptions(primaryJobs);
   }
 
-  // Final deduplication. Uses sourceId when available, falls back to title+location
-  // for any jobs the API returned without an ID (e.g. pagination overlap on the last page).
+  // Final deduplication by sourceId, falling back to title+location for jobs
+  // returned without a stable ID (e.g. pagination overlap on the last page).
   const seen = new Set<string>();
-  return jobs.filter((job) => {
+  return primaryJobs.filter((job) => {
     const key = job.sourceId ?? `${job.title}|${job.location ?? ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
