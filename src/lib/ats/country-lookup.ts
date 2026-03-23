@@ -168,6 +168,179 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'kenya': { name: 'Kenya', code: 'KE', slug: 'kenya' },
 };
 
+// City-to-country map for when job APIs return city names instead of country names.
+// Only include cities that are unambiguous within the countries this site tracks.
+const CITY_MAP: Record<string, CountryInfo> = {
+  // ── Finland ──────────────────────────────────────────────────────────────
+  'espoo':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'helsinki':                 { name: 'Finland', code: 'FI', slug: 'finland' },
+  'helsinki metropolitan area': { name: 'Finland', code: 'FI', slug: 'finland' },
+  'joensuu':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'jyväskylä':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'jyvaskyla':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'kajaani':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'kuopio':                   { name: 'Finland', code: 'FI', slug: 'finland' },
+  'lahti':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'lappeenranta':             { name: 'Finland', code: 'FI', slug: 'finland' },
+  'oulu':                     { name: 'Finland', code: 'FI', slug: 'finland' },
+  'rovaniemi':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'tampere':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'turku':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'vaasa':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  // ── Germany ──────────────────────────────────────────────────────────────
+  'berlin':                   { name: 'Germany', code: 'DE', slug: 'germany' },
+  'bielefeld':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'bonn':                     { name: 'Germany', code: 'DE', slug: 'germany' },
+  'braunschweig':             { name: 'Germany', code: 'DE', slug: 'germany' },
+  'brunswick':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'braunschweig/brunswick':   { name: 'Germany', code: 'DE', slug: 'germany' },
+  'dortmund':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'dresden':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'düsseldorf':               { name: 'Germany', code: 'DE', slug: 'germany' },
+  'dusseldorf':               { name: 'Germany', code: 'DE', slug: 'germany' },
+  'essen':                    { name: 'Germany', code: 'DE', slug: 'germany' },
+  'ettlingen':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'frankfurt':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'frankfurt am main':        { name: 'Germany', code: 'DE', slug: 'germany' },
+  'hamburg':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'hannover':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'hanover':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'ingolstadt':               { name: 'Germany', code: 'DE', slug: 'germany' },
+  'karlsruhe':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'köln':                     { name: 'Germany', code: 'DE', slug: 'germany' },
+  'cologne':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'koln':                     { name: 'Germany', code: 'DE', slug: 'germany' },
+  'leipzig':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'mannheim':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'münchen':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'munich':                   { name: 'Germany', code: 'DE', slug: 'germany' },
+  'nürnberg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'nuremberg':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'nurnberg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'stuttgart':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  // ── Austria ──────────────────────────────────────────────────────────────
+  'graz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
+  'innsbruck':                { name: 'Austria', code: 'AT', slug: 'austria' },
+  'linz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
+  'salzburg':                 { name: 'Austria', code: 'AT', slug: 'austria' },
+  'wien':                     { name: 'Austria', code: 'AT', slug: 'austria' },
+  'vienna':                   { name: 'Austria', code: 'AT', slug: 'austria' },
+  // ── Spain ────────────────────────────────────────────────────────────────
+  'barcelona':                { name: 'Spain', code: 'ES', slug: 'spain' },
+  'bilbao':                   { name: 'Spain', code: 'ES', slug: 'spain' },
+  'madrid':                   { name: 'Spain', code: 'ES', slug: 'spain' },
+  'málaga':                   { name: 'Spain', code: 'ES', slug: 'spain' },
+  'malaga':                   { name: 'Spain', code: 'ES', slug: 'spain' },
+  'sevilla':                  { name: 'Spain', code: 'ES', slug: 'spain' },
+  'seville':                  { name: 'Spain', code: 'ES', slug: 'spain' },
+  'valencia':                 { name: 'Spain', code: 'ES', slug: 'spain' },
+  // ── Sweden ───────────────────────────────────────────────────────────────
+  'göteborg':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'gothenburg':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'goteborg':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'linköping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'linkoping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'lund':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'malmö':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'malmo':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'örebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'orebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'stockholm':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'umeå':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'umea':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'västerås':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'vasteras':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  // ── Norway ───────────────────────────────────────────────────────────────
+  'bergen':                   { name: 'Norway', code: 'NO', slug: 'norway' },
+  'oslo':                     { name: 'Norway', code: 'NO', slug: 'norway' },
+  'stavanger':                { name: 'Norway', code: 'NO', slug: 'norway' },
+  'trondheim':                { name: 'Norway', code: 'NO', slug: 'norway' },
+  // ── Denmark ──────────────────────────────────────────────────────────────
+  'aalborg':                  { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'aarhus':                   { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'copenhagen':               { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'københavn':                { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'kobenhavn':                { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'odense':                   { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  // ── Netherlands ──────────────────────────────────────────────────────────
+  'amsterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'eindhoven':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'den haag':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'the hague':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'rotterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'utrecht':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  // ── France ───────────────────────────────────────────────────────────────
+  'bordeaux':                 { name: 'France', code: 'FR', slug: 'france' },
+  'lille':                    { name: 'France', code: 'FR', slug: 'france' },
+  'lyon':                     { name: 'France', code: 'FR', slug: 'france' },
+  'marseille':                { name: 'France', code: 'FR', slug: 'france' },
+  'nantes':                   { name: 'France', code: 'FR', slug: 'france' },
+  'nice':                     { name: 'France', code: 'FR', slug: 'france' },
+  'paris':                    { name: 'France', code: 'FR', slug: 'france' },
+  'strasbourg':               { name: 'France', code: 'FR', slug: 'france' },
+  'toulouse':                 { name: 'France', code: 'FR', slug: 'france' },
+  // ── United Kingdom ───────────────────────────────────────────────────────
+  'birmingham':               { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'bristol':                  { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'cambridge':                { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'edinburgh':                { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'glasgow':                  { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'leeds':                    { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'london':                   { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'manchester':               { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'oxford':                   { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  // ── Poland ───────────────────────────────────────────────────────────────
+  'gdańsk':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'gdansk':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'kraków':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'krakow':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'łódź':                     { name: 'Poland', code: 'PL', slug: 'poland' },
+  'lodz':                     { name: 'Poland', code: 'PL', slug: 'poland' },
+  'poznań':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'poznan':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'warsaw':                   { name: 'Poland', code: 'PL', slug: 'poland' },
+  'warszawa':                 { name: 'Poland', code: 'PL', slug: 'poland' },
+  'wrocław':                  { name: 'Poland', code: 'PL', slug: 'poland' },
+  'wroclaw':                  { name: 'Poland', code: 'PL', slug: 'poland' },
+  // ── Czech Republic ───────────────────────────────────────────────────────
+  'brno':                     { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+  'prague':                   { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+  'praha':                    { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+  // ── Hungary ──────────────────────────────────────────────────────────────
+  'budapest':                 { name: 'Hungary', code: 'HU', slug: 'hungary' },
+  // ── Romania ──────────────────────────────────────────────────────────────
+  'bucurești':                { name: 'Romania', code: 'RO', slug: 'romania' },
+  'bucharest':                { name: 'Romania', code: 'RO', slug: 'romania' },
+  'cluj':                     { name: 'Romania', code: 'RO', slug: 'romania' },
+  'cluj-napoca':              { name: 'Romania', code: 'RO', slug: 'romania' },
+  // ── Switzerland ──────────────────────────────────────────────────────────
+  'basel':                    { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'bern':                     { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'genève':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'geneve':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'geneva':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'zürich':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'zurich':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  // ── Baltics ──────────────────────────────────────────────────────────────
+  'riga':                     { name: 'Latvia', code: 'LV', slug: 'latvia' },
+  'tallinn':                  { name: 'Estonia', code: 'EE', slug: 'estonia' },
+  'tartu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
+  'vilnius':                  { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'kaunas':                   { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  // ── Ireland ──────────────────────────────────────────────────────────────
+  'dublin':                   { name: 'Ireland', code: 'IE', slug: 'ireland' },
+  // ── Belgium ──────────────────────────────────────────────────────────────
+  'antwerp':                  { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'antwerpen':                { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'brussels':                 { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'bruxelles':                { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'brussel':                  { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  // ── Portugal ─────────────────────────────────────────────────────────────
+  'lisbon':                   { name: 'Portugal', code: 'PT', slug: 'portugal' },
+  'lisboa':                   { name: 'Portugal', code: 'PT', slug: 'portugal' },
+  'porto':                    { name: 'Portugal', code: 'PT', slug: 'portugal' },
+};
+
 // Location strings that should be skipped (not a country)
 const SKIP_LOCATION_PATTERNS = [
   /^remote$/i,
@@ -201,12 +374,12 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
 
   const segments = location.split(',').map((s) => s.trim()).filter(Boolean);
 
-  // Collect all unique countries found in any segment
+  // Collect all unique countries found in any segment — check country map first, then city map
   const seen = new Set<string>();
   const results: CountryInfo[] = [];
   for (const segment of segments) {
     const key = normalizeKey(segment);
-    const info = COUNTRY_MAP[key];
+    const info = COUNTRY_MAP[key] ?? CITY_MAP[key];
     if (info && !seen.has(info.code)) {
       seen.add(info.code);
       results.push(info);
@@ -214,9 +387,10 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
   }
   if (results.length > 0) return results;
 
-  // Try full string as a single key
+  // Try full string as a single key (country map, then city map)
   const fullKey = normalizeKey(location);
-  if (COUNTRY_MAP[fullKey]) return [COUNTRY_MAP[fullKey]];
+  const fullMatch = COUNTRY_MAP[fullKey] ?? CITY_MAP[fullKey];
+  if (fullMatch) return [fullMatch];
 
   return [];
 }

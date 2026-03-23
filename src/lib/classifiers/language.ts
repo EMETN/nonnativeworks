@@ -193,11 +193,13 @@ function buildAdvantageSignals(lang: string): string[] {
     `knowledge of ${lang}`,
     `${lang} knowledge`,
     `${lang} communication`,
+    `preferably also ${lang}`,
   ];
 
   const advantageModifiers = [
     ' is an advantage',
     ' is a plus',
+    ' is a big plus',
     ' is a bonus',
     ' is preferred',
     ' is desirable',

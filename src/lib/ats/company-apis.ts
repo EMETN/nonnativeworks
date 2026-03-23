@@ -83,6 +83,14 @@ export interface CompanyApiConfig {
   /** Company display name. Falls back to the hostname if omitted. */
   companyName?: string;
   /**
+   * Regex string (one capture group) applied to the fetched job page HTML to extract
+   * a raw location string (e.g. a comma-separated city list). The captured text is set
+   * as job.location and then resolved to countries via lookupCountryFromLocation.
+   * Implicitly enables per-job HTML fetching (like fetchDescription).
+   * Only applied to jobs that have no location from the API response.
+   */
+  locationFromHtml?: string;
+  /**
    * When true, individually fetch each job's URL to get its description HTML —
    * but only for jobs whose title is in English (non-ASCII titles already signal
    * a local-language requirement so there's nothing to gain from fetching them).
@@ -230,7 +238,33 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
   },
 
-    // TODO: verify Nordea API shape before enabling.
+  'gofore.com': {
+    // WordPress REST API with Polylang (lang=en returns English-language postings).
+    // No location field in the API response — city names are extracted from the HTML
+    // of each job page and resolved to countries via the city-to-country map.
+    url: 'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=en',
+    method: 'GET',
+    headers: {
+      'accept': '*/*',
+      'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,fi;q=0.7',
+      'referer': 'https://gofore.com/en/careers/',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    },
+    // WordPress page numbers start at 1; stops when the response array is empty
+    pagination: { type: 'page', param: 'page', startPage: 1 },
+    fields: {
+      title: 'title.rendered',
+      url: 'link',
+      id: 'id',
+    },
+    companyName: 'Gofore',
+    // Fetch each job page to extract its city list and description text.
+    // Location lives in: <div class="locations"><h3>…</h3><p>City1, City2</p></div>
+    fetchDescription: true,
+    locationFromHtml: 'class="locations"[\\s\\S]*?<p>(.*?)<\\/p>',
+  },
+
+  // TODO: verify Nordea API shape before enabling.
   // Embed all query params in the URL — the CompanyApiConfig type has no queryParams field.
   // Replace urlTemplate once the actual item field structure is confirmed.
   'nordea.com': {

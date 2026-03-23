@@ -117,6 +117,9 @@ async function fetchPage(
     init.body = JSON.stringify(body ?? {});
   }
   const res = await fetch(url, init);
+  // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns 400
+  // with rest_post_invalid_page_number instead of an empty array). Treat as graceful end.
+  if (res.status === 400) return null;
   if (!res.ok) throw new Error(`Company API returned ${res.status} for ${url}`);
   return res.json();
 }
@@ -131,25 +134,64 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
     });
-    return res.ok ? await res.text() : undefined;
-  } catch {
+    if (!res.ok) {
+      console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
+      return undefined;
+    }
+    return await res.text();
+  } catch (err) {
+    console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
     return undefined;
   }
 }
 
 /**
- * For each job whose title is in English, has a URL, and does not already have a description
- * (e.g. from a secondary merge), fetch the job page and attach its HTML as descriptionHtml.
- * Jobs with non-English titles are skipped — the title alone is already a high-confidence signal.
+ * For each job that needs HTML — either for description classification (English title,
+ * no existing HTML) or for location extraction (no location yet) — fetch the job page.
+ * Attaches descriptionHtml for English-titled jobs; extracts location via regex if provided.
  */
-async function enrichDescriptions(jobs: RawJob[]): Promise<void> {
-  const targets = jobs.filter((j) => j.url && !titleAppearsNonEnglish(j.title) && !j.descriptionHtml);
+async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp): Promise<void> {
+  const targets = jobs.filter((j) => {
+    if (!j.url) return false;
+    const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml;
+    const wantsLocation = !!locationRegex && !j.location;
+    return wantsDescription || wantsLocation;
+  });
+
+  const noUrl = jobs.length - targets.length;
+  console.log(`[enrichDescriptions] ${targets.length} targets (${noUrl} skipped — no url or already enriched), locationRegex=${locationRegex ?? 'none'}`);
+
+  let locationsSet = 0;
+  let htmlFailed = 0;
+  let regexMissed = 0;
+
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        job.descriptionHtml = await fetchPageHtml(job.url!);
+        const html = await fetchPageHtml(job.url!);
+        if (!html) {
+          htmlFailed++;
+          return;
+        }
+        if (!titleAppearsNonEnglish(job.title)) {
+          job.descriptionHtml = html;
+        }
+        if (locationRegex && !job.location) {
+          const m = html.match(locationRegex);
+          if (m?.[1]) {
+            job.location = m[1].trim();
+            locationsSet++;
+          } else {
+            regexMissed++;
+            console.warn(`[enrichDescriptions] location regex did not match for: ${job.url}`);
+          }
+        }
       }),
     );
+  }
+
+  if (locationRegex) {
+    console.log(`[enrichDescriptions] location extraction: ${locationsSet} set, ${regexMissed} regex misses, ${htmlFailed} fetch failures`);
   }
 }
 
@@ -311,7 +353,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
       const data = await fetchPage(pageUrl, method, pageBody, headers);
 
       if (!data) {
-        console.warn(`[${label}] empty response at page=${page}`, { url: pageUrl });
+        console.log(`[${label}] stopping: null response at page=${page} (400 = page out of range)`);
         break;
       }
 
@@ -532,8 +574,9 @@ export async function fetchCompanyApiJobs(
     ? primaryJobs.filter((j) => !j.location || isTrackedLocation(j.location))
     : primaryJobs;
 
-  if (config.fetchDescription) {
-    await enrichDescriptions(enrichmentTargets);
+  if (config.fetchDescription || config.locationFromHtml) {
+    const locationRegex = config.locationFromHtml ? new RegExp(config.locationFromHtml) : undefined;
+    await enrichDescriptions(enrichmentTargets, locationRegex);
   }
 
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {
