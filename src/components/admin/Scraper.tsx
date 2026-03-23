@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/prompt-template';
 import { atsLabel } from '../../lib/ats/detector';
 
@@ -69,6 +69,27 @@ export default function Scraper() {
   const [url, setUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
+
+  // Listen for prefill requests from DataManager's "Update" button
+  useEffect(() => {
+    // Check sessionStorage first (handles the case where the event fired before mount)
+    const stored = sessionStorage.getItem('scraper-prefill-url');
+    if (stored) {
+      setUrl(stored);
+      sessionStorage.removeItem('scraper-prefill-url');
+    }
+
+    const handler = (e: Event) => {
+      const prefillUrl = (e as CustomEvent<{ url: string }>).detail?.url;
+      if (prefillUrl) {
+        setUrl(prefillUrl);
+        setPhase({ kind: 'idle' });
+        setUrlError('');
+      }
+    };
+    window.addEventListener('scraper-prefill', handler);
+    return () => window.removeEventListener('scraper-prefill', handler);
+  }, []);
 
   // ---- Scrape ----
 
