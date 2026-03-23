@@ -89,7 +89,10 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
     const companyApiConfig = COMPANY_APIS[careerHostname];
     if (companyApiConfig) {
       try {
-        rawJobs = await fetchCompanyApiJobs(companyApiConfig);
+        rawJobs = await fetchCompanyApiJobs(
+          companyApiConfig,
+          (location) => lookupCountryFromLocation(location).some((c) => TRACKED_COUNTRY_CODES.has(c.code)),
+        );
         if (rawJobs.length > 0) {
           companyName = companyApiConfig.companyName ?? careerHostname;
           ats = 'company-api';
@@ -133,7 +136,6 @@ function buildScrapeResult(
   const groups = new Map<string, ScrapeCountryGroup>();
   let skipped = 0;
   let skippedUntracked = 0;
-  let lowConfidenceCount = 0;
 
   for (const job of rawJobs) {
     const countries = lookupCountryFromLocation(job.location ?? '');
@@ -148,13 +150,8 @@ function buildScrapeResult(
       continue;
     }
 
-    let lowCounted = false;
     for (const countryInfo of trackedCountries) {
       const classified = classifyJob(job, countryInfo.code);
-      if (classified.confidence === 'low' && !lowCounted) {
-        lowConfidenceCount++;
-        lowCounted = true;
-      }
 
       if (!groups.has(countryInfo.code)) {
         groups.set(countryInfo.code, {
@@ -172,7 +169,6 @@ function buildScrapeResult(
     ats,
     company_name: companyName,
     career_page_url: careerUrl,
-    low_confidence_count: lowConfidenceCount,
     skipped_unknown_location: skipped,
     skipped_untracked_country: skippedUntracked,
     countries: Array.from(groups.values()),

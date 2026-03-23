@@ -12,7 +12,6 @@ interface ReviewJob {
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
-  confidence: 'high' | 'low';
 }
 
 interface ReviewCountryGroup {
@@ -26,7 +25,6 @@ interface ReviewData {
   ats: string | null;
   company_name: string;
   career_page_url: string;
-  low_confidence_count: number;
   skipped_unknown_location: number;
   skipped_untracked_country: number;
   is_english_company: boolean;
@@ -100,7 +98,6 @@ export default function Scraper() {
           ats: data.ats,
           company_name: data.company_name ?? '',
           career_page_url: data.career_page_url ?? trimmed,
-          low_confidence_count: data.low_confidence_count ?? 0,
           skipped_unknown_location: data.skipped_unknown_location ?? 0,
           skipped_untracked_country: data.skipped_untracked_country ?? 0,
           is_english_company: false,
@@ -346,7 +343,6 @@ function ReviewPanel({
   onReset,
 }: ReviewPanelProps) {
   const total = totalJobs(data.countries);
-  const hasLowConfidence = data.low_confidence_count > 0;
   const hasSkipped = data.skipped_unknown_location > 0;
   const hasUntracked = data.skipped_untracked_country > 0;
 
@@ -363,11 +359,6 @@ function ReviewPanel({
           {total} {total === 1 ? 'job' : 'jobs'} across {data.countries.length}{' '}
           {data.countries.length === 1 ? 'country' : 'countries'}
         </span>
-        {hasLowConfidence && (
-          <span class="bg-amber-100 text-amber-700 rounded-full px-2.5 py-0.5 text-xs font-medium">
-            {data.low_confidence_count} low-confidence
-          </span>
-        )}
         {hasSkipped && (
           <span class="bg-gray-100 text-gray-600 rounded-full px-2.5 py-0.5 text-xs font-medium">
             {data.skipped_unknown_location} skipped (unknown location)
@@ -379,14 +370,6 @@ function ReviewPanel({
           </span>
         )}
       </div>
-
-      {/* Low-confidence notice */}
-      {hasLowConfidence && (
-        <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-          Amber rows have a low-confidence native language flag — no explicit language requirement was
-          detected. Review and adjust as needed before uploading.
-        </div>
-      )}
 
       {/* Company metadata */}
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -475,10 +458,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
               <th class="text-left px-4 py-2 font-medium text-gray-500 w-1/2">Title</th>
               <th class="text-left px-4 py-2 font-medium text-gray-500">Category</th>
               <th class="text-left px-4 py-2 font-medium text-gray-500 whitespace-nowrap">
-                Native lang?
-              </th>
-              <th class="text-left px-4 py-2 font-medium text-gray-500 whitespace-nowrap">
-                Lang advantage?
+                Local language
               </th>
             </tr>
           </thead>
@@ -488,8 +468,10 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                 key={i}
                 job={job}
                 onCategory={(v) => onJobField(i, 'category', v)}
-                onNative={(v) => onJobField(i, 'requires_native_language', v)}
-                onAdvantage={(v) => onJobField(i, 'local_language_advantage', v)}
+                onLanguage={(status) => {
+                  onJobField(i, 'requires_native_language', status === 'required');
+                  onJobField(i, 'local_language_advantage', status === 'advantage');
+                }}
               />
             ))}
           </tbody>
@@ -503,17 +485,23 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
 // Job row
 // ---------------------------------------------------------------------------
 
+type LanguageStatus = 'required' | 'advantage' | 'neither';
+
 interface JobRowProps {
   job: ReviewJob;
   onCategory: (v: string) => void;
-  onNative: (v: boolean) => void;
-  onAdvantage: (v: boolean) => void;
+  onLanguage: (status: LanguageStatus) => void;
 }
 
-function JobRow({ job, onCategory, onNative, onAdvantage }: JobRowProps) {
-  const isLowConf = job.confidence === 'low';
+function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
+  const langStatus: LanguageStatus = job.requires_native_language
+    ? 'required'
+    : job.local_language_advantage
+      ? 'advantage'
+      : 'neither';
+
   return (
-    <tr class={`border-b border-gray-50 last:border-0 ${isLowConf ? 'bg-amber-50' : 'bg-white'}`}>
+    <tr class="border-b border-gray-50 last:border-0 bg-white">
       <td class="px-4 py-2 text-gray-800">
         {job.url ? (
           <a
@@ -526,12 +514,6 @@ function JobRow({ job, onCategory, onNative, onAdvantage }: JobRowProps) {
           </a>
         ) : (
           job.title
-        )}
-        {isLowConf && (
-          <span
-            class="ml-1.5 inline-block w-2 h-2 rounded-full bg-amber-400 align-middle"
-            title="Low confidence — no explicit language requirement detected"
-          />
         )}
       </td>
       <td class="px-4 py-2">
@@ -548,22 +530,21 @@ function JobRow({ job, onCategory, onNative, onAdvantage }: JobRowProps) {
         </select>
       </td>
       <td class="px-4 py-2">
-        <input
-          type="checkbox"
-          checked={job.requires_native_language}
-          onChange={(e) => onNative((e.target as HTMLInputElement).checked)}
-          class="rounded"
-        />
-      </td>
-      <td class="px-4 py-2">
-        <input
-          type="checkbox"
-          checked={job.local_language_advantage}
-          disabled={job.requires_native_language}
-          onChange={(e) => onAdvantage((e.target as HTMLInputElement).checked)}
-          class="rounded disabled:opacity-40"
-          title={job.requires_native_language ? 'Not applicable when native language is required' : ''}
-        />
+        <div class="flex items-center gap-3">
+          {(['required', 'advantage', 'neither'] as LanguageStatus[]).map((status) => (
+            <label key={status} class="flex items-center gap-1 cursor-pointer">
+              <input
+                type="radio"
+                checked={langStatus === status}
+                onChange={() => onLanguage(status)}
+                class="accent-blue-600"
+              />
+              <span class="text-gray-600 capitalize">
+                {status === 'required' ? 'Required' : status === 'advantage' ? 'Advantage' : 'None'}
+              </span>
+            </label>
+          ))}
+        </div>
       </td>
     </tr>
   );

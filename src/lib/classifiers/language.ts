@@ -265,6 +265,9 @@ function buildRequirementSignals(lang: string): string[] {
     `mother tongue ${lang}`,
     `${lang} as mother tongue`,
     `${lang} as a mother tongue`,
+    `mother language ${lang}`,
+    `${lang} as mother language`,
+    `${lang} as a mother language`,
     // Speaker / communication
     `${lang} speaker`,
     `speaks ${lang}`,
@@ -300,7 +303,6 @@ function buildRequirementSignals(lang: string): string[] {
 export type NativeLanguageResult = {
   value: boolean;
   local_language_advantage: boolean;
-  confidence: 'high' | 'low';
 };
 
 /**
@@ -320,13 +322,12 @@ export type NativeLanguageResult = {
  *
  * **Phase 2 — English content analysis**
  * The description appears to be in English. Scan for explicit language
- * requirement or confirmation phrases. If none are found the job is assumed
- * to not require the local language, but marked low-confidence so the admin
- * can review.
+ * requirement or advantage phrases. If none are found, the absence of any
+ * local language signal is itself strong evidence that English is sufficient.
  */
 export function detectNativeLanguage(
   title: string,
-  descriptionHtml: string | undefined,
+  descriptionText: string | undefined,
   countryCode: string,
 ): NativeLanguageResult {
   const languages = COUNTRY_LANGUAGE_MAP[countryCode.toUpperCase()] ?? [];
@@ -334,13 +335,12 @@ export function detectNativeLanguage(
 
   // ── Phase 1a: Non-ASCII title ────────────────────────────────────────────
   // A job title with local-language characters is the clearest possible
-  
   // signal — no further analysis needed.
   if (titleAppearsNonEnglish(title)) {
-    return { value: true, local_language_advantage: false, confidence: 'high' };
+    return { value: true, local_language_advantage: false };
   }
 
-  const descText = descriptionHtml ? stripHtml(descriptionHtml) : '';
+  const descText = descriptionText ?? '';
   const combined = `${title} ${descText}`.toLowerCase();
 
   // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
@@ -349,7 +349,7 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildAdvantageSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: false, local_language_advantage: true, confidence: 'high' };
+        return { value: false, local_language_advantage: true };
       }
     }
   }
@@ -358,7 +358,7 @@ export function detectNativeLanguage(
   if (NORDIC_COUNTRY_CODES.has(countryCode.toUpperCase())) {
     for (const phrase of NORDIC_LANGUAGE_ADVANTAGE_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: false, local_language_advantage: true, confidence: 'high' };
+        return { value: false, local_language_advantage: true };
       }
     }
   }
@@ -367,7 +367,7 @@ export function detectNativeLanguage(
   // If any paragraph of the description is detected as the country's
   // language, the ad is (at least partially) written in that language.
   if (anyChunkInNativeLanguage(descText, langCodes)) {
-    return { value: true, local_language_advantage: false, confidence: 'high' };
+    return { value: true, local_language_advantage: false };
   }
 
   // ── Phase 2a: Explicit language requirement signals ──────────────────────
@@ -376,7 +376,7 @@ export function detectNativeLanguage(
   if (NORDIC_COUNTRY_CODES.has(countryCode.toUpperCase())) {
     for (const phrase of NORDIC_LANGUAGE_REQUIREMENT_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: true, local_language_advantage: false, confidence: 'high' };
+        return { value: true, local_language_advantage: false };
       }
     }
   }
@@ -384,7 +384,7 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: true, local_language_advantage: false, confidence: 'high' };
+        return { value: true, local_language_advantage: false };
       }
     }
   }
@@ -392,12 +392,12 @@ export function detectNativeLanguage(
   // ── Phase 2b: Explicit English-only confirmation ─────────────────────────
   for (const phrase of ENGLISH_ONLY_PHRASES) {
     if (combined.includes(phrase)) {
-      return { value: false, local_language_advantage: false, confidence: 'high' };
+      return { value: false, local_language_advantage: false };
     }
   }
 
   // ── Phase 2 default ──────────────────────────────────────────────────────
-  // No explicit signals found — assume English is sufficient, but flag for
-  // admin review.
-  return { value: false, local_language_advantage: false, confidence: 'low' };
+  // No explicit signals found — absence of any local language requirement is
+  // itself a strong signal that English is sufficient.
+  return { value: false, local_language_advantage: false };
 }

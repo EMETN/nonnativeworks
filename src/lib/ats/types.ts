@@ -22,7 +22,6 @@ export interface ClassifiedJob {
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
-  confidence: 'high' | 'low';
 }
 
 export interface ScrapeCountryGroup {
@@ -36,7 +35,6 @@ export interface ScrapeResult {
   ats: AtsType | null;
   company_name: string;
   career_page_url: string;
-  low_confidence_count: number;
   skipped_unknown_location: number;
   skipped_untracked_country: number;
   countries: ScrapeCountryGroup[];
