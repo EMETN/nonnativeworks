@@ -150,7 +150,15 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 export function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Convert block-level tags to newlines so paragraph structure survives for
+  // tinyld chunk detection. Inline tags become spaces.
+  return html
+    .replace(/<\/?(p|div|li|h[1-6]|br|section|article|blockquote|tr)[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n[ \t]*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /** True when the title contains non-ASCII characters typical of non-English languages. */
@@ -391,14 +399,26 @@ export function detectNativeLanguage(
     }
   }
 
-  // ── Phase 2b: Explicit English-only confirmation ─────────────────────────
+  // ── Phase 2b: "depending on location" conditional requirement ───────────
+  // e.g. "Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."
+  // The country's language may not be the first listed, so we can't rely on
+  // substring order — we check for the trigger phrase + language anywhere in the text.
+  if (/depending on (?:the |your )?location/i.test(combined)) {
+    for (const lang of languages) {
+      if (combined.includes(lang)) {
+        return { value: true, local_language_advantage: false };
+      }
+    }
+  }
+
+  // ── Phase 2c: Explicit English-only confirmation ─────────────────────────
   for (const phrase of ENGLISH_ONLY_PHRASES) {
     if (combined.includes(phrase)) {
       return { value: false, local_language_advantage: false };
     }
   }
 
-  // ── Phase 2 default ──────────────────────────────────────────────────────
+  // ── Phase 2d default ─────────────────────────────────────────────────────
   // No explicit signals found — absence of any local language requirement is
   // itself a strong signal that English is sufficient.
   return { value: false, local_language_advantage: false };

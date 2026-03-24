@@ -10,7 +10,7 @@ import { lookupCountryFromLocation } from '../../../lib/ats/country-lookup';
 import { classifyJob } from '../../../lib/classifier';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
 import { COMPANY_APIS } from '../../../lib/ats/company-apis';
-import { fetchCompanyApiJobs } from '../../../lib/ats/company-api-fetcher';
+import { fetchCompanyApiJobs, enrichDescriptions } from '../../../lib/ats/company-api-fetcher';
 import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
 
 const PYTHON_TIMEOUT_MS = 60_000;
@@ -118,6 +118,7 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
     }
     rawJobs = await runPythonScraper(scraperPath, careerUrl);
     ats = 'python';
+    await enrichDescriptions(rawJobs);
   }
 
   if (rawJobs.length === 0) {

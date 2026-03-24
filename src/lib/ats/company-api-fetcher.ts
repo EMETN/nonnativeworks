@@ -150,7 +150,7 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
  * no existing HTML) or for location extraction (no location yet) — fetch the job page.
  * Attaches descriptionHtml for English-titled jobs; extracts location via regex if provided.
  */
-async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp): Promise<void> {
+export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp): Promise<void> {
   const targets = jobs.filter((j) => {
     if (!j.url) return false;
     const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml;

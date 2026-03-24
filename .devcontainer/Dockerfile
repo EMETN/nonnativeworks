@@ -70,6 +70,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Make venv the default Python
 ENV PATH="/workspace/.venv/bin:$PATH"
 
+# Install Playwright browser + system dependencies (runs as root before USER node)
+RUN /workspace/.venv/bin/playwright install --with-deps chromium
+
 # --- END PYTHON SETUP ---
 
 ARG GIT_DELTA_VERSION=0.18.2
