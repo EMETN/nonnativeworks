@@ -164,7 +164,8 @@ export async function getPositionsByCountry(
       category:categories(name),
       company:companies!inner(country_id)
     `)
-    .eq('company.country_id', countryId);
+    .eq('company.country_id', countryId)
+    .eq('requires_native_language', false);
 
   if (error) { console.error('getPositionsByCountry:', error.message); throw new Error('Failed to load positions'); }
 

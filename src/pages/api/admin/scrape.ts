@@ -125,6 +125,12 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
     throw new Error('No job listings found. The page may require a login or have no open positions.');
   }
 
+  // Fall back to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
+  // The admin can correct it in the review UI before uploading.
+  if (!companyName && detection.companySlug) {
+    companyName = detection.companySlug.charAt(0).toUpperCase() + detection.companySlug.slice(1);
+  }
+
   return buildScrapeResult(rawJobs, companyName, careerUrl, ats);
 }
 
@@ -152,7 +158,7 @@ function buildScrapeResult(
     }
 
     for (const countryInfo of trackedCountries) {
-      const classified = classifyJob(job, countryInfo.code);
+      const classified = { ...classifyJob(job, countryInfo.code), city: job.location };
 
       if (!groups.has(countryInfo.code)) {
         groups.set(countryInfo.code, {

@@ -27,10 +27,6 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 }
 
 function PositionRow({ pos }: { pos: PositionDetail }) {
-  const nativeLabel = pos.requires_native_language
-    ? <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700">Native required</span>
-    : <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">Non-native OK</span>;
-
   return (
     <tr class="bg-gray-50 border-t border-gray-100">
       <td class="pl-10 pr-4 py-2 text-sm text-gray-700" colSpan={4}>
@@ -47,7 +43,9 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
           ) : (
             <span>{pos.title}</span>
           )}
-          {nativeLabel}
+          {pos.local_language_advantage && (
+            <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-50 text-yellow-700">lang advantage</span>
+          )}
           <span class="text-xs text-gray-400">{pos.category_name}</span>
         </div>
       </td>
