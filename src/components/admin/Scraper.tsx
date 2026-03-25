@@ -9,9 +9,12 @@ import { atsLabel } from '../../lib/ats/detector';
 interface ReviewJob {
   title: string;
   url?: string;
+  city?: string;
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
+  requiredLanguages: string[];
+  preferredLanguages: string[];
 }
 
 interface ReviewCountryGroup {
@@ -189,8 +192,11 @@ export default function Scraper() {
         country_code: group.country_code,
         title: job.title,
         url: job.url,
+        city: job.city,
         requires_native_language: job.requires_native_language,
         local_language_advantage: job.local_language_advantage,
+        required_languages: job.requiredLanguages,
+        preferred_languages: job.preferredLanguages,
         category: job.category,
       })),
     }));

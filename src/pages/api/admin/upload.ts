@@ -135,9 +135,12 @@ async function upsertEntry(
     company_id: companyRow.id,
     title: p.title,
     url: p.url || null,
+    city: p.city ?? null,
     category_id: categoryMap.get(p.category) ?? categoryMap.get('other'),
     requires_native_language: p.requires_native_language,
     local_language_advantage: p.local_language_advantage ?? false,
+    required_languages: p.required_languages ?? [],
+    preferred_languages: p.preferred_languages ?? [],
     extracted_at: new Date().toISOString(),
   }));
 

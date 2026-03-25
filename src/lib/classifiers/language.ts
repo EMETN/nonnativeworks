@@ -84,6 +84,92 @@ const COUNTRY_LANG_CODES: Record<string, string[]> = {
   RU: ['ru'],
 };
 
+// Country → canonical English language name(s), used in classification results.
+const COUNTRY_LANGUAGE_NAMES: Record<string, string[]> = {
+  FI: ['Finnish'],
+  SE: ['Swedish'],
+  NO: ['Norwegian'],
+  DK: ['Danish'],
+  IS: ['Icelandic'],
+  DE: ['German'],
+  AT: ['German'],
+  CH: ['German', 'French', 'Italian'],
+  NL: ['Dutch'],
+  BE: ['Dutch', 'French'],
+  FR: ['French'],
+  IT: ['Italian'],
+  ES: ['Spanish'],
+  PT: ['Portuguese'],
+  PL: ['Polish'],
+  CZ: ['Czech'],
+  SK: ['Slovak'],
+  HU: ['Hungarian'],
+  RO: ['Romanian'],
+  BG: ['Bulgarian'],
+  HR: ['Croatian'],
+  SI: ['Slovenian'],
+  RS: ['Serbian'],
+  EE: ['Estonian'],
+  LV: ['Latvian'],
+  LT: ['Lithuanian'],
+  GR: ['Greek'],
+  TR: ['Turkish'],
+  UA: ['Ukrainian'],
+  RU: ['Russian'],
+  GE: ['Georgian'],
+  IL: ['Hebrew'],
+  JP: ['Japanese'],
+  CN: ['Chinese'],
+  KR: ['Korean'],
+  BA: ['Bosnian', 'Croatian', 'Serbian'],
+  MK: ['Macedonian'],
+  ME: ['Montenegrin'],
+  AL: ['Albanian'],
+  MD: ['Romanian'],
+  BY: ['Belarusian', 'Russian'],
+};
+
+// Flat reverse map: every keyword in COUNTRY_LANGUAGE_MAP → canonical English name.
+// Used by the cross-language scan to identify non-local language requirements
+// (e.g. "fluent Norwegian required" on a job located in Latvia).
+const KEYWORD_TO_CANONICAL_NAME: Record<string, string> = {
+  'finnish': 'Finnish', 'suomi': 'Finnish', 'suomen': 'Finnish',
+  'swedish': 'Swedish', 'svenska': 'Swedish',
+  'norwegian': 'Norwegian', 'norsk': 'Norwegian', 'bokmål': 'Norwegian', 'nynorsk': 'Norwegian',
+  'danish': 'Danish', 'dansk': 'Danish',
+  'icelandic': 'Icelandic', 'íslenska': 'Icelandic',
+  'german': 'German', 'deutsch': 'German',
+  'dutch': 'Dutch', 'nederlands': 'Dutch', 'flemish': 'Dutch',
+  'french': 'French', 'français': 'French', 'francais': 'French',
+  'italian': 'Italian', 'italiano': 'Italian',
+  'spanish': 'Spanish', 'español': 'Spanish', 'espanol': 'Spanish', 'castellano': 'Spanish',
+  'portuguese': 'Portuguese', 'português': 'Portuguese', 'portugues': 'Portuguese',
+  'polish': 'Polish', 'polski': 'Polish',
+  'czech': 'Czech', 'čeština': 'Czech', 'cestina': 'Czech',
+  'slovak': 'Slovak', 'slovenčina': 'Slovak',
+  'hungarian': 'Hungarian', 'magyar': 'Hungarian',
+  'romanian': 'Romanian', 'română': 'Romanian', 'romana': 'Romanian', 'moldovan': 'Romanian',
+  'bulgarian': 'Bulgarian', 'български': 'Bulgarian',
+  'croatian': 'Croatian', 'hrvatski': 'Croatian',
+  'slovenian': 'Slovenian', 'slovenščina': 'Slovenian',
+  'serbian': 'Serbian', 'srpski': 'Serbian',
+  'estonian': 'Estonian', 'eesti': 'Estonian',
+  'latvian': 'Latvian', 'latviešu': 'Latvian',
+  'lithuanian': 'Lithuanian', 'lietuvių': 'Lithuanian',
+  'greek': 'Greek', 'ελληνικά': 'Greek',
+  'turkish': 'Turkish', 'türkçe': 'Turkish',
+  'ukrainian': 'Ukrainian', 'українська': 'Ukrainian',
+  'russian': 'Russian', 'русский': 'Russian',
+  'georgian': 'Georgian', 'ქართული': 'Georgian',
+  'hebrew': 'Hebrew', 'עברית': 'Hebrew',
+  'japanese': 'Japanese', '日本語': 'Japanese',
+  'chinese': 'Chinese', 'mandarin': 'Chinese', '普通话': 'Chinese',
+  'korean': 'Korean', '한국어': 'Korean',
+  'bosnian': 'Bosnian', 'macedonian': 'Macedonian', 'montenegrin': 'Montenegrin',
+  'albanian': 'Albanian', 'shqip': 'Albanian',
+  'belarusian': 'Belarusian',
+};
+
 // Nordic/Scandinavian countries — used to gate group-language advantage phrases.
 const NORDIC_COUNTRY_CODES = new Set(['FI', 'SE', 'NO', 'DK', 'IS']);
 
@@ -150,9 +236,18 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 export function stripHtml(html: string): string {
+  // Remove entire sections that are never part of the job description body.
+  // These are stripped with their contents to prevent navigation/footer text
+  // (often in the local language) from triggering the tinyld language detector
+  // on otherwise English job ads. Script/style contents are removed for the
+  // same reason — minified JS produces garbage chunks.
+  const stripped = html.replace(
+    /<(script|style|nav|footer)[^>]*>[\s\S]*?<\/\1>/gi,
+    '',
+  );
   // Convert block-level tags to newlines so paragraph structure survives for
   // tinyld chunk detection. Inline tags become spaces.
-  return html
+  return stripped
     .replace(/<\/?(p|div|li|h[1-6]|br|section|article|blockquote|tr)[^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/[ \t]+/g, ' ')
@@ -255,6 +350,7 @@ function buildRequirementSignals(lang: string): string[] {
     // Fluency / proficiency
     `fluent ${lang}`,
     `fluent in ${lang}`,
+    `fluent language skills in ${lang}`,
     `fluency in ${lang}`,
     `proficiency in ${lang}`,
     `${lang} proficiency`,
@@ -280,6 +376,7 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} as a mother language`,
     // Speaker / communication
     `${lang} speaker`,
+    `${lang} speaking`,
     `speaks ${lang}`,
     `speak ${lang}`,
     `communicate in ${lang}`,
@@ -301,8 +398,18 @@ function buildRequirementSignals(lang: string): string[] {
     `in both ${lang}`,
     `${lang} and english`,
     `english and ${lang}`,
+    `english, and ${lang}`,
     `${lang}/english`,
     `english/${lang}`,
+    `written and spoken English and ${lang}`,
+    // Discussion / communication ability
+    `discussions in ${lang}`,
+    // Minimum level requirements — even basic knowledge means English alone isn't enough
+    `basic ${lang}`,
+    `basic in ${lang}`,
+    `basic knowledge of ${lang}`,
+    `basic level of ${lang}`,
+    `some ${lang}`,
   ];
 }
 
@@ -313,6 +420,8 @@ function buildRequirementSignals(lang: string): string[] {
 export type NativeLanguageResult = {
   value: boolean;
   local_language_advantage: boolean;
+  requiredLanguages: string[];
+  preferredLanguages: string[];
 };
 
 /**
@@ -340,18 +449,23 @@ export function detectNativeLanguage(
   descriptionText: string | undefined,
   countryCode: string,
 ): NativeLanguageResult {
-  const languages = COUNTRY_LANGUAGE_MAP[countryCode.toUpperCase()] ?? [];
-  const langCodes = COUNTRY_LANG_CODES[countryCode.toUpperCase()] ?? [];
+  const cc = countryCode.toUpperCase();
+  const languages = COUNTRY_LANGUAGE_MAP[cc] ?? [];
+  const langCodes = COUNTRY_LANG_CODES[cc] ?? [];
+  const langNames = COUNTRY_LANGUAGE_NAMES[cc] ?? [];
 
   // ── Phase 1a: Non-ASCII title ────────────────────────────────────────────
   // A job title with local-language characters is the clearest possible
   // signal — no further analysis needed.
   if (titleAppearsNonEnglish(title)) {
-    return { value: true, local_language_advantage: false };
+    return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
   }
 
   const descText = descriptionText ?? '';
-  const combined = `${title} ${descText}`.toLowerCase();
+  // Flatten whitespace (including newlines from stripHtml block-tag conversion)
+  // so signal phrases aren't broken by HTML structure. tinyld uses descText
+  // directly and still gets the original paragraph breaks.
+  const combined = `${title} ${descText}`.toLowerCase().replace(/\s+/g, ' ');
 
   // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
   // Check for explicit "X is a plus / an advantage" phrases before running
@@ -359,16 +473,16 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildAdvantageSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: false, local_language_advantage: true };
+        return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames };
       }
     }
   }
 
-    // Group-language advantage phrases (e.g. "fluent in a Nordic language").
-  if (NORDIC_COUNTRY_CODES.has(countryCode.toUpperCase())) {
+  // Group-language advantage phrases (e.g. "fluent in a Nordic language").
+  if (NORDIC_COUNTRY_CODES.has(cc)) {
     for (const phrase of NORDIC_LANGUAGE_ADVANTAGE_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: false, local_language_advantage: true };
+        return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames };
       }
     }
   }
@@ -377,16 +491,16 @@ export function detectNativeLanguage(
   // If any paragraph of the description is detected as the country's
   // language, the ad is (at least partially) written in that language.
   if (anyChunkInNativeLanguage(descText, langCodes)) {
-    return { value: true, local_language_advantage: false };
+    return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
   }
 
   // ── Phase 2a: Explicit language requirement signals ──────────────────────
   // The description is in English — scan for phrases that explicitly require
   // the local language (e.g. "fluent Finnish", "working language is German").
-  if (NORDIC_COUNTRY_CODES.has(countryCode.toUpperCase())) {
+  if (NORDIC_COUNTRY_CODES.has(cc)) {
     for (const phrase of NORDIC_LANGUAGE_REQUIREMENT_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: true, local_language_advantage: false };
+        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
       }
     }
   }
@@ -394,7 +508,29 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: true, local_language_advantage: false };
+        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+      }
+    }
+  }
+
+  // ── Phase 2a-cross: Cross-language scan ─────────────────────────────────
+  // Checks requirement and advantage signals for every tracked language,
+  // not just the country's own. Catches cases like "fluent Norwegian required"
+  // on a job located in Latvia. Runs after country-specific phases to keep
+  // those as the authoritative signal when the country language does match.
+  {
+    const countryKeywordSet = new Set(languages);
+    for (const [kw, canonicalName] of Object.entries(KEYWORD_TO_CANONICAL_NAME)) {
+      if (countryKeywordSet.has(kw)) continue; // already covered by Phase 2a
+      for (const signal of buildRequirementSignals(kw)) {
+        if (combined.includes(signal)) {
+          return { value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [] };
+        }
+      }
+      for (const signal of buildAdvantageSignals(kw)) {
+        if (combined.includes(signal)) {
+          return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName] };
+        }
       }
     }
   }
@@ -406,7 +542,7 @@ export function detectNativeLanguage(
   if (/depending on (?:the |your )?location/i.test(combined)) {
     for (const lang of languages) {
       if (combined.includes(lang)) {
-        return { value: true, local_language_advantage: false };
+        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
       }
     }
   }
@@ -414,12 +550,12 @@ export function detectNativeLanguage(
   // ── Phase 2c: Explicit English-only confirmation ─────────────────────────
   for (const phrase of ENGLISH_ONLY_PHRASES) {
     if (combined.includes(phrase)) {
-      return { value: false, local_language_advantage: false };
+      return { value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [] };
     }
   }
 
   // ── Phase 2d default ─────────────────────────────────────────────────────
   // No explicit signals found — absence of any local language requirement is
   // itself a strong signal that English is sufficient.
-  return { value: false, local_language_advantage: false };
+  return { value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [] };
 }

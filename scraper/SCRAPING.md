@@ -127,10 +127,10 @@ Keyword matching against the job title (2 pts per match). If no title match, fal
 
 ### Language classifier (`detectNativeLanguage`)
 
-Determines `requires_native_language` and `local_language_advantage` for the specific country. Runs through phases in order, returning as soon as a signal is found:
+Determines `requires_native_language`, `local_language_advantage`, `requiredLanguages`, and `preferredLanguages` for each job. Runs through phases in order, returning as soon as a signal is found. Phases 1a–2a are country-scoped (only check the language of the job's assigned country); Phase 2a-cross broadens the scan to all tracked languages.
 
 **Phase 1a — Non-ASCII title**
-A job title containing characters like `ä`, `ö`, `å`, `ü`, `é` etc. is an unambiguous signal. Returns `required` immediately without inspecting the description.
+A job title containing characters like `ä`, `ö`, `å`, `ü`, `é` etc. is an unambiguous signal. Returns `required` with the country's canonical language name(s) immediately without inspecting the description.
 
 **Phase 1b — Advantage signal pre-filter**
 Before running the language detector, checks if the combined text (title + description) contains any "X is a plus / advantage / preferred" phrase for the country's language. If found, returns `advantage`. This runs before tinyld because a full fetched page often contains local-language navigation and footers that would trigger the detector even when the actual job says "Finnish is a plus".
@@ -140,10 +140,15 @@ Also checks group-language phrases for Nordic countries: "a Nordic language is a
 **Phase 1c — tinyld paragraph detection**
 The description is split into paragraphs (block-level HTML tags are converted to newlines by `stripHtml` before this step). tinyld runs on each paragraph ≥ 80 characters. If any paragraph is detected as the country's language, returns `required`. Paragraph-level detection handles mixed-language ads where only the requirements section is in the local language.
 
-**Phase 2a — Explicit requirement phrases**
+**Phase 2a — Explicit requirement phrases (country-scoped)**
 Scans for keyword phrases like `"fluent Finnish"`, `"Finnish required"`, `"working language is German"`, `"Finnish and English"`, etc. Generated programmatically per language keyword from `COUNTRY_LANGUAGE_MAP`.
 
 Also checks Nordic group phrases: "fluent in English and at least one Nordic language".
+
+**Phase 2a-cross — Cross-language scan**
+Repeats the requirement and advantage signal scan for every tracked language, not just the country's own. This catches cases where the required language differs from the job's location — e.g. a job in Latvia that says `"fluent Norwegian required"`. The matched language keyword is looked up in `KEYWORD_TO_CANONICAL_NAME` to produce the correct `requiredLanguages` or `preferredLanguages` value (e.g. `['Norwegian']`), independent of the job's country.
+
+Skips any keywords belonging to the country's own language (already covered by Phase 2a). Runs after all country-specific phases so those remain the authoritative signal when they do match.
 
 **Phase 2b — "Depending on location" conditional**
 Catches phrases like `"Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."` A regex detects the trigger phrase and then checks if any of the country's languages appear anywhere in the text. Returns `required` when matched. (The language may not be the first listed, so a simple substring match on `"depending on the location, {lang}"` would miss Swedish and Lithuanian in this example.)
@@ -153,3 +158,17 @@ Checks for explicit English-only phrases like `"working language is English"`, `
 
 **Phase 2d — Default**
 No signals found. Returns `not required` — absence of any local-language mention is itself a strong signal that English is sufficient.
+
+### Classification outputs
+
+Each classified job carries:
+
+| Field | Type | Description |
+|---|---|---|
+| `requires_native_language` | `boolean` | True if a local/non-English language is required |
+| `local_language_advantage` | `boolean` | True if a local language is preferred but not required |
+| `requiredLanguages` | `string[]` | Canonical English name(s) of required language(s), e.g. `["Finnish"]` |
+| `preferredLanguages` | `string[]` | Canonical English name(s) of preferred language(s), e.g. `["Swedish"]` |
+| `city` | `string?` | Raw location string from the scraper before country resolution, e.g. `"Tampere, Finland"` |
+
+For most single-language countries `requiredLanguages` will have one entry. Multi-language countries (CH, BE) may return multiple. Cross-language matches return the specific matched language, not the country's languages.

@@ -9,7 +9,7 @@ export function classifyJob(job: RawJob, countryCode: string): ClassifiedJob {
   const descText = job.descriptionHtml ? stripHtml(job.descriptionHtml) : job.descriptionText;
 
   const category = classifyCategory(job.title, descText);
-  const { value: requires_native_language, local_language_advantage } =
+  const { value: requires_native_language, local_language_advantage, requiredLanguages, preferredLanguages } =
     detectNativeLanguage(job.title, descText, countryCode);
 
   return {
@@ -18,5 +18,7 @@ export function classifyJob(job: RawJob, countryCode: string): ClassifiedJob {
     category,
     requires_native_language,
     local_language_advantage,
+    requiredLanguages,
+    preferredLanguages,
   };
 }
