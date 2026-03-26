@@ -30,6 +30,8 @@ interface RawJob {
   url?: string;
   location?: string;
   country_code?: string;
+  descriptionHtml?: string;
+  descriptionText?: string;
 }
 
 // Parse CLI args
@@ -77,7 +79,7 @@ for (const [cc, jobs] of byCountry) {
 
   const positions = jobs.map((job) => {
     const { classified, signals } = classifyJobVerbose(
-      { title: job.title, url: job.url },
+      { title: job.title, url: job.url, descriptionHtml: job.descriptionHtml, descriptionText: job.descriptionText },
       cc,
     );
 

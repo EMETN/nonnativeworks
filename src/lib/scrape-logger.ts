@@ -30,6 +30,7 @@ function formatLanguageSignal(pos: PositionLogEntry): string {
   switch (sig.phase) {
     case '1a': return `1a: non-ASCII title${m}`;
     case '1b': return `1b: advantage phrase${m}`;
+    case '1b-chars': return `1b-chars: ${sig.description}${m}`;
     case '1c': return `1c: tinyld${m}`;
     case '2a': return `2a: ${sig.description}${m}`;
     case '2a-nordic': return `2a-nordic: ${sig.description}${m}`;

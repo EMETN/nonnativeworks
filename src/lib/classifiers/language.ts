@@ -245,6 +245,41 @@ const ENGLISH_ONLY_PHRASES = [
 ];
 
 // ---------------------------------------------------------------------------
+// Per-country native-character detection
+// Faster and more reliable than tinyld for languages with distinctive scripts.
+//
+// TO REMOVE THIS FEATURE: delete COUNTRY_NATIVE_CHARS, descriptionContainsNativeChars(),
+// and the "Phase 1b-chars" block in detectNativeLanguage(). The SignalEntry
+// phase '1b-chars' can be removed from the union type at the same time.
+// ---------------------------------------------------------------------------
+
+const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
+  FI: { pattern: /[äöÄÖ]/g,              threshold: 3 },
+  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 3 },
+  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 3 },
+  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 3 },
+  IS: { pattern: /[þðÞÐ]/g,              threshold: 1 }, // þ/ð never appear in English
+  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 3 },
+  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 3 },
+  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 3 },
+  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 3 },
+  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 3 },
+  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 3 },
+};
+
+function descriptionContainsNativeChars(
+  text: string,
+  countryCode: string,
+): { count: number; sample: string } | null {
+  const entry = COUNTRY_NATIVE_CHARS[countryCode];
+  if (!entry) return null;
+  const matches = text.match(entry.pattern);
+  if (!matches || matches.length < entry.threshold) return null;
+  const unique = [...new Set(matches)].sort().join('');
+  return { count: matches.length, sample: unique };
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -417,7 +452,7 @@ function buildRequirementSignals(lang: string): string[] {
 // ---------------------------------------------------------------------------
 
 export type SignalEntry = {
-  phase: '1a' | '1b' | '1c' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
+  phase: '1a' | '1b' | '1b-chars' | '1c' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
   description: string;
   matched?: string; // exact phrase or character that triggered this signal
 };
@@ -527,9 +562,31 @@ export function detectNativeLanguage(
     }
   }
 
+  // ── Phase 1b-chars: Description character-frequency check ───────────────
+  // Counts occurrences of language-specific non-ASCII characters in the
+  // description. A sufficient count (see COUNTRY_NATIVE_CHARS thresholds) is
+  // a near-certain indicator that the text is written in the local language —
+  // more reliable than tinyld for short or mixed-language descriptions.
+  // TO REMOVE: delete the block below plus COUNTRY_NATIVE_CHARS and
+  // descriptionContainsNativeChars() above, and '1b-chars' from SignalEntry.
+  if (descText) {
+    const charMatch = descriptionContainsNativeChars(descText, cc);
+    if (charMatch) {
+      return {
+        value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+        signals: [{
+          phase: '1b-chars',
+          description: `${charMatch.count} native chars in description`,
+          matched: charMatch.sample,
+        }],
+      };
+    }
+  }
+
   // ── Phase 1c: tinyld content language detection ──────────────────────────
-  // If any paragraph of the description is detected as the country's
-  // language, the ad is (at least partially) written in that language.
+  // Fallback for languages without distinctive characters (e.g. French, Spanish).
+  // If any paragraph of the description is detected as the country's language,
+  // the ad is (at least partially) written in that language.
   const nativeChunk = findNativeLanguageChunk(descText, langCodes);
   if (nativeChunk) {
     return {
