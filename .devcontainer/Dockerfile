@@ -59,19 +59,19 @@ WORKDIR /workspace
 # Copy requirements first for better caching
 COPY ./scraper/requirements.txt /workspace/
 
-# Create virtual environment
-RUN python3 -m venv /workspace/.venv
+# Create virtual environment outside /workspace so the bind mount doesn't shadow it
+RUN python3 -m venv /opt/scraper-venv
 
 # Install Python dependencies into venv
 RUN --mount=type=cache,target=/root/.cache/pip \
-    /workspace/.venv/bin/pip install --upgrade pip && \
-    /workspace/.venv/bin/pip install -r /workspace/requirements.txt
+    /opt/scraper-venv/bin/pip install --upgrade pip && \
+    /opt/scraper-venv/bin/pip install -r /workspace/requirements.txt
 
 # Make venv the default Python
-ENV PATH="/workspace/.venv/bin:$PATH"
+ENV PATH="/opt/scraper-venv/bin:$PATH"
 
 # Install Playwright browser + system dependencies (runs as root before USER node)
-RUN /workspace/.venv/bin/playwright install --with-deps chromium
+RUN /opt/scraper-venv/bin/playwright install --with-deps chromium
 
 # --- END PYTHON SETUP ---
 
@@ -106,7 +106,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -x
 
 # (Optional) auto-activate venv in terminal
-RUN echo 'source /workspace/.venv/bin/activate' >> /home/node/.zshrc
+RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
 
 # Install Claude (global tool, uses npm intentionally)
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
