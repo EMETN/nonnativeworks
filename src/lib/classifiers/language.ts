@@ -54,8 +54,8 @@ const COUNTRY_LANGUAGE_MAP: Record<string, string[]> = {
 const COUNTRY_LANG_CODES: Record<string, string[]> = {
   FI: ['fi'],
   SE: ['sv'],
-  NO: ['no', 'nb', 'nn'],
-  DK: ['da'],
+  NO: ['no', 'nb', 'nn', 'da'],  // tinyld often misdetects Norwegian as Danish — treat da as a NO signal too
+  DK: ['da', 'no', 'nb', 'nn'],  // symmetrically, Norwegian misdetected as Danish is also a DK signal
   IS: ['is'],
   NL: ['nl'],
   DE: ['de'],
@@ -182,6 +182,14 @@ const NORDIC_LANGUAGE_REQUIREMENT_PHRASES = [
   'fluent in english and at least one scandinavian language',
   'english and at least one nordic language',
   'english and at least one scandinavian language',
+  'proficient in one of the nordic languages',
+  'proficient in one of the scandinavian languages',
+  'proficiency in english and one of the nordic languages',
+  'proficiency in english and one of the scandinavian languages',
+  'fluency in english and a nordic language',
+  'fluency in english and a scandinavian language',
+  'in english and in one nordic language',
+  'in english and in one scandinavian language',
 ];
 
 const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
@@ -209,6 +217,11 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'nordic language skills is preferred',
   'scandinavian language skills is an advantage',
   'scandinavian language skills is a plus',
+  'a nordic language is a strong advantage',
+  'a scandinavian language is a strong advantage',
+  'knowledge of other nordic languages is considered an additional qualification',
+  'nordic language is considered an additional qualification',
+  'scandinavian language is considered an additional qualification',
 ];
 
 // Phrases that explicitly confirm English is the working language.
@@ -261,23 +274,6 @@ function titleAppearsNonEnglish(title: string): boolean {
   return /[äöüåéèêëàâîïôùûçñßãõøæœ]/i.test(title);
 }
 
-/**
- * Splits plain text into paragraphs and runs tinyld on each chunk that is
- * long enough to be reliable (≥80 chars). Returns true if any chunk is
- * detected as one of the target language codes.
- *
- * Paragraph-level detection handles mixed-language ads where e.g. the
- * introduction is in English but the requirements section is in German.
- */
-function anyChunkInNativeLanguage(text: string, langCodes: string[]): boolean {
-  if (!langCodes.length) return false;
-  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 80);
-  const candidates = chunks.length > 0 ? chunks : [text.trim()];
-  for (const chunk of candidates) {
-    if (langCodes.includes(detect(chunk))) return true;
-  }
-  return false;
-}
 
 /**
  * Builds compound "advantage" signal phrases for a given language keyword, e.g.:
@@ -303,6 +299,7 @@ function buildAdvantageSignals(lang: string): string[] {
     ' is an advantage',
     ' is a plus',
     ' is a big plus',
+    ' is a strong plus',
     ' is a bonus',
     ' is preferred',
     ' is desirable',
@@ -315,6 +312,7 @@ function buildAdvantageSignals(lang: string): string[] {
     ' is considered an advantage',
     ' is considered a plus',
     ' is considered a bonus',
+    ' is considered an additional qualification',
     ' as a plus',
     ' as an advantage',
     ' seen as an advantage',
@@ -328,6 +326,7 @@ function buildAdvantageSignals(lang: string): string[] {
   }
   signals.push(`nice to have: ${lang}`);
   signals.push(`nice to have ${lang}`);
+  signals.push(`preferably ${lang}`);
   return signals;
 }
 
@@ -417,12 +416,37 @@ function buildRequirementSignals(lang: string): string[] {
 // Main export
 // ---------------------------------------------------------------------------
 
+export type SignalEntry = {
+  phase: '1a' | '1b' | '1c' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
+  description: string;
+  matched?: string; // exact phrase or character that triggered this signal
+};
+
 export type NativeLanguageResult = {
   value: boolean;
   local_language_advantage: boolean;
   requiredLanguages: string[];
   preferredLanguages: string[];
+  signals: SignalEntry[];
 };
+
+/**
+ * Like anyChunkInNativeLanguage but returns the matching chunk and detected
+ * language code so callers can log exactly what triggered detection.
+ */
+function findNativeLanguageChunk(
+  text: string,
+  langCodes: string[],
+): { chunk: string; detectedCode: string } | null {
+  if (!langCodes.length) return null;
+  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 80);
+  const candidates = chunks.length > 0 ? chunks : [text.trim()];
+  for (const chunk of candidates) {
+    const code = detect(chunk);
+    if (langCodes.includes(code)) return { chunk, detectedCode: code };
+  }
+  return null;
+}
 
 /**
  * Determines whether a job requires (or advantages) knowledge of the local
@@ -458,14 +482,24 @@ export function detectNativeLanguage(
   // A job title with local-language characters is the clearest possible
   // signal — no further analysis needed.
   if (titleAppearsNonEnglish(title)) {
-    return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+    const nonAsciiChar = title.match(/[äöüåéèêëàâîïôùûçñßãõøæœ]/i)?.[0];
+    return {
+      value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+      signals: [{ phase: '1a', description: 'non-ASCII title', matched: nonAsciiChar }],
+    };
   }
 
   const descText = descriptionText ?? '';
   // Flatten whitespace (including newlines from stripHtml block-tag conversion)
   // so signal phrases aren't broken by HTML structure. tinyld uses descText
   // directly and still gets the original paragraph breaks.
-  const combined = `${title} ${descText}`.toLowerCase().replace(/\s+/g, ' ');
+  // Also normalize parentheses (strip them while keeping content) so that
+  // "English (and Dutch)" becomes "English and Dutch", and normalize "&" to
+  // "and" so "English & Swedish" matches the same signals as "English and Swedish".
+  const combined = `${title} ${descText}`.toLowerCase()
+    .replace(/[()]/g, ' ')
+    .replace(/&/g, 'and')
+    .replace(/\s+/g, ' ');
 
   // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
   // Check for explicit "X is a plus / an advantage" phrases before running
@@ -473,7 +507,10 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildAdvantageSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames };
+        return {
+          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+          signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: signal }],
+        };
       }
     }
   }
@@ -482,7 +519,10 @@ export function detectNativeLanguage(
   if (NORDIC_COUNTRY_CODES.has(cc)) {
     for (const phrase of NORDIC_LANGUAGE_ADVANTAGE_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames };
+        return {
+          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+          signals: [{ phase: '1b', description: 'Nordic/Scandinavian advantage phrase', matched: phrase }],
+        };
       }
     }
   }
@@ -490,17 +530,41 @@ export function detectNativeLanguage(
   // ── Phase 1c: tinyld content language detection ──────────────────────────
   // If any paragraph of the description is detected as the country's
   // language, the ad is (at least partially) written in that language.
-  if (anyChunkInNativeLanguage(descText, langCodes)) {
-    return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+  const nativeChunk = findNativeLanguageChunk(descText, langCodes);
+  if (nativeChunk) {
+    return {
+      value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+      signals: [{
+        phase: '1c',
+        description: `tinyld detected "${nativeChunk.detectedCode}" in description`,
+        matched: nativeChunk.chunk.slice(0, 80) + (nativeChunk.chunk.length > 80 ? '…' : ''),
+      }],
+    };
   }
 
   // ── Phase 2a: Explicit language requirement signals ──────────────────────
   // The description is in English — scan for phrases that explicitly require
   // the local language (e.g. "fluent Finnish", "working language is German").
+
+  // Generic "native local/country language" phrase — doesn't name the language
+  // but clearly means native fluency in the local language is required.
+  const genericMatch = languages.length > 0
+    ? combined.match(/native (?:local country|local|country|regional) language/)
+    : null;
+  if (genericMatch) {
+    return {
+      value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+      signals: [{ phase: '2a', description: 'generic native language phrase', matched: genericMatch[0] }],
+    };
+  }
+
   if (NORDIC_COUNTRY_CODES.has(cc)) {
     for (const phrase of NORDIC_LANGUAGE_REQUIREMENT_PHRASES) {
       if (combined.includes(phrase)) {
-        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+        return {
+          value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+          signals: [{ phase: '2a-nordic', description: 'Nordic/Scandinavian requirement phrase', matched: phrase }],
+        };
       }
     }
   }
@@ -508,7 +572,10 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
-        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+        return {
+          value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+          signals: [{ phase: '2a', description: `"${lang}" requirement phrase`, matched: signal }],
+        };
       }
     }
   }
@@ -524,12 +591,18 @@ export function detectNativeLanguage(
       if (countryKeywordSet.has(kw)) continue; // already covered by Phase 2a
       for (const signal of buildRequirementSignals(kw)) {
         if (combined.includes(signal)) {
-          return { value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [] };
+          return {
+            value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [],
+            signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
+          };
         }
       }
       for (const signal of buildAdvantageSignals(kw)) {
         if (combined.includes(signal)) {
-          return { value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName] };
+          return {
+            value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
+            signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: signal }],
+          };
         }
       }
     }
@@ -542,7 +615,10 @@ export function detectNativeLanguage(
   if (/depending on (?:the |your )?location/i.test(combined)) {
     for (const lang of languages) {
       if (combined.includes(lang)) {
-        return { value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [] };
+        return {
+          value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+          signals: [{ phase: '2b', description: 'location-conditional requirement', matched: `depending on location + ${lang}` }],
+        };
       }
     }
   }
@@ -550,12 +626,18 @@ export function detectNativeLanguage(
   // ── Phase 2c: Explicit English-only confirmation ─────────────────────────
   for (const phrase of ENGLISH_ONLY_PHRASES) {
     if (combined.includes(phrase)) {
-      return { value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [] };
+      return {
+        value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
+        signals: [{ phase: '2c', description: 'English-only confirmation', matched: phrase }],
+      };
     }
   }
 
   // ── Phase 2d default ─────────────────────────────────────────────────────
   // No explicit signals found — absence of any local language requirement is
   // itself a strong signal that English is sufficient.
-  return { value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [] };
+  return {
+    value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
+    signals: [{ phase: '2d-none', description: 'no signal — English assumed' }],
+  };
 }

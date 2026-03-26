@@ -9,7 +9,7 @@ How the system fetches jobs, resolves countries, and classifies language require
 When the admin submits a career page URL, the scrape API (`/api/admin/scrape`) runs through up to four layers in sequence, stopping as soon as any layer returns jobs.
 
 ```
-Layer 1   → Known ATS API (Greenhouse, Lever, Ashby)
+Layer 1   → Known ATS API (Greenhouse, Lever, Ashby, Workable)
 Layer 1.5 → Per-company API config
 Layer 2   → Python HTML scraper
               └─ enrichDescriptions (fetches individual job pages)
@@ -28,6 +28,7 @@ The URL is inspected by `detectAts()` to see if it matches a known ATS hostname:
 | `boards.greenhouse.io/{slug}` | Greenhouse |
 | `jobs.lever.co/{slug}` | Lever |
 | `jobs.ashbyhq.com/{slug}` | Ashby |
+| `apply.workable.com/api/v1/widget/accounts/{slug}` | Workable |
 
 If matched, the company slug is extracted and the corresponding API is called directly (e.g. `boards-api.greenhouse.io/v1/boards/{slug}/jobs`). These APIs return structured JSON with titles, locations, and descriptions already included — no HTML scraping needed.
 

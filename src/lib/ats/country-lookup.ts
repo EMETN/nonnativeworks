@@ -10,22 +10,28 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'finland': { name: 'Finland', code: 'FI', slug: 'finland' },
   'suomi': { name: 'Finland', code: 'FI', slug: 'finland' },
   'fin': { name: 'Finland', code: 'FI', slug: 'finland' },
+  'fi': { name: 'Finland', code: 'FI', slug: 'finland' },
   'sweden': { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'sverige': { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'swe': { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'se': { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'norway': { name: 'Norway', code: 'NO', slug: 'norway' },
   'norge': { name: 'Norway', code: 'NO', slug: 'norway' },
   'nor': { name: 'Norway', code: 'NO', slug: 'norway' },
+  'no': { name: 'Norway', code: 'NO', slug: 'norway' },
   'denmark': { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'danmark': { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'dnk': { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'dk': { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'iceland': { name: 'Iceland', code: 'IS', slug: 'iceland' },
   'island': { name: 'Iceland', code: 'IS', slug: 'iceland' },
   'isl': { name: 'Iceland', code: 'IS', slug: 'iceland' },
+  'is': { name: 'Iceland', code: 'IS', slug: 'iceland' },
   // DACH
   'germany': { name: 'Germany', code: 'DE', slug: 'germany' },
   'deutschland': { name: 'Germany', code: 'DE', slug: 'germany' },
   'deu': { name: 'Germany', code: 'DE', slug: 'germany' },
+  'de': { name: 'Germany', code: 'DE', slug: 'germany' },
   'austria': { name: 'Austria', code: 'AT', slug: 'austria' },
   'österreich': { name: 'Austria', code: 'AT', slug: 'austria' },
   'osterreich': { name: 'Austria', code: 'AT', slug: 'austria' },
@@ -42,6 +48,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'holland': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nederland': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nld': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'nl': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'belgium': { name: 'Belgium', code: 'BE', slug: 'belgium' },
   'belgique': { name: 'Belgium', code: 'BE', slug: 'belgium' },
   'belgië': { name: 'Belgium', code: 'BE', slug: 'belgium' },
@@ -110,12 +117,15 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'estonia': { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'eesti': { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'est': { name: 'Estonia', code: 'EE', slug: 'estonia' },
+  'ee': { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'latvia': { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'latvija': { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'lva': { name: 'Latvia', code: 'LV', slug: 'latvia' },
+  'lv': { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'lithuania': { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
   'lietuva': { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
   'ltu': { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'lt': { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
   // Southern/SE Europe
   'greece': { name: 'Greece', code: 'GR', slug: 'greece' },
   'hellas': { name: 'Greece', code: 'GR', slug: 'greece' },
@@ -339,6 +349,80 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'lisbon':                   { name: 'Portugal', code: 'PT', slug: 'portugal' },
   'lisboa':                   { name: 'Portugal', code: 'PT', slug: 'portugal' },
   'porto':                    { name: 'Portugal', code: 'PT', slug: 'portugal' },
+  // ── United States (states) ───────────────────────────────────────────────
+  // COUNTRY_MAP takes priority for 'georgia' (country Georgia/GE), so adding it here is safe.
+  'alabama':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'alaska':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'arizona':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'arkansas':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'california':               { name: 'United States', code: 'US', slug: 'united-states' },
+  'colorado':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'connecticut':              { name: 'United States', code: 'US', slug: 'united-states' },
+  'delaware':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'florida':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'georgia':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'hawaii':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'idaho':                    { name: 'United States', code: 'US', slug: 'united-states' },
+  'illinois':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'indiana':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'iowa':                     { name: 'United States', code: 'US', slug: 'united-states' },
+  'kansas':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'kentucky':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'louisiana':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'maine':                    { name: 'United States', code: 'US', slug: 'united-states' },
+  'maryland':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'massachusetts':            { name: 'United States', code: 'US', slug: 'united-states' },
+  'michigan':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'minnesota':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'mississippi':              { name: 'United States', code: 'US', slug: 'united-states' },
+  'missouri':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'montana':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'nebraska':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'nevada':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'new hampshire':            { name: 'United States', code: 'US', slug: 'united-states' },
+  'new jersey':               { name: 'United States', code: 'US', slug: 'united-states' },
+  'new mexico':               { name: 'United States', code: 'US', slug: 'united-states' },
+  'new york':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'north carolina':           { name: 'United States', code: 'US', slug: 'united-states' },
+  'north dakota':             { name: 'United States', code: 'US', slug: 'united-states' },
+  'ohio':                     { name: 'United States', code: 'US', slug: 'united-states' },
+  'oklahoma':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'oregon':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'pennsylvania':             { name: 'United States', code: 'US', slug: 'united-states' },
+  'rhode island':             { name: 'United States', code: 'US', slug: 'united-states' },
+  'south carolina':           { name: 'United States', code: 'US', slug: 'united-states' },
+  'south dakota':             { name: 'United States', code: 'US', slug: 'united-states' },
+  'tennessee':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'texas':                    { name: 'United States', code: 'US', slug: 'united-states' },
+  'utah':                     { name: 'United States', code: 'US', slug: 'united-states' },
+  'vermont':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'virginia':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'washington':               { name: 'United States', code: 'US', slug: 'united-states' },
+  'west virginia':            { name: 'United States', code: 'US', slug: 'united-states' },
+  'wisconsin':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'wyoming':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  // ── United States (major cities) ─────────────────────────────────────────
+  'atlanta':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'austin':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'boston':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'chicago':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'dallas':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'denver':                   { name: 'United States', code: 'US', slug: 'united-states' },
+  'houston':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'los angeles':              { name: 'United States', code: 'US', slug: 'united-states' },
+  'miami':                    { name: 'United States', code: 'US', slug: 'united-states' },
+  'minneapolis':              { name: 'United States', code: 'US', slug: 'united-states' },
+  'nashville':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'new york city':            { name: 'United States', code: 'US', slug: 'united-states' },
+  'nyc':                      { name: 'United States', code: 'US', slug: 'united-states' },
+  'philadelphia':             { name: 'United States', code: 'US', slug: 'united-states' },
+  'phoenix':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'portland':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'raleigh':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  'san diego':                { name: 'United States', code: 'US', slug: 'united-states' },
+  'san francisco':            { name: 'United States', code: 'US', slug: 'united-states' },
+  'san jose':                 { name: 'United States', code: 'US', slug: 'united-states' },
+  'seattle':                  { name: 'United States', code: 'US', slug: 'united-states' },
 };
 
 // Location strings that should be skipped (not a country)
@@ -364,6 +448,9 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+// Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
+const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
+
 export function lookupCountryFromLocation(location: string): CountryInfo[] {
   if (!location || !location.trim()) return [];
 
@@ -372,7 +459,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     if (pattern.test(location.trim())) return [];
   }
 
-  const segments = location.split(',').map((s) => s.trim()).filter(Boolean);
+  // Split by semicolon first (Greenhouse: "Hybrid - Helsinki, Uusimaa; Hybrid - Oulu, North Ostrobothnia")
+  // then by comma within each part. Strip work-mode prefixes before lookup.
+  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const segments = parts.flatMap((part) => {
+    const stripped = part.replace(LOCATION_PREFIX_RE, '');
+    return stripped.split(',').map((s) => s.trim()).filter(Boolean);
+  });
 
   // Collect all unique countries found in any segment — check country map first, then city map
   const seen = new Set<string>();

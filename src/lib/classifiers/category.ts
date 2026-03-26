@@ -74,40 +74,63 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
  * Classifies a job into one of the defined categories based on keyword matching.
  * Title is scored first (2 pts per match); if no title match, description is
  * scored as a fallback (1 pt per match).
+ * Returns the category plus the keyword that triggered it and the source.
  */
-export function classifyCategory(title: string, descriptionText?: string): string {
+export function classifyCategoryVerbose(
+  title: string,
+  descriptionText?: string,
+): { category: string; matchedKeyword?: string; source: 'title' | 'description' | 'default' } {
   const titleLower = ` ${title.toLowerCase()} `;
 
   let best = 'other';
   let bestScore = 0;
+  let bestKeyword: string | undefined;
+  let bestSource: 'title' | 'description' | 'default' = 'default';
 
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = 0;
+    let firstMatch: string | undefined;
     for (const kw of keywords) {
-      if (titleLower.includes(kw)) score += 2;
+      if (titleLower.includes(kw)) {
+        score += 2;
+        if (!firstMatch) firstMatch = kw.trim();
+      }
     }
     if (score > bestScore) {
       bestScore = score;
       best = category;
+      bestKeyword = firstMatch;
+      bestSource = 'title';
     }
   }
 
-  if (bestScore > 0) return best;
+  if (bestScore > 0) return { category: best, matchedKeyword: bestKeyword, source: bestSource };
 
   // Fallback: scan description text
   if (descriptionText) {
     const descLower = descriptionText.toLowerCase();
     for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
       let score = 0;
+      let firstMatch: string | undefined;
       for (const kw of keywords) {
-        if (descLower.includes(kw)) score++;
+        if (descLower.includes(kw)) {
+          score++;
+          if (!firstMatch) firstMatch = kw.trim();
+        }
       }
       if (score > bestScore) {
         bestScore = score;
         best = category;
+        bestKeyword = firstMatch;
+        bestSource = 'description';
       }
     }
   }
 
-  return best;
+  return { category: best, matchedKeyword: bestKeyword, source: bestSource };
+}
+
+/** Classifies a job into one of the defined categories. */
+export function classifyCategory(title: string, descriptionText?: string): string {
+  return classifyCategoryVerbose(title, descriptionText).category;
 }
