@@ -8,14 +8,21 @@
             "ZSH_IN_DOCKER_VERSION": "1.2.0"
         }
     },
-    "runArgs": ["--cap-add=NET_ADMIN", "--cap-add=NET_RAW"],
+    "runArgs": [
+        "--cap-add=NET_ADMIN",
+        "--cap-add=NET_RAW",
+        "--name=NonNativeWorks",
+        "--env-file",
+        "${localWorkspaceFolder}/.env"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [
                 "anthropic.claude-code",
                 "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
-                "eamodio.gitlens"
+                "eamodio.gitlens",
+                "astro-build.astro-vscode"
             ],
             "settings": {
                 "editor.formatOnSave": true,
@@ -49,5 +56,6 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
     "workspaceFolder": "/workspace",
     "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
-    "waitFor": "postStartCommand"
+    "waitFor": "postStartCommand",
+    "postCreateCommand": "git config user.name \"$GIT_USER_NAME\" && git config user.email \"$GIT_USER_EMAIL\""
 }
