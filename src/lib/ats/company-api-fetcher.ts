@@ -44,6 +44,8 @@ function mapItem(
   fields: CompanyApiConfig['fields'],
   urlTemplate?: string,
   descriptionFields?: string[],
+  urlPlaceholders?: Record<string, string>,
+  keepQueryParams?: boolean,
 ): RawJob | null {
   const title = getString(item, fields.title);
   if (!title) return null;
@@ -53,7 +55,12 @@ function mapItem(
     : getString(item, fields.url);
 
   if (url) {
-    url = cleanJobUrl(url);
+    if (urlPlaceholders) {
+      for (const [from, to] of Object.entries(urlPlaceholders)) {
+        url = url.replaceAll(from, to);
+      }
+    }
+    url = cleanJobUrl(url, keepQueryParams);
   }
 
   let descriptionText: string | undefined;
@@ -102,19 +109,38 @@ function expandJobToSecondaryLocations(
   return extras;
 }
 
+/** Build a FormData from a body object. Array values produce multiple fields with the same name. */
+function buildFormData(body: Record<string, unknown>): FormData {
+  const fd = new FormData();
+  for (const [key, val] of Object.entries(body)) {
+    if (Array.isArray(val)) {
+      for (const v of val) fd.append(key, String(v));
+    } else {
+      fd.append(key, String(val));
+    }
+  }
+  return fd;
+}
+
 async function fetchPage(
   url: string,
   method: 'GET' | 'POST',
   body: Record<string, unknown> | undefined,
   headers: Record<string, string>,
+  bodyType: 'json' | 'multipart' = 'json',
 ): Promise<unknown> {
   const init: RequestInit = {
     method,
     headers: { Accept: 'application/json', ...headers },
   };
   if (method === 'POST') {
-    init.headers = { ...init.headers as Record<string, string>, 'Content-Type': 'application/json' };
-    init.body = JSON.stringify(body ?? {});
+    if (bodyType === 'multipart') {
+      // Do NOT set Content-Type — fetch sets it automatically with the correct boundary.
+      init.body = buildFormData(body ?? {});
+    } else {
+      init.headers = { ...init.headers as Record<string, string>, 'Content-Type': 'application/json' };
+      init.body = JSON.stringify(body ?? {});
+    }
   }
   const res = await fetch(url, init);
   // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns 400
@@ -261,16 +287,19 @@ interface FetchSpec {
   url: string;
   method: 'GET' | 'POST';
   body?: Record<string, unknown>;
+  bodyType?: 'json' | 'multipart';
   headers: Record<string, string>;
   pagination: CompanyApiConfig['pagination'];
   fields: CompanyApiConfig['fields'];
   itemsPath?: string;
   urlTemplate?: string;
+  urlPlaceholders?: Record<string, string>;
+  keepQueryParams?: boolean;
   expandSecondaryLocations?: CompanyApiConfig['expandSecondaryLocations'];
   descriptionFields?: string[];
 }
 
-export const cleanJobUrl = (rawUrl: string): string => {
+export const cleanJobUrl = (rawUrl: string, keepQueryParams = false): string => {
   if (!rawUrl) return '';
 
   let url = rawUrl;
@@ -281,8 +310,8 @@ export const cleanJobUrl = (rawUrl: string): string => {
   url = url.replace(/&amp;/g, '&');
   url = url.replace(/&amp;/g, '&');
 
-  // 2. Remove tracking/query params (keep only base URL)
-  url = url.split('?')[0];
+  // 2. Remove tracking/query params (keep only base URL) — unless keepQueryParams is set.
+  if (!keepQueryParams) url = url.split('?')[0];
 
   // 3. Normalize slashes (avoid https://domain.com//job)
   url = url.replace(/([^:]\/)\/+/g, '$1');
@@ -312,10 +341,12 @@ function mapItems(
   urlTemplate: string | undefined,
   expand: CompanyApiConfig['expandSecondaryLocations'],
   descriptionFields?: string[],
+  urlPlaceholders?: Record<string, string>,
+  keepQueryParams?: boolean,
 ): RawJob[] {
   const result: RawJob[] = [];
   for (const item of items) {
-    const job = mapItem(item, fields, urlTemplate, descriptionFields);
+    const job = mapItem(item, fields, urlTemplate, descriptionFields, urlPlaceholders, keepQueryParams);
     if (!job) continue;
     result.push(job);
     result.push(...expandJobToSecondaryLocations(job, item, expand));
@@ -325,18 +356,18 @@ function mapItems(
 
 /** Fetches all jobs from a single endpoint, handling all pagination types. */
 async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJob[]> {
-  const { url, method, body, headers, pagination, fields, itemsPath, urlTemplate, expandSecondaryLocations, descriptionFields } = spec;
+  const { url, method, body, bodyType, headers, pagination, fields, itemsPath, urlTemplate, urlPlaceholders, keepQueryParams, expandSecondaryLocations, descriptionFields } = spec;
   const jobs: RawJob[] = [];
 
   if (pagination.type === 'none') {
     console.log(`[${label}] fetching (no pagination): ${url}`);
-    const data = await fetchPage(url, method, body, headers);
+    const data = await fetchPage(url, method, body, headers, bodyType);
     if (!data) {
       console.warn(`[${label}] empty response`, { url });
       return jobs;
     }
     const items = extractItems(data, itemsPath);
-    jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields));
+    jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
     console.log(`[${label}] fetched ${jobs.length} jobs (single request)`, paginationMeta(data));
   } else if (pagination.type === 'page') {
     const param = pagination.param ?? 'page';
@@ -350,7 +381,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, page) : url;
       const pageBody = method === 'POST' ? { ...body, [param]: page } : undefined;
       console.log(`[${label}] fetching page=${page}${method === 'POST' ? ` body.${param}=${page}` : ` url=${pageUrl}`}`);
-      const data = await fetchPage(pageUrl, method, pageBody, headers);
+      const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
       if (!data) {
         console.log(`[${label}] stopping: null response at page=${page} (400 = page out of range)`);
@@ -368,7 +399,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       const items = extractItems(data, itemsPath);
       const before = jobs.length;
-      for (const job of mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields)) {
+      for (const job of mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams)) {
         jobs.push(job);
         uniqueKeys.add(job.sourceId ?? `${job.title}|${job.location ?? ''}`);
       }
@@ -395,7 +426,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
       const pageBody = method === 'POST' ? { ...body, [param]: offset } : undefined;
       console.log(`[${label}] fetching offset=${offset}${method === 'POST' ? `` : ` url=${pageUrl}`}`);
-      const data = await fetchPage(pageUrl, method, pageBody, headers);
+      const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
       if (!data) {
         console.warn(`[${label}] empty response at offset=${offset}`, { url: pageUrl });
@@ -404,7 +435,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       const items = extractItems(data, itemsPath);
       const before = jobs.length;
-      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields));
+      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
       console.log(`[${label}] offset=${offset} → ${items.length} items, mapped ${jobs.length - before}, cumulative=${jobs.length}`, paginationMeta(data));
 
       if (items.length === 0) {
@@ -425,7 +456,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
       const pageUrl = buildFinderOffsetUrl(url, offset);
       console.log(`[${label}] fetching finder-offset=${offset} url=${pageUrl}`);
-      const data = await fetchPage(pageUrl, method, body, headers);
+      const data = await fetchPage(pageUrl, method, body, headers, bodyType);
 
       if (!data) {
         console.warn(`[${label}] empty response at finder-offset=${offset}`, { url: pageUrl });
@@ -434,7 +465,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       const items = extractItems(data, itemsPath);
       const before = jobs.length;
-      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields));
+      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
       console.log(`[${label}] finder-offset=${offset} → ${items.length} items, mapped ${jobs.length - before}, cumulative=${jobs.length}`, paginationMeta(data));
 
       if (items.length === 0) {
@@ -489,17 +520,35 @@ export async function fetchCompanyApiJobs(
     url: config.url,
     method,
     body: config.body,
+    bodyType: config.bodyType,
     headers,
     pagination: config.pagination,
     fields: config.fields,
     itemsPath: config.itemsPath,
     urlTemplate: config.urlTemplate,
+    urlPlaceholders: config.urlPlaceholders,
+    keepQueryParams: config.keepQueryParams,
     expandSecondaryLocations: config.expandSecondaryLocations,
     descriptionFields: config.descriptionFields,
   };
 
-  console.log(`[fetchCompanyApiJobs] starting primary fetch: ${config.url}`);
-  const primaryJobsRaw = await fetchAllJobsRaw(primarySpec, 'primary');
+  let primaryJobsRaw: RawJob[];
+  if (config.repeatFor) {
+    // Fetch once per body-override entry (e.g. one country + locale at a time) and merge results.
+    const { body: overrides } = config.repeatFor;
+    console.log(`[fetchCompanyApiJobs] repeatFor: ${overrides.length} entries → fetching sequentially`);
+    const allRaw: RawJob[] = [];
+    for (const override of overrides) {
+      const label = Object.values(override).join('/');
+      const spec: FetchSpec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
+      const jobs = await fetchAllJobsRaw(spec, label);
+      allRaw.push(...jobs);
+    }
+    primaryJobsRaw = allRaw;
+  } else {
+    console.log(`[fetchCompanyApiJobs] starting primary fetch: ${config.url}`);
+    primaryJobsRaw = await fetchAllJobsRaw(primarySpec, 'primary');
+  }
 
   // Deduplicate primary results immediately — some APIs return the same job on
   // multiple pages (e.g. when total count isn't a multiple of the page size).

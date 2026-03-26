@@ -86,6 +86,7 @@ for domain in \
     "boards-api.greenhouse.io" \
     "api.lever.co" \
     "api.ashbyhq.com" \
+    "apply.workable.com" \
     "gofore.com" \
     "op-careers.fi" \
     "jobs.nokia.com" \
@@ -94,10 +95,14 @@ for domain in \
     "nordea.com" \
     "www.nordea.com" \
     "careers.vaisala.com" \
+    "cgi.njoyn.com" \
+    "www.accenture.com" \
+    "careers.abb" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
-    "storage.googleapis.com" ; do
+    "storage.googleapis.com" \
+    "host.docker.internal" ; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

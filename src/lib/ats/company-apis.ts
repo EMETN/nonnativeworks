@@ -44,8 +44,17 @@ export interface CompanyApiConfig {
    * Base request body for POST requests.
    * The pagination value is merged in automatically — you do not need to
    * include the page/offset key here; it will be added or overwritten.
+   * Array values are only meaningful when bodyType is 'multipart' (each element
+   * becomes a separate field with the same name, e.g. multiple jobCountry values).
    */
   body?: Record<string, unknown>;
+  /**
+   * How to encode the POST body. Defaults to 'json'.
+   * 'multipart' builds a multipart/form-data body (the browser sets the boundary
+   * automatically — do NOT set Content-Type in headers for multipart requests).
+   * Array values in body are appended as multiple fields with the same name.
+   */
+  bodyType?: 'json' | 'multipart';
   pagination:
     | { type: 'none' }
     | { type: 'page';   param?: string; startPage?: number; totalCountPath?: string }
@@ -76,6 +85,18 @@ export interface CompanyApiConfig {
    * Use url (in fields) for simple single-field cases; use urlTemplate for composite URLs.
    */
   urlTemplate?: string;
+  /**
+   * String replacements applied to the raw URL field value before any other processing.
+   * Useful when the API returns URLs with positional placeholders (e.g. Accenture's {0} locale slot).
+   * Example: { '{0}': 'fi-en' } → "https://accenture.com/{0}/careers/..." becomes
+   *          "https://accenture.com/fi-en/careers/..."
+   */
+  urlPlaceholders?: Record<string, string>;
+  /**
+   * When true, query string parameters are preserved in job URLs instead of being stripped.
+   * Set this when the job URL requires query params to identify the posting (e.g. ?id=12345).
+   */
+  keepQueryParams?: boolean;
   /** Dot-path to the jobs array in the response body. Omit if root is the array. */
   itemsPath?: string;
   /** Optional HTTP headers (e.g. Accept, X-Api-Key). Content-Type is set automatically for POST. */
@@ -148,6 +169,15 @@ export interface CompanyApiConfig {
   expandSecondaryLocations?: {
     path: string;
     countryName: string;
+  };
+  /**
+   * When set, one full paginated fetch is made per entry, with each entry's fields merged
+   * into the base body as overrides. All results are merged and deduplicated.
+   * Use when the API requires separate requests per filter value (e.g. Accenture requires
+   * one jobCountry + matching countrySite per request).
+   */
+  repeatFor?: {
+    body: Record<string, string>[];
   };
 }
 
@@ -262,6 +292,50 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // Location lives in: <div class="locations"><h3>…</h3><p>City1, City2</p></div>
     fetchDescription: true,
     locationFromHtml: 'class="locations"[\\s\\S]*?<p>(.*?)<\\/p>',
+  },
+
+  'accenture.com': {
+    // Accenture's internal Elasticsearch job search endpoint.
+    // Uses multipart/form-data POST. The API only accepts one jobCountry per request,
+    // so repeatFor iterates over tracked countries and merges the results.
+    // jobLanguage:'en' filters to English postings at the source.
+    // startIndex is the offset; maxResultSize is the page size.
+    url: 'https://www.accenture.com/api/accenture/elastic/findjobs',
+    method: 'POST',
+    bodyType: 'multipart',
+    body: {
+      maxResultSize: '50',
+      jobLanguage: 'en',
+      sortBy: '2',
+      jobFilters: '[]',
+    },
+    repeatFor: {
+      body: [
+        { jobCountry: 'Finland',     countrySite: 'fi-en' },
+        { jobCountry: 'Sweden',      countrySite: 'se-en' },
+        { jobCountry: 'Norway',      countrySite: 'no-en' },
+        { jobCountry: 'Denmark',     countrySite: 'dk-en' },
+        { jobCountry: 'Netherlands', countrySite: 'nl-en' },
+        { jobCountry: 'Germany',     countrySite: 'de-de' },
+        { jobCountry: 'Latvia',      countrySite: 'lv-en' },
+      ],
+    },
+    pagination: { type: 'offset', param: 'startIndex', pageSize: 50 },
+    itemsPath: 'data',
+    fields: {
+      title: 'title',
+      location: 'country',
+      url: 'jobDetailUrl',
+      id: 'requisitionId',
+      department: 'jobFamilyGroup',  // array — first element is used automatically
+    },
+    // jobDetailUrl contains "{0}" as a locale placeholder (e.g. "fi-en")
+    urlPlaceholders: { '{0}': 'fi-en' },
+    // The job URL requires ?id=... to identify the posting — don't strip query params
+    keepQueryParams: true,
+    companyName: 'Accenture',
+    // Description fields visible in the response — adjust once full item shape is confirmed
+    descriptionFields: ['jobDescriptionClean', 'qualificationClean'],
   },
 
   // TODO: verify Nordea API shape before enabling.
