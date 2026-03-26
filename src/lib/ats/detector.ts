@@ -30,6 +30,32 @@ export function detectAts(url: string): AtsDetectionResult {
       if (match) return { ats: 'ashby', companySlug: match[1] };
     }
 
+    // Workable
+    // Patterns:
+    // apply.workable.com/{slug}
+    // apply.workable.com/{slug}/jobs
+    // apply.workable.com/api/v1/widget/accounts/{slug}
+    // {slug}.workable.com
+    if (hostname === 'apply.workable.com') {
+      // API pattern
+      const apiMatch = pathname.match(/^\/api\/v1\/widget\/accounts\/([^/]+)/);
+      if (apiMatch) {
+        return { ats: 'workable', companySlug: apiMatch[1] };
+      }
+
+      // Standard UI pattern
+      const match = pathname.match(/^\/([^/]+)/);
+      if (match && match[1] !== 'api') {
+        return { ats: 'workable', companySlug: match[1] };
+      }
+    }
+
+    // Workable subdomain pattern: {slug}.workable.com
+    if (hostname.endsWith('.workable.com')) {
+      const slug = hostname.replace(/\.workable\.com$/, '');
+      if (slug) return { ats: 'workable', companySlug: slug };
+    }
+
     return { ats: null, companySlug: extractCompanySlug(hostname) };
   } catch {
     return { ats: null, companySlug: null };
@@ -57,6 +83,7 @@ export function atsLabel(ats: string | null): string {
     case 'greenhouse': return 'Greenhouse';
     case 'lever': return 'Lever';
     case 'ashby': return 'Ashby';
+    case 'workable': return 'Workable';
     case 'company-api': return 'Company API';
     case 'python': return 'Page scraper';
     default: return 'Unknown';

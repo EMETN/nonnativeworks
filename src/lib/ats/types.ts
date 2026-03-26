@@ -1,4 +1,4 @@
-export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'company-api' | 'python';
+export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'workable' | 'company-api' | 'python';
 
 export interface RawJob {
   title: string;
@@ -7,6 +7,8 @@ export interface RawJob {
   location?: string;
   url?: string;
   department?: string;
+  /** ISO alpha-2 country code set by scrapers that already know the country (e.g. njoyn). */
+  country_code?: string;
   /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
   sourceId?: string;
 }

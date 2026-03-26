@@ -6,14 +6,16 @@ import { detectAts } from '../../../lib/ats/detector';
 import { fetchGreenhouseJobs, fetchGreenhouseCompanyName } from '../../../lib/ats/greenhouse';
 import { fetchLeverJobs, fetchLeverCompanyName } from '../../../lib/ats/lever';
 import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
+import { fetchWorkableCompanyName, fetchWorkableJobs, enrichWorkableDescriptions } from '../../../lib/ats/workable';
 import { lookupCountryFromLocation } from '../../../lib/ats/country-lookup';
-import { classifyJob } from '../../../lib/classifier';
+import { classifyJobVerbose } from '../../../lib/classifier';
+import { logScrapeRun, type PositionLogEntry } from '../../../lib/scrape-logger';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
 import { COMPANY_APIS } from '../../../lib/ats/company-apis';
 import { fetchCompanyApiJobs, enrichDescriptions } from '../../../lib/ats/company-api-fetcher';
 import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
 
-const PYTHON_TIMEOUT_MS = 60_000;
+const PYTHON_TIMEOUT_MS = 600_000; // 10 min — njoyn scrapes 9 countries sequentially
 
 export const POST: APIRoute = async ({ request }) => {
   let body: unknown;
@@ -35,6 +37,15 @@ export const POST: APIRoute = async ({ request }) => {
     return json(result, 200);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown scrape error';
+    logScrapeRun({
+      companyName: url,
+      careerUrl: url,
+      ats: null,
+      positions: [],
+      skippedUnknownLocation: 0,
+      skippedUntrackedCountry: 0,
+      error: message,
+    });
     return json({ error: message }, 500);
   }
 };
@@ -67,15 +78,35 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
           fetchGreenhouseCompanyName(detection.companySlug),
         ]);
         ats = 'greenhouse';
+
       } else if (resolvedAts === 'lever') {
         [rawJobs, companyName] = await Promise.all([
           fetchLeverJobs(detection.companySlug),
           fetchLeverCompanyName(detection.companySlug),
         ]);
         ats = 'lever';
+
       } else if (resolvedAts === 'ashby') {
         ({ jobs: rawJobs, companyName } = await fetchAshbyJobsAndCompanyName(detection.companySlug));
         ats = 'ashby';
+
+      } else if (resolvedAts === 'workable') {
+        const [jobs, name] = await Promise.all([
+          fetchWorkableJobs(detection.companySlug),
+          fetchWorkableCompanyName(detection.companySlug),
+        ]);
+
+        if (!jobs.length) {
+          throw new Error('Workable returned no jobs');
+        }
+        const trackedJobs = jobs.filter((job) => {
+          const locationStr = job.country_code ?? job.location ?? '';
+          return lookupCountryFromLocation(locationStr).some((c) => TRACKED_COUNTRY_CODES.has(c.code));
+        });
+        await enrichWorkableDescriptions(trackedJobs, detection.companySlug);
+        rawJobs = jobs;
+        companyName = name;
+        ats = 'workable';
       }
     } catch (err) {
       layer1Error = err instanceof Error ? err.message : String(err);
@@ -143,9 +174,13 @@ function buildScrapeResult(
   const groups = new Map<string, ScrapeCountryGroup>();
   let skipped = 0;
   let skippedUntracked = 0;
+  const positionLogs: PositionLogEntry[] = [];
 
   for (const job of rawJobs) {
-    const countries = lookupCountryFromLocation(job.location ?? '');
+    // Use country_code when the scraper already resolved it (e.g. njoyn country filter),
+    // otherwise fall back to free-text location lookup.
+    const locationStr = job.country_code ?? job.location ?? '';
+    const countries = lookupCountryFromLocation(locationStr);
     const trackedCountries = countries.filter((c) => TRACKED_COUNTRY_CODES.has(c.code));
 
     if (countries.length === 0) {
@@ -158,7 +193,21 @@ function buildScrapeResult(
     }
 
     for (const countryInfo of trackedCountries) {
-      const classified = { ...classifyJob(job, countryInfo.code), city: job.location };
+      const { classified, signals } = classifyJobVerbose(job, countryInfo.code);
+
+      positionLogs.push({
+        title: classified.title,
+        category: classified.category,
+        categorySignal: signals.categorySignal,
+        categorySource: signals.categorySource,
+        requires_native_language: classified.requires_native_language,
+        local_language_advantage: classified.local_language_advantage,
+        requiredLanguages: classified.requiredLanguages,
+        preferredLanguages: classified.preferredLanguages,
+        languageSignals: signals.languageSignals,
+        countryCode: countryInfo.code,
+        countryName: countryInfo.name,
+      });
 
       if (!groups.has(countryInfo.code)) {
         groups.set(countryInfo.code, {
@@ -168,9 +217,18 @@ function buildScrapeResult(
           jobs: [],
         });
       }
-      groups.get(countryInfo.code)!.jobs.push(classified);
+      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: job.location });
     }
   }
+
+  logScrapeRun({
+    companyName,
+    careerUrl,
+    ats,
+    positions: positionLogs,
+    skippedUnknownLocation: skipped,
+    skippedUntrackedCountry: skippedUntracked,
+  });
 
   return {
     ats,
@@ -184,13 +242,23 @@ function buildScrapeResult(
 
 function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
   return new Promise((resolve, reject) => {
-    const venvPython = join(process.cwd(), 'scraper', '.venv', 'bin', 'python3');
-    const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+    // Check venv locations in order: system-installed (Docker), local dev fallback
+    const venvCandidates = [
+      '/opt/scraper-venv/bin/python3',
+      join(process.cwd(), 'scraper', '.venv', 'bin', 'python3'),
+    ];
+    const pythonBin = venvCandidates.find(existsSync) ?? 'python3';
 
     console.log('[python-scraper] command:', pythonBin, scraperPath, url);
 
+    const env: Record<string, string> = { ...process.env as Record<string, string> };
+    if (process.env.PLAYWRIGHT_CDP_URL) {
+      env.PLAYWRIGHT_CDP_URL = process.env.PLAYWRIGHT_CDP_URL;
+    }
+
     const py = spawn(pythonBin, [scraperPath, url], {
       timeout: PYTHON_TIMEOUT_MS,
+      env,
     });
 
     let stdout = '';
@@ -226,15 +294,29 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
 }
 
 /** Try Greenhouse, Lever, and Ashby APIs to see which one recognises the slug. */
-async function probeAts(slug: string): Promise<'greenhouse' | 'lever' | 'ashby' | null> {
-  const [ghRes, lvRes, ashbyRes] = await Promise.allSettled([
+async function probeAts(slug: string): Promise<'greenhouse' | 'lever' | 'ashby' | 'workable' | null> {
+  const [ghRes, lvRes, ashbyRes, workableRes] = await Promise.allSettled([
     fetch(`https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(slug)}`, { method: 'HEAD' }),
     fetch(`https://api.lever.co/v0/postings/${encodeURIComponent(slug)}?limit=1`, { method: 'HEAD' }),
     fetch(`https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}`, { method: 'GET' }),
+    fetch(`https://apply.workable.com/api/v1/widget/accounts/${encodeURIComponent(slug)}`, { method: 'GET' }),
   ]);
   if (ghRes.status === 'fulfilled' && ghRes.value.ok) return 'greenhouse';
   if (lvRes.status === 'fulfilled' && lvRes.value.ok) return 'lever';
-  if (ashbyRes.status === 'fulfilled' && ashbyRes.value.ok) return 'ashby';
+  // Ashby returns 200 with {"jobs":[],"apiVersion":"1"} for unknown slugs — only match if jobs are present
+  if (ashbyRes.status === 'fulfilled' && ashbyRes.value.ok) {
+    try {
+      const data = await ashbyRes.value.json() as { jobs?: unknown[] };
+      if (Array.isArray(data.jobs) && data.jobs.length > 0) return 'ashby';
+    } catch { /* ignore */ }
+  }
+  // Workable returns 200 with {"jobs":[]} for accounts with no open positions — only match if jobs are present
+  if (workableRes.status === 'fulfilled' && workableRes.value.ok) {
+    try {
+      const data = await workableRes.value.json() as { jobs?: unknown[] };
+      if (Array.isArray(data.jobs) && data.jobs.length > 0) return 'workable';
+    } catch { /* ignore */ }
+  }
   return null;
 }
 
