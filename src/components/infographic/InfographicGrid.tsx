@@ -70,7 +70,7 @@ function CountryRow({
                             Non-native
                         </span>
                         <span
-                            class="text-base sm:text-2xl md:text-5xl font-bold text-blue-600 group-hover:text-white transition-colors leading-none"
+                            class="text-base sm:text-2xl md:text-5xl font-black text-blue-600 group-hover:text-white transition-colors leading-none"
                             style={numFont}
                         >
                             {formatNumber(country.english_positions)}
@@ -92,7 +92,7 @@ function CountryRow({
                             Total
                         </span>
                         <span
-                            class="text-base sm:text-2xl md:text-5xl font-bold text-gray-900 group-hover:text-white transition-colors leading-none"
+                            class="text-base sm:text-2xl md:text-5xl font-black text-gray-900 group-hover:text-white transition-colors leading-none"
                             style={numFont}
                         >
                             {formatNumber(country.total_positions)}
@@ -103,7 +103,7 @@ function CountryRow({
                 {/* Percentage — right-aligned */}
                 <div class="flex items-center justify-end py-4 md:py-8 pl-4 md:pl-12 pr-4 md:pr-8">
                     <span
-                        class="text-base sm:text-2xl md:text-5xl font-black text-gray-800 group-hover:text-white transition-colors leading-none"
+                        class={`text-base sm:text-2xl md:text-5xl font-bold group-hover:text-white transition-colors leading-none ${pct >= 60 ? 'text-green-600' : pct >= 30 ? 'text-amber-500' : 'text-[#FF0000]'}`}
                         style={numFont}
                     >
                         {pct}%
