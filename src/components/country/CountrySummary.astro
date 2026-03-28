@@ -7,20 +7,23 @@ interface Props {
 }
 
 const { country, companyCount } = Astro.props;
-
-const stats = [
-  { label: 'Companies',        value: companyCount,                   color: 'text-gray-900' },
-  { label: 'Total positions',  value: country.total_positions,        color: 'text-gray-900' },
-  { label: 'Non-native',       value: country.english_positions,      color: 'text-blue-600' },
-  { label: 'Non-native ratio', value: `${country.english_percentage}%`, color: 'text-blue-600' },
-];
+const pct = Math.round(country.english_percentage);
+const numFont = "font-family: 'Inter', sans-serif";
 ---
 
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-  {stats.map((s) => (
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-      <div class={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-      <div class="text-sm text-gray-500 mt-0.5">{s.label}</div>
-    </div>
-  ))}
+<div class="flex flex-wrap items-baseline gap-x-4 sm:gap-x-6 gap-y-2 mb-10">
+  <div class="flex items-baseline gap-1 sm:gap-2">
+    <span class="text-xl sm:text-5xl font-bold text-gray-900" style={numFont}>{companyCount}</span>
+    <span class="text-[0.6rem] sm:text-sm font-semibold tracking-wider uppercase text-gray-400">companies</span>
+  </div>
+  <span class="text-base sm:text-3xl font-light text-gray-300">/</span>
+  <div class="flex items-baseline gap-1 sm:gap-2">
+    <span class="text-xl sm:text-5xl font-bold text-blue-600" style={numFont}>{country.english_positions.toLocaleString()}</span>
+    <span class="text-[0.6rem] sm:text-sm font-semibold tracking-wider uppercase text-gray-400">non-native</span>
+  </div>
+  <span class="text-base sm:text-3xl font-light text-gray-300">/</span>
+  <div class="flex items-baseline gap-1 sm:gap-2">
+    <span class="text-xl sm:text-5xl font-bold text-gray-900" style={numFont}>{country.total_positions.toLocaleString()}</span>
+    <span class="text-[0.6rem] sm:text-sm font-semibold tracking-wider uppercase text-gray-400">total</span>
+  </div>
 </div>
