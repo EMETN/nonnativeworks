@@ -14,16 +14,14 @@ const numFont = "font-family: 'Inter', sans-serif";
 
 <div class="mt-12">
   <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-6">Breakdown by category</h2>
-  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-4">
-    {categories.map((cat) => (
-      <div class="flex items-baseline gap-2 border-b border-gray-100 pb-3">
-        <span class="text-sm text-gray-600 truncate flex-1">{cat.category_name}</span>
-        <span class="text-sm font-bold whitespace-nowrap tabular-nums shrink-0 inline-flex" style={numFont}>
-          <span class="w-6 text-right inline-block">{cat.english_positions < 10 && <span class="text-[#CCd9ED]">0</span>}<span class="text-[#002EA2]">{cat.english_positions}</span></span>
-          <span class="text-gray-300 font-light mx-0.5">/</span>
-          <span class="w-6 text-right inline-block">{cat.total_positions < 10 && <span class="text-gray-200">0</span>}<span class="text-gray-900">{cat.total_positions}</span></span>
-        </span>
-      </div>
+  <div class="flex flex-wrap gap-x-1 gap-y-2">
+    {categories.map((cat, i) => (
+      <span class="text-sm whitespace-nowrap">
+        <span class="text-gray-600">{cat.category_name}</span>
+        <span class="font-bold tabular-nums" style={numFont}>
+          <span class="text-[#002EA2] ml-0.5">{cat.english_positions}</span><span class="text-gray-500">/</span><span class="text-gray-900">{cat.total_positions}</span>
+        </span>{i < categories.length - 1 && <span class="text-gray-300 mx-1">|</span>}
+      </span>
     ))}
   </div>
 </div>
