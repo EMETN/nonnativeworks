@@ -56,6 +56,13 @@ export function detectAts(url: string): AtsDetectionResult {
       if (slug) return { ats: 'workable', companySlug: slug };
     }
 
+    // Workday
+    // Pattern: {company}.wd{N}.myworkdayjobs.com/{locale}/{site}
+    if (hostname.endsWith('.myworkdayjobs.com')) {
+      const company = hostname.split('.')[0];
+      if (company) return { ats: 'workday', companySlug: company };
+    }
+
     return { ats: null, companySlug: extractCompanySlug(hostname) };
   } catch {
     return { ats: null, companySlug: null };
@@ -84,6 +91,7 @@ export function atsLabel(ats: string | null): string {
     case 'lever': return 'Lever';
     case 'ashby': return 'Ashby';
     case 'workable': return 'Workable';
+    case 'workday': return 'Workday';
     case 'company-api': return 'Company API';
     case 'python': return 'Page scraper';
     default: return 'Unknown';
