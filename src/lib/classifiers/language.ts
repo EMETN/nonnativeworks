@@ -1,4 +1,5 @@
 import { detect } from 'tinyld';
+import { titleAppearsNonEnglish } from '../ats/title-language';
 
 // ---------------------------------------------------------------------------
 // Country → language keyword map
@@ -222,6 +223,12 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'knowledge of other nordic languages is considered an additional qualification',
   'nordic language is considered an additional qualification',
   'scandinavian language is considered an additional qualification',
+  'nordic languages are a plus but not a requirement',
+  'nordic language is a plus but not a requirement',
+  'scandinavian languages are a plus but not a requirement',
+  'scandinavian language is a plus but not a requirement',
+  'nordic languages are not a requirement',
+  'scandinavian languages are not a requirement',
 ];
 
 // Phrases that explicitly confirm English is the working language.
@@ -254,17 +261,17 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
-  FI: { pattern: /[äöÄÖ]/g,              threshold: 3 },
-  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 3 },
-  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 3 },
-  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 3 },
-  IS: { pattern: /[þðÞÐ]/g,              threshold: 1 }, // þ/ð never appear in English
-  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 3 },
-  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 3 },
-  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 3 },
-  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 3 },
-  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 3 },
-  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 3 },
+  FI: { pattern: /[äöÄÖ]/g,              threshold: 5 },
+  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 5 },
+  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
+  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
+  IS: { pattern: /[þðÞÐ]/g,              threshold: 3 }, // þ/ð never appear in English
+  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
+  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
+  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 5 },
+  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 5 },
+  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 5 },
+  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 5 },
 };
 
 function descriptionContainsNativeChars(
@@ -304,10 +311,6 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
-/** True when the title contains non-ASCII characters typical of non-English languages. */
-function titleAppearsNonEnglish(title: string): boolean {
-  return /[äöüåéèêëàâîïôùûçñßãõøæœ]/i.test(title);
-}
 
 
 /**
@@ -468,17 +471,33 @@ export type NativeLanguageResult = {
 /**
  * Like anyChunkInNativeLanguage but returns the matching chunk and detected
  * language code so callers can log exactly what triggered detection.
+ *
+ * For countries with distinctive native characters (see COUNTRY_NATIVE_CHARS),
+ * the tinyld result is cross-checked against a minimum native-char count in
+ * the same chunk. This prevents a single loanword or proper noun containing
+ * one accented letter from causing a false positive — tinyld can be fooled by
+ * even one unusual character in an otherwise English paragraph.
  */
 function findNativeLanguageChunk(
   text: string,
   langCodes: string[],
+  countryCode?: string,
 ): { chunk: string; detectedCode: string } | null {
   if (!langCodes.length) return null;
   const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 80);
   const candidates = chunks.length > 0 ? chunks : [text.trim()];
+  const nativeCharEntry = countryCode ? COUNTRY_NATIVE_CHARS[countryCode] : undefined;
   for (const chunk of candidates) {
     const code = detect(chunk);
-    if (langCodes.includes(code)) return { chunk, detectedCode: code };
+    if (!langCodes.includes(code)) continue;
+    // If we have a native-char pattern for this country, require at least 2
+    // such characters in the chunk. A single accented letter from one word is
+    // not enough evidence — it too easily misleads tinyld on English text.
+    if (nativeCharEntry) {
+      const matches = chunk.match(nativeCharEntry.pattern);
+      if (!matches || matches.length < 2) continue;
+    }
+    return { chunk, detectedCode: code };
   }
   return null;
 }
@@ -587,7 +606,7 @@ export function detectNativeLanguage(
   // Fallback for languages without distinctive characters (e.g. French, Spanish).
   // If any paragraph of the description is detected as the country's language,
   // the ad is (at least partially) written in that language.
-  const nativeChunk = findNativeLanguageChunk(descText, langCodes);
+  const nativeChunk = findNativeLanguageChunk(descText, langCodes, cc);
   if (nativeChunk) {
     return {
       value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
