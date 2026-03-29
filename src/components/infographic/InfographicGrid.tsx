@@ -148,9 +148,9 @@ export default function InfographicGrid({ countries }: Props) {
     });
 
     const btnBase =
-        'rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors';
-    const btnActive = `${btnBase} bg-[#002EA2] text-white hover:bg-[#002383]`;
-    const btnInactive = `${btnBase} bg-gray-100 text-gray-600 hover:bg-gray-200`;
+        'rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors border border-[#002EA2] cursor-pointer';
+    const btnActive = `${btnBase} bg-[#002EA2] text-white hover:bg-white hover:text-[#002EA2]`;
+    const btnInactive = `${btnBase} bg-white text-[#002EA2] hover:bg-[#002EA2] hover:text-white`;
 
     return (
         <div class="w-full">
