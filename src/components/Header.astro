@@ -59,7 +59,7 @@ const { stats } = Astro.props;
                             <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">
                                 Non-native
                             </div>
-                            <div class="text-xl font-bold text-blue-600 leading-tight">
+                            <div class="text-xl font-bold text-[#002EA2] leading-tight">
                                 {stats.english_positions.toLocaleString()}
                             </div>
                         </div>
@@ -73,10 +73,10 @@ const { stats } = Astro.props;
 {
     stats && stats.total_positions > 0 && (
         <div
-            class="sm:hidden bg-blue-600/10 border-b border-blue-200 px-4 py-1.5"
+            class="sm:hidden bg-[#002EA2]/10 border-b border-[#99B3DB] px-4 py-1.5"
             aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
         >
-            <p class="text-center text-xs text-blue-900">
+            <p class="text-center text-xs text-[#001A5C]">
                 <span class="font-bold">{stats.total_countries}</span> countries
                 · <span class="font-bold">{stats.total_companies}</span>{' '}
                 companies ·{' '}
