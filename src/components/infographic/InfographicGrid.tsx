@@ -40,7 +40,7 @@ function CountryRow({
         >
             <a
                 href={`/${country.slug}`}
-                class="group relative no-underline hover:bg-blue-600 transition-colors"
+                class="group relative no-underline hover:bg-[#002EA2] transition-colors"
                 style={{ display: 'grid', gridTemplateColumns: 'subgrid', gridColumn: '1 / -1' }}
             >
                 {/* Country name */}
@@ -54,7 +54,7 @@ function CountryRow({
                         </span>
                         {country.last_updated && (
                             <span
-                                class="absolute top-full left-0 text-[0.45rem] sm:text-[0.55rem] md:text-xs text-gray-400 group-hover:text-blue-100 transition-colors whitespace-nowrap"
+                                class="absolute top-full left-0 text-[0.45rem] sm:text-[0.55rem] md:text-xs text-gray-400 group-hover:text-[#809AD1] transition-colors whitespace-nowrap"
                                 style={numFont}
                             >
                                 Updated: {new Date(country.last_updated).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
@@ -66,11 +66,11 @@ function CountryRow({
                 {/* Non-native — right-aligned */}
                 <div class="flex items-center justify-end py-4 md:py-8">
                     <div class="relative">
-                        <span class="absolute bottom-full right-0 mb-[-2px] md:mb-0 text-[0.45rem] sm:text-[0.55rem] md:text-xs font-semibold tracking-wider uppercase text-blue-600 group-hover:text-white transition-colors whitespace-nowrap">
+                        <span class="absolute bottom-full right-0 mb-[-2px] md:mb-0 text-[0.45rem] sm:text-[0.55rem] md:text-xs font-semibold tracking-wider uppercase text-[#002EA2] group-hover:text-white transition-colors whitespace-nowrap">
                             Non-native
                         </span>
                         <span
-                            class="text-base sm:text-2xl md:text-5xl font-bold text-blue-600 group-hover:text-white transition-colors leading-none"
+                            class="text-base sm:text-2xl md:text-5xl font-black text-[#002EA2] group-hover:text-white transition-colors leading-none"
                             style={numFont}
                         >
                             {formatNumber(country.english_positions)}
@@ -80,7 +80,7 @@ function CountryRow({
 
                 {/* Slash */}
                 <div class="flex items-center justify-center py-4 md:py-8 px-0.5 md:px-2">
-                    <span class="text-sm sm:text-xl md:text-4xl font-light text-gray-300 group-hover:text-blue-200 transition-colors leading-none">
+                    <span class="text-sm sm:text-xl md:text-4xl font-light text-gray-300 group-hover:text-[#99B3DB] transition-colors leading-none">
                         /
                     </span>
                 </div>
@@ -92,7 +92,7 @@ function CountryRow({
                             Total
                         </span>
                         <span
-                            class="text-base sm:text-2xl md:text-5xl font-bold text-gray-900 group-hover:text-white transition-colors leading-none"
+                            class="text-base sm:text-2xl md:text-5xl font-black text-gray-900 group-hover:text-white transition-colors leading-none"
                             style={numFont}
                         >
                             {formatNumber(country.total_positions)}
@@ -103,7 +103,7 @@ function CountryRow({
                 {/* Percentage — right-aligned */}
                 <div class="flex items-center justify-end py-4 md:py-8 pl-4 md:pl-12 pr-4 md:pr-8">
                     <span
-                        class="text-base sm:text-2xl md:text-5xl font-black text-gray-800 group-hover:text-white transition-colors leading-none"
+                        class="text-base sm:text-2xl md:text-5xl font-black text-black group-hover:text-white transition-colors leading-none"
                         style={numFont}
                     >
                         {pct}%
@@ -148,9 +148,9 @@ export default function InfographicGrid({ countries }: Props) {
     });
 
     const btnBase =
-        'rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors';
-    const btnActive = `${btnBase} bg-blue-600 text-white hover:bg-blue-700`;
-    const btnInactive = `${btnBase} bg-gray-100 text-gray-600 hover:bg-gray-200`;
+        'rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors border border-[#002EA2] cursor-pointer';
+    const btnActive = `${btnBase} bg-[#002EA2] text-white hover:bg-white hover:text-[#002EA2]`;
+    const btnInactive = `${btnBase} bg-white text-[#002EA2] hover:bg-[#002EA2] hover:text-white`;
 
     return (
         <div class="w-full">

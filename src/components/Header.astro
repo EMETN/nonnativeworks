@@ -2,49 +2,89 @@
 import type { GlobalStats } from '../lib/types';
 
 interface Props {
-  stats?: GlobalStats;
+    stats?: GlobalStats;
 }
 
 const { stats } = Astro.props;
 ---
 
-<header class="bg-white border-b border-gray-200 sticky top-0 z-50" role="banner">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2" aria-label="NonNativeWorks — home">
-        <span class="text-xl font-bold text-gray-900" aria-hidden="true">NonNativeWorks</span>
-      </a>
+<header
+    class="bg-white border-b border-gray-200 sticky top-0 z-50"
+    role="banner"
+>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <a
+                href="/"
+                class="flex items-center gap-2"
+                aria-label="NonNativeWorks — home"
+            >
+                <span class="text-xl font-bold text-gray-900" aria-hidden="true"
+                    >NonNativeWorks</span
+                >
+            </a>
 
-      {stats && stats.total_positions > 0 && (
-        <div
-          class="hidden sm:flex items-center gap-3"
-          aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
-        >
-          <div class="text-right whitespace-nowrap" aria-hidden="true">
-            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">Countries</div>
-            <div class="text-xl font-bold text-gray-900 leading-tight">{stats.total_countries}</div>
-          </div>
-          <div class="text-right whitespace-nowrap border-l border-gray-200 pl-3" aria-hidden="true">
-            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">Companies</div>
-            <div class="text-xl font-bold text-gray-900 leading-tight">{stats.total_companies}</div>
-          </div>
-          <div class="text-right whitespace-nowrap border-l border-gray-200 pl-3" aria-hidden="true">
-            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">Non-native</div>
-            <div class="text-xl font-bold text-blue-600 leading-tight">{stats.english_positions.toLocaleString()}</div>
-          </div>
+            {
+                stats && stats.total_positions > 0 && (
+                    <div
+                        class="hidden sm:flex items-center gap-3"
+                        aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
+                    >
+                        <div
+                            class="text-right whitespace-nowrap"
+                            aria-hidden="true"
+                        >
+                            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">
+                                Countries
+                            </div>
+                            <div class="text-xl font-bold text-gray-900 leading-tight">
+                                {stats.total_countries}
+                            </div>
+                        </div>
+                        <div
+                            class="text-right whitespace-nowrap border-l border-gray-200 pl-3"
+                            aria-hidden="true"
+                        >
+                            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">
+                                Companies
+                            </div>
+                            <div class="text-xl font-bold text-gray-900 leading-tight">
+                                {stats.total_companies}
+                            </div>
+                        </div>
+                        <div
+                            class="text-right whitespace-nowrap border-l border-gray-200 pl-3"
+                            aria-hidden="true"
+                        >
+                            <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">
+                                Non-native
+                            </div>
+                            <div class="text-xl font-bold text-[#002EA2] leading-tight">
+                                {stats.english_positions.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
-      )}
     </div>
-  </div>
 </header>
 
-{stats && stats.total_positions > 0 && (
-  <div
-    class="sm:hidden bg-blue-600/10 border-b border-blue-200 px-4 py-1.5"
-    aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
-  >
-    <p class="text-center text-xs text-blue-900">
-      <span class="font-bold">{stats.total_countries}</span> countries · <span class="font-bold">{stats.total_companies}</span> companies · <span class="font-bold">{stats.english_positions.toLocaleString()}</span> non-native positions
-    </p>
-  </div>
-)}
+{
+    stats && stats.total_positions > 0 && (
+        <div
+            class="sm:hidden bg-[#002EA2]/10 border-b border-[#99B3DB] px-4 py-1.5"
+            aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
+        >
+            <p class="text-center text-xs text-[#001A5C]">
+                <span class="font-bold">{stats.total_countries}</span> countries
+                · <span class="font-bold">{stats.total_companies}</span>{' '}
+                companies ·{' '}
+                <span class="font-bold">
+                    {stats.english_positions.toLocaleString()}
+                </span>{' '}
+                non-native positions
+            </p>
+        </div>
+    )
+}
