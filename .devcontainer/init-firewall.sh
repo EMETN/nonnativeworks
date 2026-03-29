@@ -97,7 +97,9 @@ for domain in \
     "careers.vaisala.com" \
     "cgi.njoyn.com" \
     "www.accenture.com" \
+    "posti.wd3.myworkdayjobs.com" \
     "careers.abb" \
+    "baronacareers.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

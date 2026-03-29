@@ -9,6 +9,8 @@
 - Wolt
 - Oura
 - Accenture
+- Posti
+- Barona (enrichment of descriptions not working yet)
 
 ## Companies by Scraping Layer
 
@@ -25,7 +27,8 @@ Detected automatically from the career page URL. No per-company config needed â€
 | Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura |
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
-| Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` | Iceye |
+| Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
+| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti |
 
 ---
 
@@ -40,6 +43,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
 | Accenture | `accenture.com` | Custom API |
+| Barona | `baronacareers.com/fi/fi/job` | Custom API |
 
 ---
 

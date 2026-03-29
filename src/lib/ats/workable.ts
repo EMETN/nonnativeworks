@@ -1,4 +1,5 @@
 import type { RawJob } from './types';
+import { titleAppearsNonEnglish } from './title-language';
 
 const DESCRIPTION_BATCH = 1;
 
@@ -108,10 +109,6 @@ export async function enrichWorkableDescriptions(jobs: RawJob[], account: string
   }
 }
 
-/** Returns true when the title contains non-ASCII chars typical of non-English languages. */
-function titleAppearsNonEnglish(title: string): boolean {
-  return /[äöüåéèêëàâîïôùûçñßãõøæœ]/i.test(title);
-}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
