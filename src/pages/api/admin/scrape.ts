@@ -7,6 +7,7 @@ import { fetchGreenhouseJobs, fetchGreenhouseCompanyName } from '../../../lib/at
 import { fetchLeverJobs, fetchLeverCompanyName } from '../../../lib/ats/lever';
 import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
 import { fetchWorkableCompanyName, fetchWorkableJobs, enrichWorkableDescriptions } from '../../../lib/ats/workable';
+import { parseWorkdayUrl, fetchWorkdayJobs, enrichWorkdayDescriptions } from '../../../lib/workday';
 import { lookupCountryFromLocation } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { logScrapeRun, type PositionLogEntry } from '../../../lib/scrape-logger';
@@ -89,6 +90,14 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
       } else if (resolvedAts === 'ashby') {
         ({ jobs: rawJobs, companyName } = await fetchAshbyJobsAndCompanyName(detection.companySlug));
         ats = 'ashby';
+
+      } else if (resolvedAts === 'workday') {
+        const parts = parseWorkdayUrl(careerUrl);
+        if (!parts) throw new Error('Could not parse Workday URL');
+        rawJobs = await fetchWorkdayJobs(parts);
+        await enrichWorkdayDescriptions(rawJobs);
+        companyName = parts.company.charAt(0).toUpperCase() + parts.company.slice(1);
+        ats = 'workday';
 
       } else if (resolvedAts === 'workable') {
         const [jobs, name] = await Promise.all([
@@ -194,6 +203,10 @@ function buildScrapeResult(
 
     for (const countryInfo of trackedCountries) {
       const { classified, signals } = classifyJobVerbose(job, countryInfo.code);
+      // Scraper-provided explicit language data overrides the classifier.
+      if (job.requires_native_language !== undefined) {
+        classified.requires_native_language = job.requires_native_language;
+      }
 
       positionLogs.push({
         title: classified.title,
@@ -252,8 +265,10 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
     console.log('[python-scraper] command:', pythonBin, scraperPath, url);
 
     const env: Record<string, string> = { ...process.env as Record<string, string> };
-    if (process.env.PLAYWRIGHT_CDP_URL) {
-      env.PLAYWRIGHT_CDP_URL = process.env.PLAYWRIGHT_CDP_URL;
+    // import.meta.env is Vite's env store — .env vars land here but may not reach process.env
+    const cdpUrl = process.env.PLAYWRIGHT_CDP_URL ?? (import.meta.env.PLAYWRIGHT_CDP_URL as string | undefined);
+    if (cdpUrl) {
+      env.PLAYWRIGHT_CDP_URL = cdpUrl;
     }
 
     const py = spawn(pythonBin, [scraperPath, url], {
