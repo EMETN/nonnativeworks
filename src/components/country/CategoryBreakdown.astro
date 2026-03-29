@@ -8,25 +8,20 @@ interface Props {
 const { categories } = Astro.props;
 
 if (categories.length === 0) return;
+
+const numFont = "font-family: 'Inter', sans-serif";
 ---
 
-<div class="bg-white border border-gray-200 rounded-xl p-6">
-  <h2 class="text-base font-semibold text-gray-900 mb-4">Breakdown by category</h2>
-  <div class="space-y-3">
-    {categories.map((cat) => (
-      <div class="flex items-center gap-3">
-        <div class="w-36 text-sm text-gray-700 truncate shrink-0">{cat.category_name}</div>
-        <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
-          <div
-            class="h-2 rounded-full bg-blue-500 transition-all"
-            style={`width: ${cat.english_percentage}%`}
-          />
-        </div>
-        <div class="text-xs text-gray-500 w-20 text-right shrink-0">
-          {cat.english_positions}/{cat.total_positions}
-          <span class="text-blue-600 font-medium ml-1">{cat.english_percentage}%</span>
-        </div>
-      </div>
+<div class="mt-12">
+  <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-6">Breakdown by category</h2>
+  <div class="flex flex-wrap gap-x-1 gap-y-2">
+    {categories.map((cat, i) => (
+      <span class="text-sm whitespace-nowrap">
+        <span class="text-gray-600">{cat.category_name}</span>
+        <span class="font-bold tabular-nums" style={numFont}>
+          <span class="text-[#002EA2] ml-0.5">{cat.english_positions}</span><span class="text-gray-500">/</span><span class="text-gray-900">{cat.total_positions}</span>
+        </span>{i < categories.length - 1 && <span class="text-gray-300 mx-1">|</span>}
+      </span>
     ))}
   </div>
 </div>
