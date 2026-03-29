@@ -1,4 +1,4 @@
-export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'workable' | 'company-api' | 'python';
+export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'workable' | 'workday' | 'company-api' | 'python';
 
 export interface RawJob {
   title: string;
@@ -11,6 +11,12 @@ export interface RawJob {
   country_code?: string;
   /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
   sourceId?: string;
+  /**
+   * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
+   * this overrides the classifier's requires_native_language result.
+   * Use only when the source provides a definitive answer — do not set based on inferred signals.
+   */
+  requires_native_language?: boolean;
 }
 
 export interface AtsDetectionResult {

@@ -1,8 +1,21 @@
 import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
+import { titleAppearsNonEnglish } from './title-language';
 
 const MAX_PAGES = 50;        // safety cap to avoid infinite loops
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
+
+/** Decode common HTML entities in a string (e.g. &amp; → &, &lt; → <). */
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+}
 
 /** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. */
 function getPath(obj: unknown, path: string): unknown {
@@ -47,8 +60,9 @@ function mapItem(
   urlPlaceholders?: Record<string, string>,
   keepQueryParams?: boolean,
 ): RawJob | null {
-  const title = getString(item, fields.title);
-  if (!title) return null;
+  const rawTitle = getString(item, fields.title);
+  if (!rawTitle) return null;
+  const title = decodeHtmlEntities(rawTitle);
 
   let url = urlTemplate
     ? buildUrlFromTemplate(item, urlTemplate)
@@ -150,10 +164,6 @@ async function fetchPage(
   return res.json();
 }
 
-/** Returns true when the title contains non-ASCII chars typical of non-English languages. */
-function titleAppearsNonEnglish(title: string): boolean {
-  return /[äöüåéèêëàâîïôùûçñßãõøæœ]/i.test(title);
-}
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
   try {
