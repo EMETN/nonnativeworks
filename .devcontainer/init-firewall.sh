@@ -110,7 +110,7 @@ for domain in \
     "careers.amd.com" \
     "careers.wolt.com" \
     "jobs.zalando.com" \
-    "bolt.eu/en/careers" \
+    "bolt.eu" \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
     "pypi.org" \
