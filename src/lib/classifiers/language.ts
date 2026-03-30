@@ -319,45 +319,45 @@ export function stripHtml(html: string): string {
  *
  * These indicate the language is preferred / nice-to-have, not required.
  */
-function buildAdvantageSignals(lang: string): string[] {
-  const langMentions = [
-    lang,
-    `${lang} skills`,
-    `${lang} language`,
-    `${lang} language skills`,
-    `${lang} proficiency`,
-    `proficiency in ${lang}`,
-    `knowledge of ${lang}`,
-    `${lang} knowledge`,
-    `${lang} communication`,
-    `preferably also ${lang}`,
-  ];
+const LANG_MENTIONS = (lang: string) => [
+  lang,
+  `${lang} skills`,
+  `${lang} language`,
+  `${lang} language skills`,
+  `${lang} proficiency`,
+  `proficiency in ${lang}`,
+  `knowledge of ${lang}`,
+  `${lang} knowledge`,
+  `${lang} communication`,
+  `preferably also ${lang}`,
+];
 
+/**
+ * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset)".
+ * Handles any intensifier adjective(s) between the article and the noun without enumerating them.
+ * Examples: "is an advantage", "is a big plus", "would be a strong asset", "seen as a huge advantage".
+ */
+function buildAdvantageRegex(lang: string): RegExp {
+  const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(
+    `(?:${escaped.join('|')})\\s+(?:(?:is|would be)(?:\\s+considered)?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
+  );
+}
+
+function buildAdvantageSignals(lang: string): string[] {
+  // Only modifiers that don't follow the "is a(n) [adj] advantage/plus/asset/bonus" pattern —
+  // those are handled by buildAdvantageRegex above.
   const advantageModifiers = [
-    ' is an advantage',
-    ' is a plus',
-    ' is a big plus',
-    ' is a strong plus',
-    ' is a bonus',
     ' is preferred',
     ' is desirable',
     ' is nice to have',
     ' is beneficial',
-    ' would be an advantage',
-    ' would be a plus',
     ' would be beneficial',
-    ' would be an asset',
-    ' is considered an advantage',
-    ' is considered a plus',
-    ' is considered a bonus',
     ' is considered an additional qualification',
-    ' as a plus',
-    ' as an advantage',
-    ' seen as an advantage',
   ];
 
   const signals: string[] = [];
-  for (const mention of langMentions) {
+  for (const mention of LANG_MENTIONS(lang)) {
     for (const modifier of advantageModifiers) {
       signals.push(`${mention}${modifier}`);
     }
@@ -365,6 +365,7 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`nice to have: ${lang}`);
   signals.push(`nice to have ${lang}`);
   signals.push(`preferably ${lang}`);
+  signals.push(`preferably also ${lang}`);
   return signals;
 }
 
@@ -567,6 +568,13 @@ export function detectNativeLanguage(
         };
       }
     }
+    const advMatch = buildAdvantageRegex(lang).exec(combined);
+    if (advMatch) {
+      return {
+        value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+        signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: advMatch[0] }],
+      };
+    }
   }
 
   // Group-language advantage phrases (e.g. "fluent in a Nordic language").
@@ -665,19 +673,29 @@ export function detectNativeLanguage(
     const countryKeywordSet = new Set(languages);
     for (const [kw, canonicalName] of Object.entries(KEYWORD_TO_CANONICAL_NAME)) {
       if (countryKeywordSet.has(kw)) continue; // already covered by Phase 2a
-      for (const signal of buildRequirementSignals(kw)) {
-        if (combined.includes(signal)) {
-          return {
-            value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [],
-            signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
-          };
-        }
+      // Advantage signals are checked before requirement signals — a phrase like
+      // "proficiency in Finnish is a big advantage" contains "proficiency in finnish"
+      // which is also a requirement signal substring, so advantage must win.
+      const advMatch = buildAdvantageRegex(kw).exec(combined);
+      if (advMatch) {
+        return {
+          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
+          signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: advMatch[0] }],
+        };
       }
       for (const signal of buildAdvantageSignals(kw)) {
         if (combined.includes(signal)) {
           return {
             value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
             signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: signal }],
+          };
+        }
+      }
+      for (const signal of buildRequirementSignals(kw)) {
+        if (combined.includes(signal)) {
+          return {
+            value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [],
+            signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
           };
         }
       }
@@ -700,14 +718,19 @@ export function detectNativeLanguage(
   }
 
   // ── Phase 2c: Explicit English-only confirmation ─────────────────────────
-  for (const phrase of ENGLISH_ONLY_PHRASES) {
-    if (combined.includes(phrase)) {
-      return {
-        value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
-        signals: [{ phase: '2c', description: 'English-only confirmation', matched: phrase }],
-      };
-    }
-  }
+  // Disabled: "working language is English" can coexist with a local language
+  // requirement (e.g. "our working language is English, but Finnish is required
+  // for client communication"). Falls through to 2d which reaches the same
+  // conclusion by absence of any positive signal.
+  //
+  // for (const phrase of ENGLISH_ONLY_PHRASES) {
+  //   if (combined.includes(phrase)) {
+  //     return {
+  //       value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
+  //       signals: [{ phase: '2c', description: 'English-only confirmation', matched: phrase }],
+  //     };
+  //   }
+  // }
 
   // ── Phase 2d default ─────────────────────────────────────────────────────
   // No explicit signals found — absence of any local language requirement is

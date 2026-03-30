@@ -185,17 +185,19 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
  * For each job that needs HTML — either for description classification (English title,
  * no existing HTML) or for location extraction (no location yet) — fetch the job page.
  * Attaches descriptionHtml for English-titled jobs; extracts location via regex if provided.
+ * When descriptionRegex is provided, only the matched HTML fragment is stored as
+ * descriptionHtml instead of the full page (avoids native-language nav/chrome false positives).
  */
-export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp): Promise<void> {
+export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp, descriptionRegex?: RegExp): Promise<void> {
   const targets = jobs.filter((j) => {
     if (!j.url) return false;
-    const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml;
+    const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml && !j.descriptionText;
     const wantsLocation = !!locationRegex && !j.location;
     return wantsDescription || wantsLocation;
   });
 
   const noUrl = jobs.length - targets.length;
-  console.log(`[enrichDescriptions] ${targets.length} targets (${noUrl} skipped — no url or already enriched), locationRegex=${locationRegex ?? 'none'}`);
+  console.log(`[enrichDescriptions] ${targets.length} targets (${noUrl} skipped — no url or already enriched), locationRegex=${locationRegex ?? 'none'}, descriptionRegex=${descriptionRegex ?? 'none'}`);
 
   let locationsSet = 0;
   let htmlFailed = 0;
@@ -209,8 +211,13 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp)
           htmlFailed++;
           return;
         }
-        if (!titleAppearsNonEnglish(job.title)) {
-          job.descriptionHtml = html;
+        if (!titleAppearsNonEnglish(job.title) && !job.descriptionText) {
+          if (descriptionRegex) {
+            const m = html.match(descriptionRegex);
+            job.descriptionHtml = m?.[1] ?? html;
+          } else {
+            job.descriptionHtml = html;
+          }
         }
         if (locationRegex && !job.location) {
           const m = html.match(locationRegex);
@@ -635,7 +642,8 @@ export async function fetchCompanyApiJobs(
 
   if (config.fetchDescription || config.locationFromHtml) {
     const locationRegex = config.locationFromHtml ? new RegExp(config.locationFromHtml) : undefined;
-    await enrichDescriptions(enrichmentTargets, locationRegex);
+    const descriptionRegex = config.descriptionFromHtml ? new RegExp(config.descriptionFromHtml, 's') : undefined;
+    await enrichDescriptions(enrichmentTargets, locationRegex, descriptionRegex);
   }
 
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {

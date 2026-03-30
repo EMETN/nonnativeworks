@@ -1,16 +1,18 @@
 # Companies tracked
 
-- Gofore  (needs still some work, language classifier not working perfectly)
+- Accenture
+- Barona (enrichment of descriptions not working yet)
+- Gofore
 - Nokia
 - Nordea
 - OP Financial Group
+- Oura
+- Posti
 - Reaktor
+- Rovio
+- Smartly
 - Tieto
 - Wolt
-- Oura
-- Accenture
-- Posti
-- Barona (enrichment of descriptions not working yet)
 
 ## Companies by Scraping Layer
 
@@ -24,7 +26,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
-| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura |
+| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly |
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
@@ -65,7 +67,7 @@ Any company not matched by layers 1, 1.5, or Attrax detection falls here. The sc
 
 | Company | Hostname | Notes |
 |---------|----------|-------|
-| _(add manually)_ | | |
+| Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
 
 
 
