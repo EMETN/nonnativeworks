@@ -11,9 +11,7 @@
     "runArgs": [
         "--cap-add=NET_ADMIN",
         "--cap-add=NET_RAW",
-        "--name=NonNativeWorks",
-        "--env-file",
-        "${localWorkspaceFolder}/.env"
+        "--name=NonNativeWorks"
     ],
     "customizations": {
         "vscode": {
@@ -57,5 +55,5 @@
     "workspaceFolder": "/workspace",
     "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
     "waitFor": "postStartCommand",
-    "postCreateCommand": "git config user.name \"$GIT_USER_NAME\" && git config user.email \"$GIT_USER_EMAIL\""
+    "postCreateCommand": "pnpm install"
 }
