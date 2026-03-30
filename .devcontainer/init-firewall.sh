@@ -100,6 +100,9 @@ for domain in \
     "posti.wd3.myworkdayjobs.com" \
     "careers.abb" \
     "baronacareers.com" \
+    "nitor.com" \
+    "alpha-sense.com" \
+    "rovio.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
