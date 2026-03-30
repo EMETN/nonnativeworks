@@ -112,6 +112,14 @@ export interface CompanyApiConfig {
    */
   locationFromHtml?: string;
   /**
+   * Regex string (one capture group) applied to the fetched job page HTML to extract
+   * only the description section for language classification. When set, only the
+   * matched HTML fragment is stored as descriptionHtml instead of the full page.
+   * Use this when the full page contains native-language navigation or chrome that
+   * would cause false positives in the character-frequency language classifier.
+   */
+  descriptionFromHtml?: string;
+  /**
    * When true, individually fetch each job's URL to get its description HTML —
    * but only for jobs whose title is in English (non-ASCII titles already signal
    * a local-language requirement so there's nothing to gain from fetching them).
@@ -288,9 +296,12 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       id: 'id',
     },
     companyName: 'Gofore',
-    // Fetch each job page to extract its city list and description text.
+    // content.rendered is the full English post body — use it directly for language
+    // classification instead of fetching individual job pages.
+    descriptionFields: ['content.rendered'],
+    // No location field in the API response — city names are extracted from the HTML
+    // of each job page and resolved to countries via the city-to-country map.
     // Location lives in: <div class="locations"><h3>…</h3><p>City1, City2</p></div>
-    fetchDescription: true,
     locationFromHtml: 'class="locations"[\\s\\S]*?<p>(.*?)<\\/p>',
   },
 
