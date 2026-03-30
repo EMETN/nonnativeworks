@@ -13,6 +13,7 @@
 - Smartly
 - Tieto
 - Wolt
+- Zalando
 
 ## Companies by Scraping Layer
 
@@ -68,6 +69,7 @@ Any company not matched by layers 1, 1.5, or Attrax detection falls here. The sc
 | Company | Hostname | Notes |
 |---------|----------|-------|
 | Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
+| Zalando | `jobs.zalando.com` | Next.js RSC payload parsed from `self.__next_f.push` chunks; offices mapped to country codes; descriptions enriched via static fetch |
 
 
 
