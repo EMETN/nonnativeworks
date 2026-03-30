@@ -24,6 +24,7 @@ from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright
 from platforms.barona import scrape_barona_playwright
 from platforms.njoyn import scrape_njoyn_playwright
 from platforms.rovio import scrape_rovio_static
+from platforms.zalando import scrape_zalando_static
 
 MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 
@@ -31,6 +32,7 @@ PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
 PLATFORM_BARONA = "barona"
 PLATFORM_ROVIO = "rovio"
+PLATFORM_ZALANDO = "zalando"
 
 # Some career sites cap unfiltered results (e.g. 250 of 400+ jobs).
 # These overrides replace the input URL with a pre-filtered one that
@@ -55,6 +57,8 @@ def detect_platform(html: str, url: str = "") -> str | None:
         return PLATFORM_BARONA
     if "rovio.com" in url:
         return PLATFORM_ROVIO
+    if "jobs.zalando.com" in url:
+        return PLATFORM_ZALANDO
     return None
 
 
@@ -163,6 +167,16 @@ def main():
             print(f"Rovio static found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Rovio static failed: {e}", file=sys.stderr)
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
+    if platform == PLATFORM_ZALANDO:
+        print("jobs.zalando.com detected — using dedicated static scraper", file=sys.stderr)
+        try:
+            jobs = scrape_zalando_static(url)
+            print(f"Zalando static found {len(jobs)} jobs", file=sys.stderr)
+        except Exception as e:
+            print(f"Zalando static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 
