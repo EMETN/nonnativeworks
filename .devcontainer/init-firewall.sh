@@ -103,6 +103,16 @@ for domain in \
     "nitor.com" \
     "alpha-sense.com" \
     "rovio.com" \
+    "careers.kone.com" \
+    "careers.microsoft.com" \
+    "apply.careers.microsoft.com" \
+    "s-pankki.fi" \
+    "careers.amd.com" \
+    "careers.wolt.com" \
+    "jobs.zalando.com" \
+    "bolt.eu/en/careers" \
+    "jobs.sap.com" \
+    "jobs.siemens-healthineers.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
