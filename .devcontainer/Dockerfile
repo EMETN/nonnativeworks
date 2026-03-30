@@ -1,7 +1,4 @@
-FROM node:22
-
-ARG TZ
-ENV TZ="$TZ"
+FROM node:25
 
 ARG CLAUDE_CODE_VERSION=latest
 
