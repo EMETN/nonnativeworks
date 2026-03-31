@@ -113,6 +113,7 @@ for domain in \
     "bolt.eu" \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
+    "solita.fi" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
