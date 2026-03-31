@@ -340,7 +340,7 @@ const LANG_MENTIONS = (lang: string) => [
 function buildAdvantageRegex(lang: string): RegExp {
   const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return new RegExp(
-    `(?:${escaped.join('|')})\\s+(?:(?:is|would be)(?:\\s+considered)?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
+    `(?:${escaped.join('|')})\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
   );
 }
 
