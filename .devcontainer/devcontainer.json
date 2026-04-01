@@ -44,7 +44,8 @@
     "remoteUser": "node",
     "mounts": [
         "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
-        "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+        "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
+        "source=doppler-config-${devcontainerId},target=/home/node/.doppler,type=volume"
     ],
     "containerEnv": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
@@ -53,7 +54,7 @@
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
     "workspaceFolder": "/workspace",
-    "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+    "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && doppler run --command 'git config user.name \"$GIT_USER_NAME\" && git config user.email \"$GIT_USER_EMAIL\"'",
     "waitFor": "postStartCommand",
     "postCreateCommand": "pnpm install"
 }

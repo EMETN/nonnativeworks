@@ -27,26 +27,22 @@ Discover companies that welcome non-native language speakers. Track open positio
 
 All environment variables (Supabase keys, git config, etc.) are managed via [Doppler](https://www.doppler.com/). The `doppler.yaml` at the repo root auto-selects the project and config.
 
-After the devcontainer is created:
+After the **first** devcontainer build:
 
 ```bash
 doppler login          # Authenticate (opens browser)
 doppler setup          # Auto-configured via doppler.yaml
 ```
 
-Then set your git identity in your personal config (each developer does this once):
+Both credentials and setup are persisted in a Docker volume (`~/.doppler`), so you won't need to re-run these after rebuilding the container.
+
+Each developer's secrets (Supabase keys, git identity, etc.) live in their own `dev_personal` config. Set your git identity once:
 
 ```bash
 doppler secrets set --config dev_personal GIT_USER_NAME="Your Name" GIT_USER_EMAIL="your@email.com"
 ```
 
-And apply it:
-
-```bash
-doppler run -- sh -c 'git config user.name "$GIT_USER_NAME" && git config user.email "$GIT_USER_EMAIL"'
-```
-
-Shared secrets (Supabase keys, etc.) live in the `dev` config. Personal overrides like git identity go in your `dev_personal` config, which inherits from `dev` automatically.
+Git config is applied automatically on container start via `postStartCommand`.
 
 All `pnpm` scripts (`dev`, `build`, `preview`) are wrapped with `doppler run --` so env vars are injected automatically.
 
