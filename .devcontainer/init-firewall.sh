@@ -1,6 +1,10 @@
 #!/bin/bash
+set -e
+set -x
 set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
+
+sleep 3
 
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
@@ -13,6 +17,10 @@ iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
 ipset destroy allowed-domains 2>/dev/null || true
+
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
 
 # 2. Selectively restore ONLY internal Docker DNS resolution
 if [ -n "$DOCKER_DNS_RULES" ]; then
@@ -60,7 +68,7 @@ while read -r cidr; do
         exit 1
     fi
     echo "Adding GitHub range $cidr"
-    ipset add allowed-domains "$cidr"
+    ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add other allowed domains
@@ -74,10 +82,46 @@ for domain in \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com" \
     "lubcqmviewdnjgpkfzin.supabase.co" \
-    "aws-0-eu-central-1.pooler.supabase.com"\
+    "aws-0-eu-central-1.pooler.supabase.com" \
     "api.doppler.com" \
     "cli.doppler.com" \
-    "packages.doppler.com"; do
+    "packages.doppler.com" \
+    "boards-api.greenhouse.io" \
+    "api.lever.co" \
+    "api.ashbyhq.com" \
+    "apply.workable.com" \
+    "gofore.com" \
+    "op-careers.fi" \
+    "jobs.nokia.com" \
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "careers.tieto.com" \
+    "nordea.com" \
+    "www.nordea.com" \
+    "careers.vaisala.com" \
+    "cgi.njoyn.com" \
+    "www.accenture.com" \
+    "posti.wd3.myworkdayjobs.com" \
+    "careers.abb" \
+    "baronacareers.com" \
+    "nitor.com" \
+    "alpha-sense.com" \
+    "rovio.com" \
+    "careers.kone.com" \
+    "careers.microsoft.com" \
+    "apply.careers.microsoft.com" \
+    "s-pankki.fi" \
+    "careers.amd.com" \
+    "careers.wolt.com" \
+    "jobs.zalando.com" \
+    "bolt.eu" \
+    "jobs.sap.com" \
+    "jobs.siemens-healthineers.com" \
+    "solita.fi" \
+    "pypi.org" \
+    "files.pythonhosted.org" \
+    "playwright.azureedge.net" \
+    "storage.googleapis.com" \
+    "host.docker.internal" ; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

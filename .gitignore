@@ -14,6 +14,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# scrape logs
+logs/
+
 
 # environment variables
 .env
@@ -27,3 +30,17 @@ pnpm-debug.log*
 
 # claude local settings
 .claude/
+
+# Python virtual environment
+*/.venv/
+/.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+
+*/.vscode/
+.vscode/
+
+cookies.txt

@@ -135,15 +135,53 @@ async function upsertEntry(
     company_id: companyRow.id,
     title: p.title,
     url: p.url || null,
+    city: p.city ?? null,
     category_id: categoryMap.get(p.category) ?? categoryMap.get('other'),
     requires_native_language: p.requires_native_language,
+    local_language_advantage: p.local_language_advantage ?? false,
+    required_languages: p.required_languages ?? [],
+    preferred_languages: p.preferred_languages ?? [],
     extracted_at: new Date().toISOString(),
   }));
 
   const { error: insertErr } = await supabase.from('positions').insert(positionRows);
   if (insertErr) throw new Error(`Could not insert positions: ${insertErr.message}`);
 
+  // Daily snapshot — one record per (company, country) per calendar day
+  await takeSnapshotIfNeeded(supabase, company_name, countryId, positions);
+
   return { company: company_name, country, positions: positions.length };
+}
+
+async function takeSnapshotIfNeeded(
+  supabase: SupabaseClient,
+  companyName: string,
+  countryId: string,
+  positions: CompanyEntry['positions'],
+) {
+  try {
+    const today = new Date().toISOString().slice(0, 10); // "2026-03-23"
+    const { data: existing } = await supabase
+      .from('company_snapshots')
+      .select('id')
+      .eq('company_name', companyName)
+      .eq('country_id', countryId)
+      .gte('snapshotted_at', `${today}T00:00:00Z`)
+      .maybeSingle();
+
+    if (!existing) {
+      const englishCount = positions.filter((p) => !p.requires_native_language).length;
+      await supabase.from('company_snapshots').insert({
+        company_name: companyName,
+        country_id: countryId,
+        total_positions: positions.length,
+        english_positions: englishCount,
+      });
+    }
+  } catch (err) {
+    // Snapshot failure must not fail the upload
+    console.error('Snapshot insert failed (non-fatal):', err);
+  }
 }
 
 function json(data: unknown, status: number) {

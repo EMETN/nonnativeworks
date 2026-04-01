@@ -13,9 +13,13 @@ export const PositionSchema = z.object({
   country_code: z.string().length(2).toUpperCase().optional(),
   title: z.string().min(1, 'Position title is required'),
   url: urlTransform,
+  city: z.string().optional(),
   requires_native_language: z.boolean({
     required_error: 'requires_native_language must be true or false',
   }),
+  local_language_advantage: z.boolean().default(false),
+  required_languages: z.array(z.string()).default([]),
+  preferred_languages: z.array(z.string()).default([]),
   category: z
     .string()
     .refine(
