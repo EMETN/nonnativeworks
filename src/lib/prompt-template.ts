@@ -33,13 +33,23 @@ export function generatePrompt(careerPageUrl: string): string {
                             title: 'Senior Software Engineer (Helsinki)',
                             url: 'https://example.com/jobs/123',
                             requires_native_language: false,
+                            local_language_advantage: false,
                             category: 'engineering',
+                        },
+                        {
+                            country_code: 'FI',
+                            title: 'Customer Success Manager',
+                            url: 'https://example.com/jobs/127',
+                            requires_native_language: false,
+                            local_language_advantage: true,
+                            category: 'customer-support',
                         },
                         {
                             country_code: 'FI',
                             title: 'Account Manager – Finnish clients',
                             url: 'https://example.com/jobs/124',
                             requires_native_language: true,
+                            local_language_advantage: false,
                             category: 'sales',
                         },
                     ],
@@ -57,6 +67,7 @@ export function generatePrompt(careerPageUrl: string): string {
                             title: 'Vertriebsleiter (Berlin)',
                             url: 'https://example.com/jobs/125',
                             requires_native_language: true,
+                            local_language_advantage: false,
                             category: 'sales',
                         },
                         {
@@ -64,6 +75,7 @@ export function generatePrompt(careerPageUrl: string): string {
                             title: 'Backend Engineer (Munich)',
                             url: 'https://example.com/jobs/126',
                             requires_native_language: false,
+                            local_language_advantage: false,
                             category: 'engineering',
                         },
                     ],
@@ -116,8 +128,16 @@ Career page URL: ${careerPageUrl}
 
       When in doubt, default to \`true\`.
 
-   c. The direct URL to the individual job posting page (\`url\`). This must be the link to that specific position, not the general careers page. If no individual URL exists, omit the field.
-   d. The best-fitting category from this list (use the slug value):
+   c. Whether the local language is listed as a **nice-to-have or advantage** (\`local_language_advantage\`).
+
+      Set \`local_language_advantage: true\` ONLY when ALL of these are true:
+      - \`requires_native_language\` is \`false\` for this position
+      - The posting explicitly mentions the local language as preferred, beneficial, or a plus — e.g. "Finnish is a plus", "knowledge of Finnish is an advantage", "proficiency in Finnish is considered an advantage", "Finnish would be beneficial"
+
+      Set \`local_language_advantage: false\` in all other cases, including when \`requires_native_language\` is \`true\`.
+
+   d. The direct URL to the individual job posting page (\`url\`). This must be the link to that specific position, not the general careers page. If no individual URL exists, omit the field.
+   e. The best-fitting category from this list (use the slug value):
 ${categoryList}
 
 6. Set \`is_english_company: true\` only if the **entire company** operates in English as its primary language (e.g. a US/UK-headquartered company). This applies to all country entries for the same company.

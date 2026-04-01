@@ -8,7 +8,7 @@ export const GET: APIRoute = async () => {
 
   const { data, error } = await supabase
     .from('company_stats')
-    .select('company_id, name, country_id, total_positions, updated_at')
+    .select('company_id, name, country_id, career_page_url, total_positions, updated_at')
     .order('name');
 
   if (error) {
@@ -29,12 +29,15 @@ export const GET: APIRoute = async () => {
     company_id: string;
     name: string;
     country_id: string;
+    career_page_url: string | null;
     total_positions: number;
     updated_at: string;
   }) => ({
     company_id: co.company_id,
     name: co.name,
+    country_id: co.country_id,
     country_name: countryMap.get(co.country_id) ?? '—',
+    career_page_url: co.career_page_url ?? null,
     total_positions: co.total_positions,
     updated_at: co.updated_at,
   }));
@@ -43,21 +46,37 @@ export const GET: APIRoute = async () => {
 };
 
 export const DELETE: APIRoute = async ({ url }) => {
-  const id = url.searchParams.get('id');
-  if (!id || !UUID_RE.test(id)) {
-    return json({ error: 'Invalid or missing id parameter' }, 400);
-  }
-
   const supabase = createSupabaseServiceClient();
 
-  // Positions cascade-delete via FK, so just delete the company
+  // ?name=<company name> — delete all countries for a company in one go
+  const name = url.searchParams.get('name');
+  if (name) {
+    const { error } = await supabase
+      .from('companies')
+      .delete()
+      .eq('name', name);
+
+    if (error) {
+      console.error('DELETE /api/admin/companies (by name):', error.message);
+      return json({ error: 'Failed to delete company' }, 500);
+    }
+
+    return json({ ok: true }, 200);
+  }
+
+  // ?id=<uuid> — delete a single company row (kept for potential future use)
+  const id = url.searchParams.get('id');
+  if (!id || !UUID_RE.test(id)) {
+    return json({ error: 'Provide either ?name= or a valid ?id=' }, 400);
+  }
+
   const { error } = await supabase
     .from('companies')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('DELETE /api/admin/companies:', error.message);
+    console.error('DELETE /api/admin/companies (by id):', error.message);
     return json({ error: 'Failed to delete company' }, 500);
   }
 

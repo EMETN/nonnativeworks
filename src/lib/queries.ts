@@ -160,10 +160,12 @@ export async function getPositionsByCountry(
       title,
       url,
       requires_native_language,
+      local_language_advantage,
       category:categories(name),
       company:companies!inner(country_id)
     `)
-    .eq('company.country_id', countryId);
+    .eq('company.country_id', countryId)
+    .eq('requires_native_language', false);
 
   if (error) { console.error('getPositionsByCountry:', error.message); throw new Error('Failed to load positions'); }
 
@@ -174,6 +176,7 @@ export async function getPositionsByCountry(
     url: row.url ?? null,
     category_name: row.category?.name ?? 'Other',
     requires_native_language: row.requires_native_language,
+    local_language_advantage: row.local_language_advantage ?? false,
   }));
 }
 

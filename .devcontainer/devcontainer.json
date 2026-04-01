@@ -2,6 +2,7 @@
     "name": "NonNativeWorks",
     "build": {
         "dockerfile": "Dockerfile",
+        "context": "..",
         "args": {
             "CLAUDE_CODE_VERSION": "latest",
             "GIT_DELTA_VERSION": "0.18.2",
