@@ -7,9 +7,9 @@
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
-    "build": "astro build",
-    "preview": "astro preview",
+    "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
+    "build": "doppler run -- astro build",
+    "preview": "doppler run -- astro preview",
     "astro": "astro",
     "postinstall": "node scripts/patch-preact-vite.mjs"
   },
@@ -18,7 +18,7 @@
     "@astrojs/node": "^10.0.4",
     "@astrojs/preact": "^5.1.0",
     "@preact/preset-vite": "^2.10.5",
-    "@supabase/ssr": "^0.9.0",
+    "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.100.1",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^6.1.1",
