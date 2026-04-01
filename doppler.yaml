@@ -1,0 +1,3 @@
+setup:
+    project: nonnativeworks
+    config: dev_personal
