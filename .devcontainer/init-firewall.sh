@@ -121,6 +121,9 @@ for domain in \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
     "storage.googleapis.com" \
+    "eu.i.posthog.com" \
+    "eu-assets.i.posthog.com" \
+    "eu.posthog.com" \
     "host.docker.internal" ; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
