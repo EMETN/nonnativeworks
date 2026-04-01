@@ -83,6 +83,9 @@ for domain in \
     "update.code.visualstudio.com" \
     "lubcqmviewdnjgpkfzin.supabase.co" \
     "aws-0-eu-central-1.pooler.supabase.com" \
+    "api.doppler.com" \
+    "cli.doppler.com" \
+    "packages.doppler.com" \
     "boards-api.greenhouse.io" \
     "api.lever.co" \
     "api.ashbyhq.com" \

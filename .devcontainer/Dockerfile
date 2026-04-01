@@ -1,9 +1,11 @@
-FROM node:22
-
-ARG TZ
-ENV TZ="$TZ"
+FROM node:25
 
 ARG CLAUDE_CODE_VERSION=latest
+
+# Install Doppler CLI
+RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg && \
+  echo "deb [signed-by=/usr/share/keyrings/doppler-archive-keyring.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main" | tee /etc/apt/sources.list.d/doppler-cli.list && \
+  apt-get update && apt-get install doppler
 
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,9 +36,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R node:node /usr/local/share
 
-# Enable corepack and activate pnpm
-RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
-
 ARG USERNAME=node
 
 # Persist bash history.
@@ -49,8 +48,8 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
 ENV DEVCONTAINER=true
 
 # Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/node/.claude && \
-  chown -R node:node /workspace /home/node/.claude
+RUN mkdir -p /workspace /home/node/.claude /home/node/.doppler && \
+  chown -R node:node /workspace /home/node/.claude /home/node/.doppler
 
 WORKDIR /workspace
 
@@ -108,9 +107,13 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 # (Optional) auto-activate venv in terminal
 RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
 
+# Corepack was removed from Node 25+, install it explicitly
+RUN npm install -g corepack && corepack enable && corepack install --global pnpm@latest
+
+ENV PATH="/home/node/.local/bin:$PATH"
+
 # Install Claude (global tool, uses npm intentionally)
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
-
 
 # Copy and set up firewall script
 COPY .devcontainer/init-firewall.sh /usr/local/bin/
