@@ -11,6 +11,8 @@ export interface RawJob {
   country_code?: string;
   /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
   sourceId?: string;
+  /** Explicit city name when the scraper can provide it separately from the country-resolution location string. */
+  city?: string;
   /**
    * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
    * this overrides the classifier's requires_native_language result.
