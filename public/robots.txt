@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Disallow: /ph-events
+Disallow: /ph-static
 
 Sitemap: /sitemap.xml
