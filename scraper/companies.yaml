@@ -1,0 +1,29 @@
+# Scheduled scrape job — company list
+#
+# Add a company here ONLY after testing it manually via the admin scraper tab
+# and confirming that the results look correct.
+#
+# Dry-run to validate without uploading:
+#   python scraper/batch_run.py --dry-run
+#
+# ─── Fields ───────────────────────────────────────────────────────────────────
+#   url             Career page URL passed to the scraper (required)
+#   min_positions   Minimum expected positions across all tracked countries.
+#                   The batch job fails this company if fewer are found.
+#                   Set conservatively — companies do occasionally have slow
+#                   hiring periods. Default: 1
+#   is_english_company  Flag the company as English-only in the UI. Default: false
+# ──────────────────────────────────────────────────────────────────────────────
+
+companies: []
+
+# Examples — uncomment and fill in real values:
+#
+# ATS-based (Greenhouse, Lever, Ashby, Workable — fast, no browser needed):
+#   - url: https://boards.greenhouse.io/acme
+#     min_positions: 3
+#
+# Python/Playwright scraper (njoyn, attrax, barona, etc.):
+#   - url: https://careers.example.com
+#     min_positions: 1
+#     is_english_company: true

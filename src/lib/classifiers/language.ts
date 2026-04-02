@@ -440,6 +440,11 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang}/english`,
     `english/${lang}`,
     `written and spoken English and ${lang}`,
+    // "skills in X and in English" — co-requirement with "in" before each language
+    `in ${lang} and in english`,
+    `in english and in ${lang}`,
+    `in ${lang} and english`,
+    `${lang} and in english`,
     // Discussion / communication ability
     `discussions in ${lang}`,
     // Minimum level requirements — even basic knowledge means English alone isn't enough

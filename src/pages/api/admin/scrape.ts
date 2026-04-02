@@ -253,6 +253,36 @@ function buildScrapeResult(
   };
 }
 
+// ─── Render migration path ────────────────────────────────────────────────────
+// Currently this function spawns a local Python subprocess (devcontainer dev).
+//
+// To move the Python scraper to a Render-hosted service instead:
+//
+// 1. Deploy scraper/app.py to Render (see that file for full instructions).
+//
+// 2. Set SCRAPER_SERVICE_URL in your Vercel environment variables
+//    (e.g. https://your-scraper.onrender.com).
+//
+// 3. Replace the function body below with an HTTP call:
+//
+//    const scraperServiceUrl = import.meta.env.SCRAPER_SERVICE_URL as string | undefined;
+//    if (!scraperServiceUrl) throw new Error('SCRAPER_SERVICE_URL is not set');
+//    const res = await fetch(`${scraperServiceUrl}/scrape`, {
+//      method: 'POST',
+//      headers: {
+//        'Content-Type': 'application/json',
+//        'x-scraper-secret': import.meta.env.SCRAPER_SECRET ?? '',
+//      },
+//      body: JSON.stringify({ url }),
+//      signal: AbortSignal.timeout(PYTHON_TIMEOUT_MS),
+//    });
+//    if (!res.ok) throw new Error(await res.text());
+//    return res.json() as Promise<RawJob[]>;
+//
+// 4. Keep the subprocess fallback for local dev by checking:
+//    if (scraperServiceUrl) { /* HTTP call */ } else { /* spawn below */ }
+//
+// ─────────────────────────────────────────────────────────────────────────────
 function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
   return new Promise((resolve, reject) => {
     // Check venv locations in order: system-installed (Docker), local dev fallback

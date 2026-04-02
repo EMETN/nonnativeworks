@@ -3,6 +3,16 @@ import { createSupabaseClient } from './lib/supabase';
 
 const PROTECTED_PREFIXES = ['/admin', '/api/admin'];
 
+// Shared secret for machine-to-machine calls (e.g. GitHub Actions batch job).
+// Set SCRAPER_SECRET in your environment. Requests bearing a matching
+// X-Scraper-Secret header bypass both CSRF and session auth.
+const SCRAPER_SECRET = import.meta.env.SCRAPER_SECRET as string | undefined;
+
+function hasValidScraperSecret(request: Request): boolean {
+  if (!SCRAPER_SECRET) return false;
+  return request.headers.get('x-scraper-secret') === SCRAPER_SECRET;
+}
+
 function isProtectedRoute(pathname: string): boolean {
   if (pathname === '/admin/login') return false;
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -27,6 +37,12 @@ function checkOrigin(request: Request): boolean {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
   const { request } = context;
+
+  // Machine-to-machine bypass: skip CSRF + auth for requests with the scraper secret.
+  // Used by the GitHub Actions batch job (scraper/batch_run.py).
+  if (isProtectedRoute(pathname) && hasValidScraperSecret(request)) {
+    return next();
+  }
 
   // CSRF: verify origin on state-changing requests to protected routes
   if (isProtectedRoute(pathname) && isStateChangingRequest(request.method)) {
