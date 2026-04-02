@@ -7,12 +7,17 @@ All scraping and classification is delegated to the existing TypeScript API rout
 so there is no logic duplication.
 
 Usage:
-    python scraper/batch_run.py [--dry-run] [--api-url URL]
+    python scraper/batch_run.py [--dry-run] [--api-url URL] [--slice INDEX TOTAL]
 
 Options:
-    --dry-run    Scrape and validate but do not upload to the database.
-    --api-url    Base URL of the Astro server.
-                 Default: http://localhost:4321 (local server in GitHub Actions).
+    --dry-run         Scrape and validate but do not upload to the database.
+    --api-url         Base URL of the Astro server.
+                      Default: http://localhost:4321 (local server in GitHub Actions).
+    --slice INDEX TOTAL
+                      Process only the INDEX-th slice of companies (0-based), where
+                      the full list is split into TOTAL slices by round-robin.
+                      Used by GitHub Actions matrix jobs to run companies in parallel.
+                      Default: 0 1 (all companies).
 
 Environment:
     SCRAPER_SECRET   Must match the SCRAPER_SECRET set on the Astro server.
@@ -47,10 +52,11 @@ import argparse
 import os
 import sys
 import time
-from pathlib import Path
+from datetime import datetime, timezone
 
 import requests
 import yaml
+from pathlib import Path
 
 COMPANIES_FILE = Path(__file__).parent / "companies.yaml"
 
@@ -63,6 +69,11 @@ def _load_companies() -> list[dict]:
         data = yaml.safe_load(f)
     companies = (data or {}).get("companies") or []
     return [c for c in companies if c]  # drop nulls from empty yaml list
+
+
+def _slice_companies(companies: list[dict], index: int, total: int) -> list[dict]:
+    """Round-robin partition: slice INDEX takes every TOTAL-th company starting at INDEX."""
+    return [c for i, c in enumerate(companies) if i % total == index]
 
 
 def _wait_for_server(api_url: str, max_wait: int = 30) -> None:
@@ -133,28 +144,75 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
     return resp.json()
 
 
+def _write_github_summary(entries: list[dict]) -> None:
+    """Append a Markdown results table to $GITHUB_STEP_SUMMARY if set."""
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+
+    lines = [
+        "## Scrape results\n",
+        "| Company | Countries | Positions | Skipped | Status |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for e in entries:
+        company = e.get("company_name") or e["url"]
+        countries = ", ".join(e.get("countries", [])) or "—"
+        positions = str(e.get("total_positions", "—"))
+        skipped = e.get("skipped_unknown_location", 0) + e.get("skipped_untracked_country", 0)
+        if e["status"] == "success":
+            status = "✅ ok"
+        else:
+            error = e.get("error", "unknown error")
+            status = f"❌ {error[:80]}"
+        lines.append(f"| {company} | {countries} | {positions} | {skipped} | {status} |")
+
+    successes = sum(1 for e in entries if e["status"] == "success")
+    failures = sum(1 for e in entries if e["status"] != "success")
+    lines.append(f"\n**{successes} succeeded, {failures} failed**")
+
+    with open(summary_path, "a") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Batch scrape and upload job")
     parser.add_argument("--dry-run", action="store_true",
                         help="Scrape and validate but skip the upload step")
     parser.add_argument("--api-url", default="http://localhost:4321",
                         help="Base URL of the Astro server (default: http://localhost:4321)")
+    parser.add_argument("--slice", nargs=2, type=int, metavar=("INDEX", "TOTAL"),
+                        default=[0, 1],
+                        help="Process only slice INDEX of TOTAL (0-based, round-robin). "
+                             "Default: 0 1 (all companies).")
     args = parser.parse_args()
+
+    slice_index, slice_total = args.slice
+    if slice_total < 1 or not (0 <= slice_index < slice_total):
+        print(f"ERROR: invalid --slice {slice_index} {slice_total}", file=sys.stderr)
+        return 1
 
     secret = os.environ.get("SCRAPER_SECRET", "")
     if not secret:
         print("ERROR: SCRAPER_SECRET environment variable is not set", file=sys.stderr)
         return 1
 
-    companies = _load_companies()
+    all_companies = _load_companies()
+    companies = _slice_companies(all_companies, slice_index, slice_total)
+
     if not companies:
-        print("scraper/companies.yaml has no companies — nothing to do.")
+        print("No companies assigned to this slice — nothing to do.")
         return 0
 
-    print(f"Batch scrape: {len(companies)} companies | api={args.api_url} | dry_run={args.dry_run}")
+    slice_label = f"slice {slice_index + 1}/{slice_total}" if slice_total > 1 else "all"
+    print(
+        f"Batch scrape: {len(companies)} companies ({slice_label}) | "
+        f"api={args.api_url} | dry_run={args.dry_run}"
+    )
 
     _wait_for_server(args.api_url)
 
+    summary_entries: list[dict] = []
     failures: list[dict] = []
     successes: list[dict] = []
 
@@ -170,17 +228,32 @@ def main() -> int:
         print(f"\n{'─' * 60}")
         print(f"Scraping: {url}")
 
+        summary_entry: dict = {
+            "url": url,
+            "status": "unknown",
+            "company_name": None,
+            "total_positions": 0,
+            "countries": [],
+            "skipped_unknown_location": 0,
+            "skipped_untracked_country": 0,
+            "error": None,
+        }
+
         # ── Scrape ────────────────────────────────────────────────────────────
         try:
             result = _scrape(args.api_url, secret, url)
         except requests.HTTPError as e:
             msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
             print(f"FAIL — scrape error: {msg}", file=sys.stderr)
+            summary_entry.update({"status": "fail", "error": msg})
+            summary_entries.append(summary_entry)
             failures.append({"url": url, "error": msg})
             continue
         except Exception as e:
             msg = str(e)
             print(f"FAIL — scrape error: {msg}", file=sys.stderr)
+            summary_entry.update({"status": "fail", "error": msg})
+            summary_entries.append(summary_entry)
             failures.append({"url": url, "error": msg})
             continue
 
@@ -195,15 +268,27 @@ def main() -> int:
             f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}"
         )
 
+        summary_entry.update({
+            "company_name": result.get("company_name"),
+            "total_positions": total_positions,
+            "countries": country_names,
+            "skipped_unknown_location": result.get("skipped_unknown_location", 0),
+            "skipped_untracked_country": result.get("skipped_untracked_country", 0),
+        })
+
         # ── Validate ──────────────────────────────────────────────────────────
         if total_positions < min_positions:
             msg = f"Only {total_positions} positions found, expected >= {min_positions}"
             print(f"FAIL — validation: {msg}", file=sys.stderr)
+            summary_entry.update({"status": "fail", "error": msg})
+            summary_entries.append(summary_entry)
             failures.append({"url": url, "error": msg})
             continue
 
         if args.dry_run:
             print(f"  [dry-run] would upload {total_positions} positions — skipping")
+            summary_entry["status"] = "success"
+            summary_entries.append(summary_entry)
             successes.append({"url": url, "positions": total_positions})
             continue
 
@@ -214,14 +299,20 @@ def main() -> int:
             print(f"  uploaded ok: {upload_result.get('results', upload_result)}")
             if upload_result.get("errors"):
                 print(f"  partial errors: {upload_result['errors']}", file=sys.stderr)
+            summary_entry["status"] = "success"
+            summary_entries.append(summary_entry)
             successes.append({"url": url, "positions": total_positions})
         except requests.HTTPError as e:
             msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
             print(f"FAIL — upload error: {msg}", file=sys.stderr)
+            summary_entry.update({"status": "fail", "error": msg})
+            summary_entries.append(summary_entry)
             failures.append({"url": url, "error": msg})
         except Exception as e:
             msg = str(e)
             print(f"FAIL — upload error: {msg}", file=sys.stderr)
+            summary_entry.update({"status": "fail", "error": msg})
+            summary_entries.append(summary_entry)
             failures.append({"url": url, "error": msg})
 
     # ── Summary ───────────────────────────────────────────────────────────────
@@ -231,9 +322,10 @@ def main() -> int:
         print("\nFailed companies:", file=sys.stderr)
         for f in failures:
             print(f"  {f['url']} — {f['error']}", file=sys.stderr)
-        return 1
 
-    return 0
+    _write_github_summary(summary_entries)
+
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

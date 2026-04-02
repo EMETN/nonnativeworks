@@ -18,9 +18,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Step 1: read companies.yaml and split into parallel slices ──────────────
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Generate matrix
+        id: matrix
+        run: |
+          python - <<'EOF'
+          import yaml, json, os
+
+          with open("scraper/companies.yaml") as f:
+              data = yaml.safe_load(f)
+          companies = (data or {}).get("companies") or []
+          # Cap at 3 parallel slices; use 1 when the list is empty (no-op run)
+          n = min(3, max(1, len(companies)))
+          matrix = json.dumps({"include": [{"index": i, "total": n} for i in range(n)]})
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"matrix={matrix}\n")
+          print(f"Generated {n} slice(s) for {len(companies)} company/companies")
+          EOF
+
+  # ── Step 2: run each slice in parallel ─────────────────────────────────────
   scrape:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 45  # njoyn alone can take ~10 min; budget for the full list
+
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: false  # let other slices complete even if one slice fails
 
     env:
       # These secrets must be set in the repository:
@@ -99,7 +137,24 @@ jobs:
         run: |
           python scraper/batch_run.py \
             --api-url http://localhost:4321 \
+            --slice ${{ matrix.index }} ${{ matrix.total }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+      # ── Logs ──────────────────────────────────────────────────────────────
+      # The Astro server writes a human-readable text log to logs/YYYY-MM-DD.log
+      # (same format as local dev) with per-position signal details.
+      # Uploaded here as a downloadable artifact; retained 90 days.
+      # The Markdown summary written to $GITHUB_STEP_SUMMARY appears directly
+      # on each job's summary page — no download needed for a quick overview.
+
+      - name: Upload scrape logs
+        if: always()  # upload even when the scrape step failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-logs-slice-${{ matrix.index }}
+          path: logs/
+          if-no-files-found: ignore
+          retention-days: 90
 
       # ── Failure notification ───────────────────────────────────────────────
       # GitHub automatically emails the repository owner when any workflow fails
@@ -110,5 +165,5 @@ jobs:
       - name: Post failure summary
         if: failure()
         run: |
-          echo "::error::Batch scrape failed. Check the logs above for details."
+          echo "::error::Batch scrape failed for slice ${{ matrix.index }}/${{ matrix.total }}. Check the logs above for details."
           echo "Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
