@@ -147,6 +147,13 @@ export interface CompanyApiConfig {
   descriptionApiItemsPath?: string;
   descriptionApiFields?: string[];
   /**
+   * Dot-path to a location field in the per-job detail API response.
+   * When set, the fetched value overwrites job.location with a more granular value
+   * (e.g. a city name) than the main listing API provides.
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiLocationField?: string;
+  /**
    * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
    * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
    * language classification. The primary fetch provides the complete position list for statistics;
@@ -270,6 +277,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // Fetch full descriptions via Oracle HCM's per-requisition detail endpoint instead.
     descriptionApiUrl: 'https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1',
     descriptionApiFields: ['ExternalQualificationsStr', 'ExternalResponsibilitiesStr'],
+    descriptionApiLocationField: 'workLocation.0.TownOrCity',
     expandSecondaryLocations: {
       path: 'secondaryLocations',
       countryName: 'Name',

@@ -230,7 +230,7 @@ function buildScrapeResult(
           jobs: [],
         });
       }
-      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: job.location });
+      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: job.city ?? job.location });
     }
   }
 

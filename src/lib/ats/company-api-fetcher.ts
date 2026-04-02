@@ -249,6 +249,7 @@ async function enrichDescriptionsFromApi(
   itemsPath: string,
   fields: string[],
   headers: Record<string, string>,
+  locationField?: string,
 ): Promise<void> {
   const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
@@ -263,6 +264,10 @@ async function enrichDescriptionsFromApi(
             .map((f) => getString(item, f))
             .filter((v): v is string => !!v);
           if (parts.length) job.descriptionText = parts.join(' ');
+          if (locationField) {
+            const city = getString(item, locationField);
+            if (city) job.city = city;
+          }
         } catch (err) {
           console.warn(`[enrichDescriptionsFromApi] failed for sourceId=${job.sourceId}: ${err}`);
         }
@@ -649,7 +654,7 @@ export async function fetchCompanyApiJobs(
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {
     const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
     console.log(`[fetchCompanyApiJobs] enriching descriptions via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
-    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers);
+    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField);
   }
 
   // Final safety-net dedup (should be a no-op if pagination dedup above caught everything).

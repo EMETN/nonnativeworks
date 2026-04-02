@@ -228,6 +228,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'nuremberg':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'nurnberg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'stuttgart':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'ulm':                      { name: 'Germany', code: 'DE', slug: 'germany' },
   // ── Austria ──────────────────────────────────────────────────────────────
   'graz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
   'innsbruck':                { name: 'Austria', code: 'AT', slug: 'austria' },
@@ -277,6 +278,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'eindhoven':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'den haag':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'the hague':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'hoofddorp':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'rotterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'utrecht':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   // ── France ───────────────────────────────────────────────────────────────
