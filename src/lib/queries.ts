@@ -8,7 +8,9 @@ import type {
   Country,
   Category,
   PositionDetail,
+  Company,
 } from './types';
+import { nameToSlug } from './country-flags';
 
 function client(request: Request, cookies: AstroCookies) {
   return createSupabaseClient(request, cookies);
@@ -189,4 +191,96 @@ export async function getAllCategories(request: Request, cookies: AstroCookies):
 
   if (error) { console.error('getAllCategories:', error.message); throw new Error('Failed to load categories'); }
   return (data ?? []) as Category[];
+}
+
+export async function getCompanyBySlugInCountry(
+  request: Request,
+  cookies: AstroCookies,
+  countryId: string,
+  companySlug: string
+): Promise<CompanyStats | null> {
+  const supabase = client(request, cookies);
+  const { data, error } = await supabase
+    .from('company_stats')
+    .select('*')
+    .eq('country_id', countryId);
+
+  if (error) { console.error('getCompanyBySlugInCountry:', error.message); return null; }
+  const match = (data ?? []).find((c: any) => nameToSlug(c.name) === companySlug);
+  return (match as CompanyStats) ?? null;
+}
+
+export async function getPositionsByCompany(
+  request: Request,
+  cookies: AstroCookies,
+  companyId: string
+): Promise<PositionDetail[]> {
+  const supabase = client(request, cookies);
+  const { data, error } = await supabase
+    .from('positions')
+    .select(`
+      id,
+      company_id,
+      title,
+      url,
+      requires_native_language,
+      local_language_advantage,
+      category:categories(name)
+    `)
+    .eq('company_id', companyId);
+
+  if (error) { console.error('getPositionsByCompany:', error.message); throw new Error('Failed to load positions'); }
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    company_id: row.company_id,
+    title: row.title,
+    url: row.url ?? null,
+    category_name: row.category?.name ?? 'Other',
+    requires_native_language: row.requires_native_language,
+    local_language_advantage: row.local_language_advantage ?? false,
+  }));
+}
+
+export async function getCategoryBreakdownByCompany(
+  request: Request,
+  cookies: AstroCookies,
+  companyId: string
+): Promise<CategoryBreakdown[]> {
+  const supabase = client(request, cookies);
+
+  const { data, error } = await supabase
+    .from('positions')
+    .select(`
+      requires_native_language,
+      category:categories(id, name, slug)
+    `)
+    .eq('company_id', companyId);
+
+  if (error) { console.error('getCategoryBreakdownByCompany:', error.message); throw new Error('Failed to load category breakdown'); }
+
+  const map = new Map<
+    string,
+    { id: string; name: string; slug: string; total: number; english: number }
+  >();
+
+  for (const row of data ?? []) {
+    const cat = (row.category as unknown as { id: string; name: string; slug: string } | null);
+    if (!cat || Array.isArray(cat)) continue;
+    const entry = map.get(cat.id) ?? { id: cat.id, name: cat.name, slug: cat.slug, total: 0, english: 0 };
+    entry.total += 1;
+    if (!row.requires_native_language) entry.english += 1;
+    map.set(cat.id, entry);
+  }
+
+  return Array.from(map.values())
+    .map((e) => ({
+      category_id: e.id,
+      category_name: e.name,
+      category_slug: e.slug,
+      total_positions: e.total,
+      english_positions: e.english,
+      english_percentage: e.total > 0 ? Math.round((e.english / e.total) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.english_positions - a.english_positions);
 }

@@ -65,7 +65,7 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
             rel="stylesheet"
         />
     </head>
-    <body class="flex flex-col" style="min-height: 100vh; min-height: 100dvh;">
+    <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
         <PostHogInit client:load />
         <!-- Skip to content (accessibility) -->
         <a
