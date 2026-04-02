@@ -70,21 +70,33 @@ pnpm dev
 | `pnpm build`       | Build production site to `./dist/`   |
 | `pnpm preview`     | Preview production build locally     |
 
+## URL structure
+
+| URL | Description |
+|-----|-------------|
+| `/` | Homepage — country list |
+| `/{country}` | Country page — company grid |
+| `/{country}/{company}` | Company page — position list |
+
 ## Project structure
 
 ```
 src/
 ├── components/
 │   ├── admin/           # Admin UI islands (Preact)
-│   ├── country/         # Country detail page components
-│   └── infographic/     # Homepage infographic
+│   ├── company/         # Company page components
+│   ├── country/         # Country page components
+│   ├── infographic/     # Homepage infographic
+│   └── shared/          # Reusable components (DataGrid)
 ├── layouts/             # Base and admin page layouts
 ├── lib/                 # Shared utilities, DB queries, validation
 ├── pages/
 │   ├── api/admin/       # Upload and company management endpoints
 │   ├── api/auth/        # Sign-in / sign-out endpoints
 │   ├── admin/           # Admin dashboard and login
-│   ├── [slug].astro     # Dynamic country detail pages
+│   ├── [country]/
+│   │   ├── index.astro  # Country page
+│   │   └── [company].astro # Company page
 │   └── index.astro      # Homepage
 ├── styles/              # Global CSS
 └── middleware.ts        # Auth guard for /admin/*

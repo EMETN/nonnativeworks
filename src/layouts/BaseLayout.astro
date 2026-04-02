@@ -1,28 +1,30 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import PostHogInit from '../components/PostHogInit.tsx';
 import '../styles/global.css';
 import type { GlobalStats } from '../lib/types';
 
 interface Props {
-  title: string;
-  description?: string;
-  ogImage?: string;
-  noindex?: boolean;
-  stats?: GlobalStats;
+    title: string;
+    description?: string;
+    ogImage?: string;
+    noindex?: boolean;
+    stats?: GlobalStats;
 }
 
 const {
-  title,
-  description = 'Find companies where English is enough — browse positions by country.',
-  ogImage,
-  noindex = false,
-  stats,
+    title,
+    description = 'Find companies where English is enough — browse positions by country.',
+    ogImage,
+    noindex = false,
+    stats,
 } = Astro.props;
 
-const siteTitle = title === 'Home'
-  ? 'NonNativeWorks — Work abroad in English'
-  : `${title} — NonNativeWorks`;
+const siteTitle =
+    title === 'Home'
+        ? 'NonNativeWorks — Work abroad in English'
+        : `${title} — NonNativeWorks`;
 
 const canonical = Astro.url.href;
 const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
@@ -30,52 +32,53 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
 
 <!doctype html>
 <html lang="en" class="h-full">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>{siteTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+        <title>{siteTitle}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonical} />
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:title" content={siteTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:site_name" content="NonNativeWorks" />
-    {ogImage && <meta property="og:image" content={ogImageUrl} />}
+        <!-- Open Graph -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:title" content={siteTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:site_name" content="NonNativeWorks" />
+        {ogImage && <meta property="og:image" content={ogImageUrl} />}
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={siteTitle} />
-    <meta name="twitter:description" content={description} />
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={siteTitle} />
+        <meta name="twitter:description" content={description} />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="flex flex-col" style="min-height: 100vh; min-height: 100dvh;">
-    <!-- Skip to content (accessibility) -->
-    <a
-      href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-white focus:text-[#002383] focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:font-medium focus:text-sm focus:outline-none focus:ring-2 focus:ring-[#1A4DB8]"
-    >
-      Skip to content
-    </a>
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
+        <PostHogInit client:load />
+        <!-- Skip to content (accessibility) -->
+        <a
+            href="#main-content"
+            class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-white focus:text-[#002383] focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:font-medium focus:text-sm focus:outline-none focus:ring-2 focus:ring-[#1A4DB8]"
+        >
+            Skip to content
+        </a>
 
-    <Header stats={stats} />
-    <main id="main-content" class="flex-1 flex flex-col">
-      <slot />
-    </main>
-    <Footer />
-  </body>
+        <Header stats={stats} />
+        <main id="main-content" class="flex-1 flex flex-col">
+            <slot />
+        </main>
+        <Footer />
+    </body>
 </html>
