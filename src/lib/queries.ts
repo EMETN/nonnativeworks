@@ -34,11 +34,11 @@ export async function getGlobalStats(request: Request, cookies: AstroCookies): P
 
   if (posErr) { console.error('getGlobalStats positions:', posErr.message); throw new Error('Failed to load global stats'); }
 
-  const { count: companyCount, error: compErr } = await supabase
-    .from('companies')
-    .select('*', { count: 'exact', head: true });
+  const { data: companyCountData, error: compErr } = await supabase
+    .rpc('count_distinct_companies');
 
   if (compErr) { console.error('getGlobalStats companies:', compErr.message); throw new Error('Failed to load global stats'); }
+  const companyCount = companyCountData as number | null;
 
   const { count: countryCount, error: countryErr } = await supabase
     .from('countries')
