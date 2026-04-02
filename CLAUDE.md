@@ -81,19 +81,31 @@ All `career_page_url` and position `url` fields auto-strip markdown link format 
 | `src/lib/types.ts` | TypeScript interfaces matching DB schema |
 | `src/lib/validation.ts` | Zod schemas for upload JSON |
 | `src/lib/prompt-template.ts` | LLM prompt generation |
-| `src/lib/country-flags.ts` | Flag colors by ISO alpha-2 + `countryNameToSlug()` |
+| `src/lib/country-flags.ts` | Flag colors by ISO alpha-2 + `nameToSlug()` |
 | `src/middleware.ts` | Auth guard for `/admin/*` routes |
 | `src/pages/api/admin/upload.ts` | POST — validate & upsert company data |
 | `src/pages/api/admin/companies.ts` | GET/DELETE — manage companies |
 | `src/pages/sitemap.xml.ts` | Dynamic SSR sitemap |
 | `public/robots.txt` | Allows all, blocks /admin and /api/ |
 
+## URL structure
+
+| URL | Page file | What it shows |
+|-----|-----------|---------------|
+| `/` | `src/pages/index.astro` | Homepage with country list |
+| `/{country}` | `src/pages/[country]/index.astro` | Country page with company grid |
+| `/{country}/{company}` | `src/pages/[country]/[company].astro` | Company page with position list |
+
+Company slugs are derived at runtime via `nameToSlug()` — no slug column in the DB.
+
 ## Component map
 
 **Public:**
-- `InfographicGrid.astro` → `CountryBar.astro` — homepage flag bars with spheres
+- `DataGrid.tsx` (Preact) — shared sortable grid used by homepage (countries) and country page (companies)
+- `InfographicGrid.tsx` (Preact) — wraps DataGrid for homepage countries
+- `CompanyGrid.tsx` (Preact) — wraps DataGrid for country page companies
+- `PositionList.tsx` (Preact) — company page position list with search and category filter pills
 - `CountrySummary.astro` — stat boxes on country page
-- `CompanyTable.tsx` (Preact) — sortable table with expandable position rows + URLs
 - `CategoryBreakdown.astro` — horizontal bar chart per category
 
 **Admin (all Preact `client:load`):**
@@ -103,8 +115,6 @@ All `career_page_url` and position `url` fields auto-strip markdown link format 
 
 ## Potential next improvements
 
-- Add position count badge to infographic bars (currently shows total only)
-- Search/filter on homepage across all countries
 - Trend tracking (historical snapshots per company)
 - Email notification when new positions match a saved filter
 - OpenGraph image generation (dynamic OG images per country page)
