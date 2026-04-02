@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'preact/hooks';
 import type { CompanyStats, PositionDetail } from '../../lib/types';
+import { nameToSlug } from '../../lib/country-flags';
 
 type SortKey = 'name' | 'total_positions' | 'english_positions' | 'english_percentage';
 type SortDir = 'asc' | 'desc';
@@ -7,6 +8,7 @@ type SortDir = 'asc' | 'desc';
 interface Props {
   companies: CompanyStats[];
   positions: PositionDetail[];
+  countrySlug: string;
 }
 
 const numFont = { fontFamily: "'Inter', sans-serif" };
@@ -69,7 +71,7 @@ function SeeAllRow({ url }: { url: string }) {
   );
 }
 
-export default function CompanyTable({ companies, positions }: Props) {
+export default function CompanyTable({ companies, positions, countrySlug }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('english_percentage');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
@@ -230,7 +232,13 @@ export default function CompanyTable({ companies, positions }: Props) {
                         <span class="text-gray-400 group-hover:text-[#99B3DB] text-xl w-5 select-none">
                           {isExpanded ? '▾' : '▸'}
                         </span>
-                        {co.name}
+                        <a
+                          href={`/${countrySlug}/${nameToSlug(co.name)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          class="hover:underline"
+                        >
+                          {co.name}
+                        </a>
                         {co.is_english_company && (
                           <span class="text-xs bg-[#CCd9ED] text-[#002383] group-hover:bg-white/20 group-hover:text-white px-1.5 py-0.5 rounded font-semibold">
                             EN

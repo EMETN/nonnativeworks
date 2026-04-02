@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../lib/supabase';
+import { nameToSlug } from '../lib/country-flags';
 
 export const GET: APIRoute = async ({ url }) => {
   const base = url.origin;
@@ -9,6 +10,11 @@ export const GET: APIRoute = async ({ url }) => {
     .from('countries')
     .select('slug, created_at')
     .order('sort_order');
+
+  const { data: companies } = await supabase
+    .from('companies')
+    .select('name, updated_at, country:countries!inner(slug)')
+    .order('name');
 
   interface SitemapPage {
     loc: string;
@@ -28,7 +34,14 @@ export const GET: APIRoute = async ({ url }) => {
     lastmod: c.created_at ? c.created_at.slice(0, 10) : undefined,
   }));
 
-  const allPages = [...staticPages, ...countryPages];
+  const companyPages: SitemapPage[] = (companies ?? []).map((c: any) => ({
+    loc: `${base}/${c.country?.slug}/${nameToSlug(c.name)}`,
+    priority: '0.6',
+    changefreq: 'weekly',
+    lastmod: c.updated_at ? c.updated_at.slice(0, 10) : undefined,
+  }));
+
+  const allPages = [...staticPages, ...countryPages, ...companyPages];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

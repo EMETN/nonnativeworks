@@ -1,17 +1,14 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import CountrySummary from '../components/country/CountrySummary.astro';
-import CategoryBreakdown from '../components/country/CategoryBreakdown.astro';
-import CompanyTable from '../components/country/CompanyTable.tsx';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CountrySummary from '../../components/country/CountrySummary.astro';
+import CompanyGrid from '../../components/country/CompanyGrid.tsx';
 import {
   getCountryBySlug,
   getCompanyStatsByCountry,
-  getCategoryBreakdown,
   getGlobalStats,
-  getPositionsByCountry,
-} from '../lib/queries';
+} from '../../lib/queries';
 
-const { slug } = Astro.params;
+const { country: slug } = Astro.params;
 const { request, cookies } = Astro;
 
 const [stats, country] = await Promise.all([
@@ -23,11 +20,7 @@ if (!country) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
-const [companies, categories, positions] = await Promise.all([
-  getCompanyStatsByCountry(request, cookies, country.country_id),
-  getCategoryBreakdown(request, cookies, country.country_id),
-  getPositionsByCountry(request, cookies, country.country_id),
-]);
+const companies = await getCompanyStatsByCountry(request, cookies, country.country_id);
 ---
 
 <BaseLayout
@@ -38,7 +31,7 @@ const [companies, categories, positions] = await Promise.all([
   <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 py-12 pb-16">
 
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-400 mb-8" aria-label="Breadcrumb">
+    <nav class="text-sm text-gray-400 mb-4 md:mb-8" aria-label="Breadcrumb">
       <a href="/" class="hover:text-gray-700 transition-colors">Home</a>
       <span class="mx-1.5">›</span>
       <span class="text-gray-900 font-medium">{country.name}</span>
@@ -52,17 +45,14 @@ const [companies, categories, positions] = await Promise.all([
     <!-- Summary stats -->
     <CountrySummary country={country} companyCount={companies.length} />
 
-    <!-- Company table (Preact island) -->
+    <!-- Company grid (Preact island) -->
     {companies.length === 0 ? (
       <div class="text-center py-16 text-gray-400">
         No companies tracked yet for <strong>{country.name}</strong>. Check back soon!
       </div>
     ) : (
-      <CompanyTable companies={companies} positions={positions} client:load />
+      <CompanyGrid companies={companies} countrySlug={country.slug} client:only="preact" />
     )}
-
-    <!-- Category breakdown -->
-    <CategoryBreakdown categories={categories} />
 
   </div>
 </BaseLayout>
