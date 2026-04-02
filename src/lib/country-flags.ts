@@ -59,8 +59,8 @@ export function getFlagColors(code: string): string[] {
   return FLAG_COLORS[code.toUpperCase()] ?? ['#6B7280', '#9CA3AF'];
 }
 
-/** Derives a URL-safe slug from a country name. */
-export function countryNameToSlug(name: string): string {
+/** Derives a URL-safe slug from a name (country, company, etc.). */
+export function nameToSlug(name: string): string {
   return name
     .toLowerCase()
     .normalize('NFD')
@@ -68,3 +68,6 @@ export function countryNameToSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 }
+
+/** @deprecated Use nameToSlug instead */
+export const countryNameToSlug = nameToSlug;
