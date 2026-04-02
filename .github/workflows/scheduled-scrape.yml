@@ -1,0 +1,114 @@
+name: Scheduled scrape
+
+# Runs every 2 days at 06:00 UTC.
+# Also available as a manual trigger (Actions tab → "Run workflow") for testing.
+on:
+  schedule:
+    - cron: '0 6 */2 * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (scrape but do not upload)'
+        type: boolean
+        default: false
+
+# Only one run at a time — if a previous run is still going, cancel it.
+concurrency:
+  group: scheduled-scrape
+  cancel-in-progress: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45  # njoyn alone can take ~10 min; budget for the full list
+
+    env:
+      # These secrets must be set in the repository:
+      #   Settings → Secrets and variables → Actions
+      #
+      #   SUPABASE_URL              Your Supabase project URL
+      #   SUPABASE_ANON_KEY         Supabase anon/public key
+      #   SUPABASE_SERVICE_ROLE_KEY Supabase service role key (for uploads)
+      #   SCRAPER_SECRET            Random secret — must match SCRAPER_SECRET on Vercel
+      #
+      # Optional — only needed if you want email notifications beyond GitHub's
+      # built-in failure emails (Settings → Notifications):
+      #   NOTIFY_EMAIL_TO           Recipient address
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SCRAPER_SECRET: ${{ secrets.SCRAPER_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node / Astro server ────────────────────────────────────────────────
+      # The Astro app is built and started locally so that:
+      #  • /api/admin/scrape runs with no serverless timeout (vs Vercel's 10s limit)
+      #  • /api/admin/upload writes directly to Supabase
+      #  • No logic is duplicated in Python
+      #
+      # TO MIGRATE TO RENDER IN THE FUTURE:
+      #   Remove the four steps below ("Setup pnpm", "Setup Node", "Install Node
+      #   dependencies", "Build and start Astro server"). Instead, point batch_run.py
+      #   at your Render service URL for the scrape step. See scraper/batch_run.py
+      #   for detailed migration instructions.
+      # ──────────────────────────────────────────────────────────────────────
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and start Astro server
+        run: |
+          pnpm build
+          node dist/server/entry.mjs &
+        env:
+          HOST: 127.0.0.1
+          PORT: 4321
+
+      # ── Python / scraper ───────────────────────────────────────────────────
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r scraper/requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install --with-deps chromium
+
+      # ── Run ───────────────────────────────────────────────────────────────
+
+      - name: Run batch scrape
+        run: |
+          python scraper/batch_run.py \
+            --api-url http://localhost:4321 \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+      # ── Failure notification ───────────────────────────────────────────────
+      # GitHub automatically emails the repository owner when any workflow fails
+      # (Settings → Notifications). No extra setup needed for basic alerts.
+      #
+      # For a Slack or custom webhook notification, replace the step below with
+      # your preferred action (e.g. slackapi/slack-github-action).
+      - name: Post failure summary
+        if: failure()
+        run: |
+          echo "::error::Batch scrape failed. Check the logs above for details."
+          echo "Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

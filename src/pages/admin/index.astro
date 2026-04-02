@@ -4,6 +4,7 @@ import Scraper from '../../components/admin/Scraper.tsx';
 import PromptGenerator from '../../components/admin/PromptGenerator.tsx';
 import JsonUploader from '../../components/admin/JsonUploader.tsx';
 import DataManager from '../../components/admin/DataManager.tsx';
+import PositionEditor from '../../components/admin/PositionEditor.tsx';
 ---
 
 <AdminLayout title="Dashboard">
@@ -44,9 +45,14 @@ import DataManager from '../../components/admin/DataManager.tsx';
       <div id="tab-panel-scraper" role="tabpanel">
         <div class="bg-white border border-gray-200 rounded-xl p-5">
           <p class="text-sm text-gray-500 mb-4">
-            Enter a career page URL. Supported ATS platforms (Greenhouse, Lever) are fetched
-            directly via their API. Other pages are scraped via the Python scraper if configured.
+            Enter a career page URL. Supported ATS platforms (Greenhouse, Lever, Ashby, Workable)
+            are fetched directly via their API. Other pages are scraped via the Python scraper.
             Review and adjust the results before uploading.
+          </p>
+          <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+            The scraper runs as a local subprocess and requires the Python environment to be set up.
+            It is intended for development and testing. Production scraping runs automatically via
+            the GitHub Actions scheduled job (every 2 days).
           </p>
           <Scraper client:load />
         </div>
@@ -93,6 +99,20 @@ import DataManager from '../../components/admin/DataManager.tsx';
         </p>
       </div>
       <DataManager client:load />
+    </section>
+
+    <!-- Step 3: Edit positions -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">3. Edit positions</h2>
+        <p class="text-sm text-gray-500 mt-1">
+          Correct category or language requirements for already-uploaded positions.
+          Changes take effect immediately — use this when a position is reported as incorrect.
+        </p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5">
+        <PositionEditor client:load />
+      </div>
     </section>
 
   </div>
