@@ -97,9 +97,13 @@ export default function Scraper() {
   // ---- Scrape ----
 
   async function handleScrape() {
-    const trimmed = url.trim();
+    let trimmed = url.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      trimmed = `https://${trimmed}`;
+      setUrl(trimmed);
+    }
     if (!isValidUrl(trimmed)) {
-      setUrlError('Please enter a valid URL (e.g. https://company.com/careers)');
+      setUrlError('Please enter a valid URL (e.g. company.com/careers)');
       return;
     }
     setUrlError('');
@@ -240,7 +244,7 @@ export default function Scraper() {
           <div class="flex flex-col sm:flex-row gap-3">
             <input
               type="url"
-              placeholder="https://company.com/careers"
+              placeholder="company.com/careers"
               value={url}
               onInput={(e) => {
                 setUrl((e.target as HTMLInputElement).value);
