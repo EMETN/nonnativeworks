@@ -113,6 +113,7 @@ def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list
                 "title": job["title"],
                 "url": job.get("url") or None,
                 "city": job.get("city") or None,
+                "work_model": job.get("work_model") or None,
                 "category": job["category"],
                 "requires_native_language": job["requires_native_language"],
                 "local_language_advantage": job.get("local_language_advantage", False),
