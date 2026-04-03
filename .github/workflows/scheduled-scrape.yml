@@ -3,15 +3,14 @@ name: Scheduled scrape
 # Runs every 2 days at 06:00 UTC.
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
-    schedule:
-        - cron: '0 6 */2 * *'
-    workflow_dispatch:
-    #inputs:
-    #  dry_run:
-    #    description: 'Dry run (scrape but do not upload)'
-    #    type: boolean
-    #    default: false
-    push:
+  schedule:
+    - cron: '0 6 */2 * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (scrape but do not upload)'
+        type: boolean
+        default: false
     
 
 # Only one run at a time — if a previous run is still going, cancel it.
