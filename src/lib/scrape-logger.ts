@@ -14,6 +14,8 @@ export interface PositionLogEntry {
   languageSignals: SignalEntry[];
   countryCode: string;
   countryName: string;
+  city?: string[];
+  work_model?: 'remote' | 'hybrid' | 'on-site';
 }
 
 const logsDir = join(process.cwd(), 'logs');
@@ -99,6 +101,12 @@ export function logScrapeRun(params: {
       const catStr = formatCategory(pos).padEnd(18);
       const langStr = formatLanguageSignal(pos);
       lines.push(`  ${icon}  ${titleStr}${catStr}  ${langStr}`);
+      const locationParts: string[] = [];
+      if (pos.work_model) locationParts.push(pos.work_model);
+      if (pos.city && pos.city.length > 0) locationParts.push(pos.city.join(', '));
+      if (locationParts.length > 0) {
+        lines.push(`       ${locationParts.join(' · ')}`);
+      }
     }
     lines.push('');
   }
