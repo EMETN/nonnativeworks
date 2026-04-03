@@ -20,7 +20,8 @@ export async function fetchGreenhouseCompanyName(slug: string): Promise<string> 
     );
     if (!res.ok) return formatSlug(slug);
     const data: GreenhouseBoard = await res.json();
-    return data.name ?? formatSlug(slug);
+    const name = data.name ?? formatSlug(slug);
+    return name.replace(/\s*-\s*English$/i, '').trim();
   } catch {
     return formatSlug(slug);
   }
