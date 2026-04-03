@@ -4,7 +4,7 @@ name: Scheduled scrape
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
   schedule:
-    - cron: '0 6 */2 * *'
+    - cron: '0 4 */2 * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -76,9 +76,6 @@ jobs:
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
 
-      - name: Inject Doppler secrets
-        run: doppler secrets download --no-file --format env >> $GITHUB_ENV
-
       # ── Node / Astro server ────────────────────────────────────────────────
       # The Astro app is built and started locally so that:
       #  • /api/admin/scrape runs with no serverless timeout (vs Vercel's 10s limit)
@@ -109,7 +106,7 @@ jobs:
       - name: Build and start Astro server
         run: |
           pnpm build
-          node dist/server/entry.mjs &
+          doppler run -- node dist/server/entry.mjs &
         env:
           HOST: 127.0.0.1
           PORT: 4321
@@ -132,11 +129,13 @@ jobs:
       # ── Run ───────────────────────────────────────────────────────────────
 
       - name: Run batch scrape
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          python scraper/batch_run.py \
-            --api-url http://localhost:4321 \
-            --slice ${{ matrix.index }} ${{ matrix.total }} \
-            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+            doppler run -- python scraper/batch_run.py \
+              --api-url http://localhost:4321 \
+              --slice ${{ matrix.index }} ${{ matrix.total }} \
+              ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
       # ── Logs ──────────────────────────────────────────────────────────────
       # The Astro server writes a human-readable text log to logs/YYYY-MM-DD.log
