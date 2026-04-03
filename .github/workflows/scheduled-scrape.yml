@@ -77,6 +77,12 @@ jobs:
 
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
+      - name: Inject Doppler secrets
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_PROJECT: nonnativeworks
+          DOPPLER_CONFIG: dev_personal
+        run: doppler run --no-file --format env >> $GITHUB_ENV
 
       - name: Inject Doppler secrets
         run: doppler secrets download --no-file --format env >> $GITHUB_ENV
@@ -135,10 +141,11 @@ jobs:
 
       - name: Run batch scrape
         run: |
-          python scraper/batch_run.py \
-            --api-url http://localhost:4321 \
-            --slice ${{ matrix.index }} ${{ matrix.total }} \
-            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+            DRY=${{ github.event.inputs.dry_run }}
+            CMD="python scraper/batch_run.py --api-url http://localhost:4321 --slice ${{ matrix.index }} ${{ matrix.total }}" \
+            if [ "$DRY" = "true ]; then CMD="$CMD --dry_run", fi
+            echo "Running: $CMD"
+            $CMD
 
       # ── Logs ──────────────────────────────────────────────────────────────
       # The Astro server writes a human-readable text log to logs/YYYY-MM-DD.log
