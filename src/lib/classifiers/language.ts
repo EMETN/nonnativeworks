@@ -261,17 +261,17 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
-  FI: { pattern: /[äöÄÖ]/g,              threshold: 5 },
-  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 5 },
-  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
-  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
-  IS: { pattern: /[þðÞÐ]/g,              threshold: 3 }, // þ/ð never appear in English
-  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
-  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
-  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 5 },
-  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 5 },
-  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 5 },
-  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 5 },
+  FI: { pattern: /[äöÄÖ]/g,              threshold: 10 },
+  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 10 },
+  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
+  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
+  IS: { pattern: /[þðÞÐ]/g,              threshold: 10 }, // þ/ð never appear in English
+  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
+  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
+  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 10 },
+  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
+  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 10 },
+  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 10 },
 };
 
 function descriptionContainsNativeChars(
