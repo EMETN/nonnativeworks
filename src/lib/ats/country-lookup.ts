@@ -454,6 +454,29 @@ function normalizeKey(s: string): string {
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
 /**
+ * Extract a work model from a raw location string by looking for prefixes like
+ * "Hybrid - ", "Remote - ", "On-site - ".
+ * Returns 'remote', 'hybrid', or 'on-site' when all semicolon-separated segments
+ * share the same prefix; returns null when there is no prefix, or segments disagree.
+ */
+export function extractWorkModelFromLocation(location: string): 'remote' | 'hybrid' | 'on-site' | null {
+  if (!location?.trim()) return null;
+  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const models = new Set<string>();
+  for (const part of parts) {
+    const match = part.match(LOCATION_PREFIX_RE);
+    if (match) {
+      const raw = match[1].toLowerCase().replace(/-/g, '');
+      if (raw === 'remote') models.add('remote');
+      else if (raw === 'hybrid') models.add('hybrid');
+      else if (raw === 'onsite' || raw === 'inoffice') models.add('on-site');
+    }
+  }
+  if (models.size === 1) return [...models][0] as 'remote' | 'hybrid' | 'on-site';
+  return null;
+}
+
+/**
  * From a raw location string (e.g. "Hybrid - Helsinki, Uusimaa; Hybrid - Tallinn, Estonia"),
  * extract only the city names that belong to the given ISO alpha-2 country code.
  * Country names and cities from other countries are discarded.

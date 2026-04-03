@@ -8,7 +8,7 @@ import { fetchLeverJobs, fetchLeverCompanyName } from '../../../lib/ats/lever';
 import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
 import { fetchWorkableCompanyName, fetchWorkableJobs, enrichWorkableDescriptions } from '../../../lib/ats/workable';
 import { parseWorkdayUrl, fetchWorkdayJobs, enrichWorkdayDescriptions } from '../../../lib/workday';
-import { lookupCountryFromLocation, extractCitiesForCountry } from '../../../lib/ats/country-lookup';
+import { lookupCountryFromLocation, extractCitiesForCountry, extractWorkModelFromLocation } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { logScrapeRun, type PositionLogEntry } from '../../../lib/scrape-logger';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
@@ -233,7 +233,12 @@ function buildScrapeResult(
       const cities = job.city
         ? [job.city]
         : extractCitiesForCountry(job.location ?? '', countryInfo.code);
-      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: cities.length > 0 ? cities : undefined });
+      const workModel = job.work_model ?? extractWorkModelFromLocation(job.location ?? '');
+      groups.get(countryInfo.code)!.jobs.push({
+        ...classified,
+        city: cities.length > 0 ? cities : undefined,
+        work_model: workModel ?? undefined,
+      });
     }
   }
 
