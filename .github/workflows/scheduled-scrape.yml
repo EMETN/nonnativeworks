@@ -4,7 +4,7 @@ name: Scheduled scrape
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
   schedule:
-    - cron: '0 6 */2 * *'
+    - cron: '0 4 */2 * *'
   workflow_dispatch:
     inputs:
       dry_run:
