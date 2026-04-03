@@ -15,7 +15,9 @@
 #   is_english_company  Flag the company as English-only in the UI. Default: false
 # ──────────────────────────────────────────────────────────────────────────────
 
-companies: []
+companies:
+    - url: https://boards.greenhouse.io/oura                                          
+      min_positions: 5
 
 # Examples — uncomment and fill in real values:
 #

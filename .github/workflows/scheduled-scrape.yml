@@ -61,25 +61,23 @@ jobs:
       fail-fast: false  # let other slices complete even if one slice fails
 
     env:
-      # These secrets must be set in the repository:
-      #   Settings → Secrets and variables → Actions
+      # Secrets are injected via Doppler (see "Inject Doppler secrets" step below).
+      # Only one GitHub secret is required:
+      #   Settings → Secrets and variables → Actions → DOPPLER_TOKEN
       #
-      #   SUPABASE_URL              Your Supabase project URL
-      #   SUPABASE_ANON_KEY         Supabase anon/public key
-      #   SUPABASE_SERVICE_ROLE_KEY Supabase service role key (for uploads)
-      #   SCRAPER_SECRET            Random secret — must match SCRAPER_SECRET on Vercel
-      #
-      # Optional — only needed if you want email notifications beyond GitHub's
-      # built-in failure emails (Settings → Notifications):
-      #   NOTIFY_EMAIL_TO           Recipient address
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SCRAPER_SECRET: ${{ secrets.SCRAPER_SECRET }}
+      # The Doppler service token must be scoped to the config that contains:
+      #   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SCRAPER_SECRET
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Inject Doppler secrets
+        run: doppler secrets download --no-file --format env >> $GITHUB_ENV
 
       # ── Node / Astro server ────────────────────────────────────────────────
       # The Astro app is built and started locally so that:
