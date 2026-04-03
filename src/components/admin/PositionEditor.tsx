@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { CATEGORIES } from '../../lib/prompt-template';
 
 interface CompanyOption {
   company_id: string;
@@ -105,14 +106,9 @@ export default function PositionEditor() {
     patchPosition(pos.id, { local_language_advantage: value });
   }
 
-  // Categories — derived from the loaded positions (no extra fetch needed)
-  const knownCategories = Array.from(
-    new Map(
-      positions
-        .filter((p) => p.category)
-        .map((p) => [p.category!.slug, p.category!])
-    ).values()
-  ).sort((a, b) => a.name.localeCompare(b.name));
+  // Full category list from the canonical source — not derived from loaded positions,
+  // which would omit categories not yet used by this company.
+  const knownCategories = CATEGORIES;
 
   if (loadingCompanies) {
     return <div class="text-sm text-gray-400 py-4">Loading…</div>;

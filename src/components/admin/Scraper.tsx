@@ -9,7 +9,8 @@ import { atsLabel } from '../../lib/ats/detector';
 interface ReviewJob {
   title: string;
   url?: string;
-  city?: string;
+  city?: string[];
+  work_model?: 'remote' | 'hybrid' | 'on-site';
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
@@ -197,6 +198,7 @@ export default function Scraper() {
         title: job.title,
         url: job.url,
         city: job.city,
+        work_model: job.work_model,
         requires_native_language: job.requires_native_language,
         local_language_advantage: job.local_language_advantage,
         required_languages: job.requiredLanguages,
