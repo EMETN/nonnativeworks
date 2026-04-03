@@ -51,7 +51,7 @@ All `pnpm` scripts (`dev`, `build`, `preview`) are wrapped with `doppler run --`
 Run the migration in the Supabase SQL editor:
 
 ```
-supabase/migrations/001_initial_schema.sql
+supabase/migrations/000_full_schema.sql
 ```
 
 This creates all tables, views, RLS policies, and seeds 5 countries + 10 categories.
