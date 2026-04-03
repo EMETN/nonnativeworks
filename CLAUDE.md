@@ -44,13 +44,57 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 ## Database
 
 Run the migration in the Supabase SQL editor:
-1. `supabase/migrations/001_initial_schema.sql` — tables, views, RLS, seed data (5 countries + 10 categories)
+1. `supabase/migrations/000_full_schema.sql` — tables, views, RLS, seed data (5 countries + 10 categories)
 
 ### Key schema points
 - `companies` has a `UNIQUE(name, country_id)` constraint — upserts on this
 - `positions` are always fully replaced on upload (delete + re-insert per company)
 - `country_stats` and `company_stats` are SQL views used by public pages
 - Auto-country creation: upload API creates unknown countries using `country_name` + `country_code` from LLM output
+
+## Scraping system
+
+### Overview
+Scraping is the automated extraction of job listings from company career pages. The TypeScript API route `/api/admin/scrape` (POST) handles all scraping logic — both in dev and in the GitHub Actions workflow. There is no logic duplication between the two environments.
+
+### How a single scrape works (`src/pages/api/admin/scrape.ts`)
+The scraper runs in three layers, falling through to the next if the previous returns no results:
+
+1. **Layer 1 — ATS API**: Detects the ATS from the URL (Greenhouse, Lever, Ashby, Workable, Workday) and calls their public JSON APIs. No browser needed.
+2. **Layer 1.5 — per-company API**: Falls back to `COMPANY_APIS` config (`src/lib/ats/company-apis.ts`) for companies with custom API endpoints.
+3. **Layer 2 — Python scraper**: Falls back to `scraper/main.py` (Playwright-based browser scraper) for sites with no supported ATS.
+
+After jobs are collected, `classifyJobVerbose()` assigns category and `requires_native_language`. Results are returned as a `ScrapeResult` with jobs grouped by country.
+
+### Development: admin UI scraper tab
+- Operator pastes a career URL into the admin scraper tab
+- The browser calls `POST /api/admin/scrape` on the running Astro dev server
+- Results are reviewed in the UI, then uploaded via the JSON uploader (or the scrape result is uploaded directly)
+- The Python scraper subprocess is spawned locally (requires `scraper/.venv` or system Python + Playwright)
+
+### Production: GitHub Actions scheduled workflow
+- **Workflow**: `.github/workflows/scheduled-scrape.yml` — runs every 2 days at 06:00 UTC; also triggerable manually
+- **Company list**: `scraper/companies.yaml` — add a company here only after manually testing it via the admin scraper tab
+- **Execution**: Builds the Astro app and starts it locally (`node dist/server/entry.mjs`) inside the runner, then calls its own `/api/admin/scrape` and `/api/admin/upload` endpoints — same code path as dev
+- **Parallelism**: Companies are split into up to 3 parallel slices (GitHub Actions matrix) via `scraper/batch_run.py`
+- **Auth**: `SCRAPER_SECRET` env var (via Doppler) is passed as the `X-Scraper-Secret` header to bypass cookie auth
+- **Secrets**: Only `DOPPLER_TOKEN` is stored in GitHub — Doppler injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SCRAPER_SECRET`
+- **Logs**: Scrape run logs are written to `logs/YYYY-MM-DD.log` and uploaded as GitHub Actions artifacts (90-day retention)
+
+### Key scraper files
+
+| File | Purpose |
+|------|---------|
+| `src/pages/api/admin/scrape.ts` | Main scrape endpoint — ATS detection, layer 1/1.5/2 fallback, classification |
+| `src/lib/ats/` | ATS-specific fetchers (greenhouse, lever, ashby, workable, workday) |
+| `src/lib/ats/detector.ts` | URL → ATS type + company slug detection |
+| `src/lib/ats/company-apis.ts` | Per-company custom API configs (Layer 1.5) |
+| `src/lib/classifier.ts` | Job classification (`category`, `requires_native_language`) |
+| `src/lib/scrape-logger.ts` | Writes human-readable logs to `logs/` |
+| `scraper/main.py` | Python/Playwright browser scraper (Layer 2 fallback) |
+| `scraper/companies.yaml` | Production company list for scheduled scraping |
+| `scraper/batch_run.py` | GitHub Actions runner — reads YAML, calls scrape + upload endpoints |
+| `.github/workflows/scheduled-scrape.yml` | Scheduled scrape workflow definition |
 
 ## LLM prompt system
 
