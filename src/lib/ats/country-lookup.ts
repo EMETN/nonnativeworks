@@ -453,6 +453,34 @@ function normalizeKey(s: string): string {
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
+/**
+ * From a raw location string (e.g. "Hybrid - Helsinki, Uusimaa; Hybrid - Tallinn, Estonia"),
+ * extract only the city names that belong to the given ISO alpha-2 country code.
+ * Country names and cities from other countries are discarded.
+ * Returns an empty array when no matching cities are found.
+ */
+export function extractCitiesForCountry(location: string, countryCode: string): string[] {
+  if (!location?.trim()) return [];
+  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const segments = parts.flatMap((part) => {
+    const stripped = part.replace(LOCATION_PREFIX_RE, '');
+    return stripped.split(',').map((s) => s.trim()).filter(Boolean);
+  });
+  const results: string[] = [];
+  const seen = new Set<string>();
+  for (const segment of segments) {
+    const key = normalizeKey(segment);
+    const info = CITY_MAP[key];
+    if (info && info.code === countryCode) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push(segment);
+      }
+    }
+  }
+  return results;
+}
+
 export function lookupCountryFromLocation(location: string): CountryInfo[] {
   if (!location || !location.trim()) return [];
 

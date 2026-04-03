@@ -8,7 +8,7 @@ import { fetchLeverJobs, fetchLeverCompanyName } from '../../../lib/ats/lever';
 import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
 import { fetchWorkableCompanyName, fetchWorkableJobs, enrichWorkableDescriptions } from '../../../lib/ats/workable';
 import { parseWorkdayUrl, fetchWorkdayJobs, enrichWorkdayDescriptions } from '../../../lib/workday';
-import { lookupCountryFromLocation } from '../../../lib/ats/country-lookup';
+import { lookupCountryFromLocation, extractCitiesForCountry } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { logScrapeRun, type PositionLogEntry } from '../../../lib/scrape-logger';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
@@ -230,7 +230,10 @@ function buildScrapeResult(
           jobs: [],
         });
       }
-      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: job.city ?? job.location });
+      const cities = job.city
+        ? [job.city]
+        : extractCitiesForCountry(job.location ?? '', countryInfo.code);
+      groups.get(countryInfo.code)!.jobs.push({ ...classified, city: cities.length > 0 ? cities : undefined });
     }
   }
 

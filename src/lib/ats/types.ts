@@ -29,7 +29,7 @@ export interface AtsDetectionResult {
 export interface ClassifiedJob {
   title: string;
   url?: string;
-  city?: string;
+  city?: string[];
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;

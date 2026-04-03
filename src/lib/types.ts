@@ -36,6 +36,7 @@ export interface Position {
   requires_native_language: boolean;
   local_language_advantage: boolean;
   extracted_at: string;
+  city: string[] | null;
 }
 
 export interface PositionDetail {
@@ -46,6 +47,7 @@ export interface PositionDetail {
   category_name: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
+  city: string[] | null;
 }
 
 // View types
