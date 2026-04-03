@@ -13,6 +13,8 @@ export interface RawJob {
   sourceId?: string;
   /** Explicit city name when the scraper can provide it separately from the country-resolution location string. */
   city?: string;
+  /** Explicit work model when the scraper knows it ('remote' | 'hybrid' | 'on-site'). Overrides location-derived value. */
+  work_model?: 'remote' | 'hybrid' | 'on-site';
   /**
    * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
    * this overrides the classifier's requires_native_language result.
@@ -30,6 +32,7 @@ export interface ClassifiedJob {
   title: string;
   url?: string;
   city?: string[];
+  work_model?: 'remote' | 'hybrid' | 'on-site';
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;

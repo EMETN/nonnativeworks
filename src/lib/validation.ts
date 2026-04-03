@@ -14,6 +14,7 @@ export const PositionSchema = z.object({
   title: z.string().min(1, 'Position title is required'),
   url: urlTransform,
   city: z.array(z.string()).optional(),
+  work_model: z.enum(['remote', 'hybrid', 'on-site']).optional(),
   requires_native_language: z.boolean({
     required_error: 'requires_native_language must be true or false',
   }),
