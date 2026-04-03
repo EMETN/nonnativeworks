@@ -208,6 +208,11 @@ function buildScrapeResult(
         classified.requires_native_language = job.requires_native_language;
       }
 
+      const cities = job.city
+        ? [job.city]
+        : extractCitiesForCountry(job.location ?? '', countryInfo.code);
+      const workModel = job.work_model ?? extractWorkModelFromLocation(job.location ?? '');
+
       positionLogs.push({
         title: classified.title,
         category: classified.category,
@@ -220,6 +225,8 @@ function buildScrapeResult(
         languageSignals: signals.languageSignals,
         countryCode: countryInfo.code,
         countryName: countryInfo.name,
+        city: cities.length > 0 ? cities : undefined,
+        work_model: workModel ?? undefined,
       });
 
       if (!groups.has(countryInfo.code)) {
@@ -230,10 +237,6 @@ function buildScrapeResult(
           jobs: [],
         });
       }
-      const cities = job.city
-        ? [job.city]
-        : extractCitiesForCountry(job.location ?? '', countryInfo.code);
-      const workModel = job.work_model ?? extractWorkModelFromLocation(job.location ?? '');
       groups.get(countryInfo.code)!.jobs.push({
         ...classified,
         city: cities.length > 0 ? cities : undefined,

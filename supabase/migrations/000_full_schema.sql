@@ -1,5 +1,5 @@
 -- Full schema for a fresh NonNativeWorks database.
--- This is the consolidated version of all incremental migrations (001–008).
+-- This is the consolidated version of all incremental migrations (001–009).
 -- Run this file in the Supabase SQL editor on a brand-new project instead of
 -- running the individual migration files one by one.
 
@@ -52,6 +52,7 @@ CREATE TABLE positions (
   city                     TEXT[],
   required_languages       TEXT[]      NOT NULL DEFAULT '{}',
   preferred_languages      TEXT[]      NOT NULL DEFAULT '{}',
+  work_model               TEXT        CHECK (work_model IN ('remote', 'hybrid', 'on-site')),
   extracted_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
