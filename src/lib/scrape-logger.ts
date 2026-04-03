@@ -42,7 +42,14 @@ function formatLanguageSignal(pos: PositionLogEntry): string {
 }
 
 function formatCategory(pos: PositionLogEntry): string {
-  const cat = pos.category === 'customer-support' ? 'cust-support' : pos.category;
+  const ABBREV: Record<string, string> = {
+    'customer-success': 'cust-success',
+    'customer-support': 'cust-support',
+    'finance-accounting': 'finance',
+    'hr-recruiting': 'hr',
+    'data-analytics': 'data',
+  };
+  const cat = ABBREV[pos.category] ?? pos.category;
   const suffix = pos.categorySource === 'description' ? '/desc' : '';
   return `[${cat}${suffix}]`;
 }

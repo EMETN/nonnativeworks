@@ -30,6 +30,9 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
               Local language advantage
             </span>
           )}
+          {pos.city && pos.city.length > 0 && (
+            <div class="text-xs text-gray-400 mt-0.5">{pos.city.join(', ')}</div>
+          )}
         </div>
         <span class="text-xs text-gray-400 whitespace-nowrap mt-0.5">{pos.category_name}</span>
       </div>
