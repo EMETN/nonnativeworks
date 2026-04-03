@@ -11,6 +11,7 @@ on:
         description: 'Dry run (scrape but do not upload)'
         type: boolean
         default: false
+  push:
     
 
 # Only one run at a time — if a previous run is still going, cancel it.
@@ -102,7 +103,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          #cache: 'pnpm'
+          cache: 'pnpm'
 
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile
