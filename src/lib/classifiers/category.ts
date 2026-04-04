@@ -5,22 +5,22 @@
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   engineering: [
-    'engineer', 'developer', 'programmer', 'devops', 'sre', 'reliability',
+    'engineer', 'developer', 'programmer', 'devops',
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
     'full stack', 'software', 'architect', 'infrastructure', 'platform',
-    'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
+    'mobile', 'android', 'embedded', 'firmware', 'hardware',
     'cloud', 'security engineer', 'cybersecurity', 'network engineer',
     'systems engineer', 'qa engineer', 'quality assurance', 'tester',
-    'database administrator', 'dba', 'it support', 'it engineer',
+    'database administrator', 'dba', 'it support', 'it engineer', 'architecture',
     'information technology', 'staff engineer', 'principal engineer',
-    'release engineer', 'game developer', 'solutions architect',
+    'release engineer', 'game developer', 'solutions architect', 'testing', 'ict'
   ],
   'data-analytics': [
     'data scientist', 'data science', 'data engineer', 'data analyst', 'data analysis',
     'machine learning', 'ml engineer', 'ai engineer', 'artificial intelligence',
     'analytics engineer', 'business intelligence', 'bi analyst', 'bi developer',
     'data warehouse', 'big data', 'statistician', 'quantitative', 'quantitative analyst',
-    'research scientist', 'mlops', 'risk modeling', 
+    'research scientist', 'mlops', 'risk modeling', 'differential privacy', 'ai/ml',
   ],
   product: [
     'product manager', 'product owner', 'product director', 'head of product',
@@ -34,11 +34,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'illustrator', 'design lead',
   ],
   marketing: [
-    'marketing', 'seo', 'sem', 'content strategist', 'content writer',
+    'marketing', 'content strategist', 'content writer',
     'social media', 'brand', 'growth hacker', 'growth marketer', 'brand manager',
     'campaign', 'copywriter', 'copywriting', 'digital marketing',
     'performance marketing', 'email marketing', 'demand generation',
-    'product marketing', 'public relations', ' pr ', 'communications',
+    'product marketing', 'public relations', 'communication',
     'communications manager', 'communications director', 'cmo',
   ],
   sales: [
@@ -84,8 +84,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   ],
   legal: [
     'legal', 'counsel', 'lawyer', 'attorney', 'compliance',
-    'regulatory', 'privacy', 'gdpr', 'paralegal', 'intellectual property',
-    'general counsel', 'clo', 'chief legal',
+    'regulatory', 'gdpr', 'paralegal', 'intellectual property',
+    'general counsel', 'chief legal',
   ],
 };
 
@@ -124,6 +124,9 @@ export function classifyCategoryVerbose(
         bestSource = 'jobFunction';
       }
     }
+    // jobFunction is a structured field set by the company — trust it when it matches.
+    // Only fall through to title/description when jobFunction didn't match any keyword.
+    if (bestScore > 0) return { category: best, matchedKeyword: bestKeyword, source: 'jobFunction' };
   }
 
   // Title — medium priority (2 pts)
