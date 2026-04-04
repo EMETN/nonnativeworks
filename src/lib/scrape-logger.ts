@@ -6,7 +6,7 @@ export interface PositionLogEntry {
   title: string;
   category: string;
   categorySignal?: string;
-  categorySource: 'title' | 'description' | 'default';
+  categorySource: 'title' | 'description' | 'jobFunction' | 'default';
   requires_native_language: boolean;
   local_language_advantage: boolean;
   requiredLanguages: string[];
@@ -52,8 +52,12 @@ function formatCategory(pos: PositionLogEntry): string {
     'data-analytics': 'data',
   };
   const cat = ABBREV[pos.category] ?? pos.category;
-  const suffix = pos.categorySource === 'description' ? '/desc' : '';
-  return `[${cat}${suffix}]`;
+  const sourceSuffix = pos.categorySource === 'description' ? '/desc'
+    : pos.categorySource === 'jobFunction' ? '/api'
+    : '';
+  if (!pos.categorySignal) return `[${cat}]`;
+  const kw = pos.categorySignal.slice(0, 20);
+  return `[${cat}${sourceSuffix}:"${kw}"]`;
 }
 
 export function logScrapeRun(params: {
@@ -98,7 +102,7 @@ export function logScrapeRun(params: {
     for (const pos of positions) {
       const icon = pos.requires_native_language ? '✗' : pos.local_language_advantage ? '~' : '✓';
       const titleStr = pos.title.slice(0, 42).padEnd(44);
-      const catStr = formatCategory(pos).padEnd(18);
+      const catStr = formatCategory(pos);
       const langStr = formatLanguageSignal(pos);
       lines.push(`  ${icon}  ${titleStr}${catStr}  ${langStr}`);
       const locationParts: string[] = [];

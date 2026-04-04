@@ -7,7 +7,7 @@ export type { SignalEntry } from './classifiers/language';
 
 export type ClassificationSignals = {
   categorySignal?: string;
-  categorySource: 'title' | 'description' | 'default';
+  categorySource: 'title' | 'description' | 'jobFunction' | 'default';
   languageSignals: SignalEntry[];
 };
 
