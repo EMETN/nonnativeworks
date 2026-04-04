@@ -138,7 +138,11 @@ async function scrape(careerUrl: string): Promise<ScrapeResult> {
           ats = 'company-api';
         }
       } catch (err) {
-        console.warn(`Layer 1.5 (company API) failed for ${careerHostname}:`, err instanceof Error ? err.message : err);
+        const cause = err instanceof Error && (err as NodeJS.ErrnoException).cause;
+        const causeDetail = cause instanceof AggregateError
+          ? cause.errors.map((e: unknown) => String(e)).join(', ')
+          : cause ? String(cause) : '';
+        console.warn(`Layer 1.5 (company API) failed for ${careerHostname}:`, err instanceof Error ? err.message : err, causeDetail ? `(cause: ${causeDetail})` : '');
       }
     }
   }

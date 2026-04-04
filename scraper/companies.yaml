@@ -16,8 +16,11 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 companies:
-    - url: https://boards.greenhouse.io/oura                                          
+    - url: https://boards.greenhouse.io/oura
       min_positions: 5
+    
+    - url: https://www.nordea.com/en/careers
+      min_positions: 20
 
 # Examples — uncomment and fill in real values:
 #
