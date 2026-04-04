@@ -15,8 +15,8 @@ export default defineConfig({
     integrations: [
         preact(),
         sentry({
-            sourceMapsUploadOptions: {
-                enabled: false,
+            sourcemaps: {
+                disable: true,
             },
             telemetry: false,
         }),
