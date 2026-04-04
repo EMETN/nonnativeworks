@@ -243,6 +243,14 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
  * Uses sourceId to build the URL from the template. Skips jobs with non-English titles
  * and jobs that already have a description.
  */
+function normaliseWorkModel(raw: string): RawJob['work_model'] | undefined {
+  const v = raw.toLowerCase();
+  if (v.includes('remote')) return 'remote';
+  if (v.includes('hybrid')) return 'hybrid';
+  if (v.includes('office') || v.includes('on-site') || v.includes('onsite') || v.includes('on site')) return 'on-site';
+  return undefined;
+}
+
 async function enrichDescriptionsFromApi(
   jobs: RawJob[],
   urlTemplate: string,
@@ -250,6 +258,8 @@ async function enrichDescriptionsFromApi(
   fields: string[],
   headers: Record<string, string>,
   locationField?: string,
+  jobFunctionField?: string,
+  workModelField?: string,
 ): Promise<void> {
   const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
@@ -267,6 +277,14 @@ async function enrichDescriptionsFromApi(
           if (locationField) {
             const city = getString(item, locationField);
             if (city) job.city = city;
+          }
+          if (jobFunctionField) {
+            const jf = getString(item, jobFunctionField);
+            if (jf) job.jobFunction = jf;
+          }
+          if (workModelField) {
+            const wm = getString(item, workModelField);
+            if (wm) job.work_model = normaliseWorkModel(wm) ?? job.work_model;
           }
         } catch (err) {
           console.warn(`[enrichDescriptionsFromApi] failed for sourceId=${job.sourceId}: ${err}`);
@@ -654,7 +672,7 @@ export async function fetchCompanyApiJobs(
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {
     const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
     console.log(`[fetchCompanyApiJobs] enriching descriptions via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
-    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField);
+    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField, config.descriptionApiJobFunctionField, config.descriptionApiWorkModelField);
   }
 
   // Final safety-net dedup (should be a no-op if pagination dedup above caught everything).

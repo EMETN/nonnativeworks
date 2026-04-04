@@ -16,6 +16,12 @@ export interface RawJob {
   /** Explicit work model when the scraper knows it ('remote' | 'hybrid' | 'on-site'). Overrides location-derived value. */
   work_model?: 'remote' | 'hybrid' | 'on-site';
   /**
+   * Job function / department from the source API when available (e.g. Oracle HCM's JobFunction).
+   * Used as the primary category classification signal, ahead of title or description.
+   * Only set when the source provides a structured, concise value — not a free-text description.
+   */
+  jobFunction?: string;
+  /**
    * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
    * this overrides the classifier's requires_native_language result.
    * Use only when the source provides a definitive answer — do not set based on inferred signals.

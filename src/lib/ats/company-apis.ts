@@ -154,6 +154,22 @@ export interface CompanyApiConfig {
    */
   descriptionApiLocationField?: string;
   /**
+   * Dot-path to a job function / department field in the per-job detail API response.
+   * When set, the fetched value is stored as job.jobFunction and used as the primary
+   * category classification signal (ahead of title and description).
+   * Use for APIs that expose a structured job function label (e.g. Oracle HCM's JobFunction).
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiJobFunctionField?: string;
+  /**
+   * Dot-path to a workplace type field in the per-job detail API response.
+   * The fetched value is normalised to 'remote' | 'hybrid' | 'on-site' and stored as
+   * job.work_model, overriding any location-derived value.
+   * Unrecognised values are silently ignored.
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiWorkModelField?: string;
+  /**
    * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
    * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
    * language classification. The primary fetch provides the complete position list for statistics;
@@ -278,6 +294,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     descriptionApiUrl: 'https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1',
     descriptionApiFields: ['ExternalQualificationsStr', 'ExternalResponsibilitiesStr'],
     descriptionApiLocationField: 'workLocation.0.TownOrCity',
+    descriptionApiJobFunctionField: 'JobFunction',
+    descriptionApiWorkModelField: 'WorkplaceType',
     expandSecondaryLocations: {
       path: 'secondaryLocations',
       countryName: 'Name',

@@ -91,21 +91,43 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 
 /**
  * Classifies a job into one of the defined categories based on keyword matching.
- * Title is scored first (2 pts per match); if no title match, description is
- * scored as a fallback (1 pt per match).
+ * jobFunction (structured API field) is scored first (3 pts per match);
+ * title is scored next (2 pts per match); description is a fallback (1 pt per match).
  * Returns the category plus the keyword that triggered it and the source.
  */
 export function classifyCategoryVerbose(
   title: string,
   descriptionText?: string,
-): { category: string; matchedKeyword?: string; source: 'title' | 'description' | 'default' } {
-  const titleLower = ` ${title.toLowerCase()} `;
-
+  jobFunction?: string,
+): { category: string; matchedKeyword?: string; source: 'title' | 'description' | 'jobFunction' | 'default' } {
   let best = 'other';
   let bestScore = 0;
   let bestKeyword: string | undefined;
-  let bestSource: 'title' | 'description' | 'default' = 'default';
+  let bestSource: 'title' | 'description' | 'jobFunction' | 'default' = 'default';
 
+  // jobFunction — highest priority (3 pts): a structured API field like "Internal communication"
+  if (jobFunction) {
+    const jfLower = ` ${jobFunction.toLowerCase()} `;
+    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+      let score = 0;
+      let firstMatch: string | undefined;
+      for (const kw of keywords) {
+        if (jfLower.includes(kw)) {
+          score += 3;
+          if (!firstMatch) firstMatch = kw.trim();
+        }
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = category;
+        bestKeyword = firstMatch;
+        bestSource = 'jobFunction';
+      }
+    }
+  }
+
+  // Title — medium priority (2 pts)
+  const titleLower = ` ${title.toLowerCase()} `;
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = 0;
     let firstMatch: string | undefined;
