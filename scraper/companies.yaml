@@ -20,7 +20,10 @@ companies:
       min_positions: 5
     
     - url: https://www.nordea.com/en/careers
-      min_positions: 20
+      min_positions: 10
+
+    - url: https://jobs.nokia.com/en
+      min_positions: 10
 
 # Examples — uncomment and fill in real values:
 #
