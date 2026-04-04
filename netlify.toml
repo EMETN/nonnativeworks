@@ -1,0 +1,11 @@
+[[redirects]]
+  from = "/ph-events/*"
+  to = "https://eu.i.posthog.com/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ph-static/*"
+  to = "https://eu-assets.i.posthog.com/:splat"
+  status = 200
+  force = true
