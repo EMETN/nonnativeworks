@@ -3,12 +3,12 @@
     "type": "module",
     "version": "0.0.1",
     "engines": {
-        "node": ">=25.0.0"
+        "node": ">=22.0.0"
     },
     "packageManager": "pnpm@10.33.0",
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
-        "build": "doppler run -- astro build",
+        "build": "astro build",
         "preview": "doppler run -- astro preview",
         "astro": "astro",
         "postinstall": "node scripts/patch-preact-vite.mjs",
