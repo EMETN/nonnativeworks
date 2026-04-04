@@ -19,6 +19,10 @@ export default defineConfig({
                 disable: true,
             },
             telemetry: false,
+            unstable_sentryVitePluginOptions: {
+                release: { inject: false },
+                sourcemaps: { disable: true },
+            },
         }),
     ],
     vite: {
