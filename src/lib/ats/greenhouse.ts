@@ -41,6 +41,7 @@ export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
     location: job.location?.name,
     url: job.absolute_url,
     department: job.departments?.[0]?.name,
+    jobFunction: job.departments?.[0]?.name,
   }));
 }
 
