@@ -63,10 +63,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'operations manager', 'operations director', 'head of operations',
     'supply chain', 'logistics', 'procurement', 'facilities',
     'office manager', 'executive assistant', 'program manager',
-    'project manager', 'pmo', 'coo', 'process manager',
+    'project manager', 'pmo', 'coo', 'process manager', 'manufacturing',
     'business operations', 'revenue operations', 'revenue ops', 'revops', 
     'business strategy', 'program management', 'portfolio management', 
-    'governance', 'change management', 'transformation', 
+    'governance', 'change management', 'transformation', 'assembly', 'assembler',
+    'logistics', 'technician', 'inventory', 'shipping', 'distribution', 'operator',
   ],
   'finance-accounting': [
     'finance', 'financial', 'accountant', 'accounting', 'controller',
