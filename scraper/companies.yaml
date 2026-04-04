@@ -28,6 +28,16 @@ companies:
     - url: https://www.reaktor.com/careers
       min_positions: 2
 
+    - url: https://job-boards.greenhouse.io/smartlyio
+      min_positions: 2
+
+    - url: https://careers.wolt.com/en/jobs
+      min_positions: 10
+
+    - url: https://yousician.com/careers
+      min_positions: 1
+
+
 # Examples — uncomment and fill in real values:
 #
 # ATS-based (Greenhouse, Lever, Ashby, Workable — fast, no browser needed):

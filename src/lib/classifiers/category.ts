@@ -13,7 +13,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   engineering: [
     'engineer', 'engineering', 'developer', 'programmer', 'devops',
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
-    'full stack', 'software', 'architect', 'infrastructure', 'platform',
+    'full stack', 'software', 'architect', 'infrastructure',
     'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
     'cloud', 'security engineer', 'cybersecurity', 'network engineer',
     'systems engineer', 'qa engineer', 'quality assurance', 'tester',
@@ -49,7 +49,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'communications manager', 'communications director', 'cmo',
   ],
   sales: [
-    'sales', 'sales manager', 'account executive', 'account manager',
+    'sales', 'sales manager', 'account executive', 'account manager', 'account management',
     'business development', 'bdm', 'bdr', 'sdr', 'revenue', 'partnership manager',
     'partner manager', 'commercial manager', 'field sales',
     'enterprise sales', 'sales development', 'head of sales', 'vp sales',
@@ -67,14 +67,15 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'support agent', 'support representative',
   ],
   operations: [
-    'operations manager', 'operations director', 'head of operations',
-    'supply chain', 'logistics', 'procurement', 'facilities',
+    'operations', 'operations manager', 'operations director', 'head of operations',
+    'supply chain', 'logistics', 'procurement', 'facilities', 'head of production',
     'office manager', 'executive assistant', 'program manager',
     'project manager', 'pmo', 'coo', 'process manager', 'manufacturing',
     'business operations', 'revenue operations', 'revenue ops', 'revops', 
     'business strategy', 'program management', 'portfolio management', 
     'governance', 'change management', 'transformation', 'assembly', 'assembler',
     'logistics', 'technician', 'inventory', 'shipping', 'distribution', 'operator',
+    'grocery associate', 'grocery shift lead',
   ],
   'finance-accounting': [
     'finance', 'financial', 'accountant', 'accounting', 'controller',
@@ -87,7 +88,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'hr', 'recruiter', 'recruitment', 'talent acquisition', 'talent management',
     'talent partner', 'people operations', 'people partner', 'hrbp', 
     'hr business partner', 'hr manager', 'hr director', 'chief people', 'payroll',
-    'compensation', 'learning and development', 'l&d', 'onboarding',
+    'compensation', 'learning and development', 'l&d',
     'organisational development', 'organizational development',
   ],
   legal: [
