@@ -12,7 +12,7 @@
         "preview": "doppler run -- astro preview",
         "astro": "astro",
         "postinstall": "node scripts/patch-preact-vite.mjs",
-        "clean": "rm -rf node_modules dist pnpm-lock.yaml"
+        "clean": "rm -rf node_modules dist .netlify pnpm-lock.yaml .pnpm-store"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.8",
@@ -20,7 +20,7 @@
         "@astrojs/node": "^10.0.4",
         "@astrojs/preact": "^5.1.1",
         "@preact/preset-vite": "^2.10.5",
-        "@sentry/astro": "^10.47.0",
+        "@sentry/browser": "^10.47.0",
         "@sentry/node": "^10.47.0",
         "@supabase/ssr": "^0.10.0",
         "@supabase/supabase-js": "^2.101.1",
