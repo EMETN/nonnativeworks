@@ -11,7 +11,7 @@ const CATEGORY_KEYWORD_PATTERNS: Record<string, Array<{ pattern: RegExp; keyword
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   engineering: [
-    'engineer', 'developer', 'programmer', 'devops',
+    'engineer', 'engineering', 'developer', 'programmer', 'devops',
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
     'full stack', 'software', 'architect', 'infrastructure', 'platform',
     'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
@@ -22,12 +22,12 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'release engineer', 'game developer', 'solutions architect', 'testing', 'ict'
   ],
   'data-analytics': [
-    'data scientist', 'data science', 'data engineer', 'data analyst', 'data analysis',
+    'data scientist', 'data science', 'data engineer', 'data analyst', 
+    'data analysis', 'data analytics', 'ai', 'ml', 'ai/ml',
     'machine learning', 'ml engineer', 'ai engineer', 'artificial intelligence',
     'analytics engineer', 'business intelligence', 'bi analyst', 'bi developer',
     'data warehouse', 'big data', 'statistician', 'quantitative', 'quantitative analyst',
-    'research scientist', 'mlops', 'risk modeling', 'differential privacy', 'ai/ml', 
-    'ai', 'ml',
+    'research scientist', 'mlops', 'risk modeling', 'differential privacy',
   ],
   product: [
     'product manager', 'product owner', 'product director', 'head of product',
@@ -118,6 +118,7 @@ export function classifyCategoryVerbose(
 ): { category: string; matchedKeyword?: string; source: 'title' | 'description' | 'jobFunction' | 'default' } {
   let best = 'other';
   let bestScore = 0;
+  let bestMatchPos = Infinity; // tiebreaker: earlier position = higher emphasis in text
   let bestKeyword: string | undefined;
   let bestSource: 'title' | 'description' | 'jobFunction' | 'default' = 'default';
 
@@ -126,14 +127,18 @@ export function classifyCategoryVerbose(
     for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
       let score = 0;
       let firstMatch: string | undefined;
+      let earliestPos = Infinity;
       for (const { pattern, keyword } of patterns) {
-        if (pattern.test(jobFunction)) {
+        const m = pattern.exec(jobFunction);
+        if (m) {
           score += 3;
           if (!firstMatch) firstMatch = keyword;
+          if (m.index < earliestPos) earliestPos = m.index;
         }
       }
-      if (score > bestScore) {
+      if (score > bestScore || (score === bestScore && earliestPos < bestMatchPos)) {
         bestScore = score;
+        bestMatchPos = earliestPos;
         best = category;
         bestKeyword = firstMatch;
         bestSource = 'jobFunction';
@@ -148,14 +153,18 @@ export function classifyCategoryVerbose(
   for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
     let score = 0;
     let firstMatch: string | undefined;
+    let earliestPos = Infinity;
     for (const { pattern, keyword } of patterns) {
-      if (pattern.test(title)) {
+      const m = pattern.exec(title);
+      if (m) {
         score += 2;
         if (!firstMatch) firstMatch = keyword;
+        if (m.index < earliestPos) earliestPos = m.index;
       }
     }
-    if (score > bestScore) {
+    if (score > bestScore || (score === bestScore && earliestPos < bestMatchPos)) {
       bestScore = score;
+      bestMatchPos = earliestPos;
       best = category;
       bestKeyword = firstMatch;
       bestSource = 'title';
@@ -169,14 +178,18 @@ export function classifyCategoryVerbose(
     for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
       let score = 0;
       let firstMatch: string | undefined;
+      let earliestPos = Infinity;
       for (const { pattern, keyword } of patterns) {
-        if (pattern.test(descriptionText)) {
+        const m = pattern.exec(descriptionText);
+        if (m) {
           score++;
           if (!firstMatch) firstMatch = keyword;
+          if (m.index < earliestPos) earliestPos = m.index;
         }
       }
-      if (score > bestScore) {
+      if (score > bestScore || (score === bestScore && earliestPos < bestMatchPos)) {
         bestScore = score;
+        bestMatchPos = earliestPos;
         best = category;
         bestKeyword = firstMatch;
         bestSource = 'description';
