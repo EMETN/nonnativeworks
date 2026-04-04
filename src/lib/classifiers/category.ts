@@ -3,12 +3,18 @@
 // Matched against lowercased job title (primary) and description (fallback).
 // ---------------------------------------------------------------------------
 
+// Pre-compiled word-boundary regexes for each keyword, built at module load.
+// Using \b ensures "head of product" doesn't match "head of production".
+// Special non-word characters (/, &) inside keywords are escaped but not treated
+// as boundary positions — the outer \b anchors at the true word edges.
+const CATEGORY_KEYWORD_PATTERNS: Record<string, Array<{ pattern: RegExp; keyword: string }>> = {};
+
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   engineering: [
     'engineer', 'developer', 'programmer', 'devops',
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
     'full stack', 'software', 'architect', 'infrastructure', 'platform',
-    'mobile', 'android', 'embedded', 'firmware', 'hardware',
+    'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
     'cloud', 'security engineer', 'cybersecurity', 'network engineer',
     'systems engineer', 'qa engineer', 'quality assurance', 'tester',
     'database administrator', 'dba', 'it support', 'it engineer', 'architecture',
@@ -20,7 +26,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'machine learning', 'ml engineer', 'ai engineer', 'artificial intelligence',
     'analytics engineer', 'business intelligence', 'bi analyst', 'bi developer',
     'data warehouse', 'big data', 'statistician', 'quantitative', 'quantitative analyst',
-    'research scientist', 'mlops', 'risk modeling', 'differential privacy', 'ai/ml',
+    'research scientist', 'mlops', 'risk modeling', 'differential privacy', 'ai/ml', 
+    'ai', 'ml',
   ],
   product: [
     'product manager', 'product owner', 'product director', 'head of product',
@@ -28,7 +35,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'product analyst', 'product strategist', 
   ],
   design: [
-    'designer', ' ux ', 'ux designer', 'ui designer', 'user experience',
+    'designer', 'ux', 'ux designer', 'ui designer', 'user experience',
     'user interface', 'product designer', 'graphic designer', 'visual designer',
     'creative director', 'art director', 'brand designer', 'motion designer',
     'illustrator', 'design lead',
@@ -77,7 +84,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'corporate finance', 'valuation', 'credit analyst', 'fraud analyst',
   ],
   'hr-recruiting': [
-    'recruiter', 'recruitment', 'talent acquisition', 'talent management',
+    'hr', 'recruiter', 'recruitment', 'talent acquisition', 'talent management',
     'talent partner', 'people operations', 'people partner', 'hrbp', 
     'hr business partner', 'hr manager', 'hr director', 'chief people', 'payroll',
     'compensation', 'learning and development', 'l&d', 'onboarding',
@@ -89,6 +96,14 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'general counsel', 'chief legal',
   ],
 };
+
+// Build the regex map once at module load.
+for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+  CATEGORY_KEYWORD_PATTERNS[category] = keywords.map(kw => ({
+    keyword: kw.trim(),
+    pattern: new RegExp(`\\b${kw.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
+  }));
+}
 
 /**
  * Classifies a job into one of the defined categories based on keyword matching.
@@ -108,14 +123,13 @@ export function classifyCategoryVerbose(
 
   // jobFunction — highest priority (3 pts): a structured API field like "Internal communication"
   if (jobFunction) {
-    const jfLower = ` ${jobFunction.toLowerCase()} `;
-    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
       let score = 0;
       let firstMatch: string | undefined;
-      for (const kw of keywords) {
-        if (jfLower.includes(kw)) {
+      for (const { pattern, keyword } of patterns) {
+        if (pattern.test(jobFunction)) {
           score += 3;
-          if (!firstMatch) firstMatch = kw.trim();
+          if (!firstMatch) firstMatch = keyword;
         }
       }
       if (score > bestScore) {
@@ -131,14 +145,13 @@ export function classifyCategoryVerbose(
   }
 
   // Title — medium priority (2 pts)
-  const titleLower = ` ${title.toLowerCase()} `;
-  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+  for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
     let score = 0;
     let firstMatch: string | undefined;
-    for (const kw of keywords) {
-      if (titleLower.includes(kw)) {
+    for (const { pattern, keyword } of patterns) {
+      if (pattern.test(title)) {
         score += 2;
-        if (!firstMatch) firstMatch = kw.trim();
+        if (!firstMatch) firstMatch = keyword;
       }
     }
     if (score > bestScore) {
@@ -153,14 +166,13 @@ export function classifyCategoryVerbose(
 
   // Fallback: scan description text
   if (descriptionText) {
-    const descLower = descriptionText.toLowerCase();
-    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const [category, patterns] of Object.entries(CATEGORY_KEYWORD_PATTERNS)) {
       let score = 0;
       let firstMatch: string | undefined;
-      for (const kw of keywords) {
-        if (descLower.includes(kw)) {
+      for (const { pattern, keyword } of patterns) {
+        if (pattern.test(descriptionText)) {
           score++;
-          if (!firstMatch) firstMatch = kw.trim();
+          if (!firstMatch) firstMatch = keyword;
         }
       }
       if (score > bestScore) {

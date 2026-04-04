@@ -25,6 +25,9 @@ companies:
     - url: https://jobs.nokia.com/en
       min_positions: 10
 
+    - url: https://www.reaktor.com/careers
+      min_positions: 2
+
 # Examples — uncomment and fill in real values:
 #
 # ATS-based (Greenhouse, Lever, Ashby, Workable — fast, no browser needed):
