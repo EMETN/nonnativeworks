@@ -4,27 +4,13 @@ import preact from '@astrojs/preact';
 import node from '@astrojs/node';
 import netlify from '@astrojs/netlify';
 import tailwindcss from '@tailwindcss/vite';
-import sentry from '@sentry/astro';
-
 const isNetlify = !!process.env.NETLIFY;
 
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
     adapter: isNetlify ? netlify() : node({ mode: 'standalone' }),
-    integrations: [
-        preact(),
-        sentry({
-            sourcemaps: {
-                disable: true,
-            },
-            telemetry: false,
-            unstable_sentryVitePluginOptions: {
-                release: { inject: false },
-                sourcemaps: { disable: true },
-            },
-        }),
-    ],
+    integrations: [preact()],
     vite: {
         plugins: [tailwindcss()],
         server: {
