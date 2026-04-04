@@ -16,10 +16,9 @@ export default defineConfig({
         preact(),
         sentry({
             sourceMapsUploadOptions: {
-                org: import.meta.env.SENTRY_ORG,
-                project: import.meta.env.SENTRY_PROJECT,
-                authToken: import.meta.env.SENTRY_AUTH_TOKEN,
+                enabled: false,
             },
+            telemetry: false,
         }),
     ],
     vite: {
