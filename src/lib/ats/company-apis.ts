@@ -79,6 +79,7 @@ export interface CompanyApiConfig {
     /** Use url OR urlTemplate, not both. */
     url?: string;
     department?: string;
+    jobFunction?: string;
     /**
      * Stable ID field used to deduplicate jobs when merging a primary and secondary fetch.
      * Required when secondaryUrl is set.
@@ -370,9 +371,11 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     fields: {
       title: 'title',
       location: 'country',
+      cities: 'location',  // array of city strings e.g. ["Helsinki"]
       url: 'jobDetailUrl',
       id: 'requisitionId',
-      department: 'jobFamilyGroup',  // array — first element is used automatically
+      department: 'jobFamilyGroup',
+      jobFunction: 'jobFamilyGroup',  // array — first element is used automatically
     },
     // jobDetailUrl contains "{0}" as a locale placeholder (e.g. "fi-en")
     urlPlaceholders: { '{0}': 'fi-en' },
@@ -383,9 +386,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     descriptionFields: ['jobDescriptionClean', 'qualificationClean'],
   },
 
-  // TODO: verify Nordea API shape before enabling.
-  // Embed all query params in the URL — the CompanyApiConfig type has no queryParams field.
-  // Replace urlTemplate once the actual item field structure is confirmed.
+ 
   'nordea.com': {
     url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
     method: 'GET',

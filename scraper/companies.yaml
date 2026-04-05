@@ -17,9 +17,17 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 companies:
+    - name: Accenture
+      url: https://www.accenture.com/us-en/careers
+      min_positions: 10
+
     - name: Gofore
       url: https://gofore.com/en/careers/
       min_positions: 1
+
+    - name: Konecranes
+      url: https://konecranes.careers/jobs
+      min_positions: 10
 
     - name: Nokia
       url: https://jobs.nokia.com/en
