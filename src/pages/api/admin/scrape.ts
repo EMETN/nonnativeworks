@@ -8,7 +8,7 @@ import { fetchLeverJobs, fetchLeverCompanyName } from '../../../lib/ats/lever';
 import { fetchAshbyJobsAndCompanyName } from '../../../lib/ats/ashby';
 import { fetchWorkableCompanyName, fetchWorkableJobs, enrichWorkableDescriptions } from '../../../lib/ats/workable';
 import { parseWorkdayUrl, fetchWorkdayJobs, enrichWorkdayDescriptions } from '../../../lib/workday';
-import { lookupCountryFromLocation, extractCitiesForCountry, extractWorkModelFromLocation } from '../../../lib/ats/country-lookup';
+import { lookupCountryFromLocation, extractCitiesForCountry, extractWorkModelFromLocation, getCompanyCountryFallback } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { logScrapeRun, type PositionLogEntry } from '../../../lib/scrape-logger';
 import type { RawJob, ScrapeResult, ScrapeCountryGroup, AtsType } from '../../../lib/ats/types';
@@ -189,11 +189,19 @@ function buildScrapeResult(
   let skippedUntracked = 0;
   const positionLogs: PositionLogEntry[] = [];
 
+  const companyFallbackCountry = getCompanyCountryFallback(careerUrl);
+
   for (const job of rawJobs) {
     // Use country_code when the scraper already resolved it (e.g. njoyn country filter),
     // otherwise fall back to free-text location lookup.
     const locationStr = job.country_code ?? job.location ?? '';
-    const countries = lookupCountryFromLocation(locationStr);
+    let countries = lookupCountryFromLocation(locationStr);
+
+    // If location lookup failed, use the company-level country fallback (e.g. Posti = Finland).
+    if (countries.length === 0 && companyFallbackCountry) {
+      countries = [companyFallbackCountry];
+    }
+
     const trackedCountries = countries.filter((c) => TRACKED_COUNTRY_CODES.has(c.code));
 
     if (countries.length === 0) {

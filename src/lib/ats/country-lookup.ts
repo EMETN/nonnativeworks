@@ -183,20 +183,32 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
 const CITY_MAP: Record<string, CountryInfo> = {
   // ── Finland ──────────────────────────────────────────────────────────────
   'espoo':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'forssa':                   { name: 'Finland', code: 'FI', slug: 'finland' },
+  'heinola':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'helsinki':                 { name: 'Finland', code: 'FI', slug: 'finland' },
   'helsinki metropolitan area': { name: 'Finland', code: 'FI', slug: 'finland' },
+  'huittinen':                 { name: 'Finland', code: 'FI', slug: 'finland' },
+  'hyvinkää':                 { name: 'Finland', code: 'FI', slug: 'finland' },
+  'hämeenlinna':              { name: 'Finland', code: 'FI', slug: 'finland' },
   'joensuu':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'jyväskylä':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'jyvaskyla':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'järvenpää':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'kajaani':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'kerava':                   { name: 'Finland', code: 'FI', slug: 'finland' },
   'kuopio':                   { name: 'Finland', code: 'FI', slug: 'finland' },
   'lahti':                    { name: 'Finland', code: 'FI', slug: 'finland' },
   'lappeenranta':             { name: 'Finland', code: 'FI', slug: 'finland' },
   'oulu':                     { name: 'Finland', code: 'FI', slug: 'finland' },
+  'mikkeli':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'riihimäki':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'rovaniemi':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'savonlinna':               { name: 'Finland', code: 'FI', slug: 'finland' },
   'tampere':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'turku':                    { name: 'Finland', code: 'FI', slug: 'finland' },
   'vaasa':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'vantaa':                   { name: 'Finland', code: 'FI', slug: 'finland' },
+  'varkaus':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   // ── Germany ──────────────────────────────────────────────────────────────
   'berlin':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   'bielefeld':                { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -426,6 +438,25 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'san jose':                 { name: 'United States', code: 'US', slug: 'united-states' },
   'seattle':                  { name: 'United States', code: 'US', slug: 'united-states' },
 };
+
+// Companies that only operate in one country — keyed by a substring of their career page URL.
+// When location lookup fails for a job from one of these companies, fall back to this country
+// instead of skipping the job.
+const COMPANY_COUNTRY_FALLBACKS: Array<{ urlSubstring: string; country: CountryInfo }> = [
+  { urlSubstring: 'posti.', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
+];
+
+/**
+ * Returns a fallback country for the given career URL if the company is known to operate
+ * exclusively in that country. Returns null if no fallback is configured.
+ */
+export function getCompanyCountryFallback(careerUrl: string): CountryInfo | null {
+  const lower = careerUrl.toLowerCase();
+  for (const entry of COMPANY_COUNTRY_FALLBACKS) {
+    if (lower.includes(entry.urlSubstring)) return entry.country;
+  }
+  return null;
+}
 
 // Location strings that should be skipped (not a country)
 const SKIP_LOCATION_PATTERNS = [

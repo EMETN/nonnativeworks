@@ -37,6 +37,9 @@ companies:
     - url: https://yousician.com/careers
       min_positions: 1
 
+    - url: https://posti.wd3.myworkdayjobs.com/en-US/external
+      min_positions: 1
+
 
 # Examples — uncomment and fill in real values:
 #
