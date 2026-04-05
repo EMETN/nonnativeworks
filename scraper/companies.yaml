@@ -29,6 +29,10 @@ companies:
       url: https://www.nordea.com/en/careers
       min_positions: 10
 
+    - name: OP
+      url: https://op-careers.fi
+      min_positions: 5
+
     - name: Oura
       url: https://boards.greenhouse.io/oura
       min_positions: 5
