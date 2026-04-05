@@ -225,9 +225,10 @@ def main() -> int:
 
         min_positions = company.get("min_positions", 1)
         is_english_company = company.get("is_english_company", False)
+        display_name = company.get("name") or url
 
         print(f"\n{'─' * 60}")
-        print(f"Scraping: {url}")
+        print(f"Scraping: {display_name}  ({url})")
 
         summary_entry: dict = {
             "url": url,

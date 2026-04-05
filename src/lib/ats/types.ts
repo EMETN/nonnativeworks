@@ -13,6 +13,8 @@ export interface RawJob {
   sourceId?: string;
   /** Explicit city name when the scraper can provide it separately from the country-resolution location string. */
   city?: string;
+  /** Explicit list of city names when the API returns multiple cities for a single posting. Takes priority over city. */
+  cities?: string[];
   /** Explicit work model when the scraper knows it ('remote' | 'hybrid' | 'on-site'). Overrides location-derived value. */
   work_model?: 'remote' | 'hybrid' | 'on-site';
   /**

@@ -27,6 +27,24 @@ function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
+/**
+ * Extract all string values from a dot-path that points to an array or an object
+ * with numeric-string keys (e.g. sfstd_jobLocation_obj: {0: "Helsinki", 1: "Oulu"}).
+ * Returns an empty array if the path is missing or has no string values.
+ */
+function getStringArray(obj: unknown, path: string | undefined): string[] {
+  if (!path) return [];
+  const val = getPath(obj, path);
+  if (Array.isArray(val)) {
+    return val.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+  }
+  if (val !== null && typeof val === 'object') {
+    return Object.values(val as Record<string, unknown>)
+      .filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+  }
+  return [];
+}
+
 /** Extract a string from a dot-path. Arrays return their first string element. Numbers are coerced to strings. */
 function getString(obj: unknown, path: string | undefined): string | undefined {
   if (!path) return undefined;
@@ -85,9 +103,12 @@ function mapItem(
     if (parts.length) descriptionText = parts.join(' ');
   }
 
+  const cities = getStringArray(item, fields.cities);
+
   return {
     title,
     location: getString(item, fields.location),
+    cities: cities.length > 0 ? cities : undefined,
     url: url || undefined,
     department: getString(item, fields.department),
     sourceId: fields.id ? getString(item, fields.id) : undefined,

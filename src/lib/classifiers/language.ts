@@ -1,5 +1,5 @@
 import { detect } from 'tinyld';
-import { titleAppearsNonEnglish } from '../ats/title-language';
+import { titleAppearsNonEnglish, KEYWORDS_RE } from '../ats/title-language';
 
 // ---------------------------------------------------------------------------
 // Country → language keyword map
@@ -329,6 +329,8 @@ const LANG_MENTIONS = (lang: string) => [
   `knowledge of ${lang}`,
   `${lang} knowledge`,
   `${lang} communication`,
+  `communicate in ${lang}`,
+  `ability to communicate in ${lang}`,
   `preferably also ${lang}`,
 ];
 
@@ -340,7 +342,7 @@ const LANG_MENTIONS = (lang: string) => [
 function buildAdvantageRegex(lang: string): RegExp {
   const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return new RegExp(
-    `(?:${escaped.join('|')})\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
+    `(?:${escaped.join('|')})(?:\\s+\\w+){0,6}\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
   );
 }
 
@@ -543,9 +545,10 @@ export function detectNativeLanguage(
   // signal — no further analysis needed.
   if (titleAppearsNonEnglish(title)) {
     const nonAsciiChar = title.match(/[äöüåéèêëàâîïôùûçñßãõøæœ]/i)?.[0];
+    const keyword = nonAsciiChar ? undefined : KEYWORDS_RE.exec(title)?.[0];
     return {
       value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
-      signals: [{ phase: '1a', description: 'non-ASCII title', matched: nonAsciiChar }],
+      signals: [{ phase: '1a', description: nonAsciiChar ? 'non-ASCII title' : 'local-language keyword in title', matched: nonAsciiChar ?? keyword }],
     };
   }
 

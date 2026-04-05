@@ -98,6 +98,15 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
+// Titles that should always classify as 'other' regardless of description content.
+// These are catch-all or non-specific postings where description keywords would mislead.
+const OTHER_TITLE_PATTERNS: RegExp[] = [
+  /\bopen\s+application\b/i,
+  /\bspontaneous\s+application\b/i,
+  /\bspeculative\s+application\b/i,
+  /\bgeneral\s+application\b/i,
+];
+
 // Build the regex map once at module load.
 for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
   CATEGORY_KEYWORD_PATTERNS[category] = keywords.map(kw => ({
@@ -173,6 +182,11 @@ export function classifyCategoryVerbose(
   }
 
   if (bestScore > 0) return { category: best, matchedKeyword: bestKeyword, source: bestSource };
+
+  // If the title signals a non-specific posting, don't let description keywords mislead.
+  if (OTHER_TITLE_PATTERNS.some(p => p.test(title))) {
+    return { category: 'other', source: 'default' };
+  }
 
   // Fallback: scan description text
   if (descriptionText) {
