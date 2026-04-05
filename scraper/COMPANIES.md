@@ -3,6 +3,7 @@
 - Accenture
 - Barona (enrichment of descriptions not working yet)
 - Gofore
+- Konecranes
 - Nokia
 - Nordea
 - OP Financial Group
@@ -61,6 +62,7 @@ Detected by `attrax-vacancy-tile` in the page HTML. Uses a paginated Attrax-spec
 
 | Company | Hostname | Notes |
 |---------|----------|-------|
+| Konecranes | `konecranes.careers/jobs` | |
 | Tieto | `careers.tieto.com` | URL override applied — filtered to tracked countries to bypass 250-job cap |
 
 #### Generic heuristics (all other sites)

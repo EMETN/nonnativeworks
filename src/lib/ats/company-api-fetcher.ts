@@ -111,6 +111,7 @@ function mapItem(
     cities: cities.length > 0 ? cities : undefined,
     url: url || undefined,
     department: getString(item, fields.department),
+    jobFunction: getString(item, fields.jobFunction),
     sourceId: fields.id ? getString(item, fields.id) : undefined,
     descriptionText,
   };

@@ -11,7 +11,7 @@ const CATEGORY_KEYWORD_PATTERNS: Record<string, Array<{ pattern: RegExp; keyword
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   engineering: [
-    'engineer', 'engineering', 'developer', 'programmer', 'devops',
+    'engineer', 'engineering', 'developer', 'developers', 'programmer', 'devops',
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
     'full stack', 'software', 'architect', 'infrastructure',
     'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
@@ -19,7 +19,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'systems engineer', 'qa engineer', 'quality assurance', 'tester',
     'database administrator', 'dba', 'it support', 'it engineer', 'architecture',
     'information technology', 'staff engineer', 'principal engineer',
-    'release engineer', 'game developer', 'solutions architect', 'testing', 'ict'
+    'release engineer', 'game developer', 'solutions architect', 'testing', 'ict',
+    'development skills', 'guidewire', 
   ],
   'data-analytics': [
     'data scientist', 'data science', 'data engineer', 'data analyst', 
