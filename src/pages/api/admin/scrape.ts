@@ -220,9 +220,8 @@ function buildScrapeResult(
         classified.requires_native_language = job.requires_native_language;
       }
 
-      const cities = job.city
-        ? [job.city]
-        : extractCitiesForCountry(job.location ?? '', countryInfo.code);
+      const cities = job.cities
+        ?? (job.city ? [job.city] : extractCitiesForCountry(job.location ?? '', countryInfo.code));
       const workModel = job.work_model ?? extractWorkModelFromLocation(job.location ?? '');
 
       positionLogs.push({

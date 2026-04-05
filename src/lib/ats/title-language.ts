@@ -140,7 +140,7 @@ const ALL_KEYWORDS: string[] = [
 // inside a compound word (e.g. "johtaja" matches "myyntijohtaja" and
 // "kehitysjohtaja"; "myynti" matches "myyntiassistentti").
 // False positives are negligible: these roots never appear inside English words.
-const KEYWORDS_RE = new RegExp(
+export const KEYWORDS_RE = new RegExp(
   `(${ALL_KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
   'i',
 );

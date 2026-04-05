@@ -70,6 +70,12 @@ export interface CompanyApiConfig {
   fields: {
     title: string;
     location?: string;
+    /**
+     * Dot-path to an array or object of city name strings (e.g. sfstd_jobLocation_obj).
+     * Populates job.cities with all city strings found. Takes priority over location-derived
+     * city extraction when present.
+     */
+    cities?: string;
     /** Use url OR urlTemplate, not both. */
     url?: string;
     department?: string;
@@ -247,6 +253,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       title: 'response.unifiedStandardTitle',
       // jobLocationShort is an array like ["FIN"]; first element is used
       location: 'response.jobLocationShort',
+      // sfstd_jobLocation_obj is an object/array of city name strings, e.g. {0: "Helsinki", 1: "Oulu"}
+      cities: 'response.sfstd_jobLocation_obj',
       // id is the stable job ID used to deduplicate across primary and secondary fetches
       id: 'response.id',
     },
