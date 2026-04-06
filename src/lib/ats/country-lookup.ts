@@ -279,6 +279,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'umea':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'västerås':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'vasteras':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'vaesteras':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   // ── Norway ───────────────────────────────────────────────────────────────
   'bergen':                   { name: 'Norway', code: 'NO', slug: 'norway' },
   'oslo':                     { name: 'Norway', code: 'NO', slug: 'norway' },
