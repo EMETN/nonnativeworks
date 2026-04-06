@@ -8,6 +8,16 @@ on:
   pull_request:
     paths:
       - 'scraper/companies.yaml'
+  workflow_dispatch:
+    inputs:
+      write_to_dev:
+        description: 'Write results to the dev database (default: dry run only)'
+        type: boolean
+        default: false
+      all_companies:
+        description: 'Run all companies in companies.yaml, not just newly added ones'
+        type: boolean
+        default: false
 
 permissions:
   pull-requests: write  # needed to post the result comment
@@ -41,25 +51,31 @@ jobs:
 
           python3 - <<'EOF'
           import yaml, os
-          from pathlib import Path
 
-          with open("/tmp/base.yaml") as f:
-              base = yaml.safe_load(f) or {}
+          all_companies = "${{ inputs.all_companies }}" == "true"
+
           with open("scraper/companies.yaml") as f:
               head = yaml.safe_load(f) or {}
+          all_list = head.get("companies") or []
 
-          base_urls = {c["url"] for c in (base.get("companies") or [])}
-          new = [c for c in (head.get("companies") or []) if c["url"] not in base_urls]
+          if all_companies:
+              selected = all_list
+          else:
+              with open("/tmp/base.yaml") as f:
+                  base = yaml.safe_load(f) or {}
+              base_urls = {c["url"] for c in (base.get("companies") or [])}
+              selected = [c for c in all_list if c["url"] not in base_urls]
 
           with open("/tmp/new_companies.yaml", "w") as f:
-              yaml.dump({"companies": new}, f)
+              yaml.dump({"companies": selected}, f)
 
-          names = ", ".join(c["name"] for c in new) or "(none)"
+          names = ", ".join(c["name"] for c in selected) or "(none)"
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write(f"count={len(new)}\n")
+              out.write(f"count={len(selected)}\n")
               out.write(f"names={names}\n")
 
-          print(f"New companies ({len(new)}): {names}")
+          label = "all" if all_companies else "new"
+          print(f"Selected {label} companies ({len(selected)}): {names}")
           EOF
 
       - name: No new companies
@@ -121,7 +137,8 @@ jobs:
           doppler run -- python scraper/batch_run.py \
             --api-url http://localhost:4321 \
             --companies-file /tmp/new_companies.yaml \
-            --dry-run 2>&1 | tee /tmp/scrape_output.txt
+            ${{ github.event_name == 'workflow_dispatch' && inputs.write_to_dev == true && '' || '--dry-run' }} \
+            2>&1 | tee /tmp/scrape_output.txt
 
       - name: Post PR comment
         if: steps.diff.outputs.count != '0'
