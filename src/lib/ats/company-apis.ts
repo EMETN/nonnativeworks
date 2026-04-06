@@ -414,3 +414,16 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     fetchDescription: true,
   },
 };
+
+// ─── Career URL aliases ───────────────────────────────────────────────────────
+// Maps a company's public-facing career page hostname to the canonical scrape URL.
+// Checked before ATS detection, so operators can paste the friendly URL into the
+// admin page and get the same result as pasting the ATS URL directly.
+// Key: lowercase hostname (no www) of the public career page.
+// Value: the URL actually passed to the scraper (may include ATS hostname + facet params).
+
+export const CAREER_URL_ALIASES: Record<string, string> = {
+  // careers.abb is ABB's branded career site; the actual jobs live on Workday.
+  // The locationCountry params pre-filter to tracked countries only.
+  'careers.abb': 'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa',
+};
