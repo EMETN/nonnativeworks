@@ -17,6 +17,10 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 companies:
+    - name: ABB
+      url: https://careers.abb/global/en/search-results
+      min_positions: 10
+
     - name: Accenture
       url: https://www.accenture.com/us-en/careers
       min_positions: 10
