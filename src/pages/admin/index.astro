@@ -5,6 +5,10 @@ import PromptGenerator from '../../components/admin/PromptGenerator.tsx';
 import JsonUploader from '../../components/admin/JsonUploader.tsx';
 import DataManager from '../../components/admin/DataManager.tsx';
 import PositionEditor from '../../components/admin/PositionEditor.tsx';
+
+// The scraper requires a local Python subprocess and only works in dev.
+// Hide the tab entirely in production (Netlify) to avoid confusion.
+const scraperEnabled = import.meta.env.NETLIFY !== 'true';
 ---
 
 <AdminLayout title="Dashboard">
@@ -15,51 +19,57 @@ import PositionEditor from '../../components/admin/PositionEditor.tsx';
       <div class="mb-4">
         <h2 class="text-lg font-semibold text-gray-900">1. Add company data</h2>
         <p class="text-sm text-gray-500 mt-1">
-          Use the scraper for automatic extraction, or generate a prompt to run through an LLM manually.
+          {scraperEnabled
+            ? 'Use the scraper for automatic extraction, or generate a prompt to run through an LLM manually.'
+            : 'Generate a prompt to run through an LLM, then upload the resulting JSON.'}
         </p>
       </div>
 
-      <!-- Tab buttons -->
-      <div class="flex gap-1 border-b border-gray-200 mb-5" role="tablist">
-        <button
-          id="tab-btn-scraper"
-          role="tab"
-          aria-selected="true"
-          aria-controls="tab-panel-scraper"
-          class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 border-gray-200 bg-white text-blue-600 -mb-px"
-        >
-          Scraper
-        </button>
-        <button
-          id="tab-btn-manual"
-          role="tab"
-          aria-selected="false"
-          aria-controls="tab-panel-manual"
-          class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-transparent text-gray-500 hover:text-gray-700"
-        >
-          Manual (LLM prompt)
-        </button>
-      </div>
+      {scraperEnabled && (
+        <>
+          <!-- Tab buttons -->
+          <div class="flex gap-1 border-b border-gray-200 mb-5" role="tablist">
+            <button
+              id="tab-btn-scraper"
+              role="tab"
+              aria-selected="true"
+              aria-controls="tab-panel-scraper"
+              class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 border-gray-200 bg-white text-blue-600 -mb-px"
+            >
+              Scraper
+            </button>
+            <button
+              id="tab-btn-manual"
+              role="tab"
+              aria-selected="false"
+              aria-controls="tab-panel-manual"
+              class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-transparent text-gray-500 hover:text-gray-700"
+            >
+              Manual (LLM prompt)
+            </button>
+          </div>
 
-      <!-- Scraper tab -->
-      <div id="tab-panel-scraper" role="tabpanel">
-        <div class="bg-white border border-gray-200 rounded-xl p-5">
-          <p class="text-sm text-gray-500 mb-4">
-            Enter a career page URL. Supported ATS platforms (Greenhouse, Lever, Ashby, Workable)
-            are fetched directly via their API. Other pages are scraped via the Python scraper.
-            Review and adjust the results before uploading.
-          </p>
-          <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-            The scraper runs as a local subprocess and requires the Python environment to be set up.
-            It is intended for development and testing. Production scraping runs automatically via
-            the GitHub Actions scheduled job (every 2 days).
-          </p>
-          <Scraper client:load />
-        </div>
-      </div>
+          <!-- Scraper tab -->
+          <div id="tab-panel-scraper" role="tabpanel">
+            <div class="bg-white border border-gray-200 rounded-xl p-5">
+              <p class="text-sm text-gray-500 mb-4">
+                Enter a career page URL. Supported ATS platforms (Greenhouse, Lever, Ashby, Workable)
+                are fetched directly via their API. Other pages are scraped via the Python scraper.
+                Review and adjust the results before uploading.
+              </p>
+              <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+                The scraper runs as a local subprocess and requires the Python environment to be set up.
+                It is intended for development and testing. Production scraping runs automatically via
+                the GitHub Actions scheduled job.
+              </p>
+              <Scraper client:load />
+            </div>
+          </div>
+        </>
+      )}
 
       <!-- Manual tab -->
-      <div id="tab-panel-manual" role="tabpanel" class="hidden">
+      <div id="tab-panel-manual" role="tabpanel" class={scraperEnabled ? 'hidden' : ''}>
         <div class="space-y-8">
           <div>
             <div class="mb-3">
@@ -120,29 +130,31 @@ import PositionEditor from '../../components/admin/PositionEditor.tsx';
 
 <script>
   const buttons = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
-  const panels = {
-    scraper: document.getElementById('tab-panel-scraper')!,
-    manual: document.getElementById('tab-panel-manual')!,
-  };
+  if (buttons.length > 0) {
+    const panels = {
+      scraper: document.getElementById('tab-panel-scraper'),
+      manual: document.getElementById('tab-panel-manual'),
+    };
 
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = btn.id === 'tab-btn-scraper' ? 'scraper' : 'manual';
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.id === 'tab-btn-scraper' ? 'scraper' : 'manual';
 
-      buttons.forEach((b) => {
-        const active = b.id === btn.id;
-        b.setAttribute('aria-selected', String(active));
-        if (active) {
-          b.classList.add('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
-          b.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
-        } else {
-          b.classList.remove('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
-          b.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
-        }
+        buttons.forEach((b) => {
+          const active = b.id === btn.id;
+          b.setAttribute('aria-selected', String(active));
+          if (active) {
+            b.classList.add('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
+            b.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+          } else {
+            b.classList.remove('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
+            b.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
+          }
+        });
+
+        panels.scraper?.classList.toggle('hidden', target !== 'scraper');
+        panels.manual?.classList.toggle('hidden', target !== 'manual');
       });
-
-      panels.scraper.classList.toggle('hidden', target !== 'scraper');
-      panels.manual.classList.toggle('hidden', target !== 'manual');
     });
-  });
+  }
 </script>
