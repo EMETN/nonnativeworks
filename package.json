@@ -8,14 +8,15 @@
     "packageManager": "pnpm@10.33.0",
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
-        "build": "doppler run -- astro build",
+        "build": "astro build",
         "preview": "doppler run -- astro preview",
         "astro": "astro",
         "postinstall": "node scripts/patch-preact-vite.mjs",
-        "clean": "rm -rf node_modules dist pnpm-lock.yaml"
+        "clean": "rm -rf node_modules dist pnpm-lock.yaml .pnpm-store .netlify"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.8",
+        "@astrojs/netlify": "^7.0.6",
         "@astrojs/node": "^10.0.4",
         "@astrojs/preact": "^5.1.1",
         "@preact/preset-vite": "^2.10.5",
