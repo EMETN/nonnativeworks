@@ -4,7 +4,7 @@ name: Scheduled scrape
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
   schedule:
-    - cron: '0 4 */2 * *'
+    - cron: '0 4 * * 1-5'  # Mon–Fri at 06:00 EET (UTC+2); runs at 07:00 during EEST (summer)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -77,16 +77,14 @@ jobs:
         uses: dopplerhq/cli-action@v3
 
       # ── Node / Astro server ────────────────────────────────────────────────
-      # The Astro app is built and started locally so that:
-      #  • /api/admin/scrape runs with no serverless timeout (vs Vercel's 10s limit)
+      # The Astro app is built and started locally (using the Node adapter) so that:
+      #  • /api/admin/scrape has no serverless timeout and can spawn Python subprocesses
       #  • /api/admin/upload writes directly to Supabase
       #  • No logic is duplicated in Python
       #
-      # TO MIGRATE TO RENDER IN THE FUTURE:
-      #   Remove the four steps below ("Setup pnpm", "Setup Node", "Install Node
-      #   dependencies", "Build and start Astro server"). Instead, point batch_run.py
-      #   at your Render service URL for the scrape step. See scraper/batch_run.py
-      #   for detailed migration instructions.
+      # The Netlify adapter is only used when building on Netlify (NETLIFY=true env var).
+      # In GitHub Actions (NETLIFY unset), the Node standalone adapter is used instead,
+      # producing dist/server/entry.mjs which is started here as a local server.
       # ──────────────────────────────────────────────────────────────────────
 
       - name: Setup pnpm
