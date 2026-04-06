@@ -38,8 +38,5 @@
             "esbuild",
             "sharp"
         ]
-    },
-    "devDependencies": {
-        "terser": "^5.46.1"
     }
 }

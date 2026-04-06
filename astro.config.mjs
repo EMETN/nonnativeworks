@@ -12,23 +12,7 @@ export default defineConfig({
     adapter: isNetlify ? netlify() : node({ mode: 'standalone' }),
     integrations: [preact()],
     vite: {
-        plugins: [
-            tailwindcss(),
-            // Force terser minification for client builds to avoid esbuild
-            // platform-specific issue on Netlify (Syntax error "d")
-            {
-                name: 'force-terser-minify',
-                config(config) {
-                    return {
-                        environments: {
-                            client: {
-                                build: { minify: 'terser' },
-                            },
-                        },
-                    };
-                },
-            },
-        ],
+        plugins: [tailwindcss()],
         server: {
             proxy: {
                 '/ph-events': {
