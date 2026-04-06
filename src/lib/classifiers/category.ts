@@ -76,7 +76,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'business strategy', 'program management', 'portfolio management', 
     'governance', 'change management', 'transformation', 'assembly', 'assembler',
     'logistics', 'technician', 'inventory', 'shipping', 'distribution', 'operator',
-    'grocery associate', 'grocery shift lead',
+    'grocery associate', 'grocery shift lead', 'doctor',
   ],
   'finance-accounting': [
     'finance', 'financial', 'accountant', 'accounting', 'controller',

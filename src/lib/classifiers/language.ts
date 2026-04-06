@@ -342,7 +342,7 @@ const LANG_MENTIONS = (lang: string) => [
 function buildAdvantageRegex(lang: string): RegExp {
   const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return new RegExp(
-    `(?:${escaped.join('|')})(?:\\s+\\w+){0,6}\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
+    `(?:${escaped.join('|')})(?:\\s+\\w+){0,6}\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`,
   );
 }
 
@@ -379,6 +379,7 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} is required`,
     `${lang} is a must`,
     `${lang} is mandatory`,
+    `mandatory ${lang}`,
     `${lang} is essential`,
     `${lang} is necessary`,
     `${lang} is needed`,
@@ -421,6 +422,7 @@ function buildRequirementSignals(lang: string): string[] {
     `speak ${lang}`,
     `communicate in ${lang}`,
     `${lang} communication skills`,
+    `communication skills in ${lang}`,
     `${lang} language skills`,
     `${lang} skills`,
     // Written + spoken
