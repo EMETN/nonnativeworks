@@ -1,3 +1,6 @@
+[build]
+  environment = { NODE_VERSION = "25" }
+
 [[redirects]]
   from = "/ph-events/*"
   to = "https://eu.i.posthog.com/:splat"
