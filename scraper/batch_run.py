@@ -8,6 +8,7 @@ so there is no logic duplication.
 
 Usage:
     python scraper/batch_run.py [--dry-run] [--api-url URL] [--slice INDEX TOTAL]
+                                [--companies-file PATH]
 
 Options:
     --dry-run         Scrape and validate but do not upload to the database.
@@ -18,6 +19,10 @@ Options:
                       the full list is split into TOTAL slices by round-robin.
                       Used by GitHub Actions matrix jobs to run companies in parallel.
                       Default: 0 1 (all companies).
+    --companies-file  Path to a companies YAML file.
+                      Default: scraper/companies.yaml.
+                      Pass a temp file to preview a subset of companies (e.g. only
+                      newly added ones) without modifying the main list.
 
 Environment:
     SCRAPER_SECRET   Must match the SCRAPER_SECRET set on the Astro server.
@@ -64,8 +69,8 @@ COMPANIES_FILE = Path(__file__).parent / "companies.yaml"
 SCRAPE_TIMEOUT_S = 700
 
 
-def _load_companies() -> list[dict]:
-    with open(COMPANIES_FILE) as f:
+def _load_companies(path: Path | None = None) -> list[dict]:
+    with open(path or COMPANIES_FILE) as f:
         data = yaml.safe_load(f)
     companies = (data or {}).get("companies") or []
     return [c for c in companies if c]  # drop nulls from empty yaml list
@@ -186,6 +191,8 @@ def main() -> int:
                         default=[0, 1],
                         help="Process only slice INDEX of TOTAL (0-based, round-robin). "
                              "Default: 0 1 (all companies).")
+    parser.add_argument("--companies-file", default=None,
+                        help="Path to a companies YAML file (default: scraper/companies.yaml).")
     args = parser.parse_args()
 
     slice_index, slice_total = args.slice
@@ -198,7 +205,8 @@ def main() -> int:
         print("ERROR: SCRAPER_SECRET environment variable is not set", file=sys.stderr)
         return 1
 
-    all_companies = _load_companies()
+    companies_file = Path(args.companies_file) if args.companies_file else None
+    all_companies = _load_companies(companies_file)
     companies = _slice_companies(all_companies, slice_index, slice_total)
 
     if not companies:

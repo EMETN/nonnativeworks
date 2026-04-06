@@ -1,13 +1,18 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
+import netlify from '@astrojs/netlify';
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
+
+// Use the Netlify adapter when building on Netlify (NETLIFY env var is set automatically).
+// Fall back to the Node standalone adapter for local dev and GitHub Actions CI.
+const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  adapter,
   integrations: [preact()],
   vite: {
     plugins: [tailwindcss()],
