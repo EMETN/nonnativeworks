@@ -1,39 +1,42 @@
 {
-  "name": "nonnativeworks",
-  "type": "module",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=20.0.0"
-  },
-  "packageManager": "pnpm@10.33.0",
-  "scripts": {
-    "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
-    "build": "doppler run -- astro build",
-    "preview": "doppler run -- astro preview",
-    "astro": "astro",
-    "postinstall": "node scripts/patch-preact-vite.mjs"
-  },
-  "dependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@astrojs/netlify": "^6.6.5",
-    "@astrojs/node": "^10.0.4",
-    "@astrojs/preact": "^5.1.0",
-    "@preact/preset-vite": "^2.10.5",
-    "@supabase/ssr": "^0.10.0",
-    "@supabase/supabase-js": "^2.100.1",
-    "@tailwindcss/vite": "^4.2.2",
-    "astro": "^6.1.1",
-    "posthog-js": "^1.364.5",
-    "preact": "^10.29.0",
-    "tailwindcss": "^4.2.2",
-    "tinyld": "^1.3.4",
-    "typescript": "^6.0.2",
-    "zod": "^4.3.6"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
-  }
+    "name": "nonnativeworks",
+    "type": "module",
+    "version": "0.0.1",
+    "engines": {
+        "node": ">=24.0.0"
+    },
+    "packageManager": "pnpm@10.33.0",
+    "scripts": {
+        "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
+        "build": "astro build",
+        "preview": "doppler run -- astro preview",
+        "astro": "astro",
+        "postinstall": "node scripts/patch-preact-vite.mjs",
+        "clean": "rm -rf node_modules dist pnpm-lock.yaml .pnpm-store .netlify"
+    },
+    "dependencies": {
+        "@astrojs/check": "^0.9.8",
+        "@astrojs/netlify": "^7.0.6",
+        "@astrojs/node": "^10.0.4",
+        "@astrojs/preact": "^5.1.1",
+        "@preact/preset-vite": "^2.10.5",
+        "@sentry/astro": "^10.47.0",
+        "@sentry/node": "^10.47.0",
+        "@supabase/ssr": "^0.10.0",
+        "@supabase/supabase-js": "^2.102.1",
+        "@tailwindcss/vite": "^4.2.2",
+        "astro": "^6.1.4",
+        "posthog-js": "^1.365.0",
+        "preact": "^10.29.1",
+        "tailwindcss": "^4.2.2",
+        "tinyld": "^1.3.4",
+        "typescript": "^6.0.2",
+        "zod": "^4.3.6"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "sharp"
+        ]
+    }
 }
