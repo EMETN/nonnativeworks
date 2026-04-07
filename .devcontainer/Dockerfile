@@ -1,4 +1,4 @@
-FROM node:25
+FROM node:24
 
 ARG CLAUDE_CODE_VERSION=latest
 
@@ -87,6 +87,12 @@ USER node
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Verify pnpm installation
+RUN pnpm -v
+
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh
 
@@ -106,11 +112,6 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 
 # (Optional) auto-activate venv in terminal
 RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
-
-# Corepack was removed from Node 25+, install it explicitly
-RUN npm install -g corepack && corepack enable && corepack install --global pnpm@latest
-
-ENV PATH="/home/node/.local/bin:$PATH"
 
 # Install Claude (global tool, uses npm intentionally)
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
