@@ -10,6 +10,7 @@
 
 import { classifyJobVerbose } from '../src/lib/classifier';
 import { countryNameToSlug } from '../src/lib/country-flags';
+import { extractCitiesForCountry } from '../src/lib/ats/country-lookup';
 import { logScrapeRun, type PositionLogEntry } from '../src/lib/scrape-logger';
 
 // ISO alpha-2 → [full name, slug]
@@ -101,7 +102,7 @@ for (const [cc, jobs] of byCountry) {
       country_code: cc,
       title: classified.title,
       url: classified.url,
-      city: job.location ?? undefined,
+      city: (() => { const c = extractCitiesForCountry(job.location ?? '', cc); return c.length > 0 ? c : undefined; })(),
       requires_native_language: classified.requires_native_language,
       local_language_advantage: classified.local_language_advantage,
       required_languages: classified.requiredLanguages,

@@ -1,0 +1,96 @@
+# Scheduled scrape job — company list
+#
+# Add a company here ONLY after testing it manually via the admin scraper tab
+# and confirming that the results look correct.
+#
+# Dry-run to validate without uploading:
+#   python scraper/batch_run.py --dry-run
+#
+# ─── Fields ───────────────────────────────────────────────────────────────────
+#   name            Display name — for readability only, not used by the scraper
+#   url             Career page URL passed to the scraper (required)
+#   min_positions   Minimum expected positions across all tracked countries.
+#                   The batch job fails this company if fewer are found.
+#                   Set conservatively — companies do occasionally have slow
+#                   hiring periods. Default: 1
+#   is_english_company  Flag the company as English-only in the UI. Default: false
+# ──────────────────────────────────────────────────────────────────────────────
+
+companies:
+    - name: ABB
+      url: https://careers.abb/global/en/search-results
+      min_positions: 10
+
+    - name: Accenture
+      url: https://www.accenture.com/us-en/careers
+      min_positions: 10
+
+    - name: Gofore
+      url: https://gofore.com/en/careers/
+      min_positions: 1
+
+    - name: Konecranes
+      url: https://konecranes.careers/jobs
+      min_positions: 10
+
+    - name: Nokia
+      url: https://jobs.nokia.com/en
+      min_positions: 10
+
+    - name: Nordea
+      url: https://www.nordea.com/en/careers
+      min_positions: 10
+
+    - name: OP
+      url: https://op-careers.fi
+      min_positions: 5
+
+    - name: Oura
+      url: https://boards.greenhouse.io/oura
+      min_positions: 5
+
+    - name: Posti
+      url: https://posti.wd3.myworkdayjobs.com/en-US/external
+      min_positions: 5
+
+    - name: Reaktor
+      url: https://www.reaktor.com/careers
+      min_positions: 2
+
+    - name: Rovio
+      url: https://www.rovio.com/open-positions
+      min_positions: 1
+
+    - name: Smartly
+      url: https://job-boards.greenhouse.io/smartlyio
+      min_positions: 2
+
+    - name: Tieto
+      url: https://careers.tieto.com
+      min_positions: 10
+
+    - name: Wolt
+      url: https://careers.wolt.com/en/jobs
+      min_positions: 10
+
+    - name: Yousician
+      url: https://yousician.com/careers
+      min_positions: 1
+
+    - name: Zalando
+      url: https://jobs.zalando.com/en/jobs
+      min_positions: 10
+
+
+# Examples — uncomment and fill in real values:
+#
+# ATS-based (Greenhouse, Lever, Ashby, Workable — fast, no browser needed):
+#   - name: Acme Corp
+#     url: https://boards.greenhouse.io/acme
+#     min_positions: 3
+#
+# Python/Playwright scraper (njoyn, attrax, barona, etc.):
+#   - name: Example Co
+#     url: https://careers.example.com
+#     min_positions: 1
+#     is_english_company: true

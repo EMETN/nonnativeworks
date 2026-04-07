@@ -30,6 +30,15 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
               Local language advantage
             </span>
           )}
+          {(pos.work_model || (pos.city && pos.city.length > 0)) && (
+            <div class="text-xs text-gray-400 mt-0.5">
+              {pos.work_model && (
+                <span class="capitalize mr-1">{pos.work_model}</span>
+              )}
+              {pos.work_model && pos.city && pos.city.length > 0 && '· '}
+              {pos.city && pos.city.length > 0 && pos.city.join(', ')}
+            </div>
+          )}
         </div>
         <span class="text-xs text-gray-400 whitespace-nowrap mt-0.5">{pos.category_name}</span>
       </div>

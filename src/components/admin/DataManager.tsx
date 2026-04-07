@@ -122,7 +122,7 @@ export default function DataManager() {
   return (
     <div>
       <div class="flex items-center justify-between mb-3">
-        <span class="text-sm text-gray-500">{companies.length} companies</span>
+        <span class="text-sm text-gray-500">{groups.length} companies</span>
         <button
           onClick={load}
           class="text-sm text-[#002EA2] hover:underline"
