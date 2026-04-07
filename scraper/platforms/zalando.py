@@ -134,18 +134,34 @@ def _fetch_listing_page(session: requests.Session, page: int) -> list[dict]:
     return _parse_next_f_jobs(resp.text)
 
 
-def _fetch_description_html(session: requests.Session, job_id: str) -> str:
-    """Return the <article> inner HTML from a job detail page, or empty string."""
+def _fetch_detail(session: requests.Session, job_id: str) -> tuple[str, str]:
+    """
+    Fetch a job detail page and return (description_html, job_category).
+
+    description_html — inner HTML of the <article> element, or empty string.
+    job_category     — text of the "Job Category" <dd>, or empty string.
+                       e.g. "Software Engineering - Full Stack"
+    """
     url = f"{BASE_URL}/en/jobs/{job_id}"
     try:
         resp = session.get(url, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, "html.parser")
+
         article = soup.find("article")
-        return str(article) if article else ""
+        desc_html = str(article) if article else ""
+
+        job_category = ""
+        dt = soup.find("dt", string=lambda t: t and t.strip() == "Job Category")
+        if dt:
+            dd = dt.find_next_sibling("dd")
+            if dd:
+                job_category = dd.get_text(strip=True)
+
+        return desc_html, job_category
     except Exception as e:
-        print(f"zalando: description fetch error ({job_id}): {e}", file=sys.stderr)
-        return ""
+        print(f"zalando: detail fetch error ({job_id}): {e}", file=sys.stderr)
+        return "", ""
 
 
 def scrape_zalando_static(url: str) -> list[dict]:
@@ -215,7 +231,6 @@ def scrape_zalando_static(url: str) -> list[dict]:
     english_jobs = [j for j in jobs if not _title_appears_non_english(j.get("title", ""))]
 
     # Fetch each unique URL once; apply the result to all fan-out duplicates
-    desc_cache: dict[str, str] = {}
     unique_urls: list[str] = []
     seen_urls: set[str] = set()
     for job in english_jobs:
@@ -229,18 +244,21 @@ def scrape_zalando_static(url: str) -> list[dict]:
         file=sys.stderr,
     )
 
+    # Cache: url → (desc_html, job_category)
+    detail_cache: dict[str, tuple[str, str]] = {}
     for i, job_url in enumerate(unique_urls):
         job_id = job_url.rstrip("/").split("/")[-1]
-        desc_html = _fetch_description_html(session, job_id)
-        if desc_html:
-            desc_cache[job_url] = desc_html
+        desc_html, job_category = _fetch_detail(session, job_id)
+        detail_cache[job_url] = (desc_html, job_category)
         if (i + 1) % 10 == 0:
             print(f"zalando: enriched {i + 1}/{len(unique_urls)}", file=sys.stderr)
 
     for job in english_jobs:
-        desc = desc_cache.get(job.get("url", ""))
-        if desc:
-            job["descriptionHtml"] = desc
+        desc_html, job_category = detail_cache.get(job.get("url", ""), ("", ""))
+        if desc_html:
+            job["descriptionHtml"] = desc_html
+        if job_category:
+            job["jobFunction"] = job_category
 
     print(f"zalando: done — {len(jobs)} total jobs", file=sys.stderr)
     return jobs

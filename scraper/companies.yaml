@@ -57,9 +57,17 @@ companies:
       url: https://www.reaktor.com/careers
       min_positions: 2
 
+    - name: Rovio
+      url: https://www.rovio.com/open-positions
+      min_positions: 1
+
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2
+
+    - name: Tieto
+      url: https://careers.tieto.com
+      min_positions: 10
 
     - name: Wolt
       url: https://careers.wolt.com/en/jobs
@@ -68,6 +76,10 @@ companies:
     - name: Yousician
       url: https://yousician.com/careers
       min_positions: 1
+
+    - name: Zalando
+      url: https://jobs.zalando.com/en/jobs
+      min_positions: 10
 
 
 # Examples — uncomment and fill in real values:
