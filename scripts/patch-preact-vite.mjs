@@ -1,23 +1,45 @@
 /**
- * Patches @preact/preset-vite to handle `this === undefined` in Vite 6's config hook.
- * See: https://github.com/preactjs/preset-vite/issues
+ * Postinstall patches for build compatibility.
  */
 import { readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const file = resolve(__dirname, '../node_modules/@preact/preset-vite/dist/esm/index.mjs');
+const require = createRequire(import.meta.url);
 
-let content = readFileSync(file, 'utf8');
-const before = `"meta" in this && this.meta && typeof this.meta === "object"`;
-const after  = `this != null && "meta" in this && this.meta && typeof this.meta === "object"`;
+// Patch 1: @preact/preset-vite — guard against undefined `this`
+const preactFile = resolve(__dirname, '../node_modules/@preact/preset-vite/dist/esm/index.mjs');
+let preactContent = readFileSync(preactFile, 'utf8');
+const preactBefore = `"meta" in this && this.meta && typeof this.meta === "object"`;
+const preactAfter  = `this != null && "meta" in this && this.meta && typeof this.meta === "object"`;
 
-if (content.includes(before)) {
-  writeFileSync(file, content.replace(before, after), 'utf8');
+if (preactContent.includes(preactBefore)) {
+  writeFileSync(preactFile, preactContent.replace(preactBefore, preactAfter), 'utf8');
   console.log('✔ Patched @preact/preset-vite');
-} else if (content.includes(after)) {
+} else if (preactContent.includes(preactAfter)) {
   console.log('✔ @preact/preset-vite already patched');
 } else {
   console.warn('⚠ Could not find patch target in @preact/preset-vite — manual check needed');
+}
+
+// Patch 2: Astro client build — disable esbuild minify to prevent hash-placeholder crash
+// Astro hardcodes `minify: true` for the client environment build, but esbuild chokes on
+// Rollup's internal hash placeholders (`!~{NNN}~`) in chunk filenames during minification.
+// Netlify's CDN gzips assets anyway, so skipping minify has negligible impact.
+const astroEntry = require.resolve('astro');
+const astroDir = dirname(dirname(astroEntry)); // go up from dist/something to package root
+const astroBuildFile = resolve(astroDir, 'dist/core/build/static-build.js');
+let astroContent = readFileSync(astroBuildFile, 'utf8');
+
+const astroTarget = /(\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\]:\s*\{[\s\S]*?)minify:\s*true/;
+if (astroTarget.test(astroContent)) {
+  astroContent = astroContent.replace(astroTarget, '$1minify: false');
+  writeFileSync(astroBuildFile, astroContent, 'utf8');
+  console.log('✔ Patched Astro client build (disabled esbuild minify)');
+} else if (/\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\][\s\S]*?minify:\s*false/.test(astroContent)) {
+  console.log('✔ Astro client build already patched');
+} else {
+  console.warn('⚠ Could not find patch target in Astro static-build.js — manual check needed');
 }

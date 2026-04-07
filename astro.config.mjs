@@ -1,21 +1,21 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
-import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 import sentry from '@sentry/astro';
+import netlify from '@astrojs/netlify';
 
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
-    adapter: node({ mode: 'standalone' }),
+    adapter: netlify(),
     integrations: [
         preact(),
         sentry({
             sourceMapsUploadOptions: {
-                org: import.meta.env.SENTRY_ORG,
-                project: import.meta.env.SENTRY_PROJECT,
-                authToken: import.meta.env.SENTRY_AUTH_TOKEN,
+                org: process.env.SENTRY_ORG,
+                project: process.env.SENTRY_PROJECT,
+                authToken: process.env.SENTRY_AUTH_TOKEN,
             },
         }),
     ],
