@@ -117,6 +117,11 @@ for domain in \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
     "solita.fi" \
+    "finnair.wd103.myworkdayjobs.com" \
+    "careers.hiab.com" \
+    "jobs.neste.com" \
+    "kesko.fi" \
+    "storaenso.wd502.myworkdayjobs.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
