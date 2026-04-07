@@ -1,5 +1,5 @@
 [build]
-  environment = { NODE_VERSION = "25" }
+  environment = { NODE_VERSION = "24" }
 
 [[redirects]]
   from = "/ph-events/*"
