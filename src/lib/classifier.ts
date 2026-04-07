@@ -7,7 +7,7 @@ export type { SignalEntry } from './classifiers/language';
 
 export type ClassificationSignals = {
   categorySignal?: string;
-  categorySource: 'title' | 'description' | 'default';
+  categorySource: 'title' | 'description' | 'jobFunction' | 'default';
   languageSignals: SignalEntry[];
 };
 
@@ -24,7 +24,7 @@ export function classifyJobVerbose(
   const rawDesc = job.descriptionHtml ?? job.descriptionText;
   const descText = rawDesc ? stripHtml(rawDesc) : undefined;
 
-  const { category, matchedKeyword, source } = classifyCategoryVerbose(job.title, descText);
+  const { category, matchedKeyword, source } = classifyCategoryVerbose(job.title, descText, job.jobFunction);
   const langResult = detectNativeLanguage(job.title, descText, countryCode);
 
   return {

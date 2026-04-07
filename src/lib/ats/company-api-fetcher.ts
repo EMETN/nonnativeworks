@@ -27,6 +27,24 @@ function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
+/**
+ * Extract all string values from a dot-path that points to an array or an object
+ * with numeric-string keys (e.g. sfstd_jobLocation_obj: {0: "Helsinki", 1: "Oulu"}).
+ * Returns an empty array if the path is missing or has no string values.
+ */
+function getStringArray(obj: unknown, path: string | undefined): string[] {
+  if (!path) return [];
+  const val = getPath(obj, path);
+  if (Array.isArray(val)) {
+    return val.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+  }
+  if (val !== null && typeof val === 'object') {
+    return Object.values(val as Record<string, unknown>)
+      .filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+  }
+  return [];
+}
+
 /** Extract a string from a dot-path. Arrays return their first string element. Numbers are coerced to strings. */
 function getString(obj: unknown, path: string | undefined): string | undefined {
   if (!path) return undefined;
@@ -85,11 +103,15 @@ function mapItem(
     if (parts.length) descriptionText = parts.join(' ');
   }
 
+  const cities = getStringArray(item, fields.cities);
+
   return {
     title,
     location: getString(item, fields.location),
+    cities: cities.length > 0 ? cities : undefined,
     url: url || undefined,
     department: getString(item, fields.department),
+    jobFunction: getString(item, fields.jobFunction),
     sourceId: fields.id ? getString(item, fields.id) : undefined,
     descriptionText,
   };
@@ -243,12 +265,23 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
  * Uses sourceId to build the URL from the template. Skips jobs with non-English titles
  * and jobs that already have a description.
  */
+function normaliseWorkModel(raw: string): RawJob['work_model'] | undefined {
+  const v = raw.toLowerCase();
+  if (v.includes('remote')) return 'remote';
+  if (v.includes('hybrid')) return 'hybrid';
+  if (v.includes('office') || v.includes('on-site') || v.includes('onsite') || v.includes('on site')) return 'on-site';
+  return undefined;
+}
+
 async function enrichDescriptionsFromApi(
   jobs: RawJob[],
   urlTemplate: string,
   itemsPath: string,
   fields: string[],
   headers: Record<string, string>,
+  locationField?: string,
+  jobFunctionField?: string,
+  workModelField?: string,
 ): Promise<void> {
   const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
@@ -263,6 +296,18 @@ async function enrichDescriptionsFromApi(
             .map((f) => getString(item, f))
             .filter((v): v is string => !!v);
           if (parts.length) job.descriptionText = parts.join(' ');
+          if (locationField) {
+            const city = getString(item, locationField);
+            if (city) job.city = city;
+          }
+          if (jobFunctionField) {
+            const jf = getString(item, jobFunctionField);
+            if (jf) job.jobFunction = jf;
+          }
+          if (workModelField) {
+            const wm = getString(item, workModelField);
+            if (wm) job.work_model = normaliseWorkModel(wm) ?? job.work_model;
+          }
         } catch (err) {
           console.warn(`[enrichDescriptionsFromApi] failed for sourceId=${job.sourceId}: ${err}`);
         }
@@ -649,7 +694,7 @@ export async function fetchCompanyApiJobs(
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {
     const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
     console.log(`[fetchCompanyApiJobs] enriching descriptions via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
-    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers);
+    await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField, config.descriptionApiJobFunctionField, config.descriptionApiWorkModelField);
   }
 
   // Final safety-net dedup (should be a no-op if pagination dedup above caught everything).

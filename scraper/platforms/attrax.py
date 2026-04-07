@@ -173,6 +173,21 @@ def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
                         location = text
                         break
 
-        jobs.append(build_job(title, job_url, location))
+        job = build_job(title, job_url, location)
+
+        # Work model from the dedicated workplace-type tile
+        wm_tag = tile.find(class_="attrax-vacancy-tile__option-workplace-type")
+        if wm_tag:
+            val = wm_tag.find(class_="attrax-vacancy-tile__item-value")
+            if val:
+                wm_text = val.get_text(strip=True).lower()
+                if "hybrid" in wm_text:
+                    job["work_model"] = "hybrid"
+                elif "remote" in wm_text:
+                    job["work_model"] = "remote"
+                elif "on-site" in wm_text or "onsite" in wm_text or "on site" in wm_text:
+                    job["work_model"] = "on-site"
+
+        jobs.append(job)
 
     return jobs

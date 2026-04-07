@@ -70,9 +70,16 @@ export interface CompanyApiConfig {
   fields: {
     title: string;
     location?: string;
+    /**
+     * Dot-path to an array or object of city name strings (e.g. sfstd_jobLocation_obj).
+     * Populates job.cities with all city strings found. Takes priority over location-derived
+     * city extraction when present.
+     */
+    cities?: string;
     /** Use url OR urlTemplate, not both. */
     url?: string;
     department?: string;
+    jobFunction?: string;
     /**
      * Stable ID field used to deduplicate jobs when merging a primary and secondary fetch.
      * Required when secondaryUrl is set.
@@ -146,6 +153,29 @@ export interface CompanyApiConfig {
   descriptionApiUrl?: string;
   descriptionApiItemsPath?: string;
   descriptionApiFields?: string[];
+  /**
+   * Dot-path to a location field in the per-job detail API response.
+   * When set, the fetched value overwrites job.location with a more granular value
+   * (e.g. a city name) than the main listing API provides.
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiLocationField?: string;
+  /**
+   * Dot-path to a job function / department field in the per-job detail API response.
+   * When set, the fetched value is stored as job.jobFunction and used as the primary
+   * category classification signal (ahead of title and description).
+   * Use for APIs that expose a structured job function label (e.g. Oracle HCM's JobFunction).
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiJobFunctionField?: string;
+  /**
+   * Dot-path to a workplace type field in the per-job detail API response.
+   * The fetched value is normalised to 'remote' | 'hybrid' | 'on-site' and stored as
+   * job.work_model, overriding any location-derived value.
+   * Unrecognised values are silently ignored.
+   * Uses the same itemsPath root as descriptionApiFields.
+   */
+  descriptionApiWorkModelField?: string;
   /**
    * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
    * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
@@ -224,6 +254,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       title: 'response.unifiedStandardTitle',
       // jobLocationShort is an array like ["FIN"]; first element is used
       location: 'response.jobLocationShort',
+      // sfstd_jobLocation_obj is an object/array of city name strings, e.g. {0: "Helsinki", 1: "Oulu"}
+      cities: 'response.sfstd_jobLocation_obj',
       // id is the stable job ID used to deduplicate across primary and secondary fetches
       id: 'response.id',
     },
@@ -270,6 +302,9 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // Fetch full descriptions via Oracle HCM's per-requisition detail endpoint instead.
     descriptionApiUrl: 'https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1',
     descriptionApiFields: ['ExternalQualificationsStr', 'ExternalResponsibilitiesStr'],
+    descriptionApiLocationField: 'workLocation.0.TownOrCity',
+    descriptionApiJobFunctionField: 'JobFunction',
+    descriptionApiWorkModelField: 'WorkplaceType',
     expandSecondaryLocations: {
       path: 'secondaryLocations',
       countryName: 'Name',
@@ -336,9 +371,11 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     fields: {
       title: 'title',
       location: 'country',
+      cities: 'location',  // array of city strings e.g. ["Helsinki"]
       url: 'jobDetailUrl',
       id: 'requisitionId',
-      department: 'jobFamilyGroup',  // array — first element is used automatically
+      department: 'jobFamilyGroup',
+      jobFunction: 'jobFamilyGroup',  // array — first element is used automatically
     },
     // jobDetailUrl contains "{0}" as a locale placeholder (e.g. "fi-en")
     urlPlaceholders: { '{0}': 'fi-en' },
@@ -349,9 +386,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     descriptionFields: ['jobDescriptionClean', 'qualificationClean'],
   },
 
-  // TODO: verify Nordea API shape before enabling.
-  // Embed all query params in the URL — the CompanyApiConfig type has no queryParams field.
-  // Replace urlTemplate once the actual item field structure is confirmed.
+ 
   'nordea.com': {
     url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
     method: 'GET',
@@ -378,4 +413,17 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'Nordea',
     fetchDescription: true,
   },
+};
+
+// ─── Career URL aliases ───────────────────────────────────────────────────────
+// Maps a company's public-facing career page hostname to the canonical scrape URL.
+// Checked before ATS detection, so operators can paste the friendly URL into the
+// admin page and get the same result as pasting the ATS URL directly.
+// Key: lowercase hostname (no www) of the public career page.
+// Value: the URL actually passed to the scraper (may include ATS hostname + facet params).
+
+export const CAREER_URL_ALIASES: Record<string, string> = {
+  // careers.abb is ABB's branded career site; the actual jobs live on Workday.
+  // The locationCountry params pre-filter to tracked countries only.
+  'careers.abb': 'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa',
 };

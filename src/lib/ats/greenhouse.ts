@@ -20,7 +20,8 @@ export async function fetchGreenhouseCompanyName(slug: string): Promise<string> 
     );
     if (!res.ok) return formatSlug(slug);
     const data: GreenhouseBoard = await res.json();
-    return data.name ?? formatSlug(slug);
+    const name = data.name ?? formatSlug(slug);
+    return name.replace(/\s*-\s*English$/i, '').trim();
   } catch {
     return formatSlug(slug);
   }
@@ -40,6 +41,7 @@ export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
     location: job.location?.name,
     url: job.absolute_url,
     department: job.departments?.[0]?.name,
+    jobFunction: job.departments?.[0]?.name,
   }));
 }
 

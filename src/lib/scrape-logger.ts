@@ -6,7 +6,7 @@ export interface PositionLogEntry {
   title: string;
   category: string;
   categorySignal?: string;
-  categorySource: 'title' | 'description' | 'default';
+  categorySource: 'title' | 'description' | 'jobFunction' | 'default';
   requires_native_language: boolean;
   local_language_advantage: boolean;
   requiredLanguages: string[];
@@ -14,6 +14,8 @@ export interface PositionLogEntry {
   languageSignals: SignalEntry[];
   countryCode: string;
   countryName: string;
+  city?: string[];
+  work_model?: 'remote' | 'hybrid' | 'on-site';
 }
 
 const logsDir = join(process.cwd(), 'logs');
@@ -42,9 +44,20 @@ function formatLanguageSignal(pos: PositionLogEntry): string {
 }
 
 function formatCategory(pos: PositionLogEntry): string {
-  const cat = pos.category === 'customer-support' ? 'cust-support' : pos.category;
-  const suffix = pos.categorySource === 'description' ? '/desc' : '';
-  return `[${cat}${suffix}]`;
+  const ABBREV: Record<string, string> = {
+    'customer-success': 'cust-success',
+    'customer-support': 'cust-support',
+    'finance-accounting': 'finance',
+    'hr-recruiting': 'hr',
+    'data-analytics': 'data',
+  };
+  const cat = ABBREV[pos.category] ?? pos.category;
+  const sourceSuffix = pos.categorySource === 'description' ? '/desc'
+    : pos.categorySource === 'jobFunction' ? '/api'
+    : '';
+  if (!pos.categorySignal) return `[${cat}]`;
+  const kw = pos.categorySignal.slice(0, 20);
+  return `[${cat}${sourceSuffix}:"${kw}"]`;
 }
 
 export function logScrapeRun(params: {
@@ -89,9 +102,15 @@ export function logScrapeRun(params: {
     for (const pos of positions) {
       const icon = pos.requires_native_language ? '✗' : pos.local_language_advantage ? '~' : '✓';
       const titleStr = pos.title.slice(0, 42).padEnd(44);
-      const catStr = formatCategory(pos).padEnd(18);
+      const catStr = formatCategory(pos);
       const langStr = formatLanguageSignal(pos);
       lines.push(`  ${icon}  ${titleStr}${catStr}  ${langStr}`);
+      const locationParts: string[] = [];
+      if (pos.work_model) locationParts.push(pos.work_model);
+      if (pos.city && pos.city.length > 0) locationParts.push(pos.city.join(', '));
+      if (locationParts.length > 0) {
+        lines.push(`       ${locationParts.join(' · ')}`);
+      }
     }
     lines.push('');
   }

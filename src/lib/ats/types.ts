@@ -11,6 +11,18 @@ export interface RawJob {
   country_code?: string;
   /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
   sourceId?: string;
+  /** Explicit city name when the scraper can provide it separately from the country-resolution location string. */
+  city?: string;
+  /** Explicit list of city names when the API returns multiple cities for a single posting. Takes priority over city. */
+  cities?: string[];
+  /** Explicit work model when the scraper knows it ('remote' | 'hybrid' | 'on-site'). Overrides location-derived value. */
+  work_model?: 'remote' | 'hybrid' | 'on-site';
+  /**
+   * Job function / department from the source API when available (e.g. Oracle HCM's JobFunction).
+   * Used as the primary category classification signal, ahead of title or description.
+   * Only set when the source provides a structured, concise value — not a free-text description.
+   */
+  jobFunction?: string;
   /**
    * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
    * this overrides the classifier's requires_native_language result.
@@ -27,7 +39,8 @@ export interface AtsDetectionResult {
 export interface ClassifiedJob {
   title: string;
   url?: string;
-  city?: string;
+  city?: string[];
+  work_model?: 'remote' | 'hybrid' | 'on-site';
   category: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;

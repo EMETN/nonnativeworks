@@ -117,6 +117,11 @@ for domain in \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
     "solita.fi" \
+    "finnair.wd103.myworkdayjobs.com" \
+    "careers.hiab.com" \
+    "jobs.neste.com" \
+    "kesko.fi" \
+    "storaenso.wd502.myworkdayjobs.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
@@ -141,6 +146,25 @@ for domain in \
         echo "Adding $ip for $domain"
         ipset add allowed-domains "$ip" -exist
     done < <(echo "$ips")
+done
+
+# CDN-backed domains resolve to different IPs depending on which Akamai/CDN node responds.
+# Query from multiple public DNS servers to capture more of the IP pool.
+for cdn_domain in \
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" ; do
+    for dns_server in "8.8.8.8" "1.1.1.1"; do
+        echo "Resolving $cdn_domain via $dns_server..."
+        cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
+        while read -r ip; do
+            if [[ -z "$ip" ]]; then continue; fi
+            if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                echo "WARNING: Invalid IP from $dns_server for $cdn_domain: $ip (skipping)"
+                continue
+            fi
+            echo "Adding $ip for $cdn_domain (via $dns_server)"
+            ipset add allowed-domains "$ip" -exist
+        done < <(echo "$cdn_ips")
+    done
 done
 
 # Get host IP from default route

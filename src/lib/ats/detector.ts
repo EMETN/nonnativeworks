@@ -1,10 +1,25 @@
 import type { AtsDetectionResult } from './types';
 
+/**
+ * Companies whose career page hostname differs from their ATS board slug.
+ * Key: lowercase hostname of the company's own career page (no www).
+ * Value: the slug used on the ATS platform.
+ */
+const HOSTNAME_SLUG_OVERRIDES: Record<string, { ats: AtsDetectionResult['ats']; slug: string }> = {
+  'ouraring.com': { ats: 'greenhouse', slug: 'oura' },
+};
+
 export function detectAts(url: string): AtsDetectionResult {
   try {
     const parsed = new URL(url);
-    const hostname = parsed.hostname.toLowerCase();
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
     const pathname = parsed.pathname;
+
+    // Hostname override — e.g. ouraring.com → Greenhouse slug "oura"
+    if (hostname in HOSTNAME_SLUG_OVERRIDES) {
+      const { ats, slug } = HOSTNAME_SLUG_OVERRIDES[hostname];
+      return { ats, companySlug: slug };
+    }
 
     // Greenhouse
     // Patterns: boards.greenhouse.io/{slug}, job-boards.greenhouse.io/{slug}
