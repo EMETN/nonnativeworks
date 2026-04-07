@@ -90,7 +90,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'talent partner', 'people operations', 'people partner', 'hrbp', 
     'hr business partner', 'hr manager', 'hr director', 'chief people', 'payroll',
     'compensation', 'learning and development', 'l&d',
-    'organisational development', 'organizational development',
+    'organisational development', 'organizational development', 'p&o', 'p & o',
+    'people & organization',
   ],
   legal: [
     'legal', 'counsel', 'lawyer', 'attorney', 'compliance',
