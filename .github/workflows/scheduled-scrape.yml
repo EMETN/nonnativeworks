@@ -11,6 +11,9 @@ on:
                 description: 'Dry run (scrape but do not upload)'
                 type: boolean
                 default: false
+    push:
+        branches:
+        - fix/workflow-scraper-issue
 
 # Only one run at a time — if a previous run is still going, cancel it.
 concurrency:
