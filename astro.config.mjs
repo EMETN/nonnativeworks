@@ -5,7 +5,6 @@ import netlify from '@astrojs/netlify';
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 import sentry from '@sentry/astro';
-import netlify from '@astrojs/netlify';
 
 // Use the Netlify adapter when building on Netlify (NETLIFY env var is set automatically).
 // Fall back to the Node standalone adapter for local dev and GitHub Actions CI.
