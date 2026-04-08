@@ -114,10 +114,11 @@ def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list
     for country_group in scrape_result.get("countries", []):
         positions = []
         for job in country_group.get("jobs", []):
+            city_val = job.get("city")
             positions.append({
                 "title": job["title"],
                 "url": job.get("url") or None,
-                "city": job.get("city") or None,
+                "city": [city_val] if city_val else [],
                 "work_model": job.get("work_model") or None,
                 "category": job["category"],
                 "requires_native_language": job["requires_native_language"],
