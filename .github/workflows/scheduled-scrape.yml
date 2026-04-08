@@ -103,13 +103,32 @@ jobs:
             - name: Install Node dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Build and start Astro server
+            - name: Build Astro
+              run: pnpm build
+
+            - name: Start Astro server
               run: |
-                  pnpm build
-                  nohup doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 & disown
+                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1
+                echo "SERVER_PID=$!" >> $GITHUB_ENV
               env:
-                  HOST: 127.0.0.1
-                  PORT: 4321
+                HOST: 127.0.0.1
+                PORT: 4321
+
+            - name: Wait for server to be ready
+              run: |
+                echo "Waiting for http://localhost:4321..."
+                for i in $(seq 1 60); do
+                    if curl -sf http://localhost:4321/health > /dev/null 2>&1; then
+                        echo "Server ready after ${i}s"
+                        exit 0
+                    fi
+                    echo "  attempt $i/60..."
+                    sleep 1
+                done
+                echo "--- Astro server log ---"
+                cat /tmp/astro-server.log
+                echo "Server did not become ready within 60s"
+                exit 1
 
             # ── Python / scraper ───────────────────────────────────────────────────
 
@@ -136,7 +155,11 @@ jobs:
                     --api-url http://localhost:4321 \
                     ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
-            # ── Logs ──────────────────────────────────────────────────────────────
+            - name: Dump Astro server log
+              if: failure()
+              run: cat /tmp/astro-server.log
+
+              # ── Logs ──────────────────────────────────────────────────────────────
             # The Astro server writes a human-readable text log to logs/YYYY-MM-DD.log
             # (same format as local dev) with per-position signal details.
             # Uploaded here as a downloadable artifact; retained 90 days.
