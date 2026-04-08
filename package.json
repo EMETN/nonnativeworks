@@ -20,6 +20,7 @@
         "@astrojs/node": "^10.0.4",
         "@astrojs/preact": "^5.1.1",
         "@preact/preset-vite": "^2.10.5",
+        "@sentry/astro": "^10.47.0",
         "@sentry/browser": "^10.47.0",
         "@sentry/node": "^10.47.0",
         "@supabase/ssr": "^0.10.0",
