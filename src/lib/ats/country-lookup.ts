@@ -183,29 +183,44 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
 const CITY_MAP: Record<string, CountryInfo> = {
   // ── Finland ──────────────────────────────────────────────────────────────
   'espoo':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'forssa':                   { name: 'Finland', code: 'FI', slug: 'finland' },
+  'heinola':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'helsinki':                 { name: 'Finland', code: 'FI', slug: 'finland' },
   'helsinki metropolitan area': { name: 'Finland', code: 'FI', slug: 'finland' },
+  'huittinen':                 { name: 'Finland', code: 'FI', slug: 'finland' },
+  'hyvinkää':                 { name: 'Finland', code: 'FI', slug: 'finland' },
+  'hämeenlinna':              { name: 'Finland', code: 'FI', slug: 'finland' },
   'joensuu':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'jyväskylä':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'jyvaskyla':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'järvenpää':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'kajaani':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'kerava':                   { name: 'Finland', code: 'FI', slug: 'finland' },
   'kuopio':                   { name: 'Finland', code: 'FI', slug: 'finland' },
   'lahti':                    { name: 'Finland', code: 'FI', slug: 'finland' },
   'lappeenranta':             { name: 'Finland', code: 'FI', slug: 'finland' },
   'oulu':                     { name: 'Finland', code: 'FI', slug: 'finland' },
+  'mikkeli':                  { name: 'Finland', code: 'FI', slug: 'finland' },
+  'riihimäki':                { name: 'Finland', code: 'FI', slug: 'finland' },
   'rovaniemi':                { name: 'Finland', code: 'FI', slug: 'finland' },
+  'savonlinna':               { name: 'Finland', code: 'FI', slug: 'finland' },
   'tampere':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   'turku':                    { name: 'Finland', code: 'FI', slug: 'finland' },
   'vaasa':                    { name: 'Finland', code: 'FI', slug: 'finland' },
+  'vantaa':                   { name: 'Finland', code: 'FI', slug: 'finland' },
+  'varkaus':                  { name: 'Finland', code: 'FI', slug: 'finland' },
   // ── Germany ──────────────────────────────────────────────────────────────
   'berlin':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   'bielefeld':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'bochum':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   'bonn':                     { name: 'Germany', code: 'DE', slug: 'germany' },
   'braunschweig':             { name: 'Germany', code: 'DE', slug: 'germany' },
   'brunswick':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'braunschweig/brunswick':   { name: 'Germany', code: 'DE', slug: 'germany' },
+  'donauwörth':               { name: 'Germany', code: 'DE', slug: 'germany' },
   'dortmund':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'dresden':                  { name: 'Germany', code: 'DE', slug: 'germany' },
+  'duisburg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'düsseldorf':               { name: 'Germany', code: 'DE', slug: 'germany' },
   'dusseldorf':               { name: 'Germany', code: 'DE', slug: 'germany' },
   'essen':                    { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -227,7 +242,11 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'nürnberg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'nuremberg':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'nurnberg':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'regensburg':               { name: 'Germany', code: 'DE', slug: 'germany' },
+  'remptendorf':              { name: 'Germany', code: 'DE', slug: 'germany' },
   'stuttgart':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'ulm':                      { name: 'Germany', code: 'DE', slug: 'germany' },
+  'wetter':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   // ── Austria ──────────────────────────────────────────────────────────────
   'graz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
   'innsbruck':                { name: 'Austria', code: 'AT', slug: 'austria' },
@@ -248,20 +267,33 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'göteborg':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'gothenburg':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'goteborg':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'kalix':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'kalmar':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'kiruna':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'linköping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'linkoping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'lulea':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'luleå':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'lund':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'malmö':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'malmo':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'örebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'orebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'skelleftea':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'skellefteå':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'solna':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'stockholm':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'umeå':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'umea':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'uppsala':                  { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'västerås':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'vasteras':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'vaesteras':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'ostersund':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'östersund':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   // ── Norway ───────────────────────────────────────────────────────────────
   'bergen':                   { name: 'Norway', code: 'NO', slug: 'norway' },
+  'fornebu':                  { name: 'Norway', code: 'NO', slug: 'norway' },
   'oslo':                     { name: 'Norway', code: 'NO', slug: 'norway' },
   'stavanger':                { name: 'Norway', code: 'NO', slug: 'norway' },
   'trondheim':                { name: 'Norway', code: 'NO', slug: 'norway' },
@@ -272,11 +304,17 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'københavn':                { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'kobenhavn':                { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'odense':                   { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'taastrup':                 { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'viby':                      { name: 'Denmark', code: 'DK', slug: 'denmark' },
   // ── Netherlands ──────────────────────────────────────────────────────────
   'amsterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'bergen op zoom':           { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'ede':                      { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'eindhoven':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'den haag':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'the hague':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'hoofddorp':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'purmerend':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'rotterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'utrecht':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   // ── France ───────────────────────────────────────────────────────────────
@@ -332,6 +370,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'zürich':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   'zurich':                   { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   // ── Baltics ──────────────────────────────────────────────────────────────
+  'rīga':                     { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'riga':                     { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'tallinn':                  { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'tartu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
@@ -425,6 +464,25 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'seattle':                  { name: 'United States', code: 'US', slug: 'united-states' },
 };
 
+// Companies that only operate in one country — keyed by a substring of their career page URL.
+// When location lookup fails for a job from one of these companies, fall back to this country
+// instead of skipping the job.
+const COMPANY_COUNTRY_FALLBACKS: Array<{ urlSubstring: string; country: CountryInfo }> = [
+  { urlSubstring: 'posti.', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
+];
+
+/**
+ * Returns a fallback country for the given career URL if the company is known to operate
+ * exclusively in that country. Returns null if no fallback is configured.
+ */
+export function getCompanyCountryFallback(careerUrl: string): CountryInfo | null {
+  const lower = careerUrl.toLowerCase();
+  for (const entry of COMPANY_COUNTRY_FALLBACKS) {
+    if (lower.includes(entry.urlSubstring)) return entry.country;
+  }
+  return null;
+}
+
 // Location strings that should be skipped (not a country)
 const SKIP_LOCATION_PATTERNS = [
   /^remote$/i,
@@ -450,6 +508,57 @@ function normalizeKey(s: string): string {
 
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
+
+/**
+ * Extract a work model from a raw location string by looking for prefixes like
+ * "Hybrid - ", "Remote - ", "On-site - ".
+ * Returns 'remote', 'hybrid', or 'on-site' when all semicolon-separated segments
+ * share the same prefix; returns null when there is no prefix, or segments disagree.
+ */
+export function extractWorkModelFromLocation(location: string): 'remote' | 'hybrid' | 'on-site' | null {
+  if (!location?.trim()) return null;
+  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const models = new Set<string>();
+  for (const part of parts) {
+    const match = part.match(LOCATION_PREFIX_RE);
+    if (match) {
+      const raw = match[1].toLowerCase().replace(/-/g, '');
+      if (raw === 'remote') models.add('remote');
+      else if (raw === 'hybrid') models.add('hybrid');
+      else if (raw === 'onsite' || raw === 'inoffice') models.add('on-site');
+    }
+  }
+  if (models.size === 1) return [...models][0] as 'remote' | 'hybrid' | 'on-site';
+  return null;
+}
+
+/**
+ * From a raw location string (e.g. "Hybrid - Helsinki, Uusimaa; Hybrid - Tallinn, Estonia"),
+ * extract only the city names that belong to the given ISO alpha-2 country code.
+ * Country names and cities from other countries are discarded.
+ * Returns an empty array when no matching cities are found.
+ */
+export function extractCitiesForCountry(location: string, countryCode: string): string[] {
+  if (!location?.trim()) return [];
+  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const segments = parts.flatMap((part) => {
+    const stripped = part.replace(LOCATION_PREFIX_RE, '');
+    return stripped.split(',').map((s) => s.trim()).filter(Boolean);
+  });
+  const results: string[] = [];
+  const seen = new Set<string>();
+  for (const segment of segments) {
+    const key = normalizeKey(segment);
+    const info = CITY_MAP[key];
+    if (info && info.code === countryCode) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push(segment);
+      }
+    }
+  }
+  return results;
+}
 
 export function lookupCountryFromLocation(location: string): CountryInfo[] {
   if (!location || !location.trim()) return [];
