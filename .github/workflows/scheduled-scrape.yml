@@ -103,7 +103,15 @@ jobs:
             - name: Install Node dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Cache Astro build
+              id: astro-cache
+              uses: actions/cache@v4
+              with:
+                  path: dist/
+                  key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'src/**', 'astro.config.*', 'tsconfig.json') }}
+
             - name: Build Astro
+              if: steps.astro-cache.outputs.cache-hit != 'true'
               run: pnpm build
 
             - name: Start Astro server
@@ -142,8 +150,20 @@ jobs:
             - name: Install Python dependencies
               run: pip install -r scraper/requirements.txt
 
-            - name: Install Playwright browser
+            - name: Cache Playwright browsers
+              id: playwright-cache
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-chromium-${{ runner.os }}-${{ hashFiles('scraper/requirements.txt') }}
+
+            - name: Install Playwright browser (with system deps)
+              if: steps.playwright-cache.outputs.cache-hit != 'true'
               run: playwright install --with-deps chromium
+
+            - name: Install Playwright system deps (browser from cache)
+              if: steps.playwright-cache.outputs.cache-hit == 'true'
+              run: playwright install-deps chromium
 
             # ── Run ───────────────────────────────────────────────────────────────
 
