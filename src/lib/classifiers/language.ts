@@ -1,5 +1,5 @@
 import { detect } from 'tinyld';
-import { titleAppearsNonEnglish } from '../ats/title-language';
+import { titleAppearsNonEnglish, KEYWORDS_RE } from '../ats/title-language';
 
 // ---------------------------------------------------------------------------
 // Country → language keyword map
@@ -261,17 +261,17 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
-  FI: { pattern: /[äöÄÖ]/g,              threshold: 5 },
-  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 5 },
-  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
-  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 5 },
-  IS: { pattern: /[þðÞÐ]/g,              threshold: 3 }, // þ/ð never appear in English
-  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
-  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 5 },
-  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 5 },
-  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 5 },
-  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 5 },
-  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 5 },
+  FI: { pattern: /[äöÄÖ]/g,              threshold: 10 },
+  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 10 },
+  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
+  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
+  IS: { pattern: /[þðÞÐ]/g,              threshold: 10 }, // þ/ð never appear in English
+  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
+  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
+  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 10 },
+  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
+  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 10 },
+  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 10 },
 };
 
 function descriptionContainsNativeChars(
@@ -329,6 +329,8 @@ const LANG_MENTIONS = (lang: string) => [
   `knowledge of ${lang}`,
   `${lang} knowledge`,
   `${lang} communication`,
+  `communicate in ${lang}`,
+  `ability to communicate in ${lang}`,
   `preferably also ${lang}`,
 ];
 
@@ -340,7 +342,7 @@ const LANG_MENTIONS = (lang: string) => [
 function buildAdvantageRegex(lang: string): RegExp {
   const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return new RegExp(
-    `(?:${escaped.join('|')})\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus)\\b`,
+    `(?:${escaped.join('|')})(?:\\s+\\w+){0,6}\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`,
   );
 }
 
@@ -377,6 +379,7 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} is required`,
     `${lang} is a must`,
     `${lang} is mandatory`,
+    `mandatory ${lang}`,
     `${lang} is essential`,
     `${lang} is necessary`,
     `${lang} is needed`,
@@ -419,6 +422,7 @@ function buildRequirementSignals(lang: string): string[] {
     `speak ${lang}`,
     `communicate in ${lang}`,
     `${lang} communication skills`,
+    `communication skills in ${lang}`,
     `${lang} language skills`,
     `${lang} skills`,
     // Written + spoken
@@ -440,6 +444,11 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang}/english`,
     `english/${lang}`,
     `written and spoken English and ${lang}`,
+    // "skills in X and in English" — co-requirement with "in" before each language
+    `in ${lang} and in english`,
+    `in english and in ${lang}`,
+    `in ${lang} and english`,
+    `${lang} and in english`,
     // Discussion / communication ability
     `discussions in ${lang}`,
     // Minimum level requirements — even basic knowledge means English alone isn't enough
@@ -538,9 +547,10 @@ export function detectNativeLanguage(
   // signal — no further analysis needed.
   if (titleAppearsNonEnglish(title)) {
     const nonAsciiChar = title.match(/[äöüåéèêëàâîïôùûçñßãõøæœ]/i)?.[0];
+    const keyword = nonAsciiChar ? undefined : KEYWORDS_RE.exec(title)?.[0];
     return {
       value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
-      signals: [{ phase: '1a', description: 'non-ASCII title', matched: nonAsciiChar }],
+      signals: [{ phase: '1a', description: nonAsciiChar ? 'non-ASCII title' : 'local-language keyword in title', matched: nonAsciiChar ?? keyword }],
     };
   }
 

@@ -36,11 +36,11 @@ export async function getGlobalStats(request: Request, cookies: AstroCookies): P
 
   if (posErr) { console.error('getGlobalStats positions:', posErr.message); throw new Error('Failed to load global stats'); }
 
-  const { count: companyCount, error: compErr } = await supabase
-    .from('companies')
-    .select('*', { count: 'exact', head: true });
+  const { data: companyCountData, error: compErr } = await supabase
+    .rpc('count_distinct_companies');
 
   if (compErr) { console.error('getGlobalStats companies:', compErr.message); throw new Error('Failed to load global stats'); }
+  const companyCount = companyCountData as number | null;
 
   const { count: countryCount, error: countryErr } = await supabase
     .from('countries')
@@ -161,6 +161,8 @@ export async function getPositionsByCountry(
       company_id,
       title,
       url,
+      city,
+      work_model,
       requires_native_language,
       local_language_advantage,
       category:categories(name),
@@ -176,6 +178,8 @@ export async function getPositionsByCountry(
     company_id: row.company_id,
     title: row.title,
     url: row.url ?? null,
+    city: row.city ?? null,
+    work_model: row.work_model ?? null,
     category_name: row.category?.name ?? 'Other',
     requires_native_language: row.requires_native_language,
     local_language_advantage: row.local_language_advantage ?? false,
@@ -223,6 +227,8 @@ export async function getPositionsByCompany(
       company_id,
       title,
       url,
+      city,
+      work_model,
       requires_native_language,
       local_language_advantage,
       category:categories(name)
@@ -236,6 +242,8 @@ export async function getPositionsByCompany(
     company_id: row.company_id,
     title: row.title,
     url: row.url ?? null,
+    city: row.city ?? null,
+    work_model: row.work_model ?? null,
     category_name: row.category?.name ?? 'Other',
     requires_native_language: row.requires_native_language,
     local_language_advantage: row.local_language_advantage ?? false,

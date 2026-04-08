@@ -36,6 +36,8 @@ export interface Position {
   requires_native_language: boolean;
   local_language_advantage: boolean;
   extracted_at: string;
+  city: string[] | null;
+  work_model: 'remote' | 'hybrid' | 'on-site' | null;
 }
 
 export interface PositionDetail {
@@ -46,6 +48,8 @@ export interface PositionDetail {
   category_name: string;
   requires_native_language: boolean;
   local_language_advantage: boolean;
+  city: string[] | null;
+  work_model: 'remote' | 'hybrid' | 'on-site' | null;
 }
 
 // View types
