@@ -1,7 +1,6 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import PostHogInit from '../components/PostHogInit.tsx';
 import '../styles/global.css';
 import type { GlobalStats } from '../lib/types';
 
@@ -71,7 +70,35 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         />
     </head>
     <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
-        <PostHogInit client:load />
+        {import.meta.env.PUBLIC_POSTHOG_KEY && (
+            <script is:inline define:vars={{ posthogKey: import.meta.env.PUBLIC_POSTHOG_KEY }}>
+                (function() {
+                    var origin = window.location.origin;
+                    var isDev = window.location.hostname === 'localhost';
+                    var s = document.createElement('script');
+                    s.src = isDev
+                        ? '/node_modules/posthog-js/dist/array.full.js'
+                        : origin + '/ph-events/static/array.full.js';
+                    s.onload = function() {
+                        window.posthog.init(posthogKey, {
+                            api_host: origin + '/ph-events',
+                            ui_host: origin + '/ph-static',
+                            autocapture: true,
+                            capture_pageview: true,
+                            capture_pageleave: false,
+                            request_batching: true,
+                            advanced_disable_flags: true,
+                            disable_external_dependency_loading: isDev,
+                            disable_session_recording: isDev,
+                            capture_dead_clicks: !isDev,
+                            capture_performance: !isDev,
+                            debug: false,
+                        });
+                    };
+                    document.head.appendChild(s);
+                })();
+            </script>
+        )}
         <!-- Skip to content (accessibility) -->
         <a
             href="#main-content"
