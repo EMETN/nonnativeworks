@@ -108,7 +108,7 @@ jobs:
 
             - name: Start Astro server
               run: |
-                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1
+                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
                 echo "SERVER_PID=$!" >> $GITHUB_ENV
               env:
                 HOST: 127.0.0.1
