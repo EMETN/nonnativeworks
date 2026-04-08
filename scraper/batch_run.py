@@ -115,17 +115,21 @@ def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list
         positions = []
         for job in country_group.get("jobs", []):
             city_val = job.get("city")
-            positions.append({
+            position: dict = {
                 "title": job["title"],
-                "url": job.get("url") or None,
                 "city": [city_val] if city_val else [],
-                "work_model": job.get("work_model") or None,
                 "category": job["category"],
                 "requires_native_language": job["requires_native_language"],
                 "local_language_advantage": job.get("local_language_advantage", False),
                 "required_languages": job.get("requiredLanguages", []),
                 "preferred_languages": job.get("preferredLanguages", []),
-            })
+            }
+            # Omit optional fields when absent — Zod's .optional() rejects JSON null
+            if job.get("url"):
+                position["url"] = job["url"]
+            if job.get("work_model"):
+                position["work_model"] = job["work_model"]
+            positions.append(position)
         if not positions:
             continue
         entries.append({

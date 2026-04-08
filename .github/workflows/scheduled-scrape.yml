@@ -114,31 +114,10 @@ jobs:
               if: steps.astro-cache.outputs.cache-hit != 'true'
               run: pnpm build
 
-            - name: Start Astro server
-              run: |
-                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
-                echo "SERVER_PID=$!" >> $GITHUB_ENV
-              env:
-                HOST: 127.0.0.1
-                PORT: 4321
-
-            - name: Wait for server to be ready
-              run: |
-                echo "Waiting for http://localhost:4321..."
-                for i in $(seq 1 60); do
-                    if curl -s -o /dev/null http://localhost:4321; then
-                        echo "Server ready after ${i}s"
-                        exit 0
-                    fi
-                    echo "  attempt $i/60..."
-                    sleep 1
-                done
-                echo "--- Astro server log ---"
-                cat /tmp/astro-server.log
-                echo "Server did not become ready within 60s"
-                exit 1
-
             # ── Python / scraper ───────────────────────────────────────────────────
+            # Set up Python before starting the Astro server so that the server
+            # inherits a PATH that includes the correct python3 and installed packages.
+            # (The server spawns python3 when the scrape API falls through to Layer 2.)
 
             - name: Setup Python
               uses: actions/setup-python@v5
@@ -164,6 +143,30 @@ jobs:
             - name: Install Playwright system deps (browser from cache)
               if: steps.playwright-cache.outputs.cache-hit == 'true'
               run: playwright install-deps chromium
+
+            - name: Start Astro server
+              run: |
+                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
+                echo "SERVER_PID=$!" >> $GITHUB_ENV
+              env:
+                HOST: 127.0.0.1
+                PORT: 4321
+
+            - name: Wait for server to be ready
+              run: |
+                echo "Waiting for http://localhost:4321..."
+                for i in $(seq 1 60); do
+                    if curl -s -o /dev/null http://localhost:4321; then
+                        echo "Server ready after ${i}s"
+                        exit 0
+                    fi
+                    echo "  attempt $i/60..."
+                    sleep 1
+                done
+                echo "--- Astro server log ---"
+                cat /tmp/astro-server.log
+                echo "Server did not become ready within 60s"
+                exit 1
 
             # ── Run ───────────────────────────────────────────────────────────────
 
