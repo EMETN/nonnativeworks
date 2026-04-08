@@ -7,7 +7,7 @@ const PROTECTED_PREFIXES = ['/admin', '/api/admin'];
 // Shared secret for machine-to-machine calls (e.g. GitHub Actions batch job).
 // Set SCRAPER_SECRET in your environment. Requests bearing a matching
 // X-Scraper-Secret header bypass both CSRF and session auth.
-const SCRAPER_SECRET = import.meta.env.SCRAPER_SECRET as string | undefined;
+const SCRAPER_SECRET = process.env.SCRAPER_SECRET;
 
 function hasValidScraperSecret(request: Request): boolean {
   if (!SCRAPER_SECRET) return false;
