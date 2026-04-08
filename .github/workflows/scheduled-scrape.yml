@@ -103,7 +103,7 @@ jobs:
             - name: Build and start Astro server
               run: |
                   pnpm build
-                  doppler run -- node dist/server/entry.mjs &
+                  nohup doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 & disown
               env:
                   HOST: 127.0.0.1
                   PORT: 4321
