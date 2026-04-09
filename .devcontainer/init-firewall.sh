@@ -101,12 +101,17 @@ for domain in \
     "cgi.njoyn.com" \
     "www.accenture.com" \
     "posti.wd3.myworkdayjobs.com" \
+    "sok.wd502.myworkdayjobs.com" \
+    "ag.wd3.myworkdayjobs.com/Airbus" \
+    "equinor.wd3.myworkdayjobs.com" \
+    "storaenso.wd502.myworkdayjobs.com" \
+    "kone.wd3.myworkdayjobs.com" \
+    "finnair.wd103.myworkdayjobs.com" \
     "careers.abb" \
     "baronacareers.com" \
     "nitor.com" \
     "alpha-sense.com" \
     "rovio.com" \
-    "careers.kone.com" \
     "careers.microsoft.com" \
     "apply.careers.microsoft.com" \
     "s-pankki.fi" \
@@ -117,11 +122,14 @@ for domain in \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
     "solita.fi" \
-    "finnair.wd103.myworkdayjobs.com" \
     "careers.hiab.com" \
     "jobs.neste.com" \
     "kesko.fi" \
-    "storaenso.wd502.myworkdayjobs.com" \
+    "konecranes.careers" \
+    "careers.allianz.com" \
+    "bmwgroup.job" \
+    "jobs.volkswagen-group.com" \
+    "academicwork.fi" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
