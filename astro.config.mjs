@@ -3,7 +3,6 @@ import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
 import netlify from '@astrojs/netlify';
 import node from '@astrojs/node';
-import netlify from '@astrojs/netlify';
 import tailwindcss from '@tailwindcss/vite';
 import sentry from '@sentry/astro';
 
@@ -14,10 +13,12 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
-    adapter: netlify(),
+    adapter,
     integrations: [
         preact(),
         sentry({
+            clientInitPath: 'src/lib/sentry-client.ts',
+            serverInitPath: 'src/lib/sentry-server.ts',
             sourceMapsUploadOptions: {
                 org: process.env.SENTRY_ORG,
                 project: process.env.SENTRY_PROJECT,
