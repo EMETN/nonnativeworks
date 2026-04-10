@@ -102,7 +102,7 @@ for domain in \
     "www.accenture.com" \
     "posti.wd3.myworkdayjobs.com" \
     "sok.wd502.myworkdayjobs.com" \
-    "ag.wd3.myworkdayjobs.com/Airbus" \
+    "ag.wd3.myworkdayjobs.com" \
     "equinor.wd3.myworkdayjobs.com" \
     "storaenso.wd502.myworkdayjobs.com" \
     "kone.wd3.myworkdayjobs.com" \
