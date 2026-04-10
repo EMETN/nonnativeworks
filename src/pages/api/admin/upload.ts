@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const parsed = UploadSchema.safeParse(body);
   if (!parsed.success) {
+    console.error('Upload validation failed:', JSON.stringify(parsed.error.issues, null, 2));
     return json({ error: 'Validation failed', issues: parsed.error.issues }, 422);
   }
 
