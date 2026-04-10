@@ -9,7 +9,7 @@ function parseDsn(dsn: string) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-    const sentryDsn = process.env.SENTRY_DSN;
+    const sentryDsn = import.meta.env.SENTRY_DSN;
     if (!sentryDsn) {
         return new Response('Sentry not configured', { status: 500 });
     }
