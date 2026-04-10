@@ -13,10 +13,12 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 // https://astro.build/config
 export default defineConfig({
     output: 'server',
-    adapter: adapter,
+    adapter,
     integrations: [
         preact(),
         sentry({
+            clientInitPath: 'src/lib/sentry-client.ts',
+            serverInitPath: 'src/lib/sentry-server.ts',
             sourceMapsUploadOptions: {
                 org: process.env.SENTRY_ORG,
                 project: process.env.SENTRY_PROJECT,
