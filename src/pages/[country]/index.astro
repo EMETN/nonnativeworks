@@ -51,7 +51,7 @@ const companies = await getCompanyStatsByCountry(request, cookies, country.count
         No companies tracked yet for <strong>{country.name}</strong>. Check back soon!
       </div>
     ) : (
-      <CompanyGrid companies={companies} countrySlug={country.slug} client:only="preact" />
+      <CompanyGrid companies={companies} countrySlug={country.slug} client:load />
     )}
 
   </div>
