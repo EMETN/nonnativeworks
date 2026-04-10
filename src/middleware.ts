@@ -1,4 +1,3 @@
-import './lib/sentry-server';
 import { defineMiddleware } from 'astro:middleware';
 import { createSupabaseClient } from './lib/supabase';
 
