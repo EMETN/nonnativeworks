@@ -11,6 +11,9 @@ on:
                 description: 'Dry run (scrape but do not upload)'
                 type: boolean
                 default: false
+    #push:
+    #   branches:
+    #  - fix/workflow-scraper-issue
 
 # Only one run at a time — if a previous run is still going, cancel it.
 concurrency:
@@ -100,15 +103,21 @@ jobs:
             - name: Install Node dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Build and start Astro server
-              run: |
-                  pnpm build
-                  doppler run -- node dist/server/entry.mjs &
-              env:
-                  HOST: 127.0.0.1
-                  PORT: 4321
+            - name: Cache Astro build
+              id: astro-cache
+              uses: actions/cache@v4
+              with:
+                  path: dist/
+                  key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'src/**', 'astro.config.*', 'tsconfig.json') }}
+
+            - name: Build Astro
+              if: steps.astro-cache.outputs.cache-hit != 'true'
+              run: pnpm build
 
             # ── Python / scraper ───────────────────────────────────────────────────
+            # Set up Python before starting the Astro server so that the server
+            # inherits a PATH that includes the correct python3 and installed packages.
+            # (The server spawns python3 when the scrape API falls through to Layer 2.)
 
             - name: Setup Python
               uses: actions/setup-python@v5
@@ -120,8 +129,44 @@ jobs:
             - name: Install Python dependencies
               run: pip install -r scraper/requirements.txt
 
-            - name: Install Playwright browser
+            - name: Cache Playwright browsers
+              id: playwright-cache
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-chromium-${{ runner.os }}-${{ hashFiles('scraper/requirements.txt') }}
+
+            - name: Install Playwright browser (with system deps)
+              if: steps.playwright-cache.outputs.cache-hit != 'true'
               run: playwright install --with-deps chromium
+
+            - name: Install Playwright system deps (browser from cache)
+              if: steps.playwright-cache.outputs.cache-hit == 'true'
+              run: playwright install-deps chromium
+
+            - name: Start Astro server
+              run: |
+                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
+                echo "SERVER_PID=$!" >> $GITHUB_ENV
+              env:
+                HOST: 127.0.0.1
+                PORT: 4321
+
+            - name: Wait for server to be ready
+              run: |
+                echo "Waiting for http://localhost:4321..."
+                for i in $(seq 1 60); do
+                    if curl -s -o /dev/null http://localhost:4321; then
+                        echo "Server ready after ${i}s"
+                        exit 0
+                    fi
+                    echo "  attempt $i/60..."
+                    sleep 1
+                done
+                echo "--- Astro server log ---"
+                cat /tmp/astro-server.log
+                echo "Server did not become ready within 60s"
+                exit 1
 
             # ── Run ───────────────────────────────────────────────────────────────
 
@@ -133,7 +178,11 @@ jobs:
                     --api-url http://localhost:4321 \
                     ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
-            # ── Logs ──────────────────────────────────────────────────────────────
+            - name: Dump Astro server log
+              if: failure()
+              run: cat /tmp/astro-server.log
+
+              # ── Logs ──────────────────────────────────────────────────────────────
             # The Astro server writes a human-readable text log to logs/YYYY-MM-DD.log
             # (same format as local dev) with per-position signal details.
             # Uploaded here as a downloadable artifact; retained 90 days.
