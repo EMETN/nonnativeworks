@@ -48,7 +48,7 @@ try {
         <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
       </div>
     ) : (
-      <InfographicGrid countries={countries} client:only="preact" />
+      <InfographicGrid countries={countries} client:load />
     )}
   </div>
 </BaseLayout>
