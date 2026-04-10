@@ -24,28 +24,28 @@ importers:
         specifier: ^2.10.5
         version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.3))
       '@sentry/astro':
-        specifier: ^10.47.0
+        specifier: ^10.48.0
         version: 10.48.0(astro@6.1.5(@netlify/blobs@10.7.4)(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.1)(typescript@6.0.2)(yaml@2.8.3))(rollup@4.60.1)
       '@sentry/browser':
-        specifier: ^10.47.0
+        specifier: ^10.48.0
         version: 10.48.0
       '@sentry/node':
-        specifier: ^10.47.0
+        specifier: ^10.48.0
         version: 10.48.0
       '@supabase/ssr':
-        specifier: ^0.10.0
+        specifier: ^0.10.2
         version: 0.10.2(@supabase/supabase-js@2.103.0)
       '@supabase/supabase-js':
-        specifier: ^2.102.1
+        specifier: ^2.103.0
         version: 2.103.0
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(yaml@2.8.3))
       astro:
-        specifier: ^6.1.4
+        specifier: ^6.1.5
         version: 6.1.5(@netlify/blobs@10.7.4)(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.1)(typescript@6.0.2)(yaml@2.8.3)
       posthog-js:
-        specifier: ^1.365.1
+        specifier: ^1.367.0
         version: 1.367.0
       preact:
         specifier: ^10.29.1
