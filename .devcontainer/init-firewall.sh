@@ -127,7 +127,7 @@ for domain in \
     "kesko.fi" \
     "konecranes.careers" \
     "careers.allianz.com" \
-    "bmwgroup.job" \
+    "bmwgroup.jobs" \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
     "pypi.org" \
