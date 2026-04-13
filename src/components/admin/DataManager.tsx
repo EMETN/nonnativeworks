@@ -95,11 +95,10 @@ export default function DataManager() {
   }
 
   function handleUpdate(careerUrl: string) {
-    // Pre-fill the Scraper tab's URL input and switch to it (Option A)
     sessionStorage.setItem('scraper-prefill-url', careerUrl);
-    document.getElementById('tab-btn-scraper')?.click();
+    sessionStorage.setItem('admin-active-tab', 'scraper');
     window.dispatchEvent(new CustomEvent('scraper-prefill', { detail: { url: careerUrl } }));
-    document.getElementById('tab-panel-scraper')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('tab-btn-scraper')?.click();
   }
 
   if (loading) return <div class="text-sm text-gray-400 py-4">Loading…</div>;

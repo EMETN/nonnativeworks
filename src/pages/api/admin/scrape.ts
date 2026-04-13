@@ -45,6 +45,11 @@ import {
   enrichDescriptions,
 } from "../../../lib/ats/company-api-fetcher";
 import { TRACKED_COUNTRY_CODES } from "../../../lib/tracked-countries";
+import {
+  loadSkills,
+  extractSkills,
+  type SkillEntry,
+} from "../../../lib/ats/skills-extractor";
 
 const PYTHON_TIMEOUT_MS = 600_000; // 10 min — njoyn scrapes 9 countries sequentially
 
@@ -87,6 +92,8 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 async function scrape(rawUrl: string): Promise<ScrapeResult> {
+  // Load skills taxonomy once for this scrape run — used to extract skills from descriptions.
+  const skills: SkillEntry[] = await loadSkills();
   // Remap friendly branded career URLs (e.g. careers.abb) to the actual ATS URL.
   const urlHostname = (() => {
     try {
@@ -248,7 +255,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
       detection.companySlug.slice(1);
   }
 
-  return buildScrapeResult(rawJobs, companyName, careerUrl, ats);
+  return buildScrapeResult(rawJobs, companyName, careerUrl, ats, skills);
 }
 
 function buildScrapeResult(
@@ -256,6 +263,7 @@ function buildScrapeResult(
   companyName: string,
   careerUrl: string,
   ats: AtsType | null,
+  skills: SkillEntry[],
 ): ScrapeResult {
   const groups = new Map<string, ScrapeCountryGroup>();
   let skipped = 0;
@@ -327,10 +335,13 @@ function buildScrapeResult(
           jobs: [],
         });
       }
+      const jobSkills = extractSkills(job.descriptionText ?? '', skills);
+
       groups.get(countryInfo.code)!.jobs.push({
         ...classified,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
+        skills: jobSkills.length > 0 ? jobSkills : undefined,
       });
     }
   }

@@ -46,6 +46,7 @@ export interface ClassifiedJob {
   local_language_advantage: boolean;
   requiredLanguages: string[];
   preferredLanguages: string[];
+  skills?: string[];
 }
 
 export interface ScrapeCountryGroup {
