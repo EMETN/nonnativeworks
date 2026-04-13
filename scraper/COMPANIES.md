@@ -34,7 +34,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
-| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB |
+| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso |
 
 ---
 
