@@ -21,6 +21,7 @@ export const PositionSchema = z.object({
   local_language_advantage: z.boolean().default(false),
   required_languages: z.array(z.string()).default([]),
   preferred_languages: z.array(z.string()).default([]),
+  skills: z.array(z.string()).default([]),
   category: z
     .string()
     .refine(
