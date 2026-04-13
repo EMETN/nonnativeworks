@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 
-const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology'] as const;
+const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style'] as const;
 
 export const GET: APIRoute = async ({ url }) => {
   const category = url.searchParams.get('category');
@@ -12,7 +12,7 @@ export const GET: APIRoute = async ({ url }) => {
   const supabase = createSupabaseServiceClient();
   let query = supabase
     .from('skills')
-    .select('id, canonical_name, category, aliases')
+    .select('id, canonical_name, category, aliases, is_legacy')
     .order('canonical_name');
 
   if (category) {
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { canonical_name, category, aliases } = body as Record<string, unknown>;
+  const { canonical_name, category, aliases, is_legacy } = body as Record<string, unknown>;
 
   if (typeof canonical_name !== 'string' || !canonical_name.trim()) {
     return json({ error: 'canonical_name is required' }, 400);
@@ -55,8 +55,9 @@ export const POST: APIRoute = async ({ request }) => {
       canonical_name: canonical_name.trim(),
       category,
       aliases: aliases.map((a: string) => a.trim().toLowerCase()).filter(Boolean),
+      is_legacy: is_legacy === true,
     })
-    .select('id, canonical_name, category, aliases')
+    .select('id, canonical_name, category, aliases, is_legacy')
     .single();
 
   if (error) {
