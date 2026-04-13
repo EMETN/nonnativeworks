@@ -10,13 +10,15 @@ interface CountryData {
     english_positions: number;
     english_percentage: number;
     last_updated: string | null;
+    country_id: string;
 }
 
 interface Props {
     countries: CountryData[];
+    companyCounts: Record<string, number>;
 }
 
-export default function InfographicGrid({ countries }: Props) {
+export default function InfographicGrid({ countries, companyCounts }: Props) {
     const items: DataGridItem[] = countries.map((c) => ({
         id: c.slug,
         name: c.name,
@@ -25,6 +27,7 @@ export default function InfographicGrid({ countries }: Props) {
         total_positions: c.total_positions,
         english_percentage: c.english_percentage,
         updated_at: c.last_updated,
+        company_count: companyCounts[c.country_id] ?? 0,
     }));
 
     return <DataGrid items={items} compact />;

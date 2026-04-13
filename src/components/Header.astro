@@ -28,7 +28,7 @@ const { stats } = Astro.props;
                 stats && stats.total_positions > 0 && (
                     <div
                         class="hidden sm:flex items-center gap-3"
-                        aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
+                        aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} positions`}
                     >
                         <div
                             class="text-right whitespace-nowrap"
@@ -57,7 +57,7 @@ const { stats } = Astro.props;
                             aria-hidden="true"
                         >
                             <div class="text-xs font-semibold tracking-wider uppercase text-gray-500 leading-tight">
-                                Non-native
+                                Positions
                             </div>
                             <div class="text-xl font-bold text-[#002EA2] leading-tight">
                                 {stats.english_positions.toLocaleString()}
@@ -74,7 +74,7 @@ const { stats } = Astro.props;
     stats && stats.total_positions > 0 && (
         <div
             class="sm:hidden bg-[#002EA2]/10 border-b border-[#99B3DB] px-4 py-1.5"
-            aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} non-native positions`}
+            aria-label={`${stats.total_countries} countries, ${stats.total_companies} companies, ${stats.english_positions.toLocaleString()} positions`}
         >
             <p class="text-center text-xs text-[#001A5C]">
                 <span class="font-bold">{stats.total_countries}</span> countries
@@ -83,7 +83,7 @@ const { stats } = Astro.props;
                 <span class="font-bold">
                     {stats.english_positions.toLocaleString()}
                 </span>{' '}
-                non-native positions
+                positions
             </p>
         </div>
     )
