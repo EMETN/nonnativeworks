@@ -338,12 +338,19 @@ const LANG_MENTIONS = (lang: string) => [
  * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset)".
  * Handles any intensifier adjective(s) between the article and the noun without enumerating them.
  * Examples: "is an advantage", "is a big plus", "would be a strong asset", "seen as a huge advantage".
+ *
+ * The bare language name (e.g. "dutch") gets zero gap words to avoid false positives where
+ * the language word is used as a geographic adjective: "Dutch retail ecosystem is a strong advantage".
+ * Compound mentions (e.g. "dutch language skills") are more specific and allow up to 6 gap words.
  */
 function buildAdvantageRegex(lang: string): RegExp {
-  const escaped = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  return new RegExp(
-    `(?:${escaped.join('|')})(?:\\s+\\w+){0,6}\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`,
-  );
+  const [bare, ...compound] = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`;
+  const parts = [
+    `${bare}${operatorSuffix}`,
+    ...(compound.length > 0 ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,6}${operatorSuffix}`] : []),
+  ];
+  return new RegExp(`(?:${parts.join('|')})`);
 }
 
 function buildAdvantageSignals(lang: string): string[] {
@@ -458,6 +465,25 @@ function buildRequirementSignals(lang: string): string[] {
     `basic level of ${lang}`,
     `some ${lang}`,
   ];
+}
+
+// Negation patterns that immediately follow a requirement signal phrase
+// (within ~80 characters), indicating the language is actually optional.
+// e.g. "fluent Dutch being a nice-to-have but certainly not compulsory"
+const REQUIREMENT_NEGATION_RE =
+  /\b(?:nice-?to-?have|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
+
+/**
+ * Returns true when a requirement-signal match is immediately qualified by
+ * optional/negation language in the ~80 characters that follow it.
+ * e.g. "fluent Dutch being a nice-to-have but certainly not compulsory"
+ *   → signal "fluent dutch" is found, but the trailing context negates it.
+ */
+function requirementNegatedByContext(combined: string, signal: string): boolean {
+  const idx = combined.indexOf(signal);
+  if (idx === -1) return false;
+  const after = combined.slice(idx + signal.length, idx + signal.length + 80);
+  return REQUIREMENT_NEGATION_RE.test(after);
 }
 
 // ---------------------------------------------------------------------------
@@ -666,6 +692,12 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
+        if (requirementNegatedByContext(combined, signal)) {
+          return {
+            value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+            signals: [{ phase: '2a', description: `"${lang}" requirement phrase negated by context`, matched: signal }],
+          };
+        }
         return {
           value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
           signals: [{ phase: '2a', description: `"${lang}" requirement phrase`, matched: signal }],
@@ -703,6 +735,12 @@ export function detectNativeLanguage(
       }
       for (const signal of buildRequirementSignals(kw)) {
         if (combined.includes(signal)) {
+          if (requirementNegatedByContext(combined, signal)) {
+            return {
+              value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
+              signals: [{ phase: '2a-cross', description: `cross-language requirement negated by context: ${canonicalName}`, matched: signal }],
+            };
+          }
           return {
             value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [],
             signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
