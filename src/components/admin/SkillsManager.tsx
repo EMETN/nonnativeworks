@@ -15,7 +15,8 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: 'cloud',       label: 'Cloud' },
   { value: 'tool',        label: 'Tool' },
   { value: 'methodology', label: 'Methodology' },
-  { value: 'api_style',   label: 'API Style' },
+  { value: 'api_style',     label: 'API Style' },
+  { value: 'certification', label: 'Certification' },
 ];
 
 const EMPTY_DRAFT = { canonical_name: '', category: 'language', aliases: '', is_legacy: false };
