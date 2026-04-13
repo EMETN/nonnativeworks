@@ -26,6 +26,7 @@ import {
   getCompanyCountryFallback,
 } from "../../../lib/ats/country-lookup";
 import { classifyJobVerbose } from "../../../lib/classifier";
+import { stripHtml } from "../../../lib/classifiers/language";
 import {
   logScrapeRun,
   type PositionLogEntry,
@@ -312,6 +313,20 @@ function buildScrapeResult(
       const workModel =
         job.work_model ?? extractWorkModelFromLocation(job.location ?? "");
 
+      if (!groups.has(countryInfo.code)) {
+        groups.set(countryInfo.code, {
+          country: countryInfo.slug,
+          country_name: countryInfo.name,
+          country_code: countryInfo.code,
+          jobs: [],
+        });
+      }
+      // Derive plain text from HTML when the scraper only populated descriptionHtml
+      // (e.g. Greenhouse, Ashby, Workable). Workday and Lever already set descriptionText.
+      const plainText = job.descriptionText ?? (job.descriptionHtml ? stripHtml(job.descriptionHtml) : '');
+      const jobSkills = extractSkills(plainText, skills);
+      const education = extractEducationRequirement(plainText);
+
       positionLogs.push({
         title: classified.title,
         category: classified.category,
@@ -326,18 +341,9 @@ function buildScrapeResult(
         countryName: countryInfo.name,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
+        skills: jobSkills.length > 0 ? jobSkills : undefined,
+        required_education: education,
       });
-
-      if (!groups.has(countryInfo.code)) {
-        groups.set(countryInfo.code, {
-          country: countryInfo.slug,
-          country_name: countryInfo.name,
-          country_code: countryInfo.code,
-          jobs: [],
-        });
-      }
-      const jobSkills = extractSkills(job.descriptionText ?? '', skills);
-      const education = extractEducationRequirement(job.descriptionText ?? '');
 
       groups.get(countryInfo.code)!.jobs.push({
         ...classified,
