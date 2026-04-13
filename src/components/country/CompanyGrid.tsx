@@ -20,5 +20,5 @@ export default function CompanyGrid({ companies, countrySlug }: Props) {
     updated_at: c.updated_at,
   }));
 
-  return <DataGrid items={items} compact />;
+  return <DataGrid items={items} />;
 }

@@ -23,7 +23,7 @@ try {
   description="NonNativeWorks tracks open positions where English is enough — no local language required. Browse by country to find your next opportunity abroad."
   stats={stats ?? undefined}
 >
-  <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 py-12 pb-16">
+  <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-12">
     <!-- Intro -->
     <div class="max-w-3xl mx-auto text-center mb-16">
       <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
@@ -35,8 +35,10 @@ try {
         Track open positions across countries worldwide.
       </p>
     </div>
+  </div>
 
-    <!-- Country list -->
+  <!-- Country list — full width, same margins as header -->
+  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     {loadError ? (
       <div class="text-center py-8 text-gray-400">
         <p class="text-lg mb-2">Something went wrong loading the data.</p>
