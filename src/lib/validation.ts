@@ -22,6 +22,7 @@ export const PositionSchema = z.object({
   required_languages: z.array(z.string()).default([]),
   preferred_languages: z.array(z.string()).default([]),
   skills: z.array(z.string()).default([]),
+  required_education: z.enum(['vocational', 'bachelor', 'master', 'mba', 'phd']).optional(),
   category: z
     .string()
     .refine(
