@@ -10,9 +10,10 @@ CREATE TABLE skills (
   canonical_name TEXT    NOT NULL UNIQUE,
   category       TEXT    NOT NULL CHECK (category IN (
                            'language', 'framework', 'database',
-                           'cloud', 'tool', 'methodology'
+                           'cloud', 'tool', 'methodology', 'api_style'
                          )),
-  aliases        TEXT[]  NOT NULL DEFAULT '{}'
+  aliases        TEXT[]  NOT NULL DEFAULT '{}',
+  is_legacy      BOOLEAN NOT NULL DEFAULT false
 );
 
 -- ── skills[] on positions ────────────────────────────────────
@@ -110,7 +111,14 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Laravel',        'framework', ARRAY['laravel']),
 ('Rails',          'framework', ARRAY['rails', 'ruby on rails', 'ror']),
 ('Symfony',        'framework', ARRAY['symfony']),
-('Quarkus',        'framework', ARRAY['quarkus']),
+('Quarkus',         'framework', ARRAY['quarkus']),
+('Tailwind CSS',    'framework', ARRAY['tailwind', 'tailwindcss', 'tailwind css']),
+('Bootstrap',       'framework', ARRAY['bootstrap']),
+('Material UI',     'framework', ARRAY['material ui', 'material-ui', 'mui']),
+('Chakra UI',       'framework', ARRAY['chakra ui', 'chakra']),
+('Styled Components','framework', ARRAY['styled components', 'styled-components']),
+('Redux',           'framework', ARRAY['redux', 'redux toolkit', 'rtk']),
+('Zustand',         'framework', ARRAY['zustand']),
 ('Micronaut',      'framework', ARRAY['micronaut']),
 ('Ktor',           'framework', ARRAY['ktor']),
 ('PyTorch',        'framework', ARRAY['pytorch', 'torch']),
@@ -180,10 +188,13 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Nginx',            'tool', ARRAY['nginx']),
 ('Kafka',            'tool', ARRAY['kafka', 'apache kafka']),
 ('RabbitMQ',         'tool', ARRAY['rabbitmq', 'rabbit mq']),
-('gRPC',             'tool', ARRAY['grpc']),
-('REST API',         'tool', ARRAY['rest api', 'restful api', 'restful', 'rest apis']),
-('GraphQL',          'tool', ARRAY['graphql', 'graph ql']),
-('OpenAPI',          'tool', ARRAY['openapi', 'open api', 'swagger']),
+-- API styles / protocols (separate from tools — keeps analytics clean)
+('REST',             'api_style', ARRAY['rest api', 'restful api', 'restful', 'rest apis', 'rest services']),
+('GraphQL',          'api_style', ARRAY['graphql', 'graph ql']),
+('gRPC',             'api_style', ARRAY['grpc']),
+('OpenAPI',          'api_style', ARRAY['openapi', 'open api', 'swagger', 'openapi spec']),
+('WebSocket',        'api_style', ARRAY['websocket', 'websockets', 'web socket']),
+('MQTT',             'api_style', ARRAY['mqtt']),
 ('Kibana',           'tool', ARRAY['kibana']),
 ('Apache Airflow',   'tool', ARRAY['airflow', 'apache airflow']),
 ('dbt',              'tool', ARRAY['dbt', 'data build tool']),
@@ -196,6 +207,9 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Playwright',       'tool', ARRAY['playwright']),
 ('Cypress',          'tool', ARRAY['cypress']),
 ('Jest',             'tool', ARRAY['jest']),
+('Vitest',           'tool', ARRAY['vitest']),
+('Mocha',            'tool', ARRAY['mocha']),
+('Testing Library',  'tool', ARRAY['testing library', 'react testing library', '@testing-library']),
 ('pytest',           'tool', ARRAY['pytest', 'py.test']),
 ('JUnit',            'tool', ARRAY['junit', 'junit5', 'junit 5']),
 ('SonarQube',        'tool', ARRAY['sonarqube', 'sonar qube']),
@@ -225,3 +239,15 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Event-Driven Architecture','methodology', ARRAY['event driven architecture', 'event-driven architecture', 'event driven']),
 ('Lean',                     'methodology', ARRAY['lean methodology', 'lean development', 'lean startup', 'lean software']),
 ('OKR',                      'methodology', ARRAY['okr', 'objectives and key results']);
+
+-- ── Mark legacy skills ────────────────────────────────────────
+
+UPDATE skills SET is_legacy = true
+WHERE canonical_name IN (
+  'COBOL',
+  'Fortran',
+  'Assembly',
+  'Perl',
+  'VBA',
+  'Objective-C'
+);

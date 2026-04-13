@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 
-const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology'] as const;
+const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style'] as const;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const PATCH: APIRoute = async ({ params, request }) => {
@@ -18,7 +18,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
 
   const patch: Record<string, unknown> = {};
-  const { canonical_name, category, aliases } = body as Record<string, unknown>;
+  const { canonical_name, category, aliases, is_legacy } = body as Record<string, unknown>;
 
   if (canonical_name !== undefined) {
     if (typeof canonical_name !== 'string' || !canonical_name.trim()) {
@@ -41,6 +41,13 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     patch.aliases = aliases.map((a: string) => a.trim().toLowerCase()).filter(Boolean);
   }
 
+  if (is_legacy !== undefined) {
+    if (typeof is_legacy !== 'boolean') {
+      return json({ error: 'is_legacy must be a boolean' }, 400);
+    }
+    patch.is_legacy = is_legacy;
+  }
+
   if (Object.keys(patch).length === 0) {
     return json({ error: 'No fields to update' }, 400);
   }
@@ -50,7 +57,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     .from('skills')
     .update(patch)
     .eq('id', id)
-    .select('id, canonical_name, category, aliases')
+    .select('id, canonical_name, category, aliases, is_legacy')
     .single();
 
   if (error) {

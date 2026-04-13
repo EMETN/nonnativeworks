@@ -5,6 +5,7 @@ interface Skill {
   canonical_name: string;
   category: string;
   aliases: string[];
+  is_legacy: boolean;
 }
 
 const CATEGORIES: { value: string; label: string }[] = [
@@ -14,9 +15,10 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: 'cloud',       label: 'Cloud' },
   { value: 'tool',        label: 'Tool' },
   { value: 'methodology', label: 'Methodology' },
+  { value: 'api_style',   label: 'API Style' },
 ];
 
-const EMPTY_DRAFT = { canonical_name: '', category: 'language', aliases: '' };
+const EMPTY_DRAFT = { canonical_name: '', category: 'language', aliases: '', is_legacy: false };
 
 export default function SkillsManager() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function SkillsManager() {
   const [addError, setAddError] = useState('');
   const [addSaving, setAddSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState({ ...EMPTY_DRAFT });
+  const [editDraft, setEditDraft] = useState({ ...EMPTY_DRAFT, is_legacy: false });
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -67,6 +69,7 @@ export default function SkillsManager() {
           canonical_name: addDraft.canonical_name.trim(),
           category: addDraft.category,
           aliases: parseAliases(addDraft.aliases),
+          is_legacy: addDraft.is_legacy,
         }),
       });
       const data = await res.json();
@@ -93,6 +96,7 @@ export default function SkillsManager() {
       canonical_name: skill.canonical_name,
       category: skill.category,
       aliases: skill.aliases.join(', '),
+      is_legacy: skill.is_legacy,
     });
     setEditError('');
     setShowAddForm(false);
@@ -110,6 +114,7 @@ export default function SkillsManager() {
           canonical_name: editDraft.canonical_name.trim(),
           category: editDraft.category,
           aliases: parseAliases(editDraft.aliases),
+          is_legacy: editDraft.is_legacy,
         }),
       });
       const data = await res.json();
@@ -217,6 +222,15 @@ export default function SkillsManager() {
               />
             </div>
           </div>
+          <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={addDraft.is_legacy}
+              onChange={(e) => setAddDraft((d) => ({ ...d, is_legacy: (e.target as HTMLInputElement).checked }))}
+              class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+            />
+            Legacy technology
+          </label>
           {addError && <p class="text-xs text-red-600">{addError}</p>}
           <div class="flex gap-2">
             <button
@@ -307,6 +321,15 @@ export default function SkillsManager() {
                               class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
+                          <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
+                            <input
+                              type="checkbox"
+                              checked={editDraft.is_legacy}
+                              onChange={(e) => setEditDraft((d) => ({ ...d, is_legacy: (e.target as HTMLInputElement).checked }))}
+                              class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                            />
+                            Legacy technology
+                          </label>
                           {editError && <p class="text-xs text-red-600">{editError}</p>}
                           <div class="flex gap-2">
                             <button
@@ -329,7 +352,12 @@ export default function SkillsManager() {
                     ) : (
                       /* ── Normal row ── */
                       <>
-                        <td class="px-4 py-2.5 font-medium text-gray-900">{skill.canonical_name}</td>
+                        <td class="px-4 py-2.5 font-medium text-gray-900">
+                          {skill.canonical_name}
+                          {skill.is_legacy && (
+                            <span class="ml-2 px-1.5 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">legacy</span>
+                          )}
+                        </td>
                         <td class="px-4 py-2.5 text-gray-500 text-xs">
                           {skill.aliases.length > 0
                             ? skill.aliases.join(', ')
