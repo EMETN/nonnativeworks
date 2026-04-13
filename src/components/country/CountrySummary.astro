@@ -8,7 +8,7 @@ interface Props {
 
 const { country, companyCount } = Astro.props;
 const pct = Math.round(country.english_percentage);
-const numFont = "font-family: 'Inter', sans-serif";
+const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
 ---
 
 <div class="flex flex-wrap items-baseline gap-x-4 sm:gap-x-6 gap-y-2 mb-10">

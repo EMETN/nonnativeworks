@@ -33,7 +33,7 @@ const [positions, categories] = await Promise.all([
   getCategoryBreakdownByCompany(request, cookies, company.company_id),
 ]);
 
-const numFont = "font-family: 'Inter', sans-serif";
+const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
 ---
 
 <BaseLayout
@@ -41,7 +41,7 @@ const numFont = "font-family: 'Inter', sans-serif";
   description={`${company.name} has ${company.total_positions} open positions in ${country.name} — ${company.english_positions} don't require the local language.`}
   stats={stats}
 >
-  <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 py-12 pb-16">
+  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-16">
 
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-400 mb-4 md:mb-8" aria-label="Breadcrumb">
@@ -53,7 +53,7 @@ const numFont = "font-family: 'Inter', sans-serif";
     </nav>
 
     <!-- Title -->
-    <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-2 sm:mb-4 leading-tight" style="font-family: 'Inter', sans-serif;">
+    <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-2 sm:mb-6 leading-tight" style={numFont}>
       {company.name}
       {company.is_english_company && (
         <span class="text-sm sm:text-base bg-[#CCd9ED] text-[#002383] px-2 py-1 rounded font-semibold align-middle ml-2">
@@ -65,12 +65,12 @@ const numFont = "font-family: 'Inter', sans-serif";
     <!-- Summary stats -->
     <div class="flex flex-wrap items-baseline gap-x-4 sm:gap-x-6 gap-y-2 mb-10">
       <div class="flex items-baseline gap-1 sm:gap-2">
-        <span class="text-xl sm:text-5xl font-bold text-[#002EA2]" style={numFont}>{company.english_positions}</span>
+        <span class="text-xl sm:text-5xl font-bold text-[#002EA2]" style={numFont}>{company.english_positions.toLocaleString()}</span>
         <span class="text-[0.6rem] sm:text-sm font-semibold tracking-wider uppercase text-gray-400">non-native</span>
       </div>
       <span class="text-base sm:text-3xl font-light text-gray-300">/</span>
       <div class="flex items-baseline gap-1 sm:gap-2">
-        <span class="text-xl sm:text-5xl font-bold text-gray-900" style={numFont}>{company.total_positions}</span>
+        <span class="text-xl sm:text-5xl font-bold text-gray-900" style={numFont}>{company.total_positions.toLocaleString()}</span>
         <span class="text-[0.6rem] sm:text-sm font-semibold tracking-wider uppercase text-gray-400">total</span>
       </div>
       <span class="text-base sm:text-3xl font-light text-gray-300">/</span>
