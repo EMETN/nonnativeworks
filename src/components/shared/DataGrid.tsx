@@ -10,6 +10,7 @@ export interface DataGridItem {
   total_positions: number;
   english_percentage: number;
   updated_at: string | null;
+  company_count?: number;
 }
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
   compact?: boolean;
 }
 
-type SortField = 'positions' | 'total' | 'percentage';
+type SortField = 'positions' | 'total' | 'percentage' | 'companies';
 type SortDir = 'desc' | 'asc';
 
 function formatNumber(n: number): string {
@@ -26,7 +27,10 @@ function formatNumber(n: number): string {
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
-const gridCols = 'minmax(0, 1fr) auto auto auto auto auto';
+// compact (homepage): name | companies | non-native | pct | arrow
+const compactGridCols = 'minmax(0, 1fr) auto auto auto auto';
+// non-compact (country): name | non-native | / | total | pct | arrow
+const fullGridCols = 'minmax(0, 1fr) auto auto auto auto auto';
 
 function SortArrow({ dir, active }: { dir: SortDir; active: boolean }) {
   return (
@@ -54,12 +58,14 @@ function SizingRow({ items, compact }: { items: DataGridItem[]; compact?: boolea
   const ts = compact
     ? 'text-xs sm:text-2xl md:text-4xl xl:text-6xl'
     : 'text-xs sm:text-xl md:text-2xl xl:text-4xl';
-  const ss = compact
-    ? 'text-[0.6rem] sm:text-xl md:text-3xl xl:text-5xl'
-    : 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
+  const ss = 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
   const as = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
+  const maxCompanies = compact
+    ? Math.max(...items.map((i) => i.company_count ?? 0))
+    : 0;
+
   return (
     <li
       aria-hidden="true"
@@ -69,15 +75,28 @@ function SizingRow({ items, compact }: { items: DataGridItem[]; compact?: boolea
       <div class="pr-2 sm:pr-4 md:pr-8 xl:pr-12">
         <span class={ts} style={numFont}>W</span>
       </div>
-      <div class="pr-2.5 sm:pr-3 md:pr-4">
-        <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.english_positions)}</span>
-      </div>
-      <div>
-        <span class={ss}>/</span>
-      </div>
-      <div class="pl-1.5 sm:pl-3 md:pl-4">
-        <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.total_positions)}</span>
-      </div>
+      {compact ? (
+        <>
+          <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+            <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(maxCompanies)}</span>
+          </div>
+          <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+            <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.english_positions)}</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="pr-2.5 sm:pr-3 md:pr-4">
+            <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.english_positions)}</span>
+          </div>
+          <div>
+            <span class={ss}>/</span>
+          </div>
+          <div class="pl-1.5 sm:pl-3 md:pl-4">
+            <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.total_positions)}</span>
+          </div>
+        </>
+      )}
       <div class="pl-4 sm:pl-6 md:pl-8 xl:pl-10">
         <span class={`${ts} tabular-nums`} style={numFont}>{pct}%</span>
       </div>
@@ -121,9 +140,7 @@ function GridRow({
   const textSize = compact
     ? 'text-xs sm:text-2xl md:text-4xl xl:text-6xl'
     : 'text-xs sm:text-xl md:text-2xl xl:text-4xl';
-  const slashSize = compact
-    ? 'text-[0.6rem] sm:text-xl md:text-3xl xl:text-5xl'
-    : 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
+  const slashSize = 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
   const arrowSize = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
@@ -169,21 +186,36 @@ function GridRow({
           </div>
         </div>
 
-        <div class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4`}>
-          <span class={`${textSize} font-semibold text-[#002EA2] leading-none tabular-nums`} style={numFont}>
-            {formatNumber(item.english_positions)}
-          </span>
-        </div>
-
-        <div class={`flex items-center justify-center ${rowPy}`}>
-          <span class={`${slashSize} font-extralight text-gray-300 leading-none`}>/</span>
-        </div>
-
-        <div class={`flex items-center justify-end ${rowPy} pl-1.5 sm:pl-3 md:pl-4`}>
-          <span class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`} style={numFont}>
-            {formatNumber(item.total_positions)}
-          </span>
-        </div>
+        {compact ? (
+          <>
+            <div class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}>
+              <span class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`} style={numFont}>
+                {formatNumber(item.company_count ?? 0)}
+              </span>
+            </div>
+            <div class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}>
+              <span class={`${textSize} font-semibold text-[#002EA2] leading-none tabular-nums`} style={numFont}>
+                {formatNumber(item.english_positions)}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4`}>
+              <span class={`${textSize} font-semibold text-[#002EA2] leading-none tabular-nums`} style={numFont}>
+                {formatNumber(item.english_positions)}
+              </span>
+            </div>
+            <div class={`flex items-center justify-center ${rowPy}`}>
+              <span class={`${slashSize} font-extralight text-gray-300 leading-none`}>/</span>
+            </div>
+            <div class={`flex items-center justify-end ${rowPy} pl-1.5 sm:pl-3 md:pl-4`}>
+              <span class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`} style={numFont}>
+                {formatNumber(item.total_positions)}
+              </span>
+            </div>
+          </>
+        )}
 
         <div class={`flex items-center justify-end ${rowPy} pl-4 sm:pl-6 md:pl-8 xl:pl-10`}>
           <span class={`${textSize} font-semibold text-gray-900 leading-none tabular-nums`} style={numFont}>
@@ -202,7 +234,7 @@ function GridRow({
 }
 
 export default function DataGrid({ items, compact }: Props) {
-  const sortField = useSignal<SortField>('positions');
+  const sortField = useSignal<SortField>(compact ? 'companies' : 'positions');
   const sortDir = useSignal<SortDir>('desc');
   const search = useSignal('');
   const hoveredId = useSignal<string | null>(null);
@@ -221,6 +253,7 @@ export default function DataGrid({ items, compact }: Props) {
     const list = q ? items.filter((it) => it.name.toLowerCase().includes(q)) : items;
     const dir = sortDir.value === 'desc' ? 1 : -1;
     return [...list].sort((a, b) => {
+      if (sortField.value === 'companies') return ((b.company_count ?? 0) - (a.company_count ?? 0)) * dir;
       if (sortField.value === 'positions') return (b.english_positions - a.english_positions) * dir;
       if (sortField.value === 'total') return (b.total_positions - a.total_positions) * dir;
       return (b.english_percentage - a.english_percentage) * dir;
@@ -234,6 +267,7 @@ export default function DataGrid({ items, compact }: Props) {
 
   const entityLabel = compact ? 'country' : 'company';
   const hasResults = filtered.value.length > 0;
+  const gridCols = compact ? compactGridCols : fullGridCols;
 
   return (
     <div class="w-full">
@@ -282,26 +316,48 @@ export default function DataGrid({ items, compact }: Props) {
             </div>
           </div>
 
-          {/* Non-native sort */}
-          <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4">
-            <button onClick={() => toggleSort('positions')} class={sortField.value === 'positions' ? labelActive : labelInactive} style={numFont}>
-              <span class="hidden sm:inline">Non-native</span><span class="sm:hidden">NN</span>
-              <SortArrow dir={sortField.value === 'positions' ? sortDir.value : 'desc'} active={sortField.value === 'positions'} />
-            </button>
-          </div>
+          {compact ? (
+            <>
+              {/* Companies sort */}
+              <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+                <button onClick={() => toggleSort('companies')} class={sortField.value === 'companies' ? labelActive : labelInactive} style={numFont}>
+                  <span class="hidden sm:inline">Companies</span><span class="sm:hidden">Co.</span>
+                  <SortArrow dir={sortField.value === 'companies' ? sortDir.value : 'desc'} active={sortField.value === 'companies'} />
+                </button>
+              </div>
 
-          {/* Slash */}
-          <div class="flex items-center justify-center">
-            <span class="text-[0.5rem] sm:text-[0.7rem] md:text-xs font-semibold text-gray-400">/</span>
-          </div>
+              {/* Positions sort */}
+              <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+                <button onClick={() => toggleSort('positions')} class={sortField.value === 'positions' ? labelActive : labelInactive} style={numFont}>
+                  <span class="hidden sm:inline">Positions</span><span class="sm:hidden">Pos.</span>
+                  <SortArrow dir={sortField.value === 'positions' ? sortDir.value : 'desc'} active={sortField.value === 'positions'} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Positions sort */}
+              <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4">
+                <button onClick={() => toggleSort('positions')} class={sortField.value === 'positions' ? labelActive : labelInactive} style={numFont}>
+                  <span class="hidden sm:inline">Positions</span><span class="sm:hidden">Pos.</span>
+                  <SortArrow dir={sortField.value === 'positions' ? sortDir.value : 'desc'} active={sortField.value === 'positions'} />
+                </button>
+              </div>
 
-          {/* Total sort */}
-          <div class="flex items-center justify-end pl-1.5 sm:pl-3 md:pl-4">
-            <button onClick={() => toggleSort('total')} class={sortField.value === 'total' ? labelActive : labelInactive} style={numFont}>
-              Total
-              <SortArrow dir={sortField.value === 'total' ? sortDir.value : 'desc'} active={sortField.value === 'total'} />
-            </button>
-          </div>
+              {/* Slash */}
+              <div class="flex items-center justify-center">
+                <span class="text-[0.5rem] sm:text-[0.7rem] md:text-xs font-semibold text-gray-400">/</span>
+              </div>
+
+              {/* Total sort */}
+              <div class="flex items-center justify-end pl-1.5 sm:pl-3 md:pl-4">
+                <button onClick={() => toggleSort('total')} class={sortField.value === 'total' ? labelActive : labelInactive} style={numFont}>
+                  Total
+                  <SortArrow dir={sortField.value === 'total' ? sortDir.value : 'desc'} active={sortField.value === 'total'} />
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Percentage sort */}
           <div class="flex items-center justify-end pl-4 sm:pl-6 md:pl-8 xl:pl-10">

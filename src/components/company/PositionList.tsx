@@ -162,7 +162,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
       {/* Footer */}
       <div class="mt-4 flex items-center justify-between">
         <span class="text-[0.6rem] sm:text-xs text-gray-400 font-semibold tracking-wider uppercase" style={numFont}>
-          {filtered.length} of {nonNativePositions.length} non-native positions
+          {filtered.length} of {nonNativePositions.length} positions
         </span>
         {careerPageUrl && (
           <a
