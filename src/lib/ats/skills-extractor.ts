@@ -62,7 +62,7 @@ const EDUCATION_PATTERNS: { level: EducationLevel; patterns: RegExp[] }[] = [
   {
     level: 'master',
     patterns: [
-      /\bmaster'?s?(?: degree| of science| of arts| of engineering| of laws)?\b/i,
+      /\bmaster(?:'?s(?: degree| of science| of arts| of engineering| of laws)?| degree| of science| of arts| of engineering| of laws)\b/i,
       /\bm\.?sc\.?\b/i,
       /\bm\.?s\.?\b/i,
       /\bm\.?a\.?\b/i,
