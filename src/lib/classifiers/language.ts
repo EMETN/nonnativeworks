@@ -374,7 +374,9 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`nice to have: ${lang}`);
   signals.push(`nice to have ${lang}`);
   signals.push(`preferably ${lang}`);
+  signals.push(`preferably in ${lang}`);
   signals.push(`preferably also ${lang}`);
+  signals.push(`${lang} preferred`);
   return signals;
 }
 
@@ -432,6 +434,8 @@ function buildRequirementSignals(lang: string): string[] {
     `communication skills in ${lang}`,
     `${lang} language skills`,
     `${lang} skills`,
+    `command of ${lang}`,
+    `ability in ${lang}`,
     // Written + spoken
     `written and spoken ${lang}`,
     `spoken and written ${lang}`,
@@ -520,7 +524,7 @@ function findNativeLanguageChunk(
   countryCode?: string,
 ): { chunk: string; detectedCode: string } | null {
   if (!langCodes.length) return null;
-  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 80);
+  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 120);
   const candidates = chunks.length > 0 ? chunks : [text.trim()];
   const nativeCharEntry = countryCode ? COUNTRY_NATIVE_CHARS[countryCode] : undefined;
   for (const chunk of candidates) {
