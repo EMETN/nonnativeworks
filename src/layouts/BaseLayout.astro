@@ -56,9 +56,16 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-        <!-- Fonts -->
+        <!-- Fonts — preload critical weights to avoid FOUT -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            rel="preload"
+            href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700&display=swap"
             rel="stylesheet"

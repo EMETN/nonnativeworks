@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
+/* Fallback font with metrics matching Inter to prevent layout shift */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 @layer base {
   :root {
     --color-brand: #1a56db;
   }
 
   html {
-    font-family: Inter, system-ui, sans-serif;
+    font-family: Inter, 'Inter Fallback', system-ui, sans-serif;
   }
 
   body {

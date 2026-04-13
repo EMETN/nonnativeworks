@@ -1,17 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import InfographicGrid from '../components/infographic/InfographicGrid.tsx';
-import { getCountryStats, getGlobalStats } from '../lib/queries';
+import { getCountryStats, getGlobalStats, getCompanyCountsByCountry } from '../lib/queries';
 import type { CountryStats, GlobalStats } from '../lib/types';
 
 let stats: GlobalStats | null = null;
 let countries: CountryStats[] = [];
+let companyCounts: Record<string, number> = {};
 let loadError = false;
 
 try {
-  stats = await getGlobalStats(Astro.request, Astro.cookies);
-  const allCountries = await getCountryStats(Astro.request, Astro.cookies);
+  const [s, allCountries, cc] = await Promise.all([
+    getGlobalStats(Astro.request, Astro.cookies),
+    getCountryStats(Astro.request, Astro.cookies),
+    getCompanyCountsByCountry(Astro.request, Astro.cookies),
+  ]);
+  stats = s;
   countries = allCountries.filter((c) => c.total_positions > 0);
+  companyCounts = cc;
 } catch (err) {
   console.error('Homepage data load error:', err);
   loadError = true;
@@ -23,9 +29,9 @@ try {
   description="NonNativeWorks tracks open positions where English is enough — no local language required. Browse by country to find your next opportunity abroad."
   stats={stats ?? undefined}
 >
-  <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 py-12 pb-16">
+  <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12">
     <!-- Intro -->
-    <div class="max-w-3xl mx-auto text-center mb-16">
+    <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
       <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
         <span class="text-gray-900">No native language?</span><br />
         <span class="text-[#002EA2]">NonNativeWorks!</span>
@@ -35,8 +41,10 @@ try {
         Track open positions across countries worldwide.
       </p>
     </div>
+  </div>
 
-    <!-- Country list -->
+  <!-- Country list — full width, same margins as header -->
+  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     {loadError ? (
       <div class="text-center py-8 text-gray-400">
         <p class="text-lg mb-2">Something went wrong loading the data.</p>
@@ -48,7 +56,7 @@ try {
         <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
       </div>
     ) : (
-      <InfographicGrid countries={countries} client:load />
+      <InfographicGrid countries={countries} companyCounts={companyCounts} client:load />
     )}
   </div>
 </BaseLayout>
