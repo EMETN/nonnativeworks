@@ -484,6 +484,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
 // instead of skipping the job.
 const COMPANY_COUNTRY_FALLBACKS: Array<{ urlSubstring: string; country: CountryInfo }> = [
   { urlSubstring: 'posti.', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
+  { urlSubstring: 'sok.wd', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
 ];
 
 /**

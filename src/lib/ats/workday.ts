@@ -103,7 +103,25 @@ function extractOgDescription(html: string): string | undefined {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return html
+    .replace(/<[^>]+>/g, " ")
+    // Decode named HTML entities that affect language detection (Nordic + common chars).
+    // Workday returns job descriptions as HTML inside JSON; entities are not decoded
+    // automatically and would otherwise prevent the native-character frequency check.
+    .replace(/&auml;/g, 'ä').replace(/&Auml;/g, 'Ä')
+    .replace(/&ouml;/g, 'ö').replace(/&Ouml;/g, 'Ö')
+    .replace(/&aring;/g, 'å').replace(/&Aring;/g, 'Å')
+    .replace(/&oslash;/g, 'ø').replace(/&Oslash;/g, 'Ø')
+    .replace(/&aelig;/g, 'æ').replace(/&AElig;/g, 'Æ')
+    .replace(/&uuml;/g, 'ü').replace(/&Uuml;/g, 'Ü')
+    .replace(/&szlig;/g, 'ß')
+    .replace(/&eacute;/g, 'é').replace(/&Eacute;/g, 'É')
+    .replace(/&egrave;/g, 'è').replace(/&Egrave;/g, 'È')
+    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -248,6 +266,17 @@ const EXPAND_BATCH = 5;
 const MULTI_LOC_RE = /^\d+ locations?$/i;
 
 /**
+ * Some Workday instances (e.g. SOK) use venue/building names as locationsText
+ * (e.g. "SOLO SOKOS HOTEL PIER 4") instead of "City, Country". These are
+ * recognisable as entirely uppercase strings with no comma. When detected, we
+ * fetch the job detail to get the proper location from jobPostingInfo.location.
+ */
+function looksLikeVenueName(text: string): boolean {
+  if (!text || MULTI_LOC_RE.test(text.trim())) return false;
+  return text === text.toUpperCase() && !text.includes(',');
+}
+
+/**
  * Fetches the job detail API for a multi-location posting and returns all
  * location strings: the primary `location` plus any `additionalLocations`.
  * Endpoint: GET /wday/cxs/{company}/{site}{externalPath} (no "/jobs" segment).
@@ -340,16 +369,42 @@ export async function fetchWorkdayJobs(
     if (postings.length < PAGE_SIZE) break;
   }
 
-  // Split into single-location and multi-location postings.
+  // Split into single-location, venue-name, and multi-location postings.
   const allJobs: RawJob[] = [];
   const multiLocQueue: WorkdayJobPosting[] = [];
+  const venueQueue: WorkdayJobPosting[] = [];
 
   for (const posting of allPostings) {
     const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
     if (MULTI_LOC_RE.test((posting.locationsText ?? "").trim())) {
       multiLocQueue.push(posting);
+    } else if (looksLikeVenueName(posting.locationsText ?? "")) {
+      venueQueue.push(posting);
     } else {
       allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl });
+    }
+  }
+
+  // Resolve venue-name postings by fetching the detail API for the real location.
+  if (venueQueue.length > 0) {
+    console.log(`[workday] resolving locations for ${venueQueue.length} venue-name postings (of ${allPostings.length} total)`);
+    for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
+      await Promise.all(
+        venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
+          const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
+          const { locations, description } = await fetchJobLocations(
+            parts.host, parts.company, parts.site, posting.externalPath,
+          );
+          // Use the detail location if available; fall back to the original venue string.
+          const location = locations[0] ?? posting.locationsText;
+          allJobs.push({
+            title: posting.title,
+            url: jobUrl,
+            location,
+            ...(description && { descriptionText: description }),
+          });
+        }),
+      );
     }
   }
 

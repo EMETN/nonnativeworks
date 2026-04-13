@@ -28,6 +28,11 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "konsultti",      # consultant
         "palvelu",        # service
         "tiimi",          # team
+        "ravintola",      # restaurant
+        "vastaanotto",    # reception / front desk
+        "vuoromestari",   # shift supervisor
+        "hakemus",        # application (open application postings)
+        "hovimestari",    # headwaiter
     ],
     "SE": [
         "säljare",        # salesperson

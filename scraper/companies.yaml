@@ -65,6 +65,10 @@ companies:
       url: https://www.rovio.com/open-positions
       min_positions: 1
 
+    - name: SOK
+      url: https://sok.wd502.myworkdayjobs.com/S-ryhman-avoimet-tyopaikat
+      min_positions: 5
+
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2

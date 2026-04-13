@@ -24,7 +24,10 @@ const FI: string[] = [
   'hankinta',       // procurement
   'hitsaaja',       // welder
   'hoitaja',
+  'hakemus',        // application (open application postings)
+  'hovimestari',    // headwaiter
   'huolto',         // maintenance
+  'johtaja',        // manager
   'kehitys',        // development
   'kokki',          // chef
   'kokoonpanija',    // assembler
@@ -39,6 +42,7 @@ const FI: string[] = [
   'palvelu',        // service
   'rakennus',       // building
   'rakentaja',      // builder
+  'ravintola',      // restaurant
   'rekrytointi',    // recruitment
   'suunnittelija',  // designer / planner
   'tarjoilija',     // waiter
@@ -48,6 +52,8 @@ const FI: string[] = [
   'tuotanto',       // production
   'tuotannon',
   'varasto',        // warehouse
+  'vastaanotto',    // reception / front desk
+  'vuoromestari',   // shift supervisor
 ];
 
 // ── Swedish ───────────────────────────────────────────────────────────────────
