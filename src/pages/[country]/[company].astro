@@ -1,12 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import CategoryBreakdown from '../../components/country/CategoryBreakdown.astro';
 import PositionList from '../../components/company/PositionList.tsx';
 import {
   getCountryBySlug,
   getCompanyBySlugInCountry,
   getPositionsByCompany,
-  getCategoryBreakdownByCompany,
   getGlobalStats,
 } from '../../lib/queries';
 
@@ -28,10 +26,7 @@ if (!company) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
-const [positions, categories] = await Promise.all([
-  getPositionsByCompany(request, cookies, company.company_id),
-  getCategoryBreakdownByCompany(request, cookies, company.company_id),
-]);
+const positions = await getPositionsByCompany(request, cookies, company.company_id);
 
 const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
 ---
@@ -53,7 +48,7 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
     </nav>
 
     <!-- Title -->
-    <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-2 sm:mb-6 leading-tight" style={numFont}>
+    <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-0 leading-tight" style={numFont}>
       {company.name}
       {company.is_english_company && (
         <span class="text-sm sm:text-base bg-[#CCd9ED] text-[#002383] px-2 py-1 rounded font-semibold align-middle ml-2">
@@ -61,6 +56,9 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
         </span>
       )}
     </h1>
+    <p class="text-xs sm:text-sm text-gray-400 mb-6" style={numFont}>
+      Updated {new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+    </p>
 
     <!-- Summary stats -->
     <div class="flex flex-wrap items-baseline gap-x-4 sm:gap-x-6 gap-y-2 mb-10">
@@ -87,9 +85,5 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
     ) : (
       <PositionList positions={positions} careerPageUrl={company.career_page_url} client:load />
     )}
-
-    <!-- Category breakdown -->
-    <CategoryBreakdown categories={categories} />
-
   </div>
 </BaseLayout>
