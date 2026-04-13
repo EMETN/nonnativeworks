@@ -10,7 +10,7 @@ CREATE TABLE skills (
   canonical_name TEXT    NOT NULL UNIQUE,
   category       TEXT    NOT NULL CHECK (category IN (
                            'language', 'framework', 'database',
-                           'cloud', 'tool', 'methodology', 'api_style', 'certification'
+                           'cloud', 'tool', 'methodology', 'api_style', 'certification', 'platform'
                          )),
   aliases        TEXT[]  NOT NULL DEFAULT '{}',
   is_legacy      BOOLEAN NOT NULL DEFAULT false
@@ -263,7 +263,33 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('CFA',                      'certification', ARRAY['cfa', 'chartered financial analyst']),
 ('ACCA',                     'certification', ARRAY['acca', 'association of chartered certified accountants']),
 ('ISO 27001',                'certification', ARRAY['iso 27001', 'iso/iec 27001']),
-('Salesforce Certified',     'certification', ARRAY['salesforce certified', 'salesforce administrator', 'salesforce developer', 'salesforce architect']);
+('Salesforce Certified',     'certification', ARRAY['salesforce certified', 'salesforce administrator', 'salesforce developer', 'salesforce architect']),
+('CPA',                      'certification', ARRAY['cpa', 'certified public accountant']),
+('CIA',                      'certification', ARRAY['cia', 'certified internal auditor']),
+('CISA',                     'certification', ARRAY['cisa', 'certified information systems auditor']),
+('CIMA',                     'certification', ARRAY['cima', 'chartered institute of management accountants', 'chartered management accountant']),
+('CMA',                      'certification', ARRAY['cma', 'certified management accountant']),
+('FRM',                      'certification', ARRAY['frm', 'financial risk manager']),
+('SHRM-CP',                  'certification', ARRAY['shrm-cp', 'shrm cp', 'shrm', 'phr', 'professional in human resources']),
+('Lean Six Sigma',           'certification', ARRAY['lean six sigma', 'six sigma', 'green belt', 'black belt', 'six sigma green belt', 'six sigma black belt']),
+
+-- Platforms
+('SAP',                      'platform', ARRAY['sap']),
+('SAP S/4HANA',              'platform', ARRAY['sap s/4hana', 's/4hana', 's4hana', 'sap s4hana']),
+('SAP FI/CO',                'platform', ARRAY['sap fi/co', 'sap fico', 'sap fi', 'sap co']),
+('SAP MM',                   'platform', ARRAY['sap mm', 'sap materials management']),
+('SAP HCM',                  'platform', ARRAY['sap hcm', 'sap hr', 'sap human capital management']),
+('SAP BW',                   'platform', ARRAY['sap bw', 'sap business warehouse', 'sap bw/4hana']),
+('Workday',                  'platform', ARRAY['workday']),
+('Oracle ERP',               'platform', ARRAY['oracle erp', 'oracle financials', 'oracle e-business suite', 'oracle ebs', 'oracle cloud erp']),
+('NetSuite',                 'platform', ARRAY['netsuite', 'oracle netsuite']),
+('Microsoft Dynamics',       'platform', ARRAY['microsoft dynamics', 'dynamics 365', 'dynamics ax', 'dynamics nav', 'dynamics crm']),
+('Salesforce CRM',           'platform', ARRAY['salesforce crm', 'salesforce', 'salesforce.com', 'sfdc']),
+('HubSpot',                  'platform', ARRAY['hubspot', 'hub spot']),
+('ServiceNow',               'platform', ARRAY['servicenow', 'service now']),
+('Zendesk',                  'platform', ARRAY['zendesk']),
+('Marketo',                  'platform', ARRAY['marketo', 'adobe marketo']),
+('Adobe Experience Cloud',   'platform', ARRAY['adobe experience cloud', 'adobe experience manager', 'aem', 'adobe analytics']);
 
 -- ── Mark legacy skills ────────────────────────────────────────
 
