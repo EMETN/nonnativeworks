@@ -80,6 +80,7 @@ const EDUCATION_PATTERNS: { level: EducationLevel; patterns: RegExp[] }[] = [
       /\bundergraduate degree\b/i,
       /\buniversity degree\b/i,
       /\bcollege degree\b/i,
+      /\ba degree in\b/i,
       /\bhigher education\b/i,
       /\bacademic degree\b/i,
     ],
