@@ -16,6 +16,8 @@ export interface PositionLogEntry {
   countryName: string;
   city?: string[];
   work_model?: 'remote' | 'hybrid' | 'on-site';
+  skills?: string[];
+  required_education?: string;
 }
 
 const logsDir = join(process.cwd(), 'logs');
@@ -110,6 +112,12 @@ export function logScrapeRun(params: {
       if (pos.city && pos.city.length > 0) locationParts.push(pos.city.join(', '));
       if (locationParts.length > 0) {
         lines.push(`       ${locationParts.join(' · ')}`);
+      }
+      const metaParts: string[] = [];
+      if (pos.required_education) metaParts.push(`edu:${pos.required_education}`);
+      if (pos.skills && pos.skills.length > 0) metaParts.push(pos.skills.join(', '));
+      if (metaParts.length > 0) {
+        lines.push(`       ${metaParts.join('  ·  ')}`);
       }
     }
     lines.push('');
