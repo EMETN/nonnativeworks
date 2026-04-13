@@ -64,6 +64,10 @@ companies:
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2
+    
+    - name: Stora Enso
+      url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
+      min_positions: 5
 
     - name: Tieto
       url: https://careers.tieto.com
