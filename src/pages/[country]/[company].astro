@@ -36,10 +36,10 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
   description={`${company.name} has ${company.total_positions} open positions in ${country.name} — ${company.english_positions} don't require the local language.`}
   stats={stats}
 >
-  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-16">
+  <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16">
 
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-400 mb-4 md:mb-8" aria-label="Breadcrumb">
+    <nav class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
       <a href="/" class="hover:text-gray-700 transition-colors">Home</a>
       <span class="mx-1.5">›</span>
       <a href={`/${country.slug}`} class="hover:text-gray-700 transition-colors">{country.name}</a>
