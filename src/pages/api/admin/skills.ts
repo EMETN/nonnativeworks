@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 
-const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style', 'certification'] as const;
+const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style', 'certification', 'platform'] as const;
 
 export const GET: APIRoute = async ({ url }) => {
   const category = url.searchParams.get('category');
