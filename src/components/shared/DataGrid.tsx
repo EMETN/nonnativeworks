@@ -31,7 +31,7 @@ const gridCols = 'minmax(0, 1fr) auto auto auto auto auto';
 function SortArrow({ dir, active }: { dir: SortDir; active: boolean }) {
   return (
     <svg
-      class="w-2 h-2 sm:w-2.5 sm:h-2.5 inline-block ml-0.5"
+      class="w-2 h-2 sm:w-2.5 sm:h-2.5 inline-block ml-1 sm:ml-1.5"
       width="10" height="10"
       style={{ opacity: active ? 1 : 0.35 }}
       fill="none"
