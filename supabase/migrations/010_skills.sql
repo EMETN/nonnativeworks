@@ -10,7 +10,7 @@ CREATE TABLE skills (
   canonical_name TEXT    NOT NULL UNIQUE,
   category       TEXT    NOT NULL CHECK (category IN (
                            'language', 'framework', 'database',
-                           'cloud', 'tool', 'methodology', 'api_style'
+                           'cloud', 'tool', 'methodology', 'api_style', 'certification'
                          )),
   aliases        TEXT[]  NOT NULL DEFAULT '{}',
   is_legacy      BOOLEAN NOT NULL DEFAULT false
@@ -238,7 +238,32 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Domain-Driven Design',     'methodology', ARRAY['domain driven design', 'domain-driven design', 'ddd']),
 ('Event-Driven Architecture','methodology', ARRAY['event driven architecture', 'event-driven architecture', 'event driven']),
 ('Lean',                     'methodology', ARRAY['lean methodology', 'lean development', 'lean startup', 'lean software']),
-('OKR',                      'methodology', ARRAY['okr', 'objectives and key results']);
+('OKR',                      'methodology', ARRAY['okr', 'objectives and key results']),
+
+-- Certifications
+('AWS Certified',            'certification', ARRAY['aws certified', 'aws certification', 'aws solutions architect', 'aws developer associate', 'aws sysops', 'aws cloud practitioner']),
+('Microsoft Certified',      'certification', ARRAY['microsoft certified', 'azure certified', 'az-900', 'az-104', 'az-204', 'az-305']),
+('Google Cloud Certified',   'certification', ARRAY['google cloud certified', 'gcp certified', 'google cloud professional']),
+('CKA',                      'certification', ARRAY['cka', 'certified kubernetes administrator']),
+('CKAD',                     'certification', ARRAY['ckad', 'certified kubernetes application developer']),
+('CISSP',                    'certification', ARRAY['cissp', 'certified information systems security professional']),
+('CISM',                     'certification', ARRAY['cism', 'certified information security manager']),
+('CompTIA Security+',        'certification', ARRAY['comptia security+', 'security+', 'sec+']),
+('CompTIA Network+',         'certification', ARRAY['comptia network+', 'network+', 'net+']),
+('CEH',                      'certification', ARRAY['ceh', 'certified ethical hacker']),
+('OSCP',                     'certification', ARRAY['oscp', 'offensive security certified professional']),
+('PMP',                      'certification', ARRAY['pmp', 'project management professional']),
+('PRINCE2',                  'certification', ARRAY['prince2', 'prince 2']),
+('PMI-ACP',                  'certification', ARRAY['pmi-acp', 'pmi acp', 'agile certified practitioner']),
+('CSM',                      'certification', ARRAY['csm', 'certified scrum master']),
+('CSPO',                     'certification', ARRAY['cspo', 'certified scrum product owner']),
+('PSM',                      'certification', ARRAY['psm', 'professional scrum master']),
+('CCNA',                     'certification', ARRAY['ccna', 'cisco certified network associate']),
+('CCNP',                     'certification', ARRAY['ccnp', 'cisco certified network professional']),
+('CFA',                      'certification', ARRAY['cfa', 'chartered financial analyst']),
+('ACCA',                     'certification', ARRAY['acca', 'association of chartered certified accountants']),
+('ISO 27001',                'certification', ARRAY['iso 27001', 'iso/iec 27001']),
+('Salesforce Certified',     'certification', ARRAY['salesforce certified', 'salesforce administrator', 'salesforce developer', 'salesforce architect']);
 
 -- ── Mark legacy skills ────────────────────────────────────────
 

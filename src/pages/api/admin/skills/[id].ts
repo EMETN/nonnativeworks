@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 
-const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style'] as const;
+const VALID_CATEGORIES = ['language', 'framework', 'database', 'cloud', 'tool', 'methodology', 'api_style', 'certification'] as const;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const PATCH: APIRoute = async ({ params, request }) => {
