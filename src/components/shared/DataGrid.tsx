@@ -56,9 +56,9 @@ function SizingRow({ items, compact }: { items: DataGridItem[]; compact?: boolea
   if (!widest) return null;
   const pct = Math.round(widest.english_percentage);
   const ts = compact
-    ? 'text-xs sm:text-2xl md:text-4xl xl:text-6xl'
-    : 'text-xs sm:text-xl md:text-2xl xl:text-4xl';
-  const ss = 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
+    ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
+    : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
+  const ss = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
   const as = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
@@ -138,9 +138,9 @@ function GridRow({
 
   const fadeMask = 'linear-gradient(to right, black calc(100% - 4rem), transparent)';
   const textSize = compact
-    ? 'text-xs sm:text-2xl md:text-4xl xl:text-6xl'
-    : 'text-xs sm:text-xl md:text-2xl xl:text-4xl';
-  const slashSize = 'text-[0.6rem] sm:text-lg md:text-xl xl:text-3xl';
+    ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
+    : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
+  const slashSize = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
   const arrowSize = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
