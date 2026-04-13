@@ -147,6 +147,7 @@ async function upsertEntry(
     required_languages: p.required_languages ?? [],
     preferred_languages: p.preferred_languages ?? [],
     skills: p.skills ?? [],
+    required_education: p.required_education ?? null,
     extracted_at: new Date().toISOString(),
   }));
 

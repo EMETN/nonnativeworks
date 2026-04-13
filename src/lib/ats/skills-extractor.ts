@@ -39,6 +39,88 @@ function buildPattern(term: string): RegExp {
   return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i');
 }
 
+const EDUCATION_LEVELS = ['vocational', 'bachelor', 'master', 'mba', 'phd'] as const;
+export type EducationLevel = typeof EDUCATION_LEVELS[number];
+
+const EDUCATION_PATTERNS: { level: EducationLevel; patterns: RegExp[] }[] = [
+  {
+    level: 'phd',
+    patterns: [
+      /\bph\.?d\.?\b/i,
+      /\bdoctorate\b/i,
+      /\bdoctoral degree\b/i,
+      /\bdoctor of (philosophy|science|engineering)\b/i,
+    ],
+  },
+  {
+    level: 'mba',
+    patterns: [
+      /\bmba\b/i,
+      /\bmaster of business administration\b/i,
+    ],
+  },
+  {
+    level: 'master',
+    patterns: [
+      /\bmaster'?s?(?: degree| of science| of arts| of engineering| of laws)?\b/i,
+      /\bm\.?sc\.?\b/i,
+      /\bm\.?s\.?\b/i,
+      /\bm\.?a\.?\b/i,
+      /\bpostgraduate degree\b/i,
+      /\bgraduate degree\b/i,
+    ],
+  },
+  {
+    level: 'bachelor',
+    patterns: [
+      /\bbachelor'?s?(?: degree| of science| of arts| of engineering)?\b/i,
+      /\bb\.?sc\.?\b/i,
+      /\bb\.?s\.?\b/i,
+      /\bb\.?a\.?\b/i,
+      /\bundergraduate degree\b/i,
+      /\buniversity degree\b/i,
+      /\bcollege degree\b/i,
+      /\bhigher education\b/i,
+      /\bacademic degree\b/i,
+    ],
+  },
+  {
+    level: 'vocational',
+    patterns: [
+      /\bvocational(?: training| qualification| degree)?\b/i,
+      /\bapprenticeship\b/i,
+      /\btrade (school|qualification|certificate)\b/i,
+      /\btechnical degree\b/i,
+    ],
+  },
+];
+
+/**
+ * Extract the minimum required education level from a job description.
+ *
+ * When multiple levels are mentioned (e.g. "Bachelor's or Master's preferred"),
+ * returns the lowest — that is the actual floor requirement.
+ * Returns undefined when no education requirement is stated.
+ */
+export function extractEducationRequirement(descriptionText: string): EducationLevel | undefined {
+  if (!descriptionText) return undefined;
+
+  const found = new Set<EducationLevel>();
+
+  for (const { level, patterns } of EDUCATION_PATTERNS) {
+    if (patterns.some((re) => re.test(descriptionText))) {
+      found.add(level);
+    }
+  }
+
+  if (found.size === 0) return undefined;
+
+  // Return the minimum level found (lowest index in EDUCATION_LEVELS)
+  for (const level of EDUCATION_LEVELS) {
+    if (found.has(level)) return level;
+  }
+}
+
 /**
  * Extract canonical skill names from a job description.
  *

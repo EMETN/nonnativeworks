@@ -47,6 +47,7 @@ export interface ClassifiedJob {
   requiredLanguages: string[];
   preferredLanguages: string[];
   skills?: string[];
+  required_education?: string;
 }
 
 export interface ScrapeCountryGroup {

@@ -7,6 +7,7 @@ const PatchSchema = z
     category_slug: z.string().min(1).optional(),
     requires_native_language: z.boolean().optional(),
     local_language_advantage: z.boolean().optional(),
+    required_education: z.enum(['vocational', 'bachelor', 'master', 'mba', 'phd']).nullable().optional(),
   })
   .refine((d) => Object.keys(d).length > 0, {
     message: 'At least one field must be provided',

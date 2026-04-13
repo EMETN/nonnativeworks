@@ -48,6 +48,7 @@ import { TRACKED_COUNTRY_CODES } from "../../../lib/tracked-countries";
 import {
   loadSkills,
   extractSkills,
+  extractEducationRequirement,
   type SkillEntry,
 } from "../../../lib/ats/skills-extractor";
 
@@ -336,12 +337,14 @@ function buildScrapeResult(
         });
       }
       const jobSkills = extractSkills(job.descriptionText ?? '', skills);
+      const education = extractEducationRequirement(job.descriptionText ?? '');
 
       groups.get(countryInfo.code)!.jobs.push({
         ...classified,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
         skills: jobSkills.length > 0 ? jobSkills : undefined,
+        required_education: education,
       });
     }
   }

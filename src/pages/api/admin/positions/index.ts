@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ url }) => {
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from('positions')
-    .select('id, title, url, requires_native_language, local_language_advantage, category:categories(id, name, slug)')
+    .select('id, title, url, requires_native_language, local_language_advantage, required_education, category:categories(id, name, slug)')
     .eq('company_id', companyId)
     .order('title');
 
