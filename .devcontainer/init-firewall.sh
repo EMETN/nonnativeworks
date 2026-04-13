@@ -130,6 +130,7 @@ for domain in \
     "bmwgroup.jobs" \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
+    "happeo.recruitee.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

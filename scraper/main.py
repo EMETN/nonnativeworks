@@ -22,6 +22,7 @@ from browser import _open_browser, _block_unnecessary_resources, _run_in_subproc
 from extract import extract_jobs
 from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright
 from platforms.barona import scrape_barona_playwright
+from platforms.neste import scrape_neste_static
 from platforms.njoyn import scrape_njoyn_playwright
 from platforms.rovio import scrape_rovio_static
 from platforms.zalando import scrape_zalando_static
@@ -31,6 +32,7 @@ MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
 PLATFORM_BARONA = "barona"
+PLATFORM_NESTE = "neste"
 PLATFORM_ROVIO = "rovio"
 PLATFORM_ZALANDO = "zalando"
 
@@ -55,6 +57,8 @@ def detect_platform(html: str, url: str = "") -> str | None:
         return PLATFORM_NJOYN
     if "baronacareers.com" in url:
         return PLATFORM_BARONA
+    if "jobs.neste.com" in url:
+        return PLATFORM_NESTE
     if "rovio.com" in url:
         return PLATFORM_ROVIO
     if "jobs.zalando.com" in url:
@@ -157,6 +161,16 @@ def main():
             print(f"Barona Playwright found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Barona Playwright failed: {e}", file=sys.stderr)
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
+    if platform == PLATFORM_NESTE:
+        print("jobs.neste.com detected — using dedicated static scraper", file=sys.stderr)
+        try:
+            jobs = scrape_neste_static(url)
+            print(f"Neste static found {len(jobs)} jobs", file=sys.stderr)
+        except Exception as e:
+            print(f"Neste static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 

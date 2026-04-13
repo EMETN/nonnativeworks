@@ -57,6 +57,10 @@ companies:
       url: https://www.reaktor.com/careers
       min_positions: 2
 
+    - name: Neste
+      url: https://jobs.neste.com/search
+      min_positions: 5
+
     - name: Rovio
       url: https://www.rovio.com/open-positions
       min_positions: 1

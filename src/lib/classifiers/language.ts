@@ -524,7 +524,7 @@ function findNativeLanguageChunk(
   countryCode?: string,
 ): { chunk: string; detectedCode: string } | null {
   if (!langCodes.length) return null;
-  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 120);
+  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 200);
   const candidates = chunks.length > 0 ? chunks : [text.trim()];
   const nativeCharEntry = countryCode ? COUNTRY_NATIVE_CHARS[countryCode] : undefined;
   for (const chunk of candidates) {

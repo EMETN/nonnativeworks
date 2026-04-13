@@ -106,10 +106,13 @@ const EDUCATION_PATTERNS: { level: EducationLevel; patterns: RegExp[] }[] = [
 export function extractEducationRequirement(descriptionText: string): EducationLevel | undefined {
   if (!descriptionText) return undefined;
 
+  // Normalize smart/curly apostrophes to ASCII so patterns like master'?s match
+  // regardless of whether the source used U+2019 (') or U+0027 (').
+  const text = descriptionText.replace(/[\u2018\u2019\u201A\u201B]/g, "'");
   const found = new Set<EducationLevel>();
 
   for (const { level, patterns } of EDUCATION_PATTERNS) {
-    if (patterns.some((re) => re.test(descriptionText))) {
+    if (patterns.some((re) => re.test(text))) {
       found.add(level);
     }
   }
