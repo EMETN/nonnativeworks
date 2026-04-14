@@ -19,6 +19,7 @@ import {
   fetchWorkdayJobs,
   enrichWorkdayDescriptions,
 } from "../../../lib/ats/workday";
+import { fetchRecruiteeJobs } from "../../../lib/ats/recruitee";
 import {
   lookupCountryFromLocation,
   extractCitiesForCountry,
@@ -166,6 +167,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         companyName =
           parts.company.charAt(0).toUpperCase() + parts.company.slice(1);
         ats = "workday";
+      } else if (resolvedAts === "recruitee") {
+        ({ jobs: rawJobs, companyName } = await fetchRecruiteeJobs(detection.companySlug));
+        ats = "recruitee";
       } else if (resolvedAts === "workable") {
         const [jobs, name] = await Promise.all([
           fetchWorkableJobs(detection.companySlug),

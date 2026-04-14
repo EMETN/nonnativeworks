@@ -109,6 +109,7 @@ for domain in \
     "finnair.wd103.myworkdayjobs.com" \
     "careers.abb" \
     "baronacareers.com" \
+    "barona.fi" \
     "nitor.com" \
     "alpha-sense.com" \
     "rovio.com" \
