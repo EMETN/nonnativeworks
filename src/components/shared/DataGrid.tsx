@@ -239,6 +239,20 @@ export default function DataGrid({ items, compact }: Props) {
   const sortDir = useSignal<SortDir>('desc');
   const search = useSignal('');
   const hoveredId = useSignal<string | null>(null);
+  const canHover = useSignal(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    canHover.value = mq.matches;
+    const onChange = (e: MediaQueryListEvent) => { canHover.value = e.matches; };
+    mq.addEventListener('change', onChange);
+    const onPageShow = () => { hoveredId.value = null; };
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      mq.removeEventListener('change', onChange);
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, []);
 
   function toggleSort(field: SortField) {
     if (sortField.value === field) {
@@ -379,8 +393,8 @@ export default function DataGrid({ items, compact }: Props) {
             item={c}
             isLast={i === filtered.value.length - 1}
             compact={compact}
-            faded={hoveredId.value !== null && hoveredId.value !== c.id}
-            onEnter={() => { hoveredId.value = c.id; }}
+            faded={canHover.value && hoveredId.value !== null && hoveredId.value !== c.id}
+            onEnter={() => { if (canHover.value) hoveredId.value = c.id; }}
             onLeave={() => { hoveredId.value = null; }}
           />
         ))}
