@@ -2,6 +2,7 @@
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
+import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import type { GlobalStats } from '../lib/types';
 
 interface Props {
@@ -56,19 +57,13 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-        <!-- Fonts — preload critical weights to avoid FOUT -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <!-- Self-hosted Inter variable font — preload to avoid swap flicker -->
         <link
             rel="preload"
-            href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2"
+            href={interLatinWoff2}
             as="font"
             type="font/woff2"
             crossorigin
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700&display=swap"
-            rel="stylesheet"
         />
     </head>
     <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
