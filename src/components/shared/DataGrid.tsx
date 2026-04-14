@@ -157,6 +157,7 @@ function GridRow({
     >
       <a
         href={item.href}
+        data-astro-prefetch
         class="no-underline"
         style={{
           display: 'grid',
