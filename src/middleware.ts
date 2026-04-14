@@ -78,5 +78,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // CDN caching for public GET pages. Data refreshes every ~2 days (scheduled scrape),
+  // so a short fresh window plus long stale-while-revalidate gives near-instant repeat
+  // navigation without serving stale data for long. Skipped when:
+  //   - route is protected (admin UI/API) — user-specific, must never be shared-cached
+  //   - method is not GET/HEAD — unsafe to cache
+  //   - a Set-Cookie is present (e.g. Supabase refreshed an auth cookie) — would leak
+  //   - handler already set its own Cache-Control (e.g. sitemap.xml)
+  const isSafeMethod = request.method === 'GET' || request.method === 'HEAD';
+  const alreadyCached = response.headers.has('Cache-Control');
+  const hasSetCookie = response.headers.has('Set-Cookie');
+  const isAdminArea = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+  if (!isAdminArea && isSafeMethod && !alreadyCached && !hasSetCookie) {
+    response.headers.set(
+      'Cache-Control',
+      'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
+    );
+  }
+
   return response;
 });

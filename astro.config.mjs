@@ -14,6 +14,9 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 export default defineConfig({
     output: 'server',
     adapter,
+    prefetch: {
+        defaultStrategy: 'hover',
+    },
     integrations: [
         preact(),
         sentry({
