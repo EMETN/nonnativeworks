@@ -35,6 +35,7 @@ function getPath(obj: unknown, path: string): unknown {
 function getStringArray(obj: unknown, path: string | undefined): string[] {
   if (!path) return [];
   const val = getPath(obj, path);
+  if (typeof val === 'string' && val.trim() !== '') return [val];
   if (Array.isArray(val)) {
     return val.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
   }
@@ -315,6 +316,60 @@ async function enrichDescriptionsFromApi(
     );
     await sleep(randomDelay());
   }
+}
+
+/**
+ * For each English-titled job, calls the per-job detail API and sets
+ * job.requires_native_language from the structured languages array.
+ * Only runs when the config provides both a URL template (using {jobPath})
+ * and a regex transform to derive the path from job.url.
+ *
+ * Skips jobs with non-English titles — they're already flagged by Phase 1a.
+ * Skips jobs without a URL (can't build the API request).
+ * Leaves requires_native_language unset when the languages array is missing/null
+ * so the text classifier can still decide.
+ */
+async function enrichLanguageRequirementFromApi(
+  jobs: RawJob[],
+  urlTemplate: string,
+  jobUrlTransform: { match: string; replace: string },
+  itemsPath: string,
+  languagesPath: string,
+  headers: Record<string, string>,
+): Promise<void> {
+  const targets = jobs.filter(
+    (j) => j.url && !titleAppearsNonEnglish(j.title) && j.requires_native_language === undefined,
+  );
+  console.log(`[enrichLanguageRequirementFromApi] ${targets.length} targets (${jobs.length - targets.length} skipped)`);
+  const transformRe = new RegExp(jobUrlTransform.match);
+
+  let set = 0;
+  let missing = 0;
+  for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
+    await Promise.all(
+      targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
+        const jobPath = job.url!.replace(transformRe, jobUrlTransform.replace);
+        const fetchUrl = urlTemplate.replace('{jobPath}', jobPath);
+        try {
+          const data = await fetchPage(fetchUrl, 'GET', undefined, headers);
+          const item = getPath(data, itemsPath);
+          const languages = getPath(item, languagesPath);
+          if (Array.isArray(languages)) {
+            job.requires_native_language = languages.some(
+              (l: unknown) => typeof l === 'string' && l.toLowerCase() !== 'english',
+            );
+            set++;
+          } else {
+            missing++;
+          }
+        } catch (err) {
+          console.warn(`[enrichLanguageRequirementFromApi] failed for ${job.url}: ${err}`);
+        }
+      }),
+    );
+    await sleep(randomDelay());
+  }
+  console.log(`[enrichLanguageRequirementFromApi] done — set: ${set}, missing/skipped: ${missing}`);
 }
 
 function buildGetUrl(template: string, param: string, value: number): string {
@@ -695,6 +750,12 @@ export async function fetchCompanyApiJobs(
     const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
     console.log(`[fetchCompanyApiJobs] enriching descriptions via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
     await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField, config.descriptionApiJobFunctionField, config.descriptionApiWorkModelField);
+  }
+
+  if (config.descriptionApiUrl && config.descriptionApiUrlFromJobUrl && config.descriptionApiLanguagesPath) {
+    const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
+    console.log(`[fetchCompanyApiJobs] enriching language requirements via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
+    await enrichLanguageRequirementFromApi(enrichmentTargets, config.descriptionApiUrl, config.descriptionApiUrlFromJobUrl, itemsPath, config.descriptionApiLanguagesPath, headers);
   }
 
   // Final safety-net dedup (should be a no-op if pagination dedup above caught everything).

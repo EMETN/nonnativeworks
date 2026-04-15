@@ -495,7 +495,7 @@ function requirementNegatedByContext(combined: string, signal: string): boolean 
 // ---------------------------------------------------------------------------
 
 export type SignalEntry = {
-  phase: '1a' | '1b' | '1b-chars' | '1c' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
+  phase: '1a' | '1b' | '1b-chars' | '1c' | '1c-any' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
   description: string;
   matched?: string; // exact phrase or character that triggered this signal
 };
@@ -538,6 +538,27 @@ function findNativeLanguageChunk(
       if (!matches || matches.length < 2) continue;
     }
     return { chunk, detectedCode: code };
+  }
+  return null;
+}
+
+/**
+ * Checks whether any chunk of the text is detected as a non-English language
+ * by tinyld. Used as a fallback when the description is written in a language
+ * that doesn't match the job's country (e.g. Swedish description on a Finland
+ * posting, or German on a Netherlands job). Only considers chunks ≥ 200 chars
+ * to keep false-positive risk low.
+ */
+function findAnyNonEnglishChunk(
+  text: string,
+): { chunk: string; detectedCode: string } | null {
+  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 200);
+  const candidates = chunks.length > 0 ? chunks : (text.trim().length >= 200 ? [text.trim()] : []);
+  for (const chunk of candidates) {
+    const code = detect(chunk);
+    if (code && code !== 'en') {
+      return { chunk, detectedCode: code };
+    }
   }
   return null;
 }
@@ -662,6 +683,30 @@ export function detectNativeLanguage(
         phase: '1c',
         description: `tinyld detected "${nativeChunk.detectedCode}" in description`,
         matched: nativeChunk.chunk.slice(0, 80) + (nativeChunk.chunk.length > 80 ? '…' : ''),
+      }],
+    };
+  }
+
+  // ── Phase 1c-any: non-English language in description (cross-language) ───
+  // Catches descriptions written in a language other than the country's own —
+  // e.g. a Swedish-language job ad classified under Finland. tinyld detects
+  // "sv" but COUNTRY_LANG_CODES['FI'] = ['fi'], so Phase 1c above misses it.
+  // Any non-English description requires that language → flag accordingly.
+  const nonEnglishChunk = findAnyNonEnglishChunk(descText);
+  if (nonEnglishChunk) {
+    // Map the detected code to a canonical language name if known.
+    const detectedName = Object.entries(COUNTRY_LANG_CODES).find(
+      ([, codes]) => codes.includes(nonEnglishChunk.detectedCode)
+    );
+    const requiredLanguages = detectedName
+      ? (COUNTRY_LANGUAGE_NAMES[detectedName[0]] ?? langNames)
+      : langNames;
+    return {
+      value: true, local_language_advantage: false, requiredLanguages, preferredLanguages: [],
+      signals: [{
+        phase: '1c-any',
+        description: `tinyld detected non-English language "${nonEnglishChunk.detectedCode}" in description`,
+        matched: nonEnglishChunk.chunk.slice(0, 80) + (nonEnglishChunk.chunk.length > 80 ? '…' : ''),
       }],
     };
   }
