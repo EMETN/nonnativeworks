@@ -41,6 +41,7 @@ import type {
 import {
   COMPANY_APIS,
   CAREER_URL_ALIASES,
+  PYTHON_SCRAPER_COMPANY_NAMES,
 } from "../../../lib/ats/company-apis";
 import {
   fetchCompanyApiJobs,
@@ -253,12 +254,19 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
     );
   }
 
-  // Fall back to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
+  // Fall back to a configured display name for known Python-scraped companies,
+  // then to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
   // The admin can correct it in the review UI before uploading.
-  if (!companyName && detection.companySlug) {
-    companyName =
-      detection.companySlug.charAt(0).toUpperCase() +
-      detection.companySlug.slice(1);
+  if (!companyName) {
+    const lower = careerUrl.toLowerCase();
+    const match = PYTHON_SCRAPER_COMPANY_NAMES.find((e) => lower.includes(e.urlSubstring));
+    if (match) {
+      companyName = match.name;
+    } else if (detection.companySlug) {
+      companyName =
+        detection.companySlug.charAt(0).toUpperCase() +
+        detection.companySlug.slice(1);
+    }
   }
 
   return buildScrapeResult(rawJobs, companyName, careerUrl, ats, skills);

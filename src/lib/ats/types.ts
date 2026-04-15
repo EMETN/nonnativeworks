@@ -24,6 +24,13 @@ export interface RawJob {
    */
   jobFunction?: string;
   /**
+   * When set, the classifier uses this title instead of `title` for language detection and
+   * category classification. `title` is always used for storage and display. Useful when the
+   * source appends non-English company names or city suffixes to titles (e.g. Academic Work:
+   * "Strategic Purchaser, Wärtsilä" → classifierTitle: "Strategic Purchaser").
+   */
+  classifierTitle?: string;
+  /**
    * When set by a scraper that has explicit language data (e.g. Barona's languages API field),
    * this overrides the classifier's requires_native_language result.
    * Use only when the source provides a definitive answer — do not set based on inferred signals.

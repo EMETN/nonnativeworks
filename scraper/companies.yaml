@@ -21,6 +21,10 @@ companies:
       url: https://careers.abb/global/en/search-results
       min_positions: 10
 
+    - name: Academic Work
+      url: https://www.academicwork.fi/avoimet-tyopaikat
+      min_positions: 5
+
     - name: Accenture
       url: https://www.accenture.com/us-en/careers
       min_positions: 10
