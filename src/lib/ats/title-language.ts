@@ -16,7 +16,9 @@
 
 // ── Finnish ──────────────────────────────────────────────────────────────────
 const FI: string[] = [
-  'asiakas',         // customer
+  'ammattitaitoinen' // skilled
+  'ammattitaitoisia' // skilled (plural)
+  'asiakas',        // customer
   'asennus',        // installation
   'asentaja',       // installer
   'asentajia',      // installers
@@ -59,6 +61,7 @@ const FI: string[] = [
 // ── Swedish ───────────────────────────────────────────────────────────────────
 const SE: string[] = [
   'ansvarig',       // responsible / manager
+  'ekonom',         // economist
   'samordnare',     // coordinator
   'utvecklare',     // developer
   'verksamhet',     // operations / business

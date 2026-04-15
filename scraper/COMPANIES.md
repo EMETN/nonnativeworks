@@ -2,7 +2,7 @@
 
 - ABB
 - Accenture
-- Barona (enrichment of descriptions not working yet)
+- Barona
 - Gofore
 - Happeo
 - Konecranes
@@ -54,7 +54,6 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
 | Accenture | `accenture.com` | Custom API |
-| Barona | `baronacareers.com/fi/fi/job` | Custom API |
 
 ---
 
@@ -77,6 +76,7 @@ Any company not matched by layers 1, 1.5, or Attrax detection falls here. The sc
 
 | Company | Hostname | Notes |
 |---------|----------|-------|
+| Barona | `barona.fi` | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs |
 | Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
 | Zalando | `jobs.zalando.com` | Next.js RSC payload parsed from `self.__next_f.push` chunks; offices mapped to country codes; descriptions enriched via static fetch |
 
