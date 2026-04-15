@@ -16,8 +16,8 @@
 
 // ── Finnish ──────────────────────────────────────────────────────────────────
 const FI: string[] = [
-  'ammattitaitoinen' // skilled
-  'ammattitaitoisia' // skilled (plural)
+  'ammattitaitoinen', // skilled
+  'ammattitaitoisia', // skilled (plural)
   'asiakas',        // customer
   'asennus',        // installation
   'asentaja',       // installer
