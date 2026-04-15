@@ -27,6 +27,20 @@ export async function getCountryStats(request: Request, cookies: AstroCookies): 
   return (data ?? []) as CountryStats[];
 }
 
+export async function getCompanyCountsByCountry(request: Request, cookies: AstroCookies): Promise<Record<string, number>> {
+  const supabase = client(request, cookies);
+  const { data, error } = await supabase
+    .from('companies')
+    .select('country_id');
+
+  if (error) { console.error('getCompanyCountsByCountry:', error.message); throw new Error('Failed to load company counts'); }
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    counts[row.country_id] = (counts[row.country_id] || 0) + 1;
+  }
+  return counts;
+}
+
 export async function getGlobalStats(request: Request, cookies: AstroCookies): Promise<GlobalStats> {
   const supabase = client(request, cookies);
 
