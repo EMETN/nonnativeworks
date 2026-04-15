@@ -177,6 +177,25 @@ export interface CompanyApiConfig {
    */
   descriptionApiWorkModelField?: string;
   /**
+   * When set, the language-requirement API URL is built from job.url rather than job.sourceId.
+   * The regex (one or more capture groups) is applied to job.url; the replacement string forms
+   * the value substituted for {jobPath} in descriptionApiUrl.
+   * Unlike {sourceId}, {jobPath} is NOT URL-encoded — slashes are preserved.
+   * Example (Barona): match "https://www\.baronacareers\.com(/\w+)/\w+(/jobs/.+)", replace "$1/en$2"
+   * transforms "https://www.baronacareers.com/fi/fi/jobs/slug" → "/fi/en/jobs/slug".
+   */
+  descriptionApiUrlFromJobUrl?: { match: string; replace: string };
+  /**
+   * Dot-path (relative to descriptionApiItemsPath) to a languages array in the per-job
+   * detail API response (e.g. Barona's page_info.job.requirements.languages → ["Finnish","English"]).
+   * When set, job.requires_native_language is set directly from this array — any language other
+   * than English means the job requires a native language. This overrides the text classifier.
+   * Only processed for jobs whose title appears to be in English (non-English titles are already
+   * flagged by Phase 1a of the classifier and don't need the extra API call).
+   * If the array is missing or null, the field is left unset (classifier decides instead).
+   */
+  descriptionApiLanguagesPath?: string;
+  /**
    * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
    * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
    * language classification. The primary fetch provides the complete position list for statistics;

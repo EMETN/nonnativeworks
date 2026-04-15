@@ -17,6 +17,10 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 companies:
+    - name: Barona
+      url: https://www.barona.fi/en/jobs/
+      min_positions: 5
+
     - name: ABB
       url: https://careers.abb/global/en/search-results
       min_positions: 10

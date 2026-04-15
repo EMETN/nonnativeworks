@@ -212,13 +212,24 @@ iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 # Then allow only specific outbound traffic to allowed domains
 iptables -A OUTPUT -p tcp --dport 443 -m set --match-set allowed-domains dst -j ACCEPT
 
+# Allow CDP (Chrome DevTools Protocol) to the Windows host for Playwright dev use.
+# Port 9222 is plain HTTP — it's only needed on host.docker.internal so we target
+# the resolved IP directly rather than opening port 9222 to all allowed domains.
+CDP_HOST_IP=$(dig +noall +answer A "host.docker.internal" | awk '$4 == "A" {print $5}' | head -1)
+if [ -n "$CDP_HOST_IP" ]; then
+    echo "Adding CDP rule for host.docker.internal ($CDP_HOST_IP:9222)"
+    iptables -A OUTPUT -p tcp --dport 9222 -d "$CDP_HOST_IP" -j ACCEPT
+else
+    echo "WARNING: Could not resolve host.docker.internal — CDP rule not added"
+fi
+
 # Explicitly REJECT all other outbound traffic for immediate feedback
 iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
 echo "Firewall configuration complete"
 echo "Verifying firewall rules..."
-if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - was able to reach https://example.com"
+if curl --connect-timeout 5 https://8.8.8.8 >/dev/null 2>&1; then
+    echo "ERROR: Firewall verification failed - was able to reach https://8.8.8.8"
     exit 1
 else
     echo "Firewall verification passed - unable to reach https://example.com as expected"
