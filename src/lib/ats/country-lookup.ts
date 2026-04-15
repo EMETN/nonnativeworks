@@ -529,6 +529,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
 // When location lookup fails for a job from one of these companies, fall back to this country
 // instead of skipping the job.
 const COMPANY_COUNTRY_FALLBACKS: Array<{ urlSubstring: string; country: CountryInfo }> = [
+  { urlSubstring: 'academicwork.fi', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
   { urlSubstring: 'sok.wd', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
 ];
 
