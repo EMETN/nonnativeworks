@@ -38,7 +38,7 @@ const FI: string[] = [
   'koordinaattori', // coordinator
   'kuljettaja',     // driver
   'liiketoiminta',  // business
-  'mekaanikkko',    // mechanic
+  'mekaanikko',     // mechanic
   'myynti',         // sales
   'osaaja',         // specialist / expert
   'palvelu',        // service
@@ -62,7 +62,11 @@ const FI: string[] = [
 const SE: string[] = [
   'ansvarig',       // responsible / manager
   'ekonom',         // economist
+  'förvaltare',     // administrator / manager
+  'handläggare',    // administrator / officer
+  'rådgivare',      // advisor
   'samordnare',     // coordinator
+  'säljare',        // salesperson
   'utvecklare',     // developer
   'verksamhet',     // operations / business
 ];
@@ -72,6 +76,7 @@ const NO: string[] = [
   'avdelingsleder', // department manager
   'fagansvarlig',   // subject-matter responsible
   'koordinator',    // coordinator (unambiguous in NO context when combined with NO chars)
+  'rådgiver',       // advisor
   'saksbehandler',  // case officer
   'selger',         // salesperson
   'utvikler',       // developer
@@ -80,26 +85,35 @@ const NO: string[] = [
 // ── Danish ───────────────────────────────────────────────────────────────────
 const DK: string[] = [
   'afdelingsleder', // department manager
+  'rådgiver',       // advisor
   'sagsbehandler',  // case officer
+  'sælger',         // salesperson
   'udvikler',       // developer
 ];
 
 // ── German ───────────────────────────────────────────────────────────────────
 const DE: string[] = [
+  'ausbilder',      // instructor, trainer
   'ausbildung',     // apprenticeship / training
   'berater',        // consultant / advisor
   'entwickler',     // developer
   'fachkraft',      // skilled worker
   'kauffrau',       // merchant / business person (female form)
   'kaufmann',       // merchant / business person
+  'mechaniker',     // mechanic
+  'praktikant',     // intern
+  'praktikum',      // internship
   'sachbearbeiter', // clerk / officer
+  'technischer',    // technical
   'vertrieb',       // sales
+  'werkstudent',    // working student / student employee
 ];
 
 // ── Dutch ─────────────────────────────────────────────────────────────────────
 const NL: string[] = [
   'adviseur',       // advisor
   'beheerder',      // administrator
+  'coördinator',    // coordinator
   'medewerker',     // employee / associate
   'ontwikkelaar',   // developer
   'uitvoerder',     // executor / operative
@@ -116,20 +130,20 @@ const EE: string[] = [
 
 // ── Latvian ───────────────────────────────────────────────────────────────────
 const LV: string[] = [
-  'vadītājs',       // manager
-  'speciālists',    // specialist
-  'pārdevējs',      // salesperson
   'izstrādātājs',   // developer
   'konsultants',    // consultant
+  'pārdevējs',      // salesperson
+  'speciālists',    // specialist
+  'vadītājs',       // manager
 ];
 
 // ── Lithuanian ───────────────────────────────────────────────────────────────
 const LT: string[] = [
-  'vadovas',        // manager / head
-  'specialistas',   // specialist
-  'pardavėjas',     // salesperson
   'kūrėjas',        // developer / creator
   'konsultantas',   // consultant
+  'pardavėjas',     // salesperson
+  'specialistas',   // specialist
+  'vadovas',        // manager / head
 ];
 
 // ── Icelandic ────────────────────────────────────────────────────────────────

@@ -16,90 +16,123 @@ _NON_ASCII_RE = re.compile(r"[äöüåéèêëàâîïôùûçñßãõøæœ]", 
 
 _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     "FI": [
-        "johtaja",        # manager / director
-        "asiantuntija",   # specialist / expert
-        "myynti",         # sales
-        "kehitys",        # development
-        "suunnittelija",  # designer / planner
-        "hankinta",       # procurement
-        "rekrytointi",    # recruitment
-        "liiketoiminta",  # business
-        "koordinaattori", # coordinator
-        "konsultti",      # consultant
-        "palvelu",        # service
-        "tiimi",          # team
-        "ravintola",      # restaurant
-        "vastaanotto",    # reception / front desk
-        "vuoromestari",   # shift supervisor
-        "hakemus",        # application (open application postings)
-        "hovimestari",    # headwaiter
+        "ammattitaitoinen", # skilled
+        "ammattitaitoisia", # skilled (plural)
+        "asiakas",          # customer
+        "asennus",          # installation
+        "asentaja",         # installer
+        "asentajia",        # installers
+        "asiantuntija",     # specialist / expert
+        "hakemus",          # application (open application postings)
+        "hankinta",         # procurement
+        "hitsaaja",         # welder
+        "hoitaja",          # caregiver / nurse
+        "hovimestari",      # headwaiter
+        "huolto",           # maintenance
+        "johtaja",          # manager / director
+        "kehitys",          # development
+        "kokki",            # chef
+        "kokoonpanija",     # assembler
+        "koneistaja",       # machinist
+        "konsultti",        # consultant
+        "koordinaattori",   # coordinator
+        "kuljettaja",       # driver
+        "liiketoiminta",    # business
+        "mekaanikko",       # mechanic
+        "myynti",           # sales
+        "osaaja",           # specialist / expert
+        "palvelu",          # service
+        "rakennus",         # building
+        "rakentaja",        # builder
+        "ravintola",        # restaurant
+        "rekrytointi",      # recruitment
+        "suunnittelija",    # designer / planner
+        "tarjoilija",       # waiter
+        "testaaja",         # tester
+        "tiimi",            # team
+        "timpuri",          # carpenter
+        "tuotanto",         # production
+        "tuotannon",        # production (genitive)
+        "varasto",          # warehouse
+        "vastaanotto",      # reception / front desk
+        "vuoromestari",     # shift supervisor
     ],
     "SE": [
-        "säljare",        # salesperson
         "ansvarig",       # responsible / manager
-        "handläggare",    # administrator / officer
-        "utvecklare",     # developer
-        "rådgivare",      # advisor
+        "ekonom",         # economist
         "förvaltare",     # administrator / manager
+        "handläggare",    # administrator / officer
+        "rådgivare",      # advisor
         "samordnare",     # coordinator
+        "säljare",        # salesperson
+        "utvecklare",     # developer
         "verksamhet",     # operations / business
     ],
     "NO": [
-        "selger",         # salesperson
-        "rådgiver",       # advisor
-        "utvikler",       # developer
-        "koordinator",    # coordinator
-        "saksbehandler",  # case officer
-        "fagansvarlig",   # subject-matter responsible
         "avdelingsleder", # department manager
+        "fagansvarlig",   # subject-matter responsible
+        "koordinator",    # coordinator
+        "rådgiver",       # advisor
+        "saksbehandler",  # case officer
+        "selger",         # salesperson
+        "utvikler",       # developer
+
     ],
     "DK": [
-        "sælger",         # salesperson
-        "rådgiver",       # advisor
-        "udvikler",       # developer
-        "sagsbehandler",  # case officer
         "afdelingsleder", # department manager
+        "rådgiver",       # advisor
+        "sagsbehandler",  # case officer
+        "sælger",         # salesperson
+        "udvikler",       # developer
+        
+        
     ],
     "DE": [
-        "vertrieb",       # sales
-        "sachbearbeiter", # clerk / officer
+        "ausbilder",      # instructor, trainer
+        "ausbildung",     # apprenticeship / training
         "berater",        # consultant / advisor
         "entwickler",     # developer
         "fachkraft",      # skilled worker
-        "ausbildung",     # apprenticeship / training
-        "kaufmann",       # merchant / business person
         "kauffrau",       # merchant / business person (female form)
+        "kaufmann",       # merchant / business person
+        "mechaniker",     # mechanic
+        "praktikant",     # intern
+        "praktikum",      # internship
+        "sachbearbeiter", # clerk / officer
+        "technischer",    # technical
+        "vertrieb",       # sales
         "verkäufer",      # salesperson
+        "werkstudent",    # working student / student employee
     ],
     "NL": [
-        "verkoper",       # salesperson
         "adviseur",       # advisor
+        "beheerder",      # administrator
+        "coördinator",    # coordinator
         "medewerker",     # employee / associate
         "ontwikkelaar",   # developer
-        "coördinator",    # coordinator
-        "beheerder",      # administrator
         "uitvoerder",     # executor / operative
+        "verkoper",       # salesperson
     ],
     "EE": [
-        "juht",           # manager / head
-        "spetsialist",    # specialist
-        "müügijuht",      # sales manager
         "arendaja",       # developer
+        "juht",           # manager / head
+        "müügijuht",      # sales manager
         "nõustaja",       # advisor
+        "spetsialist",    # specialist
     ],
     "LV": [
-        "vadītājs",       # manager
-        "speciālists",    # specialist
-        "pārdevējs",      # salesperson
         "izstrādātājs",   # developer
         "konsultants",    # consultant
+        "pārdevējs",      # salesperson
+        "speciālists",    # specialist
+        "vadītājs",       # manager
     ],
     "LT": [
-        "vadovas",        # manager / head
-        "specialistas",   # specialist
-        "pardavėjas",     # salesperson
         "kūrėjas",        # developer / creator
         "konsultantas",   # consultant
+        "pardavėjas",     # salesperson
+        "specialistas",   # specialist
+        "vadovas",        # manager / head
     ],
     "IS": [
         "sérfræðingur",    # specialist / expert

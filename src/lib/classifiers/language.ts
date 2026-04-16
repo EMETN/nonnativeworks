@@ -345,7 +345,7 @@ const LANG_MENTIONS = (lang: string) => [
  */
 function buildAdvantageRegex(lang: string): RegExp {
   const [bare, ...compound] = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`;
+  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)|advantageous)\\b`;
   const parts = [
     `${bare}${operatorSuffix}`,
     ...(compound.length > 0 ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,6}${operatorSuffix}`] : []),
@@ -477,6 +477,12 @@ function buildRequirementSignals(lang: string): string[] {
 const REQUIREMENT_NEGATION_RE =
   /\b(?:nice-?to-?have|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
 
+// Advantage prefix patterns that immediately precede a requirement signal phrase
+// (within ~80 characters), indicating the language is actually a nice-to-have.
+// e.g. "bonus points if you speak German"
+const REQUIREMENT_ADVANTAGE_PREFIX_RE =
+  /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
+
 /**
  * Returns true when a requirement-signal match is immediately qualified by
  * optional/negation language in the ~80 characters that follow it.
@@ -487,7 +493,11 @@ function requirementNegatedByContext(combined: string, signal: string): boolean 
   const idx = combined.indexOf(signal);
   if (idx === -1) return false;
   const after = combined.slice(idx + signal.length, idx + signal.length + 80);
-  return REQUIREMENT_NEGATION_RE.test(after);
+  if (REQUIREMENT_NEGATION_RE.test(after)) return true;
+  // Also check for advantage context in the ~80 characters *before* the signal,
+  // e.g. "bonus points if you speak German" where "speak german" is the signal.
+  const before = combined.slice(Math.max(0, idx - 80), idx);
+  return REQUIREMENT_ADVANTAGE_PREFIX_RE.test(before);
 }
 
 // ---------------------------------------------------------------------------
