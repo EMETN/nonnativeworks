@@ -119,10 +119,14 @@ function mapItem(
 }
 
 /**
- * If expandSecondaryLocations is configured, returns additional RawJob copies for
- * each secondary country on the item (e.g. Nokia jobs listed in multiple countries).
- * Each copy gets the secondary country as its location and a suffixed sourceId so
- * deduplication treats it as a distinct entry.
+ * If expandSecondaryLocations is configured, handles multi-location job postings.
+ *
+ * Country mode (countryName set): returns additional RawJob copies for each secondary
+ * country (e.g. Nokia jobs listed in multiple countries). Each copy gets the secondary
+ * country as its location and a suffixed sourceId so deduplication treats it as distinct.
+ *
+ * City mode (cityField set): collects secondary city names into primaryJob.cities so
+ * they appear as one consolidated posting. Returns [] (no duplicate jobs created).
  */
 function expandJobToSecondaryLocations(
   primaryJob: RawJob,
@@ -133,9 +137,21 @@ function expandJobToSecondaryLocations(
   const secondaries = getPath(item, expand.path);
   if (!Array.isArray(secondaries) || secondaries.length === 0) return [];
 
+  if (expand.cityField) {
+    const cities: string[] = [];
+    for (const sec of secondaries) {
+      const city = getString(sec, expand.cityField);
+      if (city) cities.push(city);
+    }
+    if (cities.length > 0) {
+      primaryJob.cities = [...(primaryJob.cities ?? []), ...cities];
+    }
+    return [];
+  }
+
   const extras: RawJob[] = [];
   for (const sec of secondaries) {
-    const countryName = getString(sec, expand.countryName);
+    const countryName = getString(sec, expand.countryName!);
     if (!countryName || countryName === primaryJob.location) continue;
     extras.push({
       ...primaryJob,
@@ -299,7 +315,14 @@ async function enrichDescriptionsFromApi(
           if (parts.length) job.descriptionText = parts.join(' ');
           if (locationField) {
             const city = getString(item, locationField);
-            if (city) job.city = city;
+            if (city) {
+              // City mode: prepend primary city to the existing secondary cities list
+              if (job.cities) {
+                job.cities = [city, ...job.cities];
+              } else {
+                job.city = city;
+              }
+            }
           }
           if (jobFunctionField) {
             const jf = getString(item, jobFunctionField);

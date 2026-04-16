@@ -12,6 +12,7 @@
 - Neste
 - Nokia
 - Nordea
+- Orion
 - OP Financial Group
 - Oura
 - Posti
@@ -54,6 +55,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 |---------|----------|----------|
 | OP Financial Group | `op-careers.fi` | Custom recruiting API (POST, Polylang locale) |
 | Nokia | `jobs.nokia.com` | Oracle HCM Recruiting Cloud |
+| Orion | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud |
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
 | Accenture | `accenture.com` | Custom API |
