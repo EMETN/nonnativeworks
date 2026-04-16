@@ -215,17 +215,25 @@ export interface CompanyApiConfig {
    */
   secondaryUrlTemplate?: string;
   /**
-   * When set, each job is duplicated for every additional country found in this
-   * nested array. Use when a single job posting covers multiple countries
-   * (e.g. Nokia's secondaryLocations). Each duplicate gets the secondary country
-   * as its location so the classifier assigns it to the correct country.
+   * When set, handles multi-location job postings. Two modes:
    *
-   * path      — dot-path from each job item to the secondary locations array
-   * countryName — dot-path within each secondary location element to the country name string
+   * Country mode (countryName set): each job is duplicated for every additional
+   * country found in the nested array. Use when a single posting covers multiple
+   * countries (e.g. Nokia). Each duplicate gets the secondary country as its
+   * location so the classifier assigns it to the correct country.
+   *
+   * City mode (cityField set): secondary entries are treated as additional cities
+   * within the same country. Their names are collected into job.cities alongside
+   * the primary city — no duplicate jobs are created.
+   *
+   * path       — dot-path from each job item to the secondary locations array
+   * countryName — dot-path within each element to the country name string (country mode)
+   * cityField   — dot-path within each element to the city name string (city mode)
    */
   expandSecondaryLocations?: {
     path: string;
-    countryName: string;
+    countryName?: string;
+    cityField?: string;
   };
   /**
    * When set, one full paginated fetch is made per entry, with each entry's fields merged
@@ -327,6 +335,40 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     expandSecondaryLocations: {
       path: 'secondaryLocations',
       countryName: 'Name',
+    },
+  },
+
+  'fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com': {
+    // Oracle HCM Recruiting Cloud endpoint for Orion (Finnish pharma).
+    // Same structure as Nokia — site number is OrionCareers.
+    url: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=OrionCareers,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+    method: 'GET',
+    headers: {
+      'accept': '*/*',
+      'accept-language': 'en',
+      'content-type': 'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+      'ora-irc-language': 'en',
+      'origin': 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com',
+      'referer': 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    },
+    pagination: { type: 'finder-offset', pageSize: 200 },
+    itemsPath: 'items.0.requisitionList',
+    fields: {
+      title: 'Title',
+      location: 'PrimaryLocation',
+      id: 'Id',
+    },
+    urlTemplate: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers/job/{Id}',
+    companyName: 'Orion',
+    descriptionApiUrl: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=OrionCareers',
+    descriptionApiFields: ['ExternalDescriptionStr'],
+    descriptionApiLocationField: 'workLocation.0.TownOrCity',
+    descriptionApiJobFunctionField: 'JobFunction',
+    descriptionApiWorkModelField: 'WorkplaceType',
+    expandSecondaryLocations: {
+      path: 'secondaryLocations',
+      cityField: 'Name',
     },
   },
 
