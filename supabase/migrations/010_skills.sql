@@ -263,11 +263,14 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Lean',                      'methodology', ARRAY['lean methodology', 'lean development', 'lean startup', 'lean software']),
 ('Microservices',             'methodology', ARRAY['microservices', 'microservice architecture', 'micro services']),
 ('MLOps',                     'methodology', ARRAY['mlops', 'ml ops', 'machine learning operations']),
+('NIS2',                      'methodology', ARRAY['nis2', 'nis 2', 'nis2 directive', 'network and information security directive']),
+('NIST',                      'methodology', ARRAY['nist', 'nist csf', 'nist cybersecurity framework', 'nist sp 800', 'nist framework']),
 ('OKR',                       'methodology', ARRAY['okr', 'objectives and key results']),
 ('SAFe',                      'methodology', ARRAY['safe agile', 'scaled agile', 'scaled agile framework', 'safe framework']),
 ('Scrum',                     'methodology', ARRAY['scrum', 'scrum master', 'scrum methodology']),
 ('TDD',                       'methodology', ARRAY['tdd', 'test driven development', 'test-driven development']),
 ('TOGAF',                     'methodology', ARRAY['togaf']),
+('Zero Trust',                'methodology', ARRAY['zero trust', 'zero-trust', 'zero trust architecture', 'zta', 'zero trust network access', 'ztna']),
 
 -- Certifications
 ('ACCA',                 'certification', ARRAY['acca', 'association of chartered certified accountants']),
@@ -328,6 +331,7 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('SAP SD',                 'platform', ARRAY['sap sd', 'sap sales and distribution']),
 ('Salesforce CRM',         'platform', ARRAY['salesforce crm', 'salesforce', 'salesforce.com', 'sfdc']),
 ('ServiceNow',             'platform', ARRAY['servicenow', 'service now']),
+('VMware',                  'platform', ARRAY['vmware', 'vmware vsphere', 'vsphere', 'vmware esxi', 'esxi', 'vcenter', 'vmware workstation']),
 ('Workday',                'platform', ARRAY['workday']),
 ('Zendesk',                'platform', ARRAY['zendesk']);
 

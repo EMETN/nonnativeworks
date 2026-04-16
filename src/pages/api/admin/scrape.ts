@@ -57,6 +57,12 @@ import {
 
 const PYTHON_TIMEOUT_MS = 600_000; // 10 min — njoyn scrapes 9 countries sequentially
 
+// Batch scraping spawns many Python subprocesses over the lifetime of the server
+// process. Each spawn registers internal cleanup listeners on the Node.js process
+// object, which triggers the default MaxListeners warning (10) after a handful of
+// companies. Raise the limit to avoid the noise; this is not a memory leak.
+process.setMaxListeners(50);
+
 export const POST: APIRoute = async ({ request }) => {
   let body: unknown;
   try {
