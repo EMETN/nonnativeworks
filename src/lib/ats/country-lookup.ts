@@ -313,6 +313,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'goteborg':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'gävle':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'gavle':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'hamlstad':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'helsingborg':              { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'jönköping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'jonkoping':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
@@ -328,6 +329,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'lund':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'malmö':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'malmo':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'mölndal':                  { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'norrköping':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'norrkoping':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'örebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
@@ -351,8 +353,11 @@ const CITY_MAP: Record<string, CountryInfo> = {
   // ── Norway ───────────────────────────────────────────────────────────────
   'bergen':                   { name: 'Norway', code: 'NO', slug: 'norway' },
   'fornebu':                  { name: 'Norway', code: 'NO', slug: 'norway' },
+  'grimstad':                 { name: 'Norway', code: 'NO', slug: 'norway' },
   'oslo':                     { name: 'Norway', code: 'NO', slug: 'norway' },
   'stavanger':                { name: 'Norway', code: 'NO', slug: 'norway' },
+  'tromsø':                   { name: 'Norway', code: 'NO', slug: 'norway' },
+  'tromso':                   { name: 'Norway', code: 'NO', slug: 'norway' },
   'trondheim':                { name: 'Norway', code: 'NO', slug: 'norway' },
   // ── Denmark ──────────────────────────────────────────────────────────────
   'aalborg':                  { name: 'Denmark', code: 'DK', slug: 'denmark' },
@@ -433,6 +438,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   // ── Baltics ──────────────────────────────────────────────────────────────
   'rīga':                     { name: 'Latvia', code: 'LV', slug: 'latvia' },
   'riga':                     { name: 'Latvia', code: 'LV', slug: 'latvia' },
+  'pärnu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'tallinn':                  { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'tartu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'vilnius':                  { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
@@ -568,6 +574,18 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+/**
+ * Looks up a city by checking whether a known CITY_MAP key is a leading word-boundary
+ * prefix of the segment. Handles location suffixes like "riga central" → "riga" or
+ * "tartu kontor" → "tartu" without requiring every variant to be listed explicitly.
+ */
+function lookupCityByPrefix(key: string): CountryInfo | undefined {
+  for (const [cityKey, info] of Object.entries(CITY_MAP)) {
+    if (key.startsWith(cityKey + ' ')) return info;
+  }
+  return undefined;
+}
+
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
@@ -611,7 +629,7 @@ export function extractCitiesForCountry(location: string, countryCode: string): 
   const seen = new Set<string>();
   for (const segment of segments) {
     const key = normalizeKey(segment);
-    const info = CITY_MAP[key];
+    const info = CITY_MAP[key] ?? lookupCityByPrefix(key);
     if (info && info.code === countryCode) {
       if (!seen.has(key)) {
         seen.add(key);
@@ -638,12 +656,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     return stripped.split(',').map((s) => s.trim()).filter(Boolean);
   });
 
-  // Collect all unique countries found in any segment — check country map first, then city map
+  // Collect all unique countries found in any segment — check country map first, then city map,
+  // then city prefix match (e.g. "riga central" → "riga", "tartu kontor" → "tartu").
   const seen = new Set<string>();
   const results: CountryInfo[] = [];
   for (const segment of segments) {
     const key = normalizeKey(segment);
-    const info = COUNTRY_MAP[key] ?? CITY_MAP[key];
+    const info = COUNTRY_MAP[key] ?? CITY_MAP[key] ?? lookupCityByPrefix(key);
     if (info && !seen.has(info.code)) {
       seen.add(info.code);
       results.push(info);
@@ -655,6 +674,14 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
   const fullKey = normalizeKey(location);
   const fullMatch = COUNTRY_MAP[fullKey] ?? CITY_MAP[fullKey];
   if (fullMatch) return [fullMatch];
+
+  // Try to extract a trailing 2-letter ISO country code, e.g. "Home office DK" → "DK" → Denmark.
+  // \b ensures the code is a standalone word, preventing e.g. "bridge" matching "ge".
+  const trailingCode = fullKey.match(/\b([a-z]{2})$/);
+  if (trailingCode) {
+    const codeInfo = COUNTRY_MAP[trailingCode[1]];
+    if (codeInfo) return [codeInfo];
+  }
 
   return [];
 }

@@ -88,6 +88,7 @@
 
 import type { RawJob } from "./types";
 import { titleAppearsNonEnglish } from "./title-language";
+import { lookupCountryFromLocation } from "./country-lookup";
 
 const DESCRIPTION_BATCH = 5;
 
@@ -286,7 +287,7 @@ async function fetchJobLocations(
   company: string,
   site: string,
   externalPath: string,
-): Promise<{ locations: string[]; description?: string }> {
+): Promise<{ locations: string[]; description?: string; countryDescriptor?: string }> {
   const origin = `https://${host}`;
   const url = `${origin}/wday/cxs/${company}/${site}${externalPath}`;
   try {
@@ -320,7 +321,11 @@ async function fetchJobLocations(
       typeof info.jobDescription === "string" && info.jobDescription
         ? stripHtml(info.jobDescription)
         : undefined;
-    return { locations, description };
+    const countryDescriptor =
+      typeof info.country?.descriptor === "string" && info.country.descriptor
+        ? info.country.descriptor
+        : undefined;
+    return { locations, description, countryDescriptor };
   } catch (e) {
     console.log(`[workday] detail fetch error for ${externalPath}: ${e}`);
     return { locations: [] };
@@ -369,17 +374,23 @@ export async function fetchWorkdayJobs(
     if (postings.length < PAGE_SIZE) break;
   }
 
-  // Split into single-location, venue-name, and multi-location postings.
+  // Split into single-location, venue-name, multi-location, and unresolvable postings.
+  // Unresolvable: locationsText exists but lookupCountryFromLocation can't identify a country.
+  // These go through the detail API to extract jobPostingInfo.country.descriptor.
   const allJobs: RawJob[] = [];
   const multiLocQueue: WorkdayJobPosting[] = [];
   const venueQueue: WorkdayJobPosting[] = [];
+  const needsCountryDetail: WorkdayJobPosting[] = [];
 
   for (const posting of allPostings) {
     const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
-    if (MULTI_LOC_RE.test((posting.locationsText ?? "").trim())) {
+    const locText = posting.locationsText ?? "";
+    if (MULTI_LOC_RE.test(locText.trim())) {
       multiLocQueue.push(posting);
-    } else if (looksLikeVenueName(posting.locationsText ?? "")) {
+    } else if (looksLikeVenueName(locText)) {
       venueQueue.push(posting);
+    } else if (locText && lookupCountryFromLocation(locText).length === 0) {
+      needsCountryDetail.push(posting);
     } else {
       allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl });
     }
@@ -408,6 +419,33 @@ export async function fetchWorkdayJobs(
     }
   }
 
+  // Resolve postings whose locationsText couldn't be mapped to a country.
+  // The detail API's jobPostingInfo.country.descriptor (e.g. "Denmark") is used as the
+  // location fallback, handling cases like "Home office DK" (already caught by the trailing
+  // ISO code heuristic) and fully opaque strings like "Distance office".
+  if (needsCountryDetail.length > 0) {
+    console.log(`[workday] resolving country for ${needsCountryDetail.length} unresolvable-location postings (of ${allPostings.length} total)`);
+    for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
+      await Promise.all(
+        needsCountryDetail.slice(i, i + EXPAND_BATCH).map(async (posting) => {
+          const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
+          const { countryDescriptor, description } = await fetchJobLocations(
+            parts.host, parts.company, parts.site, posting.externalPath,
+          );
+          // Use the country descriptor as the location so downstream country resolution works.
+          // Fall back to the original locationsText if the detail fetch yields nothing.
+          const location = countryDescriptor ?? posting.locationsText;
+          allJobs.push({
+            title: posting.title,
+            url: jobUrl,
+            location,
+            ...(description && { descriptionText: description }),
+          });
+        }),
+      );
+    }
+  }
+
   // Expand multi-location postings by fetching each job's detail page.
   if (multiLocQueue.length > 0) {
     console.log(`[workday] expanding ${multiLocQueue.length} multi-location postings (of ${allPostings.length} total)`);
@@ -419,21 +457,30 @@ export async function fetchWorkdayJobs(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
           if (locations.length > 0) {
-            // Group by country (last comma-separated segment) so that multiple
-            // cities in the same country become one job entry with a cities array,
-            // matching the general pipeline behaviour.
+            // Group locations by resolved country code so that multiple cities in
+            // the same country become one job entry. Using lookupCountryFromLocation
+            // handles bare city names (e.g. "Espoo", "Turku") correctly — they both
+            // resolve to "FI" and are merged, rather than being treated as separate
+            // groups by the last-comma-segment heuristic.
             const byCountry = new Map<string, string[]>();
             for (const loc of locations) {
-              const parts = loc.split(",").map((p) => p.trim());
-              const country = parts[parts.length - 1] || loc;
-              if (!byCountry.has(country)) byCountry.set(country, []);
-              byCountry.get(country)!.push(loc);
+              const resolved = lookupCountryFromLocation(loc);
+              const groupKey = resolved.length > 0
+                ? resolved[0].code
+                : (loc.split(",").map((p) => p.trim()).pop() ?? loc);
+              if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
+              byCountry.get(groupKey)!.push(loc);
             }
             for (const [, locs] of byCountry) {
               const citySet = new Set<string>();
               for (const loc of locs) {
                 const comma = loc.indexOf(",");
-                if (comma > 0) citySet.add(loc.slice(0, comma).trim());
+                if (comma > 0) {
+                  citySet.add(loc.slice(0, comma).trim());
+                } else {
+                  // Bare city name with no country suffix — add the whole string as the city.
+                  citySet.add(loc.trim());
+                }
               }
               allJobs.push({
                 title: posting.title,

@@ -21,16 +21,16 @@ companies:
       url: https://careers.abb/global/en/search-results
       min_positions: 10
 
-    - name: Airbus
-      url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
-      min_positions: 10
-
     - name: Academic Work
       url: https://www.academicwork.fi/avoimet-tyopaikat
       min_positions: 5
 
     - name: Accenture
       url: https://www.accenture.com/us-en/careers
+      min_positions: 10
+
+    - name: Airbus
+      url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
       min_positions: 10
 
     - name: Barona
@@ -44,6 +44,10 @@ companies:
     - name: Happeo
       url: https://happeo.recruitee.com
       min_positions: 1
+
+    - name: If
+      url: https://if.wd3.myworkdayjobs.com/Careers
+      min_positions: 5
 
     - name: Konecranes
       url: https://konecranes.careers/jobs
