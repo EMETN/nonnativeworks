@@ -552,6 +552,14 @@ function findNativeLanguageChunk(
   return null;
 }
 
+// Derived from COUNTRY_LANG_CODES — only these codes are trusted for cross-language detection.
+const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
+
+// Languages where tinyld is prone to false positives on corporate English text.
+// Require a longer chunk before accepting a match.
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'nl', 'de']);
+const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
+
 /**
  * Checks whether any chunk of the text is detected as a non-English language
  * by tinyld. Used as a fallback when the description is written in a language
@@ -566,9 +574,10 @@ function findAnyNonEnglishChunk(
   const candidates = chunks.length > 0 ? chunks : (text.trim().length >= 200 ? [text.trim()] : []);
   for (const chunk of candidates) {
     const code = detect(chunk);
-    if (code && code !== 'en') {
-      return { chunk, detectedCode: code };
-    }
+    if (!code || code.length !== 2 || code === 'en') continue;
+    if (!TRUSTED_LANG_CODES.has(code)) continue;
+    if (MEDIUM_CONFIDENCE_LANGS.has(code) && chunk.length < MEDIUM_CONFIDENCE_MIN_CHUNK) continue;
+    return { chunk, detectedCode: code };
   }
   return null;
 }
