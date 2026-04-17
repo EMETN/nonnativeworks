@@ -24,10 +24,11 @@ const FI: string[] = [
   'asentaja',       // installer
   'asentajia',      // installers
   'asiantuntija',   // specialist / expert
+  'finanssiala',    // finance sector
+  'hakemus',        // application (open application postings)
   'hankinta',       // procurement
   'hitsaaja',       // welder
-  'hoitaja',
-  'hakemus',        // application (open application postings)
+  'hoitaja',        // caregiver / nurse
   'hovimestari',    // headwaiter
   'huolto',         // maintenance
   'johtaja',        // manager
@@ -99,6 +100,7 @@ const DK: string[] = [
   'arkitekt',       // architect
   'karriere',       // career
   'konsulent',      // consultant
+  'offentlige',     // public
   'rådgiver',       // advisor
   'sagsbehandler',  // case officer
   'sælger',         // salesperson
@@ -113,6 +115,7 @@ const DE: string[] = [
   'ausbilder',      // instructor, trainer
   'ausbildung',     // apprenticeship / training
   'berater',        // consultant / advisor
+  'datenbank',      // database
   'digitalisierung', // digitalization
   'energiebranche', // energy sector
   'entwickler',     // developer
@@ -120,6 +123,7 @@ const DE: string[] = [
   'erfahrung',      // experience
   'fachexperte',    // subject matter expert
   'fachkraft',      // skilled worker
+  'glasfaser',      // fibre optic
   'informatiker',   // computer scientist
   'infrastruktur',  // infrastructure
   'kauffrau',       // merchant / business person (female form)
@@ -128,18 +132,22 @@ const DE: string[] = [
   'logistik',       // logistics
   'masterstudium',  // master's degree/programme
   'mechaniker',     // mechanic
+  'medienbranche',  // media sector
   'praktikant',     // intern
   'praktikum',      // internship
   'projekt',        // project
   'sachbearbeiter', // clerk / officer
+  'schwerpunkt',    // focus
   'spezialist',     // specialist
   'teamleiter',     // team lead
   'technischer',    // technical
   'technologie',    // technology
+  'verantwortung',  // responsibility
   'verkehr',        // traffic
   'verkäufer',      // salesperson
   'vertrieb',       // sales
   'werkstudent',    // working student / student employee
+  'wirtschaft',     // economy
 ];
 
 // ── Dutch ─────────────────────────────────────────────────────────────────────
@@ -147,16 +155,29 @@ const NL: string[] = [
   'adviseur',       // advisor
   'afstuderen',     // graduate
   'automatiseerder', // automater
+  'automatisering', // automation
   'beheerder',      // administrator
   'coördinator',    // coordinator
+  'defensie',       // defence
   'gezocht',        // wanted
   'informatie',     // information
+  'innovatie',      // innovation
   'medewerker',     // employee / associate
+  'medior',         // mid-level
   'netwerk',        // network
   'ontwikkelaar',   // developer
+  'openbaar',       // public
+  'overheid',       // government
+  'publieke',       // public
+  'spoordomein',    // railway network
+  'stagiair',       // intern
   'technisch',      // technical
+  'telecommunicatie', // telecommunications
+  'transitie',      // transition
   'uitvoerder',     // executor / operative
+  'veiligheid',     // safety
   'verkoper',       // salesperson
+  'verzekeringen',  // insurance
   'virtualisatie',  // virtualization
 ];
 
