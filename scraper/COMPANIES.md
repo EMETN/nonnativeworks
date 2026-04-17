@@ -5,6 +5,7 @@
 - Accenture
 - Airbus
 - Barona
+- CGI
 - Gofore
 - Happeo
 - If
@@ -83,6 +84,7 @@ Any company not matched by layers 1, 1.5, or Attrax detection falls here. The sc
 |---------|----------|-------|
 | Academic Work | `academicwork.fi` | Staffing agency; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions enriched via static fetch |
 | Barona | `barona.fi` | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs |
+| CGI | `cgi.njoyn.com` | Playwright |
 | Neste | `jobs.neste.com` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
 | Zalando | `jobs.zalando.com` | Next.js RSC payload parsed from `self.__next_f.push` chunks; offices mapped to country codes; descriptions enriched via static fetch |
