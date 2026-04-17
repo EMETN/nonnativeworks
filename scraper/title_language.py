@@ -18,6 +18,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     "FI": [
         "ammattitaitoinen", # skilled
         "ammattitaitoisia", # skilled (plural)
+        "arkkitehti",       # architect
         "asiakas",          # customer
         "asennus",          # installation
         "asentaja",         # installer
@@ -51,6 +52,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "testaaja",         # tester
         "tiimi",            # team
         "timpuri",          # carpenter
+        "toimiala",         # industry
         "tuotanto",         # production
         "tuotannon",        # production (genitive)
         "varasto",          # warehouse
@@ -59,18 +61,27 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     "SE": [
         "ansvarig",       # responsible / manager
+        "arkitekt",       # architect
         "ekonom",         # economist
         "förvaltare",     # administrator / manager
         "handläggare",    # administrator / officer
+        "informatiker",   # computer scientist
+        "konsult",        # consultant
+        "projektledare",  # project manager
         "rådgivare",      # advisor
         "samordnare",     # coordinator
         "säljare",        # salesperson
+        "tekniker",       # technician
+        "teknisk",        # technical
+        "testare",        # tester
         "utvecklare",     # developer
         "verksamhet",     # operations / business
     ],
     "NO": [
         "avdelingsleder", # department manager
         "fagansvarlig",   # subject-matter responsible
+        "karriere",       # career
+        "konsulent",      # consultant
         "koordinator",    # coordinator
         "rådgiver",       # advisor
         "saksbehandler",  # case officer
@@ -80,6 +91,9 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     "DK": [
         "afdelingsleder", # department manager
+        "arkitekt",       # architect
+        "karriere",       # career
+        "konsulent",      # consultant
         "rådgiver",       # advisor
         "sagsbehandler",  # case officer
         "sælger",         # salesperson
@@ -88,30 +102,55 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         
     ],
     "DE": [
+        "anforderung",    # requirement
+        "architekt",      # architect
+        "assistenz",      # assistant
         "ausbilder",      # instructor, trainer
         "ausbildung",     # apprenticeship / training
         "berater",        # consultant / advisor
+        "digitalisierung", # digitalization
+        "energiebranche", # energy sector
         "entwickler",     # developer
+        "entwicklung",    # development
+        "erfahrung",      # experience
+        "fachexperte",    # subject matter expert
         "fachkraft",      # skilled worker
+        "informatiker",   # computer scientist
+        "infrastruktur",  # infrastructure
         "kauffrau",       # merchant / business person (female form)
         "kaufmann",       # merchant / business person
+        "koordinator",    # coordinator
+        "logistik",       # logistics
+        "masterstudium",  # master's degree/programme
         "mechaniker",     # mechanic
         "praktikant",     # intern
         "praktikum",      # internship
+        "projekt",        # project
         "sachbearbeiter", # clerk / officer
+        "spezialist",     # specialist
+        "teamleiter",     # team lead
         "technischer",    # technical
+        "technologie",    # technology
+        "verkehr",        # traffic
         "vertrieb",       # sales
         "verkäufer",      # salesperson
         "werkstudent",    # working student / student employee
     ],
     "NL": [
         "adviseur",       # advisor
+        "afstuderen",     # graduate
+        "automatiseerder", # automater
         "beheerder",      # administrator
         "coördinator",    # coordinator
+        "gezocht",        # wanted
+        "informatie",     # information
         "medewerker",     # employee / associate
+        "netwerk",        # network
         "ontwikkelaar",   # developer
+        "technisch",      # technical
         "uitvoerder",     # executor / operative
         "verkoper",       # salesperson
+        "virtualisatie",  # virtualization
     ],
     "EE": [
         "arendaja",       # developer
