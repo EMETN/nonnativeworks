@@ -3,14 +3,11 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-import type { GlobalStats } from '../lib/types';
-
 interface Props {
     title: string;
     description?: string;
     ogImage?: string;
     noindex?: boolean;
-    stats?: GlobalStats;
 }
 
 const {
@@ -18,7 +15,6 @@ const {
     description = 'Find companies where English is enough — browse positions by country.',
     ogImage,
     noindex = false,
-    stats,
 } = Astro.props;
 
 const siteTitle =
@@ -104,7 +100,7 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
             Skip to content
         </a>
 
-        <Header stats={stats} />
+        <Header />
         <main id="main-content" class="flex-1 flex flex-col">
             <slot />
         </main>
