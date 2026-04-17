@@ -107,7 +107,8 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
   return (
     <div>
       {/* Search */}
-      <div class="relative w-full sm:w-56 md:w-64 mb-2 border-b border-gray-200 pb-2">
+      <div class="w-full border-b border-gray-200 pb-2 mb-2">
+      <div class="relative w-full sm:w-56 md:w-64">
         <svg
           class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 pointer-events-none"
           width="16" height="16"
@@ -136,15 +137,24 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
           </button>
         )}
       </div>
+      </div>
 
       {/* Position list */}
       <ul>
         {filtered.length === 0 ? (
           <li class="py-12 text-center text-gray-400">
-            <p class="text-base sm:text-lg mb-1.5" style={numFont}>
-              No positions found matching "{search}"
-            </p>
-            <p class="text-sm text-gray-300">Try a different search term.</p>
+            {searchQuery ? (
+              <>
+                <p class="text-base sm:text-lg mb-1.5" style={numFont}>
+                  No positions found matching "{search}"
+                </p>
+                <p class="text-sm text-gray-300">Try a different search term.</p>
+              </>
+            ) : (
+              <p class="text-base sm:text-lg" style={numFont}>
+                No English-friendly positions available right now.
+              </p>
+            )}
           </li>
         ) : (
           filtered.map((pos) => (
