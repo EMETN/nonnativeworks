@@ -55,7 +55,10 @@ import {
   type SkillEntry,
 } from "../../../lib/ats/skills-extractor";
 
-const PYTHON_TIMEOUT_MS = 600_000; // 10 min — njoyn scrapes 9 countries sequentially
+// Must exceed Python's internal NJOYN_SUBPROCESS_TIMEOUT (3600s) so Python can handle
+// its own cleanup and exit cleanly. SIGKILL ensures the process cannot ignore the signal
+// (Python's multiprocessing.Queue.get blocks SIGTERM, causing Node to wait indefinitely).
+const PYTHON_TIMEOUT_MS = 3_900_000; // 65 min
 
 // Batch scraping spawns many Python subprocesses over the lifetime of the server
 // process. Each spawn registers internal cleanup listeners on the Node.js process
@@ -446,6 +449,7 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
 
     const py = spawn(pythonBin, [scraperPath, url], {
       timeout: PYTHON_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
       env,
     });
 

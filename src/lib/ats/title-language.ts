@@ -18,6 +18,7 @@
 const FI: string[] = [
   'ammattitaitoinen', // skilled
   'ammattitaitoisia', // skilled (plural)
+  'arkkitehti',     // architect
   'asiakas',        // customer
   'asennus',        // installation
   'asentaja',       // installer
@@ -51,6 +52,7 @@ const FI: string[] = [
   'testaaja',       // tester
   'tiimi',          // team
   'timpuri',        // carpenter
+  'toimiala',       // industry
   'tuotanto',       // production
   'tuotannon',
   'varasto',        // warehouse
@@ -61,12 +63,19 @@ const FI: string[] = [
 // ── Swedish ───────────────────────────────────────────────────────────────────
 const SE: string[] = [
   'ansvarig',       // responsible / manager
+  'arkitekt',       // architect
   'ekonom',         // economist
   'förvaltare',     // administrator / manager
   'handläggare',    // administrator / officer
+  'informatiker',   // computer scientist
+  'konsult',        // consultant
+  'projektledare',  // project manager
   'rådgivare',      // advisor
   'samordnare',     // coordinator
   'säljare',        // salesperson
+  'tekniker',       // technician
+  'teknisk',        // technical
+  'testare',        // tester
   'utvecklare',     // developer
   'verksamhet',     // operations / business
 ];
@@ -75,6 +84,8 @@ const SE: string[] = [
 const NO: string[] = [
   'avdelingsleder', // department manager
   'fagansvarlig',   // subject-matter responsible
+  'karriere',       // career
+  'konsulent',      // consultant
   'koordinator',    // coordinator (unambiguous in NO context when combined with NO chars)
   'rådgiver',       // advisor
   'saksbehandler',  // case officer
@@ -85,6 +96,9 @@ const NO: string[] = [
 // ── Danish ───────────────────────────────────────────────────────────────────
 const DK: string[] = [
   'afdelingsleder', // department manager
+  'arkitekt',       // architect
+  'karriere',       // career
+  'konsulent',      // consultant
   'rådgiver',       // advisor
   'sagsbehandler',  // case officer
   'sælger',         // salesperson
@@ -93,18 +107,37 @@ const DK: string[] = [
 
 // ── German ───────────────────────────────────────────────────────────────────
 const DE: string[] = [
+  'anforderung',    // requirement
+  'architekt',      // architect
+  'assistenz',      // assistant
   'ausbilder',      // instructor, trainer
   'ausbildung',     // apprenticeship / training
   'berater',        // consultant / advisor
+  'digitalisierung', // digitalization
+  'energiebranche', // energy sector
   'entwickler',     // developer
+  'entwicklung',    // development
+  'erfahrung',      // experience
+  'fachexperte',    // subject matter expert
   'fachkraft',      // skilled worker
+  'informatiker',   // computer scientist
+  'infrastruktur',  // infrastructure
   'kauffrau',       // merchant / business person (female form)
   'kaufmann',       // merchant / business person
+  'koordinator',    // coordinator
+  'logistik',       // logistics
+  'masterstudium',  // master's degree/programme
   'mechaniker',     // mechanic
   'praktikant',     // intern
   'praktikum',      // internship
+  'projekt',        // project
   'sachbearbeiter', // clerk / officer
+  'spezialist',     // specialist
+  'teamleiter',     // team lead
   'technischer',    // technical
+  'technologie',    // technology
+  'verkehr',        // traffic
+  'verkäufer',      // salesperson
   'vertrieb',       // sales
   'werkstudent',    // working student / student employee
 ];
@@ -112,18 +145,26 @@ const DE: string[] = [
 // ── Dutch ─────────────────────────────────────────────────────────────────────
 const NL: string[] = [
   'adviseur',       // advisor
+  'afstuderen',     // graduate
+  'automatiseerder', // automater
   'beheerder',      // administrator
   'coördinator',    // coordinator
+  'gezocht',        // wanted
+  'informatie',     // information
   'medewerker',     // employee / associate
+  'netwerk',        // network
   'ontwikkelaar',   // developer
+  'technisch',      // technical
   'uitvoerder',     // executor / operative
   'verkoper',       // salesperson
+  'virtualisatie',  // virtualization
 ];
 
 // ── Estonian ─────────────────────────────────────────────────────────────────
 const EE: string[] = [
   'arendaja',       // developer
   'juht',           // manager / head
+  'müügijuht',      // sales manager
   'nõustaja',       // advisor
   'spetsialist',    // specialist
 ];
@@ -148,8 +189,9 @@ const LT: string[] = [
 
 // ── Icelandic ────────────────────────────────────────────────────────────────
 const IS: string[] = [
-  'þróunarfulltrúi', // development representative
+  'sérfræðingur',   // specialist / expert
   'stjórnandi',     // manager
+  'þróunarfulltrúi', // development representative
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

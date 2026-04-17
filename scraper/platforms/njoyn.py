@@ -17,11 +17,30 @@ from title_language import _title_appears_non_english
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
-NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DK", "NL", "DE", "EE", "LV", "LT"]
+NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DE"]  # TEST: revert to full list after testing
+
+# Country names (lowercase) expected for each tracked country code.
+# Used to validate tombstone Country values against the active filter — some companies
+# (e.g. CGI) list "any office location" jobs under every country, so the filter alone
+# is not sufficient to exclude jobs whose primary location is elsewhere.
+NJOYN_COUNTRY_NAMES: dict[str, list[str]] = {
+    "FI": ["finland", "suomi"],
+    "SE": ["sweden", "sverige"],
+    "NO": ["norway", "norge"],
+    "DK": ["denmark", "danmark"],
+    "NL": ["netherlands", "nederland"],
+    "DE": ["germany", "deutschland"],
+    "EE": ["estonia", "eesti"],
+    "LV": ["latvia", "latvija"],
+    "LT": ["lithuania", "lietuva"],
+}
+
+# njoyn listing + description enrichment can take 30+ min for large companies.
+NJOYN_SUBPROCESS_TIMEOUT = 3600
 
 
 def scrape_njoyn_playwright(url: str) -> list[dict]:
-    return _run_in_subprocess(_scrape_njoyn_playwright_inner, url)
+    return _run_in_subprocess(_scrape_njoyn_playwright_inner, url, timeout=NJOYN_SUBPROCESS_TIMEOUT)
 
 
 def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
@@ -179,7 +198,17 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                         if key not in seen:
                             seen.add(key)
                             if country_code:
+                                # Validate tombstone Country against the filter to exclude
+                                # "any office location" jobs whose primary location is elsewhere.
+                                tc = (job.pop("tombstone_country", None) or "").lower()
+                                if tc:
+                                    expected = NJOYN_COUNTRY_NAMES.get(country_code, [])
+                                    if expected and not any(name in tc for name in expected):
+                                        print(f"njoyn: skipping '{job['title']}' — tombstone country '{tc}' doesn't match filter {country_code}", file=sys.stderr)
+                                        continue
                                 job["country_code"] = country_code
+                            else:
+                                job.pop("tombstone_country", None)
                             jobs.append(job)
                             new_count += 1
 
@@ -213,6 +242,38 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
     return jobs
 
 
+_NJOYN_DESC_SELECTORS = [
+    # njoyn/classic-ASP detail page — most specific first
+    "#divJobDescription",
+    "#JobDescription",
+    "#jobDescription",
+    "#job-description",
+    ".job-description",
+    "#divJobDetails",
+    "#JobDetails",
+    # Generic fallbacks: any block-level element whose id/class contains "description"
+    "div[id*='escription']",
+    "div[class*='escription']",
+    "td[id*='escription']",
+]
+
+
+def _extract_description_html(full_html: str) -> str:
+    """Return the description section HTML from a njoyn detail page.
+
+    Tries known container selectors in order; falls back to the full page only
+    when none match. Keeping only the relevant section reduces per-job memory
+    from ~100 KB to ~5–15 KB, which matters when enriching hundreds of jobs.
+    """
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(full_html, "html.parser")
+    for selector in _NJOYN_DESC_SELECTORS:
+        el = soup.select_one(selector)
+        if el:
+            return str(el)
+    return full_html
+
+
 def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
     """Fetch individual job detail pages for English-titled jobs via the existing browser session."""
 
@@ -225,10 +286,10 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
         try:
             pw_page.goto(job["url"], wait_until="domcontentloaded", timeout=20_000)
             pw_page.wait_for_timeout(500)
-            job["descriptionHtml"] = pw_page.content()
+            job["descriptionHtml"] = _extract_description_html(pw_page.content())
         except Exception as e:
             print(f"njoyn: description fetch failed for {job['url']}: {e}", file=sys.stderr)
-        if (i + 1) % 10 == 0:
+        if (i + 1) % 5 == 0:
             print(f"njoyn: enriched {i + 1}/{len(targets)} descriptions", file=sys.stderr)
 
 
@@ -279,12 +340,16 @@ def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
             return None
 
         city = tombstone("City")
+        tombstone_country = tombstone("Country")
 
         # URL from the "View Job Details" link
         link = detail_div.find("a", href=re.compile(r"JobDetails|jobdetails|Jobid", re.I))
         href = link.get("href", "") if link else ""
         job_url = urljoin(base_url, href) if href else None
 
-        jobs.append(build_job(title, job_url, city))
+        job = build_job(title, job_url, city)
+        if tombstone_country:
+            job["tombstone_country"] = tombstone_country
+        jobs.append(job)
 
     return jobs
