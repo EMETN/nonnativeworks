@@ -235,6 +235,7 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
             # Enrich English-titled jobs with description HTML fetched through the
             # existing browser session (njoyn blocks plain static fetches via bot detection).
             _enrich_njoyn_descriptions(pw_page, jobs)
+            jobs = [j for j in jobs if not j.pop("_placeholder", False)]
 
         finally:
             cleanup()
@@ -255,6 +256,8 @@ _NJOYN_DESC_SELECTORS = [
     "div[id*='escription']",
     "div[class*='escription']",
     "td[id*='escription']",
+    # CGI njoyn pages
+    ".job-posting-content",
 ]
 
 
@@ -284,30 +287,47 @@ def _extract_description_html(full_html: str) -> str:
     Tries known container selectors in order; falls back to the full page only
     when none match. Keeping only the relevant section reduces per-job memory
     from ~100 KB to ~5–15 KB, which matters when enriching hundreds of jobs.
+    Boilerplate sections are stripped from the soup before selector matching so
+    they are removed regardless of whether a specific selector matches.
     """
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(full_html, "html.parser")
+    _strip_boilerplate_sections(soup)
     for selector in _NJOYN_DESC_SELECTORS:
         el = soup.select_one(selector)
         if el:
-            _strip_boilerplate_sections(el)
             return str(el)
-    return full_html
+    return str(soup)
+
+
+_MIN_DESCRIPTION_TEXT_LENGTH = 30
 
 
 def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
-    """Fetch individual job detail pages for English-titled jobs via the existing browser session."""
+    """Fetch individual job detail pages for English-titled jobs via the existing browser session.
 
+    Jobs whose description text is shorter than _MIN_DESCRIPTION_TEXT_LENGTH after stripping
+    HTML are marked with _placeholder=True so the caller can filter them out.
+    """
     targets = [j for j in jobs if j.get("url") and not _title_appears_non_english(j.get("title", ""))]
     if not targets:
         return
+
+    import re as _re
+    _strip_tags = _re.compile(r"<[^>]+>")
 
     print(f"njoyn: fetching descriptions for {len(targets)} English-titled jobs", file=sys.stderr)
     for i, job in enumerate(targets):
         try:
             pw_page.goto(job["url"], wait_until="domcontentloaded", timeout=20_000)
             pw_page.wait_for_timeout(500)
-            job["descriptionHtml"] = _extract_description_html(pw_page.content())
+            html = _extract_description_html(pw_page.content())
+            plain = _strip_tags.sub(" ", html).strip()
+            if len(plain) < _MIN_DESCRIPTION_TEXT_LENGTH:
+                print(f"njoyn: skipping '{job['title']}' — placeholder description ({len(plain)} chars)", file=sys.stderr)
+                job["_placeholder"] = True
+            else:
+                job["descriptionHtml"] = html
         except Exception as e:
             print(f"njoyn: description fetch failed for {job['url']}: {e}", file=sys.stderr)
         if (i + 1) % 5 == 0:
