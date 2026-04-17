@@ -497,4 +497,5 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
 export const PYTHON_SCRAPER_COMPANY_NAMES: Array<{ urlSubstring: string; name: string }> = [
   { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
   { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
+  { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
 ];

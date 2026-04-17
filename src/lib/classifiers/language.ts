@@ -376,6 +376,7 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`preferably ${lang}`);
   signals.push(`preferably in ${lang}`);
   signals.push(`preferably also ${lang}`);
+  signals.push(`preferably also in ${lang}`);
   signals.push(`${lang} preferred`);
   return signals;
 }
@@ -452,6 +453,12 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} and english`,
     `english and ${lang}`,
     `english, and ${lang}`,
+    `english as well as ${lang}`,
+    `${lang} as well as english`,
+    `english and also in ${lang}`,
+    `in english and also in ${lang}`,
+    `${lang} and also in english`,
+    `in ${lang} and also in english`,
     `${lang}/english`,
     `english/${lang}`,
     `written and spoken English and ${lang}`,

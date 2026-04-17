@@ -17,7 +17,7 @@ from title_language import _title_appears_non_english
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
-NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DE"]  # TEST: revert to full list after testing
+NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DK", "NL", "DE", "EE", "LV", "LT"]
 
 # Country names (lowercase) expected for each tracked country code.
 # Used to validate tombstone Country values against the active filter — some companies
@@ -258,6 +258,26 @@ _NJOYN_DESC_SELECTORS = [
 ]
 
 
+_BOILERPLATE_HEADING_RE = re.compile(
+    r"what you can expect from us|about cgi|about us|why join us|who we are",
+    re.IGNORECASE,
+)
+
+
+def _strip_boilerplate_sections(el) -> None:
+    """Remove job-info-row divs whose heading matches known boilerplate patterns.
+
+    CGI njoyn pages append a localised "What you can expect from us" section
+    after the English job description. This section is written in the country's
+    local language and causes the language classifier to incorrectly flag the
+    position as requiring that language.
+    """
+    for div in el.find_all("div", class_="job-info-row"):
+        heading = div.find(["h1", "h2", "h3", "h4"])
+        if heading and _BOILERPLATE_HEADING_RE.search(heading.get_text()):
+            div.decompose()
+
+
 def _extract_description_html(full_html: str) -> str:
     """Return the description section HTML from a njoyn detail page.
 
@@ -270,6 +290,7 @@ def _extract_description_html(full_html: str) -> str:
     for selector in _NJOYN_DESC_SELECTORS:
         el = soup.select_one(selector)
         if el:
+            _strip_boilerplate_sections(el)
             return str(el)
     return full_html
 
@@ -322,7 +343,7 @@ def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
         else:
             title = raw_heading
 
-        if not title or len(title) > 120:
+        if not title or len(title) < 2 or len(title) > 120:
             continue
 
         # The details div is the next sibling of the h2

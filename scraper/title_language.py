@@ -24,6 +24,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "asentaja",         # installer
         "asentajia",        # installers
         "asiantuntija",     # specialist / expert
+        "finanssiala",      # finance sector
         "hakemus",          # application (open application postings)
         "hankinta",         # procurement
         "hitsaaja",         # welder
@@ -94,6 +95,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "arkitekt",       # architect
         "karriere",       # career
         "konsulent",      # consultant
+        "offentlige",     # public
         "rådgiver",       # advisor
         "sagsbehandler",  # case officer
         "sælger",         # salesperson
@@ -108,6 +110,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "ausbilder",      # instructor, trainer
         "ausbildung",     # apprenticeship / training
         "berater",        # consultant / advisor
+        "datenbank",      # database
         "digitalisierung", # digitalization
         "energiebranche", # energy sector
         "entwickler",     # developer
@@ -115,6 +118,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "erfahrung",      # experience
         "fachexperte",    # subject matter expert
         "fachkraft",      # skilled worker
+        "glasfaser",      # fibre optic
         "informatiker",   # computer scientist
         "infrastruktur",  # infrastructure
         "kauffrau",       # merchant / business person (female form)
@@ -123,33 +127,50 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "logistik",       # logistics
         "masterstudium",  # master's degree/programme
         "mechaniker",     # mechanic
+        "medienbranche",  # media sector
         "praktikant",     # intern
         "praktikum",      # internship
         "projekt",        # project
         "sachbearbeiter", # clerk / officer
+        "schwerpunkt",    # focus
         "spezialist",     # specialist
         "teamleiter",     # team lead
         "technischer",    # technical
         "technologie",    # technology
+        "verantwortung",  # responsibility
         "verkehr",        # traffic
         "vertrieb",       # sales
         "verkäufer",      # salesperson
         "werkstudent",    # working student / student employee
+        "wirtschaft",     # economy
     ],
     "NL": [
         "adviseur",       # advisor
         "afstuderen",     # graduate
         "automatiseerder", # automater
+        "automatisering", # automation
         "beheerder",      # administrator
         "coördinator",    # coordinator
+        "defensie",       # defence
         "gezocht",        # wanted
         "informatie",     # information
+        "innovatie",      # innovation
         "medewerker",     # employee / associate
+        "medior",         # mid-level
         "netwerk",        # network
         "ontwikkelaar",   # developer
+        "openbaar",       # public
+        "overheid",       # government
+        "publieke",       # public
+        "spoordomein",    # railway network
+        "stagiair",       # intern
         "technisch",      # technical
+        "telecommunicatie", # telecommunications
+        "transitie",      # transition
         "uitvoerder",     # executor / operative
+        "veiligheid",     # safety
         "verkoper",       # salesperson
+        "verzekeringen",  # insurance
         "virtualisatie",  # virtualization
     ],
     "EE": [
