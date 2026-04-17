@@ -29,6 +29,7 @@ The URL is inspected by `detectAts()` to see if it matches a known ATS hostname:
 | `jobs.lever.co/{slug}` | Lever |
 | `jobs.ashbyhq.com/{slug}` | Ashby |
 | `apply.workable.com/api/v1/widget/accounts/{slug}` | Workable |
+| `{slug}.recruitee.com/api/offers` | Recruitee
 
 If matched, the company slug is extracted and the corresponding API is called directly (e.g. `boards-api.greenhouse.io/v1/boards/{slug}/jobs`). These APIs return structured JSON with titles, locations, and descriptions already included — no HTML scraping needed.
 
@@ -154,10 +155,7 @@ Skips any keywords belonging to the country's own language (already covered by P
 **Phase 2b — "Depending on location" conditional**
 Catches phrases like `"Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."` A regex detects the trigger phrase and then checks if any of the country's languages appear anywhere in the text. Returns `required` when matched. (The language may not be the first listed, so a simple substring match on `"depending on the location, {lang}"` would miss Swedish and Lithuanian in this example.)
 
-**Phase 2c — English-only confirmation**
-Checks for explicit English-only phrases like `"working language is English"`, `"English-speaking environment"`. Returns `not required`.
-
-**Phase 2d — Default**
+**Phase 2c — Default**
 No signals found. Returns `not required` — absence of any local-language mention is itself a strong signal that English is sufficient.
 
 ### Classification outputs
