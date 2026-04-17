@@ -59,6 +59,7 @@ function SizingRow({ items, compact }: { items: DataGridItem[]; compact?: boolea
     ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
     : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
   const ss = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
+  const ys = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
   const as = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
@@ -87,8 +88,8 @@ function SizingRow({ items, compact }: { items: DataGridItem[]; compact?: boolea
       ) : (
         <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6 flex items-baseline gap-0.5 sm:gap-1">
           <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.english_positions)}</span>
-          <span class={`${ts} font-light text-gray-300`} style={numFont}>/</span>
-          <span class={`${ts} tabular-nums`} style={numFont}>{formatNumber(widest.total_positions)}</span>
+          <span class={`${ss} font-light text-gray-300`} style={numFont}>/</span>
+          <span class={`${ys} tabular-nums`} style={numFont}>{formatNumber(widest.total_positions)}</span>
         </div>
       )}
       <div class="pl-4 sm:pl-6 md:pl-8 xl:pl-10">
@@ -135,6 +136,7 @@ function GridRow({
     ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
     : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
   const slashSize = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
+  const totalSize = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
   const arrowSize = compact
     ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
     : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
@@ -196,11 +198,11 @@ function GridRow({
           </>
         ) : (
           <div class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}>
-            <span class={`${textSize} font-semibold text-[#002EA2] leading-none tabular-nums`} style={numFont}>
+            <span class={`${textSize} font-semibold text-gray-900 leading-none tabular-nums`} style={numFont}>
               {formatNumber(item.english_positions)}
             </span>
-            <span class={`${textSize} font-light text-gray-300 leading-none`} style={numFont}>/</span>
-            <span class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`} style={numFont}>
+            <span class={`${slashSize} font-light text-gray-300 leading-none`} style={numFont}>/</span>
+            <span class={`${totalSize} font-semibold text-gray-300 leading-none tabular-nums`} style={numFont}>
               {formatNumber(item.total_positions)}
             </span>
           </div>

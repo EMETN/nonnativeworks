@@ -50,15 +50,15 @@ const companies = await getCompanyStatsByCountry(
         {
             companies.length > 0 && (
                 <StatsDescription>
-                    <strong class="font-semibold text-gray-700">
+                    <strong class="font-semibold text-gray-900">
                         {companies.length}
                     </strong>{' '}
                     {companies.length === 1 ? 'company' : 'companies'} —{' '}
-                    <strong class="font-semibold text-gray-700">
+                    <strong class="font-semibold text-gray-900">
                         {country.english_positions.toLocaleString()}
                     </strong>{' '}
                     of{' '}
-                    <strong class="font-semibold text-gray-700">
+                    <strong class="font-semibold text-gray-900">
                         {country.total_positions.toLocaleString()}
                     </strong>{' '}
                     {country.total_positions === 1 ? 'position' : 'positions'}{' '}

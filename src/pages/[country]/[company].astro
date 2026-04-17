@@ -61,7 +61,7 @@ const positions = await getPositionsByCompany(
 
         <!-- Title -->
         <h1
-            class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-0 leading-tight"
+            class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight"
         >
             {company.name}
             {
@@ -72,25 +72,16 @@ const positions = await getPositionsByCompany(
                 )
             }
         </h1>
-        <p class="text-xs sm:text-sm text-gray-400 mb-6">
-            Updated {
-                new Date(company.updated_at).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                })
-            }
-        </p>
 
         <!-- Position list (Preact island) -->
         {
             positions.length > 0 && (
                 <StatsDescription>
-                    <strong class="font-semibold text-gray-700">
+                    <strong class="font-semibold text-gray-900">
                         {company.english_positions.toLocaleString()}
                     </strong>{' '}
                     of{' '}
-                    <strong class="font-semibold text-gray-700">
+                    <strong class="font-semibold text-gray-900">
                         {company.total_positions.toLocaleString()}
                     </strong>{' '}
                     {company.total_positions === 1 ? 'position' : 'positions'} at{' '}
@@ -107,11 +98,24 @@ const positions = await getPositionsByCompany(
                     . Check back soon!
                 </div>
             ) : (
-                <PositionList
-                    positions={positions}
-                    careerPageUrl={company.career_page_url}
-                    client:visible
-                />
+                <>
+                    <PositionList
+                        positions={positions}
+                        careerPageUrl={company.career_page_url}
+                        client:visible
+                    />
+                    <p class="text-xs sm:text-sm text-gray-400 mt-4">
+                        Updated{' '}
+                        {new Date(company.updated_at).toLocaleDateString(
+                            'en-GB',
+                            {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                            },
+                        )}
+                    </p>
+                </>
             )
         }
     </div>
