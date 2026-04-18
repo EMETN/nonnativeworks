@@ -103,6 +103,7 @@ for domain in \
     "op-careers.fi" \
     "jobs.nokia.com" \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
     "nordea.com" \
     "www.nordea.com" \
@@ -117,6 +118,7 @@ for domain in \
     "storaenso.wd502.myworkdayjobs.com" \
     "kone.wd3.myworkdayjobs.com" \
     "finnair.wd103.myworkdayjobs.com" \
+    "maersk.wd3.myworkdayjobs.com" \
     "careers.abb" \
     "baronacareers.com" \
     "barona.fi" \
@@ -142,6 +144,13 @@ for domain in \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
     "happeo.recruitee.com" \
+    "jobs.arla.com" \
+    "jobs.ericsson.com" \
+    "teliacompany.com" \
+    "jobs.fortum.com" \
+    "novonordisk.com" \
+    "careers.carlsberg.com" \
+    "careers.orkla.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

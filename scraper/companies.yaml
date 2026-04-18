@@ -33,8 +33,16 @@ companies:
       url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
       min_positions: 10
 
+    - name: Arla
+      url: https://jobs.arla.com
+      min_positions: 10
+
     - name: Barona
       url: https://www.barona.fi/en/jobs/
+      min_positions: 10
+
+    - name: Ericsson
+      url: https://jobs.ericsson.com/careers
       min_positions: 10
 
     - name: Gofore

@@ -114,9 +114,12 @@ const DE: string[] = [
   'assistenz',      // assistant
   'ausbilder',      // instructor, trainer
   'ausbildung',     // apprenticeship / training
+  'ausschreiberung', // tender
+  'auszubildender',  // trainee
   'berater',        // consultant / advisor
   'datenbank',      // database
   'digitalisierung', // digitalization
+  'elektroniker',   // electrician
   'energiebranche', // energy sector
   'entwickler',     // developer
   'entwicklung',    // development
@@ -129,6 +132,8 @@ const DE: string[] = [
   'kauffrau',       // merchant / business person (female form)
   'kaufmann',       // merchant / business person
   'koordinator',    // coordinator
+  'kraftfahrer',    // driver
+  'laborant',       // laboratory technician
   'logistik',       // logistics
   'masterstudium',  // master's degree/programme
   'mechaniker',     // mechanic
