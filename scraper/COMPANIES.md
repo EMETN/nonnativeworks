@@ -7,6 +7,7 @@
 - Arla
 - Barona
 - CGI
+- Ericsson
 - Gofore
 - Happeo
 - If

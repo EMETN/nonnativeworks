@@ -674,13 +674,22 @@ export async function fetchCompanyApiJobs(
 
   let primaryJobsRaw: RawJob[];
   if (config.repeatFor) {
-    // Fetch once per body-override entry (e.g. one country + locale at a time) and merge results.
+    // Fetch once per override entry (e.g. one country at a time) and merge results.
+    // GET requests: override keys are appended as URL query params.
+    // POST requests: override keys are merged into the request body.
     const { body: overrides } = config.repeatFor;
     console.log(`[fetchCompanyApiJobs] repeatFor: ${overrides.length} entries → fetching sequentially`);
     const allRaw: RawJob[] = [];
     for (const override of overrides) {
       const label = Object.values(override).join('/');
-      const spec: FetchSpec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
+      let spec: FetchSpec;
+      if (method === 'GET') {
+        const params = new URLSearchParams(override).toString();
+        const sep = primarySpec.url.includes('?') ? '&' : '?';
+        spec = { ...primarySpec, url: `${primarySpec.url}${sep}${params}` };
+      } else {
+        spec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
+      }
       const jobs = await fetchAllJobsRaw(spec, label);
       allRaw.push(...jobs);
     }

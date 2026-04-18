@@ -292,6 +292,7 @@ function buildScrapeResult(
   let skipped = 0;
   let skippedUntracked = 0;
   const positionLogs: PositionLogEntry[] = [];
+  const skippedUnknownLocationJobs: Array<{ title: string; location: string }> = [];
 
   const companyFallbackCountry = getCompanyCountryFallback(careerUrl);
 
@@ -312,6 +313,7 @@ function buildScrapeResult(
 
     if (countries.length === 0) {
       skipped++;
+      skippedUnknownLocationJobs.push({ title: job.title, location: locationStr });
       continue;
     }
     if (trackedCountries.length === 0) {
@@ -382,6 +384,7 @@ function buildScrapeResult(
     ats,
     positions: positionLogs,
     skippedUnknownLocation: skipped,
+    skippedUnknownLocationJobs,
     skippedUntrackedCountry: skippedUntracked,
   });
 
