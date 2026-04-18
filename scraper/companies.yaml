@@ -61,6 +61,10 @@ companies:
       url: https://konecranes.careers/jobs
       min_positions: 10
 
+    - name: Maersk
+      url: https://www.maersk.com/careers
+      min_positions: 5
+
     - name: Nokia
       url: https://jobs.nokia.com/en
       min_positions: 10
