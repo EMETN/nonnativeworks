@@ -68,6 +68,7 @@ export function logScrapeRun(params: {
   ats: string | null;
   positions: PositionLogEntry[];
   skippedUnknownLocation: number;
+  skippedUnknownLocationJobs?: Array<{ title: string; location: string }>;
   skippedUntrackedCountry: number;
   error?: string;
   alsoToStderr?: boolean;
@@ -128,6 +129,13 @@ export function logScrapeRun(params: {
   if (params.skippedUntrackedCountry > 0) skippedParts.push(`${params.skippedUntrackedCountry} untracked country`);
   if (skippedParts.length > 0) {
     lines.push(`  SKIPPED  ${skippedParts.join('  ·  ')}`);
+    if (params.skippedUnknownLocationJobs?.length) {
+      for (const j of params.skippedUnknownLocationJobs) {
+        const titleStr = j.title.slice(0, 44).padEnd(46);
+        const locStr = j.location ? `"${j.location}"` : '(no location)';
+        lines.push(`  ?  ${titleStr}${locStr}`);
+      }
+    }
     lines.push('');
   }
 

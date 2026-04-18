@@ -236,10 +236,10 @@ export interface CompanyApiConfig {
     cityField?: string;
   };
   /**
-   * When set, one full paginated fetch is made per entry, with each entry's fields merged
-   * into the base body as overrides. All results are merged and deduplicated.
-   * Use when the API requires separate requests per filter value (e.g. Accenture requires
-   * one jobCountry + matching countrySite per request).
+   * When set, one full paginated fetch is made per entry. All results are merged and deduplicated.
+   * POST requests: entry fields are merged into the request body.
+   * GET requests: entry fields are appended as URL query params.
+   * Use when the API requires separate requests per filter value (e.g. one country per request).
    */
   repeatFor?: {
     body: Record<string, string>[];
@@ -448,7 +448,46 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
   },
 
  
-  'nordea.com': {
+   'jobs.ericsson.com': {
+    url: 'https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com&query=&location=&sort_by=hot',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+      'Referer': 'https://jobs.ericsson.com/careers',
+    },
+    repeatFor: {
+      body: [
+        { location: 'Finland' },
+        { location: 'Sweden' },
+        { location: 'Norway' },
+        { location: 'Denmark' },
+        { location: 'Netherlands' },
+        { location: 'Germany' },
+        { location: 'Estonia' },
+        { location: 'Latvia' },
+        { location: 'Lithuania' },
+        { location: 'Iceland' },
+      ],
+    },
+    pagination: { type: 'offset', param: 'start', pageSize: 10 },
+    itemsPath: 'data.positions',
+    fields: {
+      title: 'name',
+      location: 'locations',
+      id: 'id',
+      department: 'department',
+      jobFunction: 'efcustomTextJobfuntionAdvancefilterpcs',
+    },
+    urlTemplate: 'https://jobs.ericsson.com{positionUrl}',
+    companyName: 'Ericsson',
+    descriptionApiUrl: 'https://jobs.ericsson.com/api/pcsx/position_details?position_id={sourceId}&domain=ericsson.com&hl=en',
+    descriptionApiItemsPath: 'data',
+    descriptionApiFields: ['jobDescription'],
+    descriptionApiWorkModelField: 'workLocationOption',
+  },
+
+ 'nordea.com': {
     url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
     method: 'GET',
 
@@ -498,4 +537,5 @@ export const PYTHON_SCRAPER_COMPANY_NAMES: Array<{ urlSubstring: string; name: s
   { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
   { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
   { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
+  { urlSubstring: 'jobs.arla.com', name: 'Arla' },
 ];
