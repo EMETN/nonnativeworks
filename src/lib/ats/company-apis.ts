@@ -58,7 +58,7 @@ export interface CompanyApiConfig {
   pagination:
     | { type: 'none' }
     | { type: 'page';   param?: string; startPage?: number; totalCountPath?: string }
-    | { type: 'offset'; param?: string; pageSize: number }
+    | { type: 'offset'; param?: string; pageSize: number; totalCountPath?: string }
     /**
      * Oracle HCM finder-string pagination. The offset is injected directly into the
      * finder=... parameter value (e.g. "limit=200,offset=200,sortBy=...") rather than
@@ -449,7 +449,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
 
  
    'jobs.ericsson.com': {
-    url: 'https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com&query=&location=&sort_by=hot',
+    url: 'https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com&query=&sort_by=hot',
     method: 'GET',
     headers: {
       'User-Agent': 'Mozilla/5.0',
@@ -470,11 +470,12 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         { location: 'Iceland' },
       ],
     },
-    pagination: { type: 'offset', param: 'start', pageSize: 10 },
+    pagination: { type: 'offset', param: 'start', pageSize: 10, totalCountPath: 'data.count' },
     itemsPath: 'data.positions',
     fields: {
       title: 'name',
       location: 'locations',
+      cities: 'locations',
       id: 'id',
       department: 'department',
       jobFunction: 'efcustomTextJobfuntionAdvancefilterpcs',

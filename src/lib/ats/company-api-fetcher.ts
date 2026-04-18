@@ -300,12 +300,13 @@ async function enrichDescriptionsFromApi(
   jobFunctionField?: string,
   workModelField?: string,
 ): Promise<void> {
-  const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
+  const targets = jobs.filter((j) => (j.descriptionApiId ?? j.sourceId) && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        const url = urlTemplate.replace('{sourceId}', encodeURIComponent(job.sourceId!));
+        const apiId = job.descriptionApiId ?? job.sourceId!;
+        const url = urlTemplate.replace('{sourceId}', encodeURIComponent(apiId));
         try {
           const data = await fetchPage(url, 'GET', undefined, headers);
           const item = getPath(data, itemsPath);
@@ -561,6 +562,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
     const param = pagination.param ?? 'offset';
     const pageSize = pagination.pageSize;
     let offset = 0;
+    let totalCount: number | undefined;
 
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
@@ -573,6 +575,14 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
         break;
       }
 
+      if (totalCount === undefined && pagination.totalCountPath) {
+        const raw = getPath(data, pagination.totalCountPath);
+        if (typeof raw === 'number') {
+          totalCount = raw;
+          console.log(`[${label}] total count from API: ${totalCount} (via ${pagination.totalCountPath})`);
+        }
+      }
+
       const items = extractItems(data, itemsPath);
       const before = jobs.length;
       jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
@@ -580,6 +590,10 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       if (items.length === 0) {
         console.log(`[${label}] stopping: empty page at offset=${offset}`);
+        break;
+      }
+      if (totalCount !== undefined && jobs.length >= totalCount) {
+        console.log(`[${label}] stopping: ${jobs.length} jobs fetched of ${totalCount}`);
         break;
       }
       if (items.length < pageSize) {
@@ -691,6 +705,30 @@ export async function fetchCompanyApiJobs(
         spec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
       }
       const jobs = await fetchAllJobsRaw(spec, label);
+      if (method === 'GET') {
+        // Tag each job with the filter country so the same job appearing in
+        // multiple country queries survives as a separate entry per country.
+        // Without this, dedup by sourceId would collapse them into one, and
+        // that one might have an untracked country as its primary location.
+        for (const job of jobs) {
+          if (job.sourceId) {
+            job.descriptionApiId = job.sourceId;
+            job.sourceId = `${job.sourceId}-${label}`;
+          }
+          // Use country_code (checked first in buildScrapeResult) for country
+          // resolution so the original location string is preserved for city extraction.
+          job.country_code = label;
+          // Filter the cities array to only entries matching this country, then
+          // extract the city name from each "City,State,Country" string.
+          if (job.cities) {
+            const matched = job.cities
+              .filter((c) => c.toLowerCase().includes(label.toLowerCase()))
+              .map((c) => c.split(',')[0].trim())
+              .filter(Boolean);
+            job.cities = matched.length > 0 ? matched : undefined;
+          }
+        }
+      }
       allRaw.push(...jobs);
     }
     primaryJobsRaw = allRaw;
