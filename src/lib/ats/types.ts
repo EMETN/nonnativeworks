@@ -7,10 +7,12 @@ export interface RawJob {
   location?: string;
   url?: string;
   department?: string;
-  /** ISO alpha-2 country code set by scrapers that already know the country (e.g. njoyn). */
+  /** Country hint passed to lookupCountryFromLocation — accepts ISO alpha-2 codes or full country names. Set by scrapers that already know the country (e.g. njoyn, repeatFor GET). */
   country_code?: string;
   /** Stable ID from the source API, used for deduplication when merging primary + secondary fetches. */
   sourceId?: string;
+  /** Original source ID before any suffix was applied (e.g. repeatFor country tagging). Used for description API calls. */
+  descriptionApiId?: string;
   /** Explicit city name when the scraper can provide it separately from the country-resolution location string. */
   city?: string;
   /** Explicit list of city names when the API returns multiple cities for a single posting. Takes priority over city. */

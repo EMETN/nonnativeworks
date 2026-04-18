@@ -308,7 +308,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'bollnäs':                  { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'borås':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'boras':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
-  'enköping':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'enkoping':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'enköping':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'fors':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'falkenberg':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
