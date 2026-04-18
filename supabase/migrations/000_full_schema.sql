@@ -291,6 +291,7 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Apache Beam',       'framework', ARRAY['apache beam', 'google dataflow']),
 ('Apache Flink',      'framework', ARRAY['apache flink', 'flink']),
 ('Apache Spark',      'framework', ARRAY['apache spark', 'spark', 'pyspark']),
+('Apache Struts',     'framework', ARRAY['struts', 'apache struts', 'struts2', 'struts 2']),
 ('ASP.NET',           'framework', ARRAY['asp.net', 'aspnet', 'asp.net core', 'aspnetcore']),
 ('Bootstrap',         'framework', ARRAY['bootstrap']),
 ('Chakra UI',         'framework', ARRAY['chakra ui', 'chakra']),
@@ -304,6 +305,8 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('Hadoop',            'framework', ARRAY['hadoop', 'apache hadoop', 'hdfs', 'mapreduce']),
 ('Hugging Face',      'framework', ARRAY['hugging face', 'huggingface', 'hf transformers']),
 ('Ionic',             'framework', ARRAY['ionic', 'ionic framework']),
+('jQuery',            'framework', ARRAY['jquery', 'jquery ui', 'jquery mobile']),
+('JSP',               'framework', ARRAY['jsp', 'java server pages', 'javaserver pages']),
 ('Keras',             'framework', ARRAY['keras']),
 ('Ktor',              'framework', ARRAY['ktor']),
 ('LangChain',         'framework', ARRAY['langchain', 'lang chain']),
@@ -505,6 +508,7 @@ INSERT INTO skills (canonical_name, category, aliases) VALUES
 ('SHRM-CP',              'certification', ARRAY['shrm-cp', 'shrm cp', 'shrm', 'phr', 'professional in human resources']),
 
 -- Platforms
+('3DEXPERIENCE',           'platform', ARRAY['3dexperience', '3dx', 'dassault 3dexperience', 'dassault systemes']),
 ('Adobe Creative Suite',   'platform', ARRAY['adobe creative suite', 'adobe cc', 'adobe creative cloud', 'photoshop', 'illustrator', 'indesign', 'premiere pro', 'after effects', 'lightroom']),
 ('Adobe Experience Cloud', 'platform', ARRAY['adobe experience cloud', 'adobe experience manager', 'aem', 'adobe analytics']),
 ('Agile Data Engine',      'platform', ARRAY['agile data engine', 'ade']),
@@ -535,5 +539,8 @@ WHERE canonical_name IN (
   'Assembly',
   'Perl',
   'VBA',
-  'Objective-C'
+  'Objective-C',
+  'Apache Struts',
+  'JSP',
+  'jQuery'
 );

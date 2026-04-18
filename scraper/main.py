@@ -21,6 +21,7 @@ from urllib.parse import urljoin
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import extract_jobs
 from platforms.academicwork import scrape_academicwork_static
+from platforms.arla import scrape_arla_static
 from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright
 from platforms.barona import scrape_barona
 from platforms.neste import scrape_neste_static
@@ -31,6 +32,7 @@ from platforms.zalando import scrape_zalando_static
 MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 
 PLATFORM_ACADEMICWORK = "academicwork"
+PLATFORM_ARLA = "arla"
 PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
 PLATFORM_BARONA = "barona"
@@ -55,6 +57,8 @@ def detect_platform(html: str, url: str = "") -> str | None:
     """Detect the ATS platform from page HTML or URL."""
     if "academicwork.fi" in url:
         return PLATFORM_ACADEMICWORK
+    if "jobs.arla.com" in url:
+        return PLATFORM_ARLA
     if "attrax-vacancy-tile" in html:
         return PLATFORM_ATTRAX
     if "njoyn.com" in url:
@@ -155,6 +159,16 @@ def main():
             print(f"Academic Work static found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Academic Work static failed: {e}", file=sys.stderr)
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
+    if platform == PLATFORM_ARLA:
+        print("jobs.arla.com detected — using dedicated static scraper", file=sys.stderr)
+        try:
+            jobs = scrape_arla_static(url)
+            print(f"Arla static found {len(jobs)} jobs", file=sys.stderr)
+        except Exception as e:
+            print(f"Arla static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 
