@@ -179,7 +179,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             href={careerPageUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-xs sm:text-sm text-[#002EA2] hover:text-[#001C6A] font-semibold"
+            class="text-xs sm:text-sm text-[#166534] hover:text-[#052e16] font-semibold"
             style={numFont}
           >
             All positions ↗

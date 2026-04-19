@@ -124,7 +124,7 @@ export default function DataManager() {
         <span class="text-sm text-gray-500">{groups.length} companies</span>
         <button
           onClick={load}
-          class="text-sm text-[#002EA2] hover:underline"
+          class="text-sm text-[#166534] hover:underline"
         >
           Refresh
         </button>

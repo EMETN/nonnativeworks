@@ -27,7 +27,7 @@ function PercentageBadge({ value }: { value: number }) {
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active) return <span class="ml-1 text-gray-300">↕</span>;
-  return <span class="ml-1 text-[#002EA2]">{dir === 'asc' ? '↑' : '↓'}</span>;
+  return <span class="ml-1 text-[#166534]">{dir === 'asc' ? '↑' : '↓'}</span>;
 }
 
 function PositionRow({ pos }: { pos: PositionDetail }) {
@@ -40,7 +40,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
               href={pos.url}
               target="_blank"
               rel="noopener noreferrer"
-              class="hover:underline hover:text-[#002EA2] text-gray-800"
+              class="hover:underline hover:text-[#166534] text-gray-800"
             >
               {pos.title}
             </a>
@@ -62,7 +62,7 @@ function SeeAllRow({ url }: { url: string }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          class="text-sm text-[#002EA2] hover:text-[#001C6A] hover:underline font-medium"
+          class="text-sm text-[#166534] hover:text-[#052e16] hover:underline font-medium"
         >
           See all positions ↗
         </a>
@@ -165,7 +165,7 @@ export default function CompanyTable({ companies, positions, countrySlug }: Prop
           placeholder="Search companies, positions, categories…"
           value={search}
           onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-          class="w-full text-sm border-b border-gray-200 bg-transparent px-1 py-2 pr-7 focus:outline-none focus:border-[#1A4DB8] transition-colors"
+          class="w-full text-sm border-b border-gray-200 bg-transparent px-1 py-2 pr-7 focus:outline-none focus:border-[#16a34a] transition-colors"
         />
         {search && (
           <button
@@ -224,7 +224,7 @@ export default function CompanyTable({ companies, positions, countrySlug }: Prop
                 <>
                   <tr
                     key={co.company_id}
-                    class="border-b border-gray-100 hover:bg-[#002EA2] hover:text-white group transition-colors cursor-pointer"
+                    class="border-b border-gray-100 hover:bg-[#166534] hover:text-white group transition-colors cursor-pointer"
                     onClick={() => toggleExpand(co.company_id)}
                   >
                     <td class="px-4 py-3 font-medium text-gray-900 group-hover:text-white overflow-hidden">
@@ -240,18 +240,18 @@ export default function CompanyTable({ companies, positions, countrySlug }: Prop
                           {co.name}
                         </a>
                         {co.is_english_company && (
-                          <span class="text-xs bg-[#CCd9ED] text-[#002383] group-hover:bg-white/20 group-hover:text-white px-1.5 py-0.5 rounded font-semibold">
+                          <span class="text-xs bg-[#dcfce7] text-[#14532d] group-hover:bg-white/20 group-hover:text-white px-1.5 py-0.5 rounded font-semibold">
                             EN
                           </span>
                         )}
                       </div>
                     </td>
-                    <td class="px-4 py-3 text-center text-[#002EA2] group-hover:text-white font-bold" style={numFont}>{visibleCount}</td>
+                    <td class="px-4 py-3 text-center text-[#166534] group-hover:text-white font-bold" style={numFont}>{visibleCount}</td>
                     <td class="px-4 py-3 text-center text-gray-600 group-hover:text-white" style={numFont}>{co.total_positions}</td>
                     <td class="px-4 py-3 text-center group-hover:text-white">
                       <PercentageBadge value={pct} />
                     </td>
-                    <td class="px-4 py-3 text-gray-400 group-hover:text-[#CCd9ED] text-xs max-w-[200px] truncate">
+                    <td class="px-4 py-3 text-gray-400 group-hover:text-[#dcfce7] text-xs max-w-[200px] truncate">
                       {visibleCategories.join(', ') || '—'}
                     </td>
                   </tr>
