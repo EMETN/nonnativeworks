@@ -12,6 +12,7 @@
 - Happeo
 - If
 - Konecranes
+- Maersk
 - Neste
 - Nokia
 - Nordea
@@ -24,6 +25,7 @@
 - Smartly
 - SOK
 - Stora Enso
+- Telia
 - Tieto
 - Wolt
 - Zalando
@@ -45,7 +47,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
-| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If |
+| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk |
 | Recruitee | `{slug}.recruitee.com` | Happeo |
 
 ---
@@ -61,6 +63,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Orion | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud |
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
+| Telia | `teliacompany.com` | Custom JSON API (`/api/job`) |
 | Accenture | `accenture.com` | Custom API |
 
 ---
