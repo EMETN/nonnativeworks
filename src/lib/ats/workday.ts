@@ -37,7 +37,7 @@
  *                       and to call the detail API for multi-location postings
  *
  * The job's public URL is built as:
- *   https://{host}/en-US/{site}{externalPath}
+ *   https://{host}/{locale}/{site}{externalPath}
  *
  * ### Step 3 — Multi-location expansion (`fetchJobLocations`)
  * When `locationsText` matches the pattern "N location(s)" (e.g. "3 locations"),
@@ -88,9 +88,9 @@
 
 import type { RawJob } from "./types";
 import { titleAppearsNonEnglish } from "./title-language";
-import { lookupCountryFromLocation } from "./country-lookup";
+import { lookupCountryFromLocation, extractCitiesForCountry, isCountryKey } from "./country-lookup";
 
-const DESCRIPTION_BATCH = 5;
+const DESCRIPTION_BATCH = 10;
 
 function extractOgDescription(html: string): string | undefined {
   const m =
@@ -175,7 +175,7 @@ export async function enrichWorkdayDescriptions(jobs: RawJob[]): Promise<void> {
             if (apiRes.ok) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const data: any = await apiRes.json();
-              const info = data.jobPostingInfo ?? data;
+              const info = data.jobPostingInfo ?? data.jobPosting ?? data;
               if (typeof info.jobDescription === "string" && info.jobDescription) {
                 job.descriptionText = stripHtml(info.jobDescription);
                 return;
@@ -202,6 +202,8 @@ export interface WorkdayUrlParts {
   host: string;
   company: string;
   site: string;
+  /** Locale segment from the career page URL, e.g. "en-US", "fi-FI". Used when building public job URLs. */
+  locale: string;
   /** Facet filters to include in every API request, e.g. { locationCountry: ['abc123', ...] }. */
   appliedFacets?: Record<string, string[]>;
 }
@@ -211,8 +213,8 @@ export interface WorkdayUrlParts {
  * e.g. https://posti.wd3.myworkdayjobs.com/fi-FI/external
  *   → { host: 'posti.wd3.myworkdayjobs.com', company: 'posti', site: 'external' }
  *
- * The locale segment (e.g. fi-FI) is skipped — the API path uses only the
- * site name (last path segment).
+ * The locale segment (e.g. fi-FI) is captured and returned so public job URLs
+ * preserve the original locale rather than defaulting to en-US.
  *
  * Any recognised facet query params (locationCountry, workerSubType, etc.) are captured
  * into appliedFacets and forwarded to every paginated API request, so the server only
@@ -224,6 +226,8 @@ export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
     if (!parsed.hostname.endsWith(".myworkdayjobs.com")) return null;
     const company = parsed.hostname.split(".")[0];
     const segments = parsed.pathname.split("/").filter(Boolean);
+    const LOCALE_RE = /^[a-z]{2}-[A-Z]{2}$/;
+    const locale = segments.length >= 2 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
     const site = segments[segments.length - 1];
     if (!company || !site) return null;
 
@@ -243,6 +247,7 @@ export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
       host: parsed.hostname,
       company,
       site,
+      locale,
       ...(Object.keys(appliedFacets).length > 0 && { appliedFacets }),
     };
   } catch {
@@ -263,8 +268,8 @@ interface WorkdayResponse {
 
 
 const PAGE_SIZE = 20; // Workday rejects limit > 20
-const EXPAND_BATCH = 5;
-const MULTI_LOC_RE = /^\d+ locations?$/i;
+const EXPAND_BATCH = 10;
+const MULTI_LOC_RE = /^\d+ locations?$|^multiple locations?$/i;
 
 /**
  * Some Workday instances (e.g. SOK) use venue/building names as locationsText
@@ -275,6 +280,28 @@ const MULTI_LOC_RE = /^\d+ locations?$/i;
 function looksLikeVenueName(text: string): boolean {
   if (!text || MULTI_LOC_RE.test(text.trim())) return false;
   return text === text.toUpperCase() && !text.includes(',');
+}
+
+/**
+ * Extract a clean city name from a Workday location string. Handles:
+ *   - Venue/ISO-prefix codes: "DKCPH55 - Copenhagen - Esplanaden 50" → "Copenhagen"
+ *   - Detail API format:      "Denmark, Copenhagen, 1098"              → "Copenhagen"
+ *   - Standard format:        "Copenhagen, Denmark"                    → "Copenhagen"
+ */
+function parseCityFromWorkdayLoc(loc: string, countryCode: string): string | undefined {
+  // Venue code or ISO prefix: first dash-segment is all uppercase letters+digits → city is second
+  const dashParts = loc.split(/\s+-\s+/);
+  if (dashParts.length >= 2 && /^[A-Z]{2}[A-Z0-9]*$/.test(dashParts[0].trim())) {
+    return dashParts[1].trim() || undefined;
+  }
+  // Try CITY_MAP lookup first (handles "Copenhagen, Denmark" and "Denmark, Copenhagen, 1098")
+  const byMap = extractCitiesForCountry(loc, countryCode);
+  if (byMap.length > 0) return byMap[0];
+  // Fallback for cities not in CITY_MAP: if first comma segment is a country name use second,
+  // otherwise use first (e.g. "Great Britain, Maidenhead, SL6 8AA" → "Maidenhead")
+  const commaParts = loc.split(',').map((s) => s.trim()).filter(Boolean);
+  if (commaParts.length >= 2 && isCountryKey(commaParts[0])) return commaParts[1];
+  return commaParts[0] || undefined;
 }
 
 /**
@@ -306,7 +333,7 @@ async function fetchJobLocations(
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
-    const info = data.jobPostingInfo ?? data;
+    const info = data.jobPostingInfo ?? data.jobPosting ?? data;
     const primary = typeof info.location === "string" ? info.location : undefined;
     const additional: string[] = Array.isArray(info.additionalLocations)
       ? (info.additionalLocations as unknown[]).filter((l): l is string => typeof l === "string")
@@ -338,8 +365,9 @@ export async function fetchWorkdayJobs(
   const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
   const allPostings: WorkdayJobPosting[] = [];
   let offset = 0;
+  let total = Infinity;
 
-  while (true) {
+  while (offset < total) {
     const origin = `https://${parts.host}`;
     const res = await fetch(endpoint, {
       method: "POST",
@@ -369,6 +397,7 @@ export async function fetchWorkdayJobs(
     const data: WorkdayResponse = await res.json();
     const postings = data.jobPostings ?? [];
     allPostings.push(...postings);
+    if (total === Infinity && data.total != null) total = data.total;
 
     offset += PAGE_SIZE;
     if (postings.length < PAGE_SIZE) break;
@@ -383,16 +412,20 @@ export async function fetchWorkdayJobs(
   const needsCountryDetail: WorkdayJobPosting[] = [];
 
   for (const posting of allPostings) {
-    const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
+    const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
     const locText = posting.locationsText ?? "";
+    const resolvedCountries = lookupCountryFromLocation(locText);
     if (MULTI_LOC_RE.test(locText.trim())) {
       multiLocQueue.push(posting);
     } else if (looksLikeVenueName(locText)) {
       venueQueue.push(posting);
-    } else if (locText && lookupCountryFromLocation(locText).length === 0) {
+    } else if (locText && resolvedCountries.length === 0) {
       needsCountryDetail.push(posting);
     } else {
-      allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl });
+      const city = resolvedCountries.length > 0
+        ? parseCityFromWorkdayLoc(locText, resolvedCountries[0].code)
+        : undefined;
+      allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl, ...(city && { city }) });
     }
   }
 
@@ -402,16 +435,21 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
       await Promise.all(
         venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
+          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
           const { locations, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
           // Use the detail location if available; fall back to the original venue string.
           const location = locations[0] ?? posting.locationsText;
+          const resolvedForCity = lookupCountryFromLocation(location ?? "");
+          const city = resolvedForCity.length > 0
+            ? parseCityFromWorkdayLoc(location ?? "", resolvedForCity[0].code)
+            : undefined;
           allJobs.push({
             title: posting.title,
             url: jobUrl,
             location,
+            ...(city && { city }),
             ...(description && { descriptionText: description }),
           });
         }),
@@ -428,17 +466,23 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
       await Promise.all(
         needsCountryDetail.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
-          const { countryDescriptor, description } = await fetchJobLocations(
+          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
+          const { locations, countryDescriptor, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
-          // Use the country descriptor as the location so downstream country resolution works.
-          // Fall back to the original locationsText if the detail fetch yields nothing.
-          const location = countryDescriptor ?? posting.locationsText;
+          // Prefer countryDescriptor ("Denmark") for country resolution; fall back to
+          // locations[0] (venue code like "DKRJZ51 - Tinglev - ...") which resolves via
+          // leading-code detection, then to the original locationsText as last resort.
+          const location = countryDescriptor ?? locations[0] ?? posting.locationsText;
+          const resolvedForCity = lookupCountryFromLocation(location ?? "");
+          const city = locations[0] && resolvedForCity.length > 0
+            ? parseCityFromWorkdayLoc(locations[0], resolvedForCity[0].code)
+            : undefined;
           allJobs.push({
             title: posting.title,
             url: jobUrl,
             location,
+            ...(city && { city }),
             ...(description && { descriptionText: description }),
           });
         }),
@@ -452,7 +496,7 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < multiLocQueue.length; i += EXPAND_BATCH) {
       await Promise.all(
         multiLocQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/en-US/${parts.site}${posting.externalPath}`;
+          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
           const { locations, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
@@ -471,16 +515,11 @@ export async function fetchWorkdayJobs(
               if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
               byCountry.get(groupKey)!.push(loc);
             }
-            for (const [, locs] of byCountry) {
+            for (const [countryKey, locs] of byCountry) {
               const citySet = new Set<string>();
               for (const loc of locs) {
-                const comma = loc.indexOf(",");
-                if (comma > 0) {
-                  citySet.add(loc.slice(0, comma).trim());
-                } else {
-                  // Bare city name with no country suffix — add the whole string as the city.
-                  citySet.add(loc.trim());
-                }
+                const city = parseCityFromWorkdayLoc(loc, countryKey);
+                if (city) citySet.add(city);
               }
               allJobs.push({
                 title: posting.title,

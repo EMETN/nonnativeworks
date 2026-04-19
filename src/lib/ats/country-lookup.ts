@@ -11,14 +11,6 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'suomi': { name: 'Finland', code: 'FI', slug: 'finland' },
   'fin': { name: 'Finland', code: 'FI', slug: 'finland' },
   'fi': { name: 'Finland', code: 'FI', slug: 'finland' },
-  'sweden': { name: 'Sweden', code: 'SE', slug: 'sweden' },
-  'sverige': { name: 'Sweden', code: 'SE', slug: 'sweden' },
-  'swe': { name: 'Sweden', code: 'SE', slug: 'sweden' },
-  'se': { name: 'Sweden', code: 'SE', slug: 'sweden' },
-  'norway': { name: 'Norway', code: 'NO', slug: 'norway' },
-  'norge': { name: 'Norway', code: 'NO', slug: 'norway' },
-  'nor': { name: 'Norway', code: 'NO', slug: 'norway' },
-  'no': { name: 'Norway', code: 'NO', slug: 'norway' },
   'denmark': { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'danmark': { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'dnk': { name: 'Denmark', code: 'DK', slug: 'denmark' },
@@ -27,44 +19,53 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'island': { name: 'Iceland', code: 'IS', slug: 'iceland' },
   'isl': { name: 'Iceland', code: 'IS', slug: 'iceland' },
   'is': { name: 'Iceland', code: 'IS', slug: 'iceland' },
+  'norway': { name: 'Norway', code: 'NO', slug: 'norway' },
+  'norge': { name: 'Norway', code: 'NO', slug: 'norway' },
+  'nor': { name: 'Norway', code: 'NO', slug: 'norway' },
+  'no': { name: 'Norway', code: 'NO', slug: 'norway' },
+  'sweden': { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'sverige': { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'swe': { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'se': { name: 'Sweden', code: 'SE', slug: 'sweden' },
   // DACH
-  'germany': { name: 'Germany', code: 'DE', slug: 'germany' },
-  'deutschland': { name: 'Germany', code: 'DE', slug: 'germany' },
-  'deu': { name: 'Germany', code: 'DE', slug: 'germany' },
-  'de': { name: 'Germany', code: 'DE', slug: 'germany' },
   'austria': { name: 'Austria', code: 'AT', slug: 'austria' },
   'österreich': { name: 'Austria', code: 'AT', slug: 'austria' },
   'osterreich': { name: 'Austria', code: 'AT', slug: 'austria' },
   'aut': { name: 'Austria', code: 'AT', slug: 'austria' },
+  'germany': { name: 'Germany', code: 'DE', slug: 'germany' },
+  'deutschland': { name: 'Germany', code: 'DE', slug: 'germany' },
+  'deu': { name: 'Germany', code: 'DE', slug: 'germany' },
+  'de': { name: 'Germany', code: 'DE', slug: 'germany' },
   'switzerland': { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   'schweiz': { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   'suisse': { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   'che': { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   // Western Europe
+  'belgium': { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'belgique': { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'belgië': { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'belgie': { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'bel': { name: 'Belgium', code: 'BE', slug: 'belgium' },
   'france': { name: 'France', code: 'FR', slug: 'france' },
   'fra': { name: 'France', code: 'FR', slug: 'france' },
+  'italy': { name: 'Italy', code: 'IT', slug: 'italy' },
+  'italia': { name: 'Italy', code: 'IT', slug: 'italy' },
+  'ita': { name: 'Italy', code: 'IT', slug: 'italy' },
+  'luxembourg': { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
+  'lux': { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
   'netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'the netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'holland': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nederland': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nld': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nl': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
-  'belgium': { name: 'Belgium', code: 'BE', slug: 'belgium' },
-  'belgique': { name: 'Belgium', code: 'BE', slug: 'belgium' },
-  'belgië': { name: 'Belgium', code: 'BE', slug: 'belgium' },
-  'belgie': { name: 'Belgium', code: 'BE', slug: 'belgium' },
-  'bel': { name: 'Belgium', code: 'BE', slug: 'belgium' },
-  'luxembourg': { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
-  'lux': { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
   'spain': { name: 'Spain', code: 'ES', slug: 'spain' },
   'españa': { name: 'Spain', code: 'ES', slug: 'spain' },
   'espana': { name: 'Spain', code: 'ES', slug: 'spain' },
   'esp': { name: 'Spain', code: 'ES', slug: 'spain' },
   'portugal': { name: 'Portugal', code: 'PT', slug: 'portugal' },
   'prt': { name: 'Portugal', code: 'PT', slug: 'portugal' },
-  'italy': { name: 'Italy', code: 'IT', slug: 'italy' },
-  'italia': { name: 'Italy', code: 'IT', slug: 'italy' },
-  'ita': { name: 'Italy', code: 'IT', slug: 'italy' },
+
   // British Isles
   'united kingdom': { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'uk': { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
@@ -141,20 +142,22 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'moldova': { name: 'Moldova', code: 'MD', slug: 'moldova' },
   'belarus': { name: 'Belarus', code: 'BY', slug: 'belarus' },
   // Americas
+  'argentina': { name: 'Argentina', code: 'AR', slug: 'argentina' },
+  'brasil': { name: 'Brazil', code: 'BR', slug: 'brazil' },
+  'brazil': { name: 'Brazil', code: 'BR', slug: 'brazil' },
+  'canada': { name: 'Canada', code: 'CA', slug: 'canada' },
+  'chile': { name: 'Chile', code: 'CL', slug: 'chile' },
+  'colombia': { name: 'Colombia', code: 'CO', slug: 'colombia' },
+  'mexico': { name: 'Mexico', code: 'MX', slug: 'mexico' },
+  'méxico': { name: 'Mexico', code: 'MX', slug: 'mexico' },
   'united states': { name: 'United States', code: 'US', slug: 'united-states' },
+  'united states of america': { name: 'United States', code: 'US', slug: 'united-states' },
   'usa': { name: 'United States', code: 'US', slug: 'united-states' },
   'u.s.a.': { name: 'United States', code: 'US', slug: 'united-states' },
   'u.s.': { name: 'United States', code: 'US', slug: 'united-states' },
-  'canada': { name: 'Canada', code: 'CA', slug: 'canada' },
-  'brazil': { name: 'Brazil', code: 'BR', slug: 'brazil' },
-  'brasil': { name: 'Brazil', code: 'BR', slug: 'brazil' },
-  'mexico': { name: 'Mexico', code: 'MX', slug: 'mexico' },
-  'méxico': { name: 'Mexico', code: 'MX', slug: 'mexico' },
-  'argentina': { name: 'Argentina', code: 'AR', slug: 'argentina' },
-  'colombia': { name: 'Colombia', code: 'CO', slug: 'colombia' },
-  'chile': { name: 'Chile', code: 'CL', slug: 'chile' },
   // Asia-Pacific
   'australia': { name: 'Australia', code: 'AU', slug: 'australia' },
+  'aus': { name: 'Australia', code: 'AU', slug: 'australia' },
   'new zealand': { name: 'New Zealand', code: 'NZ', slug: 'new-zealand' },
   'japan': { name: 'Japan', code: 'JP', slug: 'japan' },
   'china': { name: 'China', code: 'CN', slug: 'china' },
@@ -173,12 +176,10 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'uae': { name: 'United Arab Emirates', code: 'AE', slug: 'united-arab-emirates' },
   'saudi arabia': { name: 'Saudi Arabia', code: 'SA', slug: 'saudi-arabia' },
   // Americas (additional)
-  'united states of america': { name: 'United States', code: 'US', slug: 'united-states' },
   'peru': { name: 'Peru', code: 'PE', slug: 'peru' },
   'ecuador': { name: 'Ecuador', code: 'EC', slug: 'ecuador' },
   'bolivia': { name: 'Bolivia', code: 'BO', slug: 'bolivia' },
   'paraguay': { name: 'Paraguay', code: 'PY', slug: 'paraguay' },
-  'brazil': { name: 'Brazil', code: 'BR', slug: 'brazil' },
   'uruguay': { name: 'Uruguay', code: 'UY', slug: 'uruguay' },
   'venezuela': { name: 'Venezuela', code: 'VE', slug: 'venezuela' },
   'panama': { name: 'Panama', code: 'PA', slug: 'panama' },
@@ -310,8 +311,78 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'vanuatu': { name: 'Vanuatu', code: 'VU', slug: 'vanuatu' },
   'samoa': { name: 'Samoa', code: 'WS', slug: 'samoa' },
   'tonga': { name: 'Tonga', code: 'TO', slug: 'tonga' },
-  'australia': { name: 'Australia', code: 'AU', slug: 'australia' },
-  'aus': { name: 'Australia', code: 'AU', slug: 'australia' },
+  // 2-letter ISO codes not already listed above.
+  // Needed for Workday venue-code prefix detection, e.g. "USCNC05 - Charlotte" → 'us' → United States.
+  // Europe
+  'al': { name: 'Albania', code: 'AL', slug: 'albania' },
+  'am': { name: 'Armenia', code: 'AM', slug: 'armenia' },
+  'at': { name: 'Austria', code: 'AT', slug: 'austria' },
+  'az': { name: 'Azerbaijan', code: 'AZ', slug: 'azerbaijan' },
+  'ba': { name: 'Bosnia and Herzegovina', code: 'BA', slug: 'bosnia-and-herzegovina' },
+  'be': { name: 'Belgium', code: 'BE', slug: 'belgium' },
+  'bg': { name: 'Bulgaria', code: 'BG', slug: 'bulgaria' },
+  'by': { name: 'Belarus', code: 'BY', slug: 'belarus' },
+  'ch': { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+  'cy': { name: 'Cyprus', code: 'CY', slug: 'cyprus' },
+  'cz': { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+  'es': { name: 'Spain', code: 'ES', slug: 'spain' },
+  'fr': { name: 'France', code: 'FR', slug: 'france' },
+  'gb': { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'ge': { name: 'Georgia', code: 'GE', slug: 'georgia' },
+  'gr': { name: 'Greece', code: 'GR', slug: 'greece' },
+  'hr': { name: 'Croatia', code: 'HR', slug: 'croatia' },
+  'hu': { name: 'Hungary', code: 'HU', slug: 'hungary' },
+  'ie': { name: 'Ireland', code: 'IE', slug: 'ireland' },
+  'it': { name: 'Italy', code: 'IT', slug: 'italy' },
+  'lu': { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
+  'md': { name: 'Moldova', code: 'MD', slug: 'moldova' },
+  'me': { name: 'Montenegro', code: 'ME', slug: 'montenegro' },
+  'mk': { name: 'North Macedonia', code: 'MK', slug: 'north-macedonia' },
+  'mt': { name: 'Malta', code: 'MT', slug: 'malta' },
+  'pl': { name: 'Poland', code: 'PL', slug: 'poland' },
+  'pt': { name: 'Portugal', code: 'PT', slug: 'portugal' },
+  'ro': { name: 'Romania', code: 'RO', slug: 'romania' },
+  'rs': { name: 'Serbia', code: 'RS', slug: 'serbia' },
+  'ru': { name: 'Russia', code: 'RU', slug: 'russia' },
+  'si': { name: 'Slovenia', code: 'SI', slug: 'slovenia' },
+  'sk': { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+  'tr': { name: 'Turkey', code: 'TR', slug: 'turkey' },
+  'ua': { name: 'Ukraine', code: 'UA', slug: 'ukraine' },
+  // Americas
+  'us': { name: 'United States', code: 'US', slug: 'united-states' },
+  'ca': { name: 'Canada', code: 'CA', slug: 'canada' },
+  'br': { name: 'Brazil', code: 'BR', slug: 'brazil' },
+  'mx': { name: 'Mexico', code: 'MX', slug: 'mexico' },
+  'ar': { name: 'Argentina', code: 'AR', slug: 'argentina' },
+  'co': { name: 'Colombia', code: 'CO', slug: 'colombia' },
+  'cl': { name: 'Chile', code: 'CL', slug: 'chile' },
+  // Asia-Pacific
+  'au': { name: 'Australia', code: 'AU', slug: 'australia' },
+  'nz': { name: 'New Zealand', code: 'NZ', slug: 'new-zealand' },
+  'jp': { name: 'Japan', code: 'JP', slug: 'japan' },
+  'cn': { name: 'China', code: 'CN', slug: 'china' },
+  'in': { name: 'India', code: 'IN', slug: 'india' },
+  'sg': { name: 'Singapore', code: 'SG', slug: 'singapore' },
+  'kr': { name: 'South Korea', code: 'KR', slug: 'south-korea' },
+  'id': { name: 'Indonesia', code: 'ID', slug: 'indonesia' },
+  'my': { name: 'Malaysia', code: 'MY', slug: 'malaysia' },
+  'th': { name: 'Thailand', code: 'TH', slug: 'thailand' },
+  'vn': { name: 'Vietnam', code: 'VN', slug: 'vietnam' },
+  'ph': { name: 'Philippines', code: 'PH', slug: 'philippines' },
+  'hk': { name: 'Hong Kong', code: 'HK', slug: 'hong-kong' },
+  'tw': { name: 'Taiwan', code: 'TW', slug: 'taiwan' },
+  'pk': { name: 'Pakistan', code: 'PK', slug: 'pakistan' },
+  'kz': { name: 'Kazakhstan', code: 'KZ', slug: 'kazakhstan' },
+  // Middle East & Africa
+  'il': { name: 'Israel', code: 'IL', slug: 'israel' },
+  'ae': { name: 'United Arab Emirates', code: 'AE', slug: 'united-arab-emirates' },
+  'sa': { name: 'Saudi Arabia', code: 'SA', slug: 'saudi-arabia' },
+  'qa': { name: 'Qatar', code: 'QA', slug: 'qatar' },
+  'za': { name: 'South Africa', code: 'ZA', slug: 'south-africa' },
+  'eg': { name: 'Egypt', code: 'EG', slug: 'egypt' },
+  'ng': { name: 'Nigeria', code: 'NG', slug: 'nigeria' },
+  'ke': { name: 'Kenya', code: 'KE', slug: 'kenya' },
+  'ma': { name: 'Morocco', code: 'MA', slug: 'morocco' },
 };
 
 // City-to-country map for when job APIs return city names instead of country names.
@@ -515,6 +586,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'kruså':                    { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'odense':                   { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'taastrup':                 { name: 'Denmark', code: 'DK', slug: 'denmark' },
+  'tinglev':                  { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'slagelse':                 { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'viby':                     { name: 'Denmark', code: 'DK', slug: 'denmark' },
   'videbæk':                  { name: 'Denmark', code: 'DK', slug: 'denmark' },
@@ -728,6 +800,11 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+/** Returns true if the string is a known country name or abbreviation (COUNTRY_MAP only, not cities). */
+export function isCountryKey(s: string): boolean {
+  return normalizeKey(s) in COUNTRY_MAP;
+}
+
 /**
  * Looks up a city by checking whether a known CITY_MAP key is a leading word-boundary
  * prefix of the segment. Handles location suffixes like "riga central" → "riga" or
@@ -843,6 +920,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
   const leadingCode = fullKey.match(/^([a-z]{2})(?:\s*-|[a-z0-9]{2,})/);
   if (leadingCode) {
     const codeInfo = COUNTRY_MAP[leadingCode[1]];
+    if (codeInfo) return [codeInfo];
+  }
+
+  // Try a 3-letter leading ISO code followed by a dash, e.g. "ESP - Madrid" → 'esp' → Spain.
+  const leadingCode3 = fullKey.match(/^([a-z]{3})\s*-/);
+  if (leadingCode3) {
+    const codeInfo = COUNTRY_MAP[leadingCode3[1]];
     if (codeInfo) return [codeInfo];
   }
 
