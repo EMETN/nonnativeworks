@@ -215,7 +215,7 @@ export interface CompanyApiConfig {
    */
   secondaryUrlTemplate?: string;
   /**
-   * When set, handles multi-location job postings. Two modes:
+   * When set, handles multi-location job postings. Three modes:
    *
    * Country mode (countryName set): each job is duplicated for every additional
    * country found in the nested array. Use when a single posting covers multiple
@@ -226,14 +226,22 @@ export interface CompanyApiConfig {
    * within the same country. Their names are collected into job.cities alongside
    * the primary city — no duplicate jobs are created.
    *
-   * path       — dot-path from each job item to the secondary locations array
-   * countryName — dot-path within each element to the country name string (country mode)
-   * cityField   — dot-path within each element to the city name string (city mode)
+   * Parallel mode (parallelCitiesPath set): path points to a flat string array of
+   * country names; parallelCitiesPath points to a comma-separated city string whose
+   * entries are positionally aligned with the countries array (country[i] → city[i]).
+   * Each country becomes a separate job entry with its corresponding city.
+   * Use when the API returns parallel country and city arrays (e.g. Telia).
+   *
+   * path               — dot-path from each job item to the countries array
+   * countryName        — dot-path within each element to the country name string (country mode)
+   * cityField          — dot-path within each element to the city name string (city mode)
+   * parallelCitiesPath — dot-path to a comma-separated city string (parallel mode)
    */
   expandSecondaryLocations?: {
     path: string;
     countryName?: string;
     cityField?: string;
+    parallelCitiesPath?: string;
   };
   /**
    * When set, one full paginated fetch is made per entry. All results are merged and deduplicated.
@@ -486,6 +494,39 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     descriptionApiItemsPath: 'data',
     descriptionApiFields: ['jobDescription'],
     descriptionApiWorkModelField: 'workLocationOption',
+  },
+
+ 'teliacompany.com': {
+    url: 'https://www.teliacompany.com/api/job',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0',
+      'Accept': '*/*',
+      'Referer': 'https://www.teliacompany.com/en/careers/open-positions',
+    },
+    pagination: { type: 'none' },
+    // Root of the response is the jobs array directly
+    fields: {
+      title: 'position',
+      location: 'country',  // array like ["SWEDEN", "LITHUANIA"] — first element used as primary location
+      department: 'jobCategory',
+      jobFunction: 'subCategory',
+      id: 'slug',           // slug is the key used by the per-job detail API
+    },
+    // country is a flat string array; city is a comma-separated string aligned by index.
+    // Parallel mode splits the city string and assigns city[i] to country[i] per duplicate job.
+    expandSecondaryLocations: {
+      path: 'country',
+      parallelCitiesPath: 'city',
+    },
+    urlTemplate: 'https://www.teliacompany.com/en/careers/open-positions/{slug}',
+    companyName: 'Telia',
+    // Per-job detail API returns description HTML and a more specific jobFamily field.
+    // Response root is the item itself (no wrapper), so itemsPath is empty string.
+    descriptionApiUrl: 'https://www.teliacompany.com/api/job?id={sourceId}',
+    descriptionApiItemsPath: '',
+    descriptionApiFields: ['jobDescription'],
+    descriptionApiJobFunctionField: 'jobFamily',
   },
 
  'nordea.com': {

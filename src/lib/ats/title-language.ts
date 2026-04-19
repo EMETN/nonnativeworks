@@ -243,6 +243,12 @@ export const KEYWORDS_RE = new RegExp(
  * signal a native-language requirement.
  */
 export function titleAppearsNonEnglish(title: string): boolean {
-  if (/[äöüåéèêëàâîïôùûçñßãõøæœ]/i.test(title)) return true;
+  // Covers all tracked-country native character sets:
+  //   Nordic/Germanic: ä ö ü å ø æ ß
+  //   French/Romance: é è ê ë à â î ï ô ù û ç ñ ã õ œ ă ș ț
+  //   Icelandic: þ ð
+  //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
+  //   Polish: ł ń ś ź ż
+  if (/[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżășț]/i.test(title)) return true;
   return KEYWORDS_RE.test(title);
 }

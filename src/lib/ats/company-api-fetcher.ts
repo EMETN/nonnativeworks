@@ -17,8 +17,9 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
 }
 
-/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. */
+/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object. */
 function getPath(obj: unknown, path: string): unknown {
+  if (!path) return obj;
   return path.split('.').reduce((cur: unknown, key) => {
     if (cur !== null && typeof cur === 'object' && key in (cur as object)) {
       return (cur as Record<string, unknown>)[key];
@@ -136,6 +137,38 @@ function expandJobToSecondaryLocations(
   if (!expand) return [];
   const secondaries = getPath(item, expand.path);
   if (!Array.isArray(secondaries) || secondaries.length === 0) return [];
+
+  if (expand.parallelCitiesPath) {
+    // Parallel mode: flat string array of country names + a comma-separated city string.
+    // Don't try to correlate cities to countries by index (ordering is unreliable).
+    // Instead, set location = full city string and country_code = country name so that
+    // buildScrapeResult can resolve the country from country_code and then call
+    // extractCitiesForCountry(location, countryCode) to filter cities correctly per country.
+    const countries = secondaries.filter((c): c is string => typeof c === 'string');
+    const cityString = getString(item, expand.parallelCitiesPath) ?? '';
+    primaryJob.country_code = countries[0];
+    // Only override location with cities when non-empty — an empty city string would
+    // cause isTrackedLocation("") to fail, filtering the job out of description enrichment.
+    // When empty, keep the country name already set by mapItem so lookups still resolve.
+    if (cityString) primaryJob.location = cityString;
+    primaryJob.cities = undefined;
+    primaryJob.city = undefined;
+    const extras: RawJob[] = [];
+    for (let i = 1; i < countries.length; i++) {
+      const country = countries[i];
+      if (!country) continue;
+      extras.push({
+        ...primaryJob,
+        country_code: country,
+        // Suffix sourceId to survive deduplication as a distinct entry per country,
+        // but preserve the original slug in descriptionApiId so the detail API URL
+        // uses the unmodified slug (the suffixed ID would 404).
+        sourceId: primaryJob.sourceId ? `${primaryJob.sourceId}-${country}` : undefined,
+        descriptionApiId: primaryJob.descriptionApiId ?? primaryJob.sourceId,
+      });
+    }
+    return extras;
+  }
 
   if (expand.cityField) {
     const cities: string[] = [];
@@ -807,7 +840,13 @@ export async function fetchCompanyApiJobs(
   // Enrich descriptions only for jobs in tracked countries (when a filter is provided).
   // This avoids fetching descriptions for thousands of irrelevant global positions.
   const enrichmentTargets = isTrackedLocation
-    ? primaryJobs.filter((j) => !j.location || isTrackedLocation(j.location))
+    ? primaryJobs.filter((j) => {
+        // Prefer country_code for the tracked-country check — it's always a resolvable
+        // country name/code. Falling back to location can fail when location is a city
+        // string not present in the CITY_MAP (e.g. Telia's parallel-expansion jobs).
+        const loc = j.country_code ?? j.location;
+        return !loc || isTrackedLocation(loc);
+      })
     : primaryJobs;
 
   if (config.fetchDescription || config.locationFromHtml) {

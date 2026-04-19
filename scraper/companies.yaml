@@ -113,6 +113,10 @@ companies:
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
 
+    - name: Telia
+      url: https://www.teliacompany.com/en/careers/open-positions
+      min_positions: 5
+
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10

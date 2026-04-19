@@ -261,16 +261,16 @@ const ENGLISH_ONLY_PHRASES = [
 // ---------------------------------------------------------------------------
 
 const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
-  FI: { pattern: /[äöÄÖ]/g,              threshold: 10 },
-  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 10 },
-  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
+  FI: { pattern: /[äöÄÖ]/g,              threshold: 15 },
+  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 15 },
+  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 15  },
   DK: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
   IS: { pattern: /[þðÞÐ]/g,              threshold: 10 }, // þ/ð never appear in English
   DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
   AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
   EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 10 },
   LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
-  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 10 },
+  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 15 },
   PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 10 },
 };
 
