@@ -416,6 +416,10 @@ function buildRequirementSignals(lang: string): string[] {
     `professional ${lang}`,
     `${lang} at a professional level`,
     `${lang} at professional level`,
+    `excellent ${lang}`,
+    `strong ${lang}`,
+    `communicative ${lang}`,
+    `${lang} communicative`,
     // Native / mother tongue
     `native ${lang}`,
     `${lang} native`,
@@ -744,7 +748,7 @@ export function detectNativeLanguage(
   // Generic "native local/country language" phrase — doesn't name the language
   // but clearly means native fluency in the local language is required.
   const genericMatch = languages.length > 0
-    ? combined.match(/native (?:local country|local|country|regional) language/)
+    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required/)
     : null;
   if (genericMatch) {
     return {
