@@ -257,7 +257,7 @@ def main() -> int:
         try:
             result = _scrape(args.api_url, secret, url)
         except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
+            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
             print(f"FAIL — scrape error: {msg}", file=sys.stderr)
             summary_entry.update({"status": "fail", "error": msg})
             summary_entries.append(summary_entry)
@@ -317,7 +317,7 @@ def main() -> int:
             summary_entries.append(summary_entry)
             successes.append({"url": url, "positions": total_positions})
         except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
+            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
             print(f"FAIL — upload error: {msg}", file=sys.stderr)
             summary_entry.update({"status": "fail", "error": msg})
             summary_entries.append(summary_entry)

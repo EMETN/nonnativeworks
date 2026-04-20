@@ -104,7 +104,7 @@ export function logScrapeRun(params: {
     lines.push(`  ${sub}`);
     for (const pos of positions) {
       const icon = pos.requires_native_language ? '✗' : pos.local_language_advantage ? '~' : '✓';
-      const titleStr = pos.title.slice(0, 42).padEnd(44);
+      const titleStr = (pos.title ?? '').slice(0, 42).padEnd(44);
       const catStr = formatCategory(pos);
       const langStr = formatLanguageSignal(pos);
       lines.push(`  ${icon}  ${titleStr}${catStr}  ${langStr}`);
@@ -131,7 +131,7 @@ export function logScrapeRun(params: {
     lines.push(`  SKIPPED  ${skippedParts.join('  ·  ')}`);
     if (params.skippedUnknownLocationJobs?.length) {
       for (const j of params.skippedUnknownLocationJobs) {
-        const titleStr = j.title.slice(0, 44).padEnd(46);
+        const titleStr = (j.title ?? '').slice(0, 44).padEnd(46);
         const locStr = j.location ? `"${j.location}"` : '(no location)';
         lines.push(`  ?  ${titleStr}${locStr}`);
       }
