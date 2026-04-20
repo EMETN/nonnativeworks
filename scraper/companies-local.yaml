@@ -1,0 +1,24 @@
+# Local-only scrape job — companies that need a residential/local IP.
+# Run with: bash scraper/run-local.sh
+#
+# These companies use Cloudflare or similar bot protection that blocks
+# GitHub Actions runner IPs. Run this locally (or from a VPS with a
+# residential proxy) instead of the scheduled GitHub Actions workflow.
+#
+# ─── Fields ───────────────────────────────────────────────────────────────────
+#   name            Display name — for readability only, not used by the scraper
+#   url             Career page URL passed to the scraper (required)
+#   min_positions   Minimum expected positions across all tracked countries.
+#                   The batch job fails this company if fewer are found.
+#                   Set conservatively. Default: 1
+#   is_english_company  Flag the company as English-only in the UI. Default: false
+# ──────────────────────────────────────────────────────────────────────────────
+
+companies:
+    - name: Barona
+      url: https://www.barona.fi/en/jobs/
+      min_positions: 10
+
+    - name: CGI
+      url: https://www.cgi.njoyn.com
+      min_positions: 10
