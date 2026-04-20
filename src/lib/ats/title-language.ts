@@ -144,6 +144,7 @@ const DE: string[] = [
   'sachbearbeiter', // clerk / officer
   'schwerpunkt',    // focus
   'spezialist',     // specialist
+  'studium',        // degree programme
   'teamleiter',     // team lead
   'technischer',    // technical
   'technologie',    // technology

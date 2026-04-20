@@ -139,6 +139,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "sachbearbeiter", # clerk / officer
         "schwerpunkt",    # focus
         "spezialist",     # specialist
+        "studium",        # degree programme
         "teamleiter",     # team lead
         "technischer",    # technical
         "technologie",    # technology
