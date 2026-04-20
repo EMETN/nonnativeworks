@@ -37,8 +37,12 @@ companies:
       url: https://jobs.arla.com
       min_positions: 10
 
-    - name: Barona
-      url: https://www.barona.fi/en/jobs/
+    # name: Barona
+    #  url: https://www.barona.fi/en/jobs/
+    #  min_positions: 10
+
+    - name: CGI
+      url: https://www.cgi.njoyn.com
       min_positions: 10
 
     - name: Ericsson
