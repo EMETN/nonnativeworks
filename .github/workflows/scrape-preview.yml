@@ -20,6 +20,7 @@ on:
         default: false
 
 permissions:
+  contents: read        # needed for actions/checkout
   pull-requests: write  # needed to post the result comment
 
 jobs:
