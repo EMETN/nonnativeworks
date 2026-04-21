@@ -197,7 +197,13 @@ def main() -> int:
                              "Default: 0 1 (all companies).")
     parser.add_argument("--companies-file", default=None,
                         help="Path to a companies YAML file (default: scraper/companies.yaml).")
+    parser.add_argument("--scrape-timeout", type=int, default=None,
+                        help="HTTP read timeout in seconds for each scrape call (default: 700).")
     args = parser.parse_args()
+
+    if args.scrape_timeout is not None:
+        global SCRAPE_TIMEOUT_S
+        SCRAPE_TIMEOUT_S = args.scrape_timeout
 
     slice_index, slice_total = args.slice
     if slice_total < 1 or not (0 <= slice_index < slice_total):

@@ -20,5 +20,5 @@ companies:
       min_positions: 10
 
     - name: CGI
-      url: https://www.cgi.njoyn.com
+      url: https://cgi.njoyn.com
       min_positions: 10

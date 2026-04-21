@@ -24,9 +24,13 @@ API_URL="http://localhost:4321"
 DRY_RUN=""
 REBUILD=""
 
-# Doppler config that holds the prod secrets (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc.)
-# Change this if your production config has a different name.
-DOPPLER_CONFIG="${DOPPLER_CONFIG:-prd}"
+# Doppler config to use. Must contain SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+# SCRAPER_SECRET, and PLAYWRIGHT_CDP_URL.
+#
+# Use dev_personal (default) to scrape into the dev database.
+# Override with DOPPLER_CONFIG=prd to scrape into production:
+#   DOPPLER_CONFIG=prd bash scraper/run-local.sh
+DOPPLER_CONFIG="${DOPPLER_CONFIG:-dev_personal}"
 
 for arg in "$@"; do
     case "$arg" in
@@ -76,4 +80,5 @@ done
 doppler run --config "$DOPPLER_CONFIG" -- python scraper/batch_run.py \
     --companies-file "$COMPANIES_FILE" \
     --api-url "$API_URL" \
+    --scrape-timeout 3600 \
     ${DRY_RUN}
