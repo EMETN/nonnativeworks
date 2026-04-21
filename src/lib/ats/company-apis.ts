@@ -34,6 +34,41 @@
  *   Dot-path to the array of job objects in the response.
  *   Omit if the root of the response is the array itself.
  *   Example: "data.jobs" for { data: { jobs: [...] } }
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * PROMPT TEMPLATE — paste this when asking Claude to add a new company
+ * ────────────────────────────────────────────────────────────────────────────
+ *
+ * Career page URL (what you paste into the admin scraper tab):
+ *   https://...
+ *
+ * API request (DevTools → Network tab → filter XHR/Fetch → reload → find the jobs request):
+ *
+ *   Method: GET / POST
+ *
+ *   URL:
+ *     https://...
+ *
+ *   Request headers (non-standard ones only — skip Accept/Content-Type/User-Agent
+ *   unless they look unusual):
+ *     ...
+ *
+ *   Request body (if POST — paste the full JSON or form data):
+ *     ...
+ *
+ * JSON response (paste the full response, or the first 2–3 items in the jobs
+ * array plus any top-level metadata like total count — this is the most
+ * important part, everything else can be derived from it):
+ *   ...
+ *
+ * Pagination (describe what changes in the request when you click "Next page"):
+ *   e.g. "body param pageNumber goes from 0 to 1"
+ *   e.g. "query param offset goes from 0 to 25"
+ *   e.g. "single request, no pagination"
+ *
+ * One example job detail page URL:
+ *   https://...
+ * ────────────────────────────────────────────────────────────────────────────
  */
 
 export interface CompanyApiConfig {

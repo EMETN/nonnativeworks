@@ -1,0 +1,57 @@
+# Generic static-HTML scraper configs
+#
+# Each entry matches a URL substring and drives generic_paginated.py.
+# Use this for career sites that render jobs as plain HTML (no JavaScript
+# required) and paginate via a query parameter.
+#
+# Required fields
+# ───────────────
+#   match         Substring matched against the career page URL
+#   card_selector CSS selector for the repeating element that wraps one job
+#                 (e.g. "tr.data-row", "li.job-card", "div.vacancy-item")
+#
+# Pagination (required unless the whole list fits on one page)
+# ───────────────────────────────────────────────────────────
+#   pagination.type       offset | page | index | none
+#                           offset — param = page_number * page_size  (e.g. startrow=0,25,50)
+#                           page   — param = page_number + 1          (e.g. page=1,2,3)
+#                           index  — param = page_number              (e.g. i=0,1,2)
+#                           none   — single fetch, no pagination
+#   pagination.param      Query-parameter name (e.g. "startrow", "page", "i")
+#   pagination.page_size  Expected results per page; stop when fewer are returned
+#   pagination.max_pages  Safety ceiling (default: 200)
+#
+# Optional selector overrides (sensible defaults used when omitted)
+# ─────────────────────────────────────────────────────────────────
+#   list_url              Override the URL used for listing pages (use when the
+#                         input URL needs a different path than the first page)
+#   extra_params          Fixed query params always appended (e.g. sort order)
+#   title_selector        CSS selector for the job title within a card
+#                         Default: first <a> or first heading (h2–h4)
+#   location_selector     CSS selector for the location within a card
+#                         Default: first element whose class matches a location pattern
+#   description_selector  CSS selector for the job description on the detail page
+#                         Default: tries .jobdescription, .job-description,
+#                                  [class*="description"], article, main
+#   job_function_selector CSS selector for the job function/area on the detail page
+#                         Used as the primary category classification signal (higher weight
+#                         than title or description). Only fetched for English-titled jobs,
+#                         during the same page fetch as description_selector.
+#                         Example: "[data-careersite-propertyid='department']"
+
+scrapers:
+  # ── Neste ────────────────────────────────────────────────────────────────────
+  - match: "jobs.neste.com"
+    name: Neste
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
