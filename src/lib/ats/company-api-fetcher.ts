@@ -17,8 +17,9 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
 }
 
-/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. */
+/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object. */
 function getPath(obj: unknown, path: string): unknown {
+  if (!path) return obj;
   return path.split('.').reduce((cur: unknown, key) => {
     if (cur !== null && typeof cur === 'object' && key in (cur as object)) {
       return (cur as Record<string, unknown>)[key];
@@ -35,6 +36,7 @@ function getPath(obj: unknown, path: string): unknown {
 function getStringArray(obj: unknown, path: string | undefined): string[] {
   if (!path) return [];
   const val = getPath(obj, path);
+  if (typeof val === 'string' && val.trim() !== '') return [val];
   if (Array.isArray(val)) {
     return val.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
   }
@@ -118,10 +120,14 @@ function mapItem(
 }
 
 /**
- * If expandSecondaryLocations is configured, returns additional RawJob copies for
- * each secondary country on the item (e.g. Nokia jobs listed in multiple countries).
- * Each copy gets the secondary country as its location and a suffixed sourceId so
- * deduplication treats it as a distinct entry.
+ * If expandSecondaryLocations is configured, handles multi-location job postings.
+ *
+ * Country mode (countryName set): returns additional RawJob copies for each secondary
+ * country (e.g. Nokia jobs listed in multiple countries). Each copy gets the secondary
+ * country as its location and a suffixed sourceId so deduplication treats it as distinct.
+ *
+ * City mode (cityField set): collects secondary city names into primaryJob.cities so
+ * they appear as one consolidated posting. Returns [] (no duplicate jobs created).
  */
 function expandJobToSecondaryLocations(
   primaryJob: RawJob,
@@ -132,9 +138,53 @@ function expandJobToSecondaryLocations(
   const secondaries = getPath(item, expand.path);
   if (!Array.isArray(secondaries) || secondaries.length === 0) return [];
 
+  if (expand.parallelCitiesPath) {
+    // Parallel mode: flat string array of country names + a comma-separated city string.
+    // Don't try to correlate cities to countries by index (ordering is unreliable).
+    // Instead, set location = full city string and country_code = country name so that
+    // buildScrapeResult can resolve the country from country_code and then call
+    // extractCitiesForCountry(location, countryCode) to filter cities correctly per country.
+    const countries = secondaries.filter((c): c is string => typeof c === 'string');
+    const cityString = getString(item, expand.parallelCitiesPath) ?? '';
+    primaryJob.country_code = countries[0];
+    // Only override location with cities when non-empty — an empty city string would
+    // cause isTrackedLocation("") to fail, filtering the job out of description enrichment.
+    // When empty, keep the country name already set by mapItem so lookups still resolve.
+    if (cityString) primaryJob.location = cityString;
+    primaryJob.cities = undefined;
+    primaryJob.city = undefined;
+    const extras: RawJob[] = [];
+    for (let i = 1; i < countries.length; i++) {
+      const country = countries[i];
+      if (!country) continue;
+      extras.push({
+        ...primaryJob,
+        country_code: country,
+        // Suffix sourceId to survive deduplication as a distinct entry per country,
+        // but preserve the original slug in descriptionApiId so the detail API URL
+        // uses the unmodified slug (the suffixed ID would 404).
+        sourceId: primaryJob.sourceId ? `${primaryJob.sourceId}-${country}` : undefined,
+        descriptionApiId: primaryJob.descriptionApiId ?? primaryJob.sourceId,
+      });
+    }
+    return extras;
+  }
+
+  if (expand.cityField) {
+    const cities: string[] = [];
+    for (const sec of secondaries) {
+      const city = getString(sec, expand.cityField);
+      if (city) cities.push(city);
+    }
+    if (cities.length > 0) {
+      primaryJob.cities = [...(primaryJob.cities ?? []), ...cities];
+    }
+    return [];
+  }
+
   const extras: RawJob[] = [];
   for (const sec of secondaries) {
-    const countryName = getString(sec, expand.countryName);
+    const countryName = getString(sec, expand.countryName!);
     if (!countryName || countryName === primaryJob.location) continue;
     extras.push({
       ...primaryJob,
@@ -283,12 +333,13 @@ async function enrichDescriptionsFromApi(
   jobFunctionField?: string,
   workModelField?: string,
 ): Promise<void> {
-  const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
+  const targets = jobs.filter((j) => (j.descriptionApiId ?? j.sourceId) && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        const url = urlTemplate.replace('{sourceId}', encodeURIComponent(job.sourceId!));
+        const apiId = job.descriptionApiId ?? job.sourceId!;
+        const url = urlTemplate.replace('{sourceId}', encodeURIComponent(apiId));
         try {
           const data = await fetchPage(url, 'GET', undefined, headers);
           const item = getPath(data, itemsPath);
@@ -298,7 +349,14 @@ async function enrichDescriptionsFromApi(
           if (parts.length) job.descriptionText = parts.join(' ');
           if (locationField) {
             const city = getString(item, locationField);
-            if (city) job.city = city;
+            if (city) {
+              // City mode: prepend primary city to the existing secondary cities list
+              if (job.cities) {
+                job.cities = [city, ...job.cities];
+              } else {
+                job.city = city;
+              }
+            }
           }
           if (jobFunctionField) {
             const jf = getString(item, jobFunctionField);
@@ -315,6 +373,60 @@ async function enrichDescriptionsFromApi(
     );
     await sleep(randomDelay());
   }
+}
+
+/**
+ * For each English-titled job, calls the per-job detail API and sets
+ * job.requires_native_language from the structured languages array.
+ * Only runs when the config provides both a URL template (using {jobPath})
+ * and a regex transform to derive the path from job.url.
+ *
+ * Skips jobs with non-English titles — they're already flagged by Phase 1a.
+ * Skips jobs without a URL (can't build the API request).
+ * Leaves requires_native_language unset when the languages array is missing/null
+ * so the text classifier can still decide.
+ */
+async function enrichLanguageRequirementFromApi(
+  jobs: RawJob[],
+  urlTemplate: string,
+  jobUrlTransform: { match: string; replace: string },
+  itemsPath: string,
+  languagesPath: string,
+  headers: Record<string, string>,
+): Promise<void> {
+  const targets = jobs.filter(
+    (j) => j.url && !titleAppearsNonEnglish(j.title) && j.requires_native_language === undefined,
+  );
+  console.log(`[enrichLanguageRequirementFromApi] ${targets.length} targets (${jobs.length - targets.length} skipped)`);
+  const transformRe = new RegExp(jobUrlTransform.match);
+
+  let set = 0;
+  let missing = 0;
+  for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
+    await Promise.all(
+      targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
+        const jobPath = job.url!.replace(transformRe, jobUrlTransform.replace);
+        const fetchUrl = urlTemplate.replace('{jobPath}', jobPath);
+        try {
+          const data = await fetchPage(fetchUrl, 'GET', undefined, headers);
+          const item = getPath(data, itemsPath);
+          const languages = getPath(item, languagesPath);
+          if (Array.isArray(languages)) {
+            job.requires_native_language = languages.some(
+              (l: unknown) => typeof l === 'string' && l.toLowerCase() !== 'english',
+            );
+            set++;
+          } else {
+            missing++;
+          }
+        } catch (err) {
+          console.warn(`[enrichLanguageRequirementFromApi] failed for ${job.url}: ${err}`);
+        }
+      }),
+    );
+    await sleep(randomDelay());
+  }
+  console.log(`[enrichLanguageRequirementFromApi] done — set: ${set}, missing/skipped: ${missing}`);
 }
 
 function buildGetUrl(template: string, param: string, value: number): string {
@@ -483,6 +595,7 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
     const param = pagination.param ?? 'offset';
     const pageSize = pagination.pageSize;
     let offset = 0;
+    let totalCount: number | undefined;
 
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
@@ -495,6 +608,14 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
         break;
       }
 
+      if (totalCount === undefined && pagination.totalCountPath) {
+        const raw = getPath(data, pagination.totalCountPath);
+        if (typeof raw === 'number') {
+          totalCount = raw;
+          console.log(`[${label}] total count from API: ${totalCount} (via ${pagination.totalCountPath})`);
+        }
+      }
+
       const items = extractItems(data, itemsPath);
       const before = jobs.length;
       jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
@@ -502,6 +623,10 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       if (items.length === 0) {
         console.log(`[${label}] stopping: empty page at offset=${offset}`);
+        break;
+      }
+      if (totalCount !== undefined && jobs.length >= totalCount) {
+        console.log(`[${label}] stopping: ${jobs.length} jobs fetched of ${totalCount}`);
         break;
       }
       if (items.length < pageSize) {
@@ -596,14 +721,47 @@ export async function fetchCompanyApiJobs(
 
   let primaryJobsRaw: RawJob[];
   if (config.repeatFor) {
-    // Fetch once per body-override entry (e.g. one country + locale at a time) and merge results.
+    // Fetch once per override entry (e.g. one country at a time) and merge results.
+    // GET requests: override keys are appended as URL query params.
+    // POST requests: override keys are merged into the request body.
     const { body: overrides } = config.repeatFor;
     console.log(`[fetchCompanyApiJobs] repeatFor: ${overrides.length} entries → fetching sequentially`);
     const allRaw: RawJob[] = [];
     for (const override of overrides) {
       const label = Object.values(override).join('/');
-      const spec: FetchSpec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
+      let spec: FetchSpec;
+      if (method === 'GET') {
+        const params = new URLSearchParams(override).toString();
+        const sep = primarySpec.url.includes('?') ? '&' : '?';
+        spec = { ...primarySpec, url: `${primarySpec.url}${sep}${params}` };
+      } else {
+        spec = { ...primarySpec, body: { ...primarySpec.body, ...override } };
+      }
       const jobs = await fetchAllJobsRaw(spec, label);
+      if (method === 'GET') {
+        // Tag each job with the filter country so the same job appearing in
+        // multiple country queries survives as a separate entry per country.
+        // Without this, dedup by sourceId would collapse them into one, and
+        // that one might have an untracked country as its primary location.
+        for (const job of jobs) {
+          if (job.sourceId) {
+            job.descriptionApiId = job.sourceId;
+            job.sourceId = `${job.sourceId}-${label}`;
+          }
+          // Use country_code (checked first in buildScrapeResult) for country
+          // resolution so the original location string is preserved for city extraction.
+          job.country_code = label;
+          // Filter the cities array to only entries matching this country, then
+          // extract the city name from each "City,State,Country" string.
+          if (job.cities) {
+            const matched = job.cities
+              .filter((c) => c.toLowerCase().includes(label.toLowerCase()))
+              .map((c) => c.split(',')[0].trim())
+              .filter(Boolean);
+            job.cities = matched.length > 0 ? matched : undefined;
+          }
+        }
+      }
       allRaw.push(...jobs);
     }
     primaryJobsRaw = allRaw;
@@ -682,7 +840,13 @@ export async function fetchCompanyApiJobs(
   // Enrich descriptions only for jobs in tracked countries (when a filter is provided).
   // This avoids fetching descriptions for thousands of irrelevant global positions.
   const enrichmentTargets = isTrackedLocation
-    ? primaryJobs.filter((j) => !j.location || isTrackedLocation(j.location))
+    ? primaryJobs.filter((j) => {
+        // Prefer country_code for the tracked-country check — it's always a resolvable
+        // country name/code. Falling back to location can fail when location is a city
+        // string not present in the CITY_MAP (e.g. Telia's parallel-expansion jobs).
+        const loc = j.country_code ?? j.location;
+        return !loc || isTrackedLocation(loc);
+      })
     : primaryJobs;
 
   if (config.fetchDescription || config.locationFromHtml) {
@@ -695,6 +859,12 @@ export async function fetchCompanyApiJobs(
     const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
     console.log(`[fetchCompanyApiJobs] enriching descriptions via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
     await enrichDescriptionsFromApi(enrichmentTargets, config.descriptionApiUrl, itemsPath, config.descriptionApiFields, headers, config.descriptionApiLocationField, config.descriptionApiJobFunctionField, config.descriptionApiWorkModelField);
+  }
+
+  if (config.descriptionApiUrl && config.descriptionApiUrlFromJobUrl && config.descriptionApiLanguagesPath) {
+    const itemsPath = config.descriptionApiItemsPath ?? 'items.0';
+    console.log(`[fetchCompanyApiJobs] enriching language requirements via API for ${enrichmentTargets.length} jobs in tracked countries (of ${primaryJobs.length} total)`);
+    await enrichLanguageRequirementFromApi(enrichmentTargets, config.descriptionApiUrl, config.descriptionApiUrlFromJobUrl, itemsPath, config.descriptionApiLanguagesPath, headers);
   }
 
   // Final safety-net dedup (should be a no-op if pagination dedup above caught everything).

@@ -21,17 +21,45 @@ companies:
       url: https://careers.abb/global/en/search-results
       min_positions: 10
 
+    - name: Academic Work
+      url: https://www.academicwork.fi/avoimet-tyopaikat
+      min_positions: 5
+
     - name: Accenture
       url: https://www.accenture.com/us-en/careers
+      min_positions: 10
+
+    - name: Airbus
+      url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
+      min_positions: 10
+
+    - name: Arla
+      url: https://jobs.arla.com
+      min_positions: 10
+
+    - name: Ericsson
+      url: https://jobs.ericsson.com/careers
       min_positions: 10
 
     - name: Gofore
       url: https://gofore.com/en/careers/
       min_positions: 1
 
+    - name: Happeo
+      url: https://happeo.recruitee.com
+      min_positions: 1
+
+    - name: If
+      url: https://if.wd3.myworkdayjobs.com/Careers
+      min_positions: 5
+
     - name: Konecranes
       url: https://konecranes.careers/jobs
       min_positions: 10
+
+    - name: Maersk
+      url: https://www.maersk.com/careers
+      min_positions: 5
 
     - name: Nokia
       url: https://jobs.nokia.com/en
@@ -43,6 +71,10 @@ companies:
 
     - name: OP
       url: https://op-careers.fi
+      min_positions: 5
+
+    - name: Orion
+      url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
       min_positions: 5
 
     - name: Oura
@@ -57,13 +89,29 @@ companies:
       url: https://www.reaktor.com/careers
       min_positions: 2
 
+    - name: Neste
+      url: https://jobs.neste.com/search
+      min_positions: 5
+
     - name: Rovio
       url: https://www.rovio.com/open-positions
       min_positions: 1
 
+    - name: SOK
+      url: https://sok.wd502.myworkdayjobs.com/S-ryhman-avoimet-tyopaikat
+      min_positions: 5
+
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2
+    
+    - name: Stora Enso
+      url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
+      min_positions: 5
+
+    - name: Telia
+      url: https://www.teliacompany.com/en/careers/open-positions
+      min_positions: 5
 
     - name: Tieto
       url: https://careers.tieto.com

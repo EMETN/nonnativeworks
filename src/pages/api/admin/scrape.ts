@@ -19,6 +19,7 @@ import {
   fetchWorkdayJobs,
   enrichWorkdayDescriptions,
 } from "../../../lib/ats/workday";
+import { fetchRecruiteeJobs } from "../../../lib/ats/recruitee";
 import {
   lookupCountryFromLocation,
   extractCitiesForCountry,
@@ -26,6 +27,7 @@ import {
   getCompanyCountryFallback,
 } from "../../../lib/ats/country-lookup";
 import { classifyJobVerbose } from "../../../lib/classifier";
+import { stripHtml } from "../../../lib/classifiers/language";
 import {
   logScrapeRun,
   type PositionLogEntry,
@@ -39,14 +41,30 @@ import type {
 import {
   COMPANY_APIS,
   CAREER_URL_ALIASES,
+  PYTHON_SCRAPER_COMPANY_NAMES,
 } from "../../../lib/ats/company-apis";
 import {
   fetchCompanyApiJobs,
   enrichDescriptions,
 } from "../../../lib/ats/company-api-fetcher";
 import { TRACKED_COUNTRY_CODES } from "../../../lib/tracked-countries";
+import {
+  loadSkills,
+  extractSkills,
+  extractEducationRequirement,
+  type SkillEntry,
+} from "../../../lib/ats/skills-extractor";
 
-const PYTHON_TIMEOUT_MS = 600_000; // 10 min — njoyn scrapes 9 countries sequentially
+// Must exceed Python's internal NJOYN_SUBPROCESS_TIMEOUT (3600s) so Python can handle
+// its own cleanup and exit cleanly. SIGKILL ensures the process cannot ignore the signal
+// (Python's multiprocessing.Queue.get blocks SIGTERM, causing Node to wait indefinitely).
+const PYTHON_TIMEOUT_MS = 3_900_000; // 65 min
+
+// Batch scraping spawns many Python subprocesses over the lifetime of the server
+// process. Each spawn registers internal cleanup listeners on the Node.js process
+// object, which triggers the default MaxListeners warning (10) after a handful of
+// companies. Raise the limit to avoid the noise; this is not a memory leak.
+process.setMaxListeners(50);
 
 export const POST: APIRoute = async ({ request }) => {
   let body: unknown;
@@ -87,6 +105,8 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 async function scrape(rawUrl: string): Promise<ScrapeResult> {
+  // Load skills taxonomy once for this scrape run — used to extract skills from descriptions.
+  const skills: SkillEntry[] = await loadSkills();
   // Remap friendly branded career URLs (e.g. careers.abb) to the actual ATS URL.
   const urlHostname = (() => {
     try {
@@ -157,6 +177,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         companyName =
           parts.company.charAt(0).toUpperCase() + parts.company.slice(1);
         ats = "workday";
+      } else if (resolvedAts === "recruitee") {
+        ({ jobs: rawJobs, companyName } = await fetchRecruiteeJobs(detection.companySlug));
+        ats = "recruitee";
       } else if (resolvedAts === "workable") {
         const [jobs, name] = await Promise.all([
           fetchWorkableJobs(detection.companySlug),
@@ -240,15 +263,22 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
     );
   }
 
-  // Fall back to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
+  // Fall back to a configured display name for known Python-scraped companies,
+  // then to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
   // The admin can correct it in the review UI before uploading.
-  if (!companyName && detection.companySlug) {
-    companyName =
-      detection.companySlug.charAt(0).toUpperCase() +
-      detection.companySlug.slice(1);
+  if (!companyName) {
+    const lower = careerUrl.toLowerCase();
+    const match = PYTHON_SCRAPER_COMPANY_NAMES.find((e) => lower.includes(e.urlSubstring));
+    if (match) {
+      companyName = match.name;
+    } else if (detection.companySlug) {
+      companyName =
+        detection.companySlug.charAt(0).toUpperCase() +
+        detection.companySlug.slice(1);
+    }
   }
 
-  return buildScrapeResult(rawJobs, companyName, careerUrl, ats);
+  return buildScrapeResult(rawJobs, companyName, careerUrl, ats, skills);
 }
 
 function buildScrapeResult(
@@ -256,11 +286,13 @@ function buildScrapeResult(
   companyName: string,
   careerUrl: string,
   ats: AtsType | null,
+  skills: SkillEntry[],
 ): ScrapeResult {
   const groups = new Map<string, ScrapeCountryGroup>();
   let skipped = 0;
   let skippedUntracked = 0;
   const positionLogs: PositionLogEntry[] = [];
+  const skippedUnknownLocationJobs: Array<{ title: string; location: string }> = [];
 
   const companyFallbackCountry = getCompanyCountryFallback(careerUrl);
 
@@ -281,6 +313,7 @@ function buildScrapeResult(
 
     if (countries.length === 0) {
       skipped++;
+      skippedUnknownLocationJobs.push({ title: job.title, location: locationStr });
       continue;
     }
     if (trackedCountries.length === 0) {
@@ -303,6 +336,20 @@ function buildScrapeResult(
       const workModel =
         job.work_model ?? extractWorkModelFromLocation(job.location ?? "");
 
+      if (!groups.has(countryInfo.code)) {
+        groups.set(countryInfo.code, {
+          country: countryInfo.slug,
+          country_name: countryInfo.name,
+          country_code: countryInfo.code,
+          jobs: [],
+        });
+      }
+      // Derive plain text from HTML when the scraper only populated descriptionHtml
+      // (e.g. Greenhouse, Ashby, Workable). Workday and Lever already set descriptionText.
+      const plainText = job.descriptionText ?? (job.descriptionHtml ? stripHtml(job.descriptionHtml) : '');
+      const jobSkills = extractSkills(plainText, skills);
+      const education = extractEducationRequirement(plainText);
+
       positionLogs.push({
         title: classified.title,
         category: classified.category,
@@ -317,20 +364,16 @@ function buildScrapeResult(
         countryName: countryInfo.name,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
+        skills: jobSkills.length > 0 ? jobSkills : undefined,
+        required_education: education,
       });
 
-      if (!groups.has(countryInfo.code)) {
-        groups.set(countryInfo.code, {
-          country: countryInfo.slug,
-          country_name: countryInfo.name,
-          country_code: countryInfo.code,
-          jobs: [],
-        });
-      }
       groups.get(countryInfo.code)!.jobs.push({
         ...classified,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
+        skills: jobSkills.length > 0 ? jobSkills : undefined,
+        required_education: education,
       });
     }
   }
@@ -341,6 +384,7 @@ function buildScrapeResult(
     ats,
     positions: positionLogs,
     skippedUnknownLocation: skipped,
+    skippedUnknownLocationJobs,
     skippedUntrackedCountry: skippedUntracked,
   });
 
@@ -408,6 +452,7 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
 
     const py = spawn(pythonBin, [scraperPath, url], {
       timeout: PYTHON_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
       env,
     });
 

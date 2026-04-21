@@ -1,81 +1,159 @@
 """
-Barona — Playwright scraper.
+Barona — Hybrid scraper.
 
-baronacareers.com uses Cloudflare bot protection, so plain HTTP requests
-are blocked. Playwright provides a real browser TLS fingerprint that passes.
+Phase 1 (no browser): Fetch the full job listing from the barona.fi WordPress
+    AJAX endpoint using plain HTTP requests. Fast and reliable — barona.fi has
+    no Cloudflare protection. Each item in the response includes the job title,
+    inline description HTML, city, country (ISO2) and applyUrl.
 
-Strategy:
-  1. One Playwright page load to establish Cloudflare clearance.
-  2. All subsequent data fetching via page.evaluate(fetch(...)) — lightweight
-     JSON API calls that reuse the browser session, no page rendering cost.
-  3. Listing API (/api/v1/browse/jobs?country=fi&locale=en&page=N) returns
-     job IDs and titles with pagination.
-  4. Detail API (/api/v1/browse/jobs/{id}?country=fi&locale=en) returns the
-     explicit "languages" array for English-titled jobs.
-  5. Language determination is direct: if the languages array contains the
-     local language for the country, requires_native_language will be set
-     by the classifier reading the descriptionText we produce.
+Phase 2 (Playwright): For English-titled jobs only — open a single Playwright
+    browser session, navigate to baronacareers.com once to establish Cloudflare
+    clearance, then call the per-job page_info API via page.evaluate(fetch(...))
+    for each target job. Reads requirements.languages to set
+    requires_native_language directly, and appends requirements.education to
+    descriptionHtml so the TypeScript extractEducationRequirement can parse it.
+
+baronacareers.com uses Cloudflare bot protection; plain HTTP requests are
+blocked. All calls to that domain must go through the browser session.
+barona.fi does not have this restriction, which is why Phase 1 uses requests.
 """
 
 import json
+import re
 import sys
-from urllib.parse import urlparse
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
-from extract import build_job
 from title_language import _title_appears_non_english
 
-# Maps the country locale in the Barona URL to its local language name as
-# returned in the API's languages array (e.g. ["Finnish", "Swedish"]).
-BARONA_LOCAL_LANGUAGES: dict[str, str] = {
-    "fi": "Finnish",
-    "se": "Swedish",
-    "no": "Norwegian",
-    "dk": "Danish",
+# barona.fi WP AJAX listing endpoint
+_LISTING_BASE = (
+    "https://www.barona.fi/wp-admin/admin-ajax.php"
+    "?action=barona_job_feed&per_page=100&lang=en&keyword=&published=&search="
+)
+_LISTING_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.barona.fi/en/jobs/",
 }
+_MAX_PAGES = 50
+_ENRICH_BATCH = 5  # concurrent in-browser fetches per tick
 
 
-def _barona_requires_native(languages: list[str]) -> bool:
-    """True when any language other than English is listed.
-    Covers both 'Finnish' on a FI job and cross-country cases like
-    'Danish' listed on a FI job — either signals a non-English requirement."""
-    return any(lang.strip().lower() != "english" for lang in languages)
+def _fetch_barona_listing() -> list[dict]:
+    """Fetch all jobs from barona.fi WP AJAX API using plain HTTP (no browser)."""
+    try:
+        import requests as req
+    except ImportError:
+        print("requests not installed", file=sys.stderr)
+        return []
+
+    jobs: list[dict] = []
+    seen_ids: set = set()
+
+    for page in range(1, _MAX_PAGES + 1):
+        url = f"{_LISTING_BASE}&page={page}"
+        print(f"barona: listing page={page}", file=sys.stderr)
+        try:
+            resp = req.get(url, headers=_LISTING_HEADERS, timeout=20)
+            resp.raise_for_status()
+            items = resp.json()
+        except Exception as e:
+            print(f"barona: listing fetch failed at page={page}: {e}", file=sys.stderr)
+            break
+
+        if not items:
+            print(f"barona: empty response at page={page} — stopping", file=sys.stderr)
+            break
+
+        new_count = 0
+        for item in items:
+            job_id = item.get("id")
+            if job_id in seen_ids:
+                continue
+            seen_ids.add(job_id)
+            jobs.append({
+                "title": item.get("title", ""),
+                "url": item.get("applyUrl", ""),
+                "location": item.get("country", ""),   # ISO2 code e.g. "FI"
+                "city": item.get("city", ""),
+                "descriptionHtml": item.get("description", ""),
+            })
+            new_count += 1
+
+        print(
+            f"barona: page={page} → {new_count} new jobs (total {len(jobs)})",
+            file=sys.stderr,
+        )
+
+    print(f"barona: listing complete — {len(jobs)} jobs total", file=sys.stderr)
+    return jobs
 
 
-def scrape_barona_playwright(url: str) -> list[dict]:
-    return _run_in_subprocess(_scrape_barona_playwright_inner, url)
+def _page_info_url(apply_url: str) -> str | None:
+    """
+    Derive the baronacareers.com page_info API URL from an applyUrl.
+
+    Input:  "https://www.baronacareers.com/fi/fi/jobs/some-slug"
+    Output: "https://www.baronacareers.com/api/v1/browse/page_info
+             ?path=/fi/en/jobs/some-slug&filters[job_id]=&locale=en"
+
+    The locale segment is forced to "en" so the API returns English-language
+    metadata regardless of which locale the listing used.
+    """
+    m = re.match(r"https://www\.baronacareers\.com(/\w+)/\w+(/jobs/.+)", apply_url)
+    if not m:
+        return None
+    path = f"{m.group(1)}/en{m.group(2)}"
+    return (
+        f"https://www.baronacareers.com/api/v1/browse/page_info"
+        f"?path={path}&filters[job_id]=&locale=en"
+    )
 
 
-def _barona_api_fetch(pw_page, path: str) -> dict | list | None:
-    """Call a Barona API path via in-browser fetch, reusing the Cloudflare session."""
+def _browser_fetch(pw_page, url: str) -> dict | list | None:
+    """Call a URL via in-browser fetch, reusing the active Cloudflare session."""
     return pw_page.evaluate(f"""async () => {{
         try {{
-            const r = await fetch({json.dumps(path)});
+            const r = await fetch({json.dumps(url)});
             if (!r.ok) return null;
             return await r.json();
         }} catch (e) {{ return null; }}
     }}""")
 
 
-def _scrape_barona_playwright_inner(url: str) -> list[dict]:
+def scrape_barona(url: str) -> list[dict]:
+    return _run_in_subprocess(_scrape_barona_inner, url)
+
+
+def _scrape_barona_inner(url: str) -> list[dict]:
+    # ── Phase 1: full listing via barona.fi WP AJAX (no browser) ────────────
+    jobs = _fetch_barona_listing()
+    if not jobs:
+        return []
+
+    # ── Phase 2: language + education enrichment via Playwright ─────────────
+    # Only English-titled jobs need enrichment — non-English titles already
+    # signal a native-language requirement via Phase 1a of the TS classifier.
+    enrich_targets = [
+        j for j in jobs
+        if j.get("url") and not _title_appears_non_english(j.get("title", ""))
+    ]
+    skipped = len(jobs) - len(enrich_targets)
+    print(
+        f"barona: {len(enrich_targets)} jobs need language enrichment "
+        f"({skipped} non-English titles skipped)",
+        file=sys.stderr,
+    )
+
+    if not enrich_targets:
+        return jobs
+
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        print("playwright not installed", file=sys.stderr)
-        return []
-
-    parsed = urlparse(url)
-    path_parts = [p for p in parsed.path.split("/") if p]
-    locale = path_parts[0] if path_parts else "fi"
-    # Preserve the language segment from the input URL (e.g. "en" or "fi")
-    lang = path_parts[1] if len(path_parts) > 1 else "en"
-
-    country_map = {"fi": "Finland", "se": "Sweden", "no": "Norway", "dk": "Denmark"}
-    location = country_map.get(locale, "Finland")
-    listing_base = f"{parsed.scheme}://{parsed.netloc}/{locale}/{lang}/job"
-
-    jobs: list[dict] = []
-    seen_ids: set[str] = set()
+        print("playwright not installed — language enrichment skipped", file=sys.stderr)
+        return jobs
 
     with sync_playwright() as p:
         pw_page, cleanup = _open_browser(
@@ -90,141 +168,61 @@ def _scrape_barona_playwright_inner(url: str) -> list[dict]:
         _block_unnecessary_resources(pw_page)
 
         try:
-            # ── Phase 1: collect all jobs from paginated listing pages ───────────
-            # Playwright renders each page; job titles + URLs come from JSON-LD.
-            page_num = 1
-            while True:
-                listing_url = f"{listing_base}?page={page_num}"
-                print(f"barona: listing page={page_num}: {listing_url}", file=sys.stderr)
-                pw_page.goto(listing_url, wait_until="domcontentloaded", timeout=30_000)
-                pw_page.wait_for_timeout(1_500)
+            # One page load to establish Cloudflare clearance.
+            print("barona: opening baronacareers.com for Cloudflare clearance…", file=sys.stderr)
+            pw_page.goto(
+                "https://www.baronacareers.com/fi/en/jobs",
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+            pw_page.wait_for_timeout(2_000)
 
-                if page_num == 1:
-                    for selector in ["[id*='cookie'] button", "[class*='cookie'] button", "[aria-label='Accept']"]:
-                        try:
-                            pw_page.click(selector, timeout=2_000)
-                        except Exception:
-                            pass
-
-                    # ── Diagnostic: intercept API call to find job ID ─────────────
-                    # Remove this block once the structure is confirmed.
-                    # Get the first English-titled job URL from JSON-LD on this page
-                    first_job_url = pw_page.evaluate("""() => {
-                        for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
-                            try {
-                                const d = JSON.parse(s.textContent);
-                                if (d['@type'] === 'ItemList' && Array.isArray(d.itemListElement)) {
-                                    return d.itemListElement[0]?.url || null;
-                                }
-                            } catch (e) {}
-                        }
-                        return null;
-                    }""")
-                    if first_job_url:
-                        intercepted: list = []
-                        def _capture(route, request):
-                            if "/api/v1/browse/jobs/" in request.url:
-                                intercepted.append(request.url)
-                            route.continue_()
-                        pw_page.route("**/api/v1/browse/jobs/**", _capture)
-                        try:
-                            pw_page.goto(first_job_url, wait_until="domcontentloaded", timeout=20_000)
-                            pw_page.wait_for_timeout(2_000)
-                        except Exception:
-                            pass
-                        pw_page.unroute("**/api/v1/browse/jobs/**", _capture)
-                        print(f"barona: intercepted API calls: {intercepted}", file=sys.stderr)
-                        # Navigate back to listing
-                        pw_page.goto(listing_url, wait_until="domcontentloaded", timeout=30_000)
-                        pw_page.wait_for_timeout(1_500)
-
-                items = pw_page.evaluate("""() => {
-                    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-                    for (const s of scripts) {
-                        try {
-                            const d = JSON.parse(s.textContent);
-                            if (d['@type'] === 'ItemList' && Array.isArray(d.itemListElement)) {
-                                return d.itemListElement;
-                            }
-                        } catch (e) {}
-                    }
-                    return [];
-                }""")
-
-                if not items:
-                    print(f"barona: no JSON-LD items at page={page_num} — stopping", file=sys.stderr)
-                    break
-
-                new_count = 0
-                for item in items:
-                    item_url = item.get("url") or ""
-                    if not item_url or item_url in seen_ids:
-                        continue
-                    seen_ids.add(item_url)
-                    jobs.append(build_job(item.get("name", ""), item_url, location))
-                    new_count += 1
-
-                print(f"barona: page={page_num} → {new_count} new jobs (total {len(jobs)})", file=sys.stderr)
-                if new_count == 0:
-                    break
-                page_num += 1
-
-            print(f"barona: collected {len(jobs)} jobs total", file=sys.stderr)
-
-            # ── Phase 2: enrich English-titled jobs via detail API ───────────────
-            # For each English-titled job we fetch the page HTML cheaply via an
-            # in-browser fetch() (no rendering cost), extract the numeric job ID
-            # from __NEXT_DATA__, then call the JSON detail API for the languages
-            # array. This avoids full Playwright page navigations for every job.
-            english_jobs = [j for j in jobs if not _title_appears_non_english(j.get("title", ""))]
-            print(f"barona: fetching language data for {len(english_jobs)} English-titled jobs", file=sys.stderr)
-
-            for i, job in enumerate(english_jobs):
-                job_url = job.get("url")
-                if not job_url:
+            enriched = 0
+            failed = 0
+            for i, job in enumerate(enrich_targets):
+                api_url = _page_info_url(job["url"])
+                if not api_url:
+                    failed += 1
                     continue
 
-                # Extract the slug from the job page URL (last path segment)
-                slug = job_url.rstrip("/").split("/")[-1]
+                result = _browser_fetch(pw_page, api_url)
+                if not result:
+                    failed += 1
+                    print(f"barona: page_info fetch returned null for {job['url']}", file=sys.stderr)
+                    continue
 
-                # Try the detail API with the slug first — many REST APIs accept
-                # either a numeric ID or the slug used in the page URL.
-                result = _barona_api_fetch(
-                    pw_page, f"/api/v1/browse/jobs/{slug}?country={locale}&locale={lang}"
+                requirements = (
+                    result.get("page_info", {}).get("job", {}).get("requirements", {})
                 )
 
-                # Fallback: fetch the page HTML and extract the numeric ID from
-                # __NEXT_DATA__ (Next.js embeds full page props there).
-                if not result:
-                    job_id = pw_page.evaluate(f"""async () => {{
-                        try {{
-                            const r = await fetch({json.dumps(job_url)});
-                            if (!r.ok) return null;
-                            const html = await r.text();
-                            const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\\s\\S]*?)<\\/script>/);
-                            if (!m) return null;
-                            const d = JSON.parse(m[1]);
-                            return d?.props?.pageProps?.job?.id ?? null;
-                        }} catch (e) {{ return null; }}
-                    }}""")
+                # Languages → requires_native_language
+                # True when any language other than English is listed.
+                languages: list[str] = requirements.get("languages") or []
+                if languages:
+                    job["requires_native_language"] = any(
+                        lang.strip().lower() != "english" for lang in languages
+                    )
 
-                    if job_id:
-                        result = _barona_api_fetch(
-                            pw_page, f"/api/v1/browse/jobs/{job_id}?country={locale}&locale={lang}"
-                        )
-                    else:
-                        print(f"barona: could not resolve ID for {job_url}", file=sys.stderr)
+                # Education → append to descriptionHtml so TypeScript's
+                # extractEducationRequirement can parse it alongside the body.
+                education = requirements.get("education")
+                if education and isinstance(education, str) and education.strip():
+                    job["descriptionHtml"] = (
+                        job.get("descriptionHtml", "")
+                        + f"<p>Education requirement: {education.strip()}</p>"
+                    )
 
-                if result:
-                    languages: list[str] = result.get("job", {}).get("languages") or []
-                    if languages:
-                        job["descriptionText"] = "Language skills: " + ", ".join(languages)
-                        job["requires_native_language"] = _barona_requires_native(languages)
-
+                enriched += 1
                 if (i + 1) % 10 == 0:
-                    print(f"barona: enriched {i + 1}/{len(english_jobs)} jobs", file=sys.stderr)
+                    print(
+                        f"barona: enriched {i + 1}/{len(enrich_targets)}",
+                        file=sys.stderr,
+                    )
 
-            print(f"barona: done — {len(jobs)} total jobs", file=sys.stderr)
+            print(
+                f"barona: enrichment done — enriched: {enriched}, failed: {failed}",
+                file=sys.stderr,
+            )
 
         finally:
             cleanup()

@@ -1,10 +1,10 @@
 name: Scheduled scrape
 
-# Runs every 2 days at 06:00 UTC.
+# Runs every 2 days at 01:00 UTC.
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
     schedule:
-        - cron: '0 4 * * 1-5' # Mon–Fri at 06:00 EET (UTC+2); runs at 07:00 during EEST (summer)
+        - cron: '0 1 * * 1-5' # Mon–Fri at 03:00 EET (UTC+2); runs at 04:00 during EEST (summer)
     workflow_dispatch:
         inputs:
             dry_run:

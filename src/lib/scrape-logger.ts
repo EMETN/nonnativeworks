@@ -16,6 +16,8 @@ export interface PositionLogEntry {
   countryName: string;
   city?: string[];
   work_model?: 'remote' | 'hybrid' | 'on-site';
+  skills?: string[];
+  required_education?: string;
 }
 
 const logsDir = join(process.cwd(), 'logs');
@@ -66,6 +68,7 @@ export function logScrapeRun(params: {
   ats: string | null;
   positions: PositionLogEntry[];
   skippedUnknownLocation: number;
+  skippedUnknownLocationJobs?: Array<{ title: string; location: string }>;
   skippedUntrackedCountry: number;
   error?: string;
   alsoToStderr?: boolean;
@@ -101,7 +104,7 @@ export function logScrapeRun(params: {
     lines.push(`  ${sub}`);
     for (const pos of positions) {
       const icon = pos.requires_native_language ? '✗' : pos.local_language_advantage ? '~' : '✓';
-      const titleStr = pos.title.slice(0, 42).padEnd(44);
+      const titleStr = (pos.title ?? '').slice(0, 42).padEnd(44);
       const catStr = formatCategory(pos);
       const langStr = formatLanguageSignal(pos);
       lines.push(`  ${icon}  ${titleStr}${catStr}  ${langStr}`);
@@ -110,6 +113,12 @@ export function logScrapeRun(params: {
       if (pos.city && pos.city.length > 0) locationParts.push(pos.city.join(', '));
       if (locationParts.length > 0) {
         lines.push(`       ${locationParts.join(' · ')}`);
+      }
+      const metaParts: string[] = [];
+      if (pos.required_education) metaParts.push(`edu:${pos.required_education}`);
+      if (pos.skills && pos.skills.length > 0) metaParts.push(pos.skills.join(', '));
+      if (metaParts.length > 0) {
+        lines.push(`       ${metaParts.join('  ·  ')}`);
       }
     }
     lines.push('');
@@ -120,6 +129,13 @@ export function logScrapeRun(params: {
   if (params.skippedUntrackedCountry > 0) skippedParts.push(`${params.skippedUntrackedCountry} untracked country`);
   if (skippedParts.length > 0) {
     lines.push(`  SKIPPED  ${skippedParts.join('  ·  ')}`);
+    if (params.skippedUnknownLocationJobs?.length) {
+      for (const j of params.skippedUnknownLocationJobs) {
+        const titleStr = (j.title ?? '').slice(0, 44).padEnd(46);
+        const locStr = j.location ? `"${j.location}"` : '(no location)';
+        lines.push(`  ?  ${titleStr}${locStr}`);
+      }
+    }
     lines.push('');
   }
 

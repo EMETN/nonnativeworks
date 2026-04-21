@@ -197,7 +197,13 @@ def main() -> int:
                              "Default: 0 1 (all companies).")
     parser.add_argument("--companies-file", default=None,
                         help="Path to a companies YAML file (default: scraper/companies.yaml).")
+    parser.add_argument("--scrape-timeout", type=int, default=None,
+                        help="HTTP read timeout in seconds for each scrape call (default: 700).")
     args = parser.parse_args()
+
+    if args.scrape_timeout is not None:
+        global SCRAPE_TIMEOUT_S
+        SCRAPE_TIMEOUT_S = args.scrape_timeout
 
     slice_index, slice_total = args.slice
     if slice_total < 1 or not (0 <= slice_index < slice_total):
@@ -257,7 +263,7 @@ def main() -> int:
         try:
             result = _scrape(args.api_url, secret, url)
         except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
+            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
             print(f"FAIL — scrape error: {msg}", file=sys.stderr)
             summary_entry.update({"status": "fail", "error": msg})
             summary_entries.append(summary_entry)
@@ -317,7 +323,7 @@ def main() -> int:
             summary_entries.append(summary_entry)
             successes.append({"url": url, "positions": total_positions})
         except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
+            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
             print(f"FAIL — upload error: {msg}", file=sys.stderr)
             summary_entry.update({"status": "fail", "error": msg})
             summary_entries.append(summary_entry)
