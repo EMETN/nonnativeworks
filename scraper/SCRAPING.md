@@ -4,6 +4,61 @@ How the system fetches jobs, resolves countries, and classifies language require
 
 ---
 
+## Local scraping script (`run-local.sh`)
+
+Some companies use Cloudflare or similar bot protection that blocks GitHub Actions runner IPs. These must be scraped locally (or from a VPS with a residential IP) using `scraper/run-local.sh`.
+
+The script mirrors the GitHub Actions workflow: it builds the Astro app, starts a local Node server, and calls `batch_run.py` against it — the only difference is it reads from `scraper/companies-local.yaml` instead of `scraper/companies.yaml`.
+
+### Prerequisites
+
+1. **Doppler CLI** authenticated, with a config (default: `dev_personal`) that contains:
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — database credentials
+   - `SCRAPER_SECRET` — matches the server's auth header
+   - `PLAYWRIGHT_CDP_URL` — e.g. `http://192.168.65.254:9222` (see below)
+
+2. **Chrome running with remote debugging** (required for Playwright-based scrapers):
+   ```
+   chrome.exe --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --remote-allow-origins=*
+   ```
+   All existing Chrome windows must be closed before launching with these flags — Chrome ignores them if an instance is already running.
+
+   Verify it's reachable from inside the container:
+   ```bash
+   curl http://192.168.65.254:9222/json/version
+   ```
+
+3. **Python dependencies** installed in `/opt/scraper-venv` or `scraper/.venv`:
+   ```bash
+   pip install -r scraper/requirements.txt
+   ```
+
+### Usage
+
+```bash
+# Scrape into the dev database (default)
+bash scraper/run-local.sh
+
+# Scrape into production
+DOPPLER_CONFIG=prd bash scraper/run-local.sh
+
+# Test without uploading
+bash scraper/run-local.sh --dry-run
+
+# Force a fresh build (if scrape.ts or other server code changed)
+bash scraper/run-local.sh --rebuild
+```
+
+### Adding companies
+
+Edit `scraper/companies-local.yaml`. The format is the same as `scraper/companies.yaml`. Add a company here (instead of the main file) when:
+- The career site uses Cloudflare or bot protection that blocks GitHub Actions IPs
+- The scraper requires a Playwright browser session (njoyn, Barona Phase 2)
+
+Test the company via the admin scraper tab first, then add it here.
+
+---
+
 ## Overview
 
 When the admin submits a career page URL, the scrape API (`/api/admin/scrape`) runs through up to four layers in sequence, stopping as soon as any layer returns jobs.

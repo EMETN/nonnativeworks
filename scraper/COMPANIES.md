@@ -5,8 +5,8 @@
 - Accenture
 - Airbus
 - Arla
-- Barona
-- CGI
+- Barona (local script)
+- CGI (local script)
 - Ericsson
 - Gofore
 - Happeo
