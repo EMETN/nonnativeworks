@@ -7,7 +7,7 @@ import os
 import queue
 import sys
 
-PLAYWRIGHT_TIMEOUT_SECONDS = 600  # hard wall-clock limit for any Playwright scrape
+PLAYWRIGHT_TIMEOUT_SECONDS = 600  # default hard wall-clock limit for any Playwright scrape
 
 # Set PLAYWRIGHT_CDP_URL to connect to a browser running outside the container
 # instead of launching Chromium locally (recommended on WSL2 devcontainers).
@@ -100,11 +100,12 @@ def _block_unnecessary_resources(page) -> None:
     page.route("**/*", _handle)
 
 
-def _run_in_subprocess(fn, *args) -> list[dict]:
+def _run_in_subprocess(fn, *args, timeout: int = PLAYWRIGHT_TIMEOUT_SECONDS) -> list[dict]:
     """
     Run fn(*args) in a child process with a hard timeout.
     If the child crashes or times out it cannot kill the parent,
     so VS Code keeps its connection to the container.
+    Pass timeout= to override the default per-scraper (e.g. njoyn needs much longer).
     """
     result_q: multiprocessing.Queue = multiprocessing.Queue()
 
@@ -116,15 +117,15 @@ def _run_in_subprocess(fn, *args) -> list[dict]:
             result_q.put(("err", str(e)))
 
     proc = multiprocessing.Process(target=worker, daemon=True)
-    _log(f"[subprocess] starting {fn.__name__} (available RAM: {_mem_mb()} MB)")
+    _log(f"[subprocess] starting {fn.__name__} (available RAM: {_mem_mb()} MB, timeout: {timeout}s)")
     proc.start()
 
     # Read from the queue BEFORE joining — if the result is large it fills the
     # pipe buffer and the child blocks, causing a deadlock with proc.join().
     try:
-        status, data = result_q.get(timeout=PLAYWRIGHT_TIMEOUT_SECONDS)
+        status, data = result_q.get(timeout=timeout)
     except queue.Empty:
-        _log(f"[subprocess] {fn.__name__} exceeded {PLAYWRIGHT_TIMEOUT_SECONDS}s — killing")
+        _log(f"[subprocess] {fn.__name__} exceeded {timeout}s — killing")
         proc.kill()
         proc.join()
         return []

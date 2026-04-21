@@ -15,12 +15,13 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'frontend', 'front-end', 'backend', 'back-end', 'fullstack', 'full-stack',
     'full stack', 'software', 'architect', 'infrastructure',
     'mobile', 'ios', 'android', 'embedded', 'firmware', 'hardware',
-    'cloud', 'security engineer', 'cybersecurity', 'network engineer',
+    'cloud', 'security engineer', 'cybersecurity', 'information security', 'network engineer',
     'systems engineer', 'qa engineer', 'quality assurance', 'tester',
     'database administrator', 'dba', 'it support', 'it engineer', 'architecture',
-    'information technology', 'staff engineer', 'principal engineer',
+    'staff engineer', 'principal engineer',
     'release engineer', 'game developer', 'solutions architect', 'testing', 'ict',
-    'development skills', 'guidewire', 
+    'development skills', 'guidewire',
+    'physicist', 'optics', 'photonics', 'laser engineer', 'optical engineer',
   ],
   'data-analytics': [
     'data scientist', 'data science', 'data engineer', 'data analyst', 
@@ -28,7 +29,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'machine learning', 'ml engineer', 'ai engineer', 'artificial intelligence',
     'analytics engineer', 'business intelligence', 'bi analyst', 'bi developer',
     'data warehouse', 'big data', 'statistician', 'quantitative', 'quantitative analyst',
-    'research scientist', 'mlops', 'risk modeling', 'differential privacy',
+    'research scientist', 'mlops', 'risk modeling', 'differential privacy', 'head of data',
   ],
   product: [
     'product manager', 'product owner', 'product director', 'head of product',
@@ -46,7 +47,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'social media', 'brand', 'growth hacker', 'growth marketer', 'brand manager',
     'campaign', 'copywriter', 'copywriting', 'digital marketing',
     'performance marketing', 'email marketing', 'demand generation',
-    'product marketing', 'public relations', 'communication',
+    'product marketing', 'public relations', 'communications',
     'communications manager', 'communications director', 'cmo',
   ],
   sales: [
@@ -76,7 +77,12 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'business strategy', 'program management', 'portfolio management', 
     'governance', 'change management', 'transformation', 'assembly', 'assembler',
     'logistics', 'technician', 'inventory', 'shipping', 'distribution', 'operator',
-    'grocery associate', 'grocery shift lead', 'doctor',
+    'grocery associate', 'grocery shift lead', 'doctor', 'truck driver',
+    'inspector', 'quality control', 'quality inspector',
+    'welder', 'welding', 'fitter', 'machinist', 'fabricator', 'boilermaker',
+    'sheet metal', 'plate smith', 'blacksmith', 'pipefitter', 'millwright',
+    'maintenance worker', 'forklift', 'crane operator', 'production worker',
+    'production operator', 'warehouse worker', 'machine operator'
   ],
   'finance-accounting': [
     'finance', 'financial', 'accountant', 'accounting', 'controller',

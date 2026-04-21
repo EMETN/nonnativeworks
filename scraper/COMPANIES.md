@@ -1,18 +1,31 @@
 # Companies tracked
 
 - ABB
+- Academic Work
 - Accenture
-- Barona (enrichment of descriptions not working yet)
+- Airbus
+- Arla
+- Barona (local script)
+- CGI (local script)
+- Ericsson
 - Gofore
+- Happeo
+- If
 - Konecranes
+- Maersk
+- Neste
 - Nokia
 - Nordea
+- Orion
 - OP Financial Group
 - Oura
 - Posti
 - Reaktor
 - Rovio
 - Smartly
+- SOK
+- Stora Enso
+- Telia
 - Tieto
 - Wolt
 - Zalando
@@ -34,7 +47,8 @@ Detected automatically from the career page URL. No per-company config needed â€
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
-| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB |
+| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk |
+| Recruitee | `{slug}.recruitee.com` | Happeo |
 
 ---
 
@@ -46,10 +60,11 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 |---------|----------|----------|
 | OP Financial Group | `op-careers.fi` | Custom recruiting API (POST, Polylang locale) |
 | Nokia | `jobs.nokia.com` | Oracle HCM Recruiting Cloud |
+| Orion | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud |
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
+| Telia | `teliacompany.com` | Custom JSON API (`/api/job`) |
 | Accenture | `accenture.com` | Custom API |
-| Barona | `baronacareers.com/fi/fi/job` | Custom API |
 
 ---
 
@@ -72,6 +87,11 @@ Any company not matched by layers 1, 1.5, or Attrax detection falls here. The sc
 
 | Company | Hostname | Notes |
 |---------|----------|-------|
+| Academic Work | `academicwork.fi` | Staffing agency; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions enriched via static fetch |
+| Arla | `jobs.arla.com` | Paginated `?startrow=N`, HTML; descriptions enriched via static fetch |
+| Barona | `barona.fi` | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs |
+| CGI | `cgi.njoyn.com` | Playwright |
+| Neste | `jobs.neste.com` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
 | Zalando | `jobs.zalando.com` | Next.js RSC payload parsed from `self.__next_f.push` chunks; offices mapped to country codes; descriptions enriched via static fetch |
 
