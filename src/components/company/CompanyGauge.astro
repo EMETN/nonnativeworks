@@ -1,0 +1,95 @@
+---
+interface Props {
+  englishPositions: number;
+  totalPositions: number;
+}
+
+const { englishPositions, totalPositions } = Astro.props;
+const pct = totalPositions > 0 ? Math.round((englishPositions / totalPositions) * 100) : 0;
+const r = 38;
+const circumference = 2 * Math.PI * r;
+const offset = circumference * (1 - pct / 100);
+---
+
+<div class="gauge shrink-0 cursor-pointer" data-gauge>
+  <svg
+    viewBox="0 0 100 100"
+    class="w-[75px] sm:w-[75px] md:w-[100px]"
+    role="img"
+    aria-label={`${englishPositions} of ${totalPositions} positions are English-friendly`}
+  >
+    <circle
+      cx="50"
+      cy="50"
+      r={r}
+      fill="none"
+      stroke="#e5e7eb"
+      stroke-width="8"
+    />
+    {pct > 0 && (
+      <circle
+        cx="50"
+        cy="50"
+        r={r}
+        fill="none"
+        stroke="#0F7A4F"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke-dasharray={circumference}
+        stroke-dashoffset={offset}
+        transform="rotate(-90 50 50)"
+      />
+    )}
+    <g class="gauge-counts">
+      <text
+        x="50"
+        y="46"
+        text-anchor="middle"
+        font-size="20"
+        font-weight="700"
+        fill="#0F7A4F"
+        font-family="'Inter', sans-serif"
+      >
+        {englishPositions}
+      </text>
+      <line x1="35" y1="52" x2="65" y2="52" stroke="#d1d5db" stroke-width="1" />
+      <text
+        x="50"
+        y="66"
+        text-anchor="middle"
+        font-size="14"
+        font-weight="500"
+        fill="#9ca3af"
+        font-family="'Inter', sans-serif"
+      >
+        {totalPositions}
+      </text>
+    </g>
+    <text
+      class="gauge-pct"
+      x="50"
+      y="57"
+      text-anchor="middle"
+      font-size="22"
+      font-weight="700"
+      fill="#0F7A4F"
+      font-family="'Inter', sans-serif"
+    >
+      {pct}%
+    </text>
+  </svg>
+</div>
+
+<style>
+  .gauge .gauge-pct { display: none; }
+  .gauge:hover .gauge-counts,
+  .gauge.active .gauge-counts { display: none; }
+  .gauge:hover .gauge-pct,
+  .gauge.active .gauge-pct { display: block; }
+</style>
+
+<script>
+  document.querySelectorAll('[data-gauge]').forEach(el => {
+    el.addEventListener('click', () => el.classList.toggle('active'));
+  });
+</script>
