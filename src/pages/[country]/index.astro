@@ -42,14 +42,13 @@ const companies = await getCompanyStatsByCountry(
         <!-- Title + Gauge -->
         <div class="flex items-start justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
-                class="relative inline-block text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
+                class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
-                {country.name}
-                <img
+                {country.name}<img
                     src={`/flags/${country.code.toLowerCase()}.png`}
                     alt={`${country.name} flag`}
-                    class="absolute -top-1 -right-5 sm:-right-6 md:-right-8 w-4 h-3 sm:w-5 sm:h-3.5 md:w-6 md:h-4 rounded-[2px] shadow-sm"
+                    class="inline-block align-top ml-1.5 sm:ml-2 w-4 h-3 sm:w-5 sm:h-3.5 md:w-6 md:h-4 rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
                 />
             </h1>
             {country.total_positions > 0 && (
