@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import PositionList from '../../components/company/PositionList.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import {
@@ -33,6 +34,7 @@ const positions = await getPositionsByCompany(
     cookies,
     company.company_id,
 );
+
 ---
 
 <BaseLayout
@@ -59,21 +61,29 @@ const positions = await getPositionsByCompany(
             <span class="text-gray-900 font-medium">{company.name}</span>
         </nav>
 
-        <!-- Title -->
-        <h1
-            class="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight"
-        >
-            {company.name}
-            {
-                company.is_english_company && (
-                    <span class="text-sm sm:text-base bg-[#CCd9ED] text-[#002383] px-2 py-1 rounded font-semibold align-middle ml-2">
-                        EN
-                    </span>
-                )
-            }
-        </h1>
+        <!-- Title + Gauge -->
+        <div class="flex items-start justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
+            <h1
+                class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
+                style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+            >
+                {company.name}
+                {
+                    company.is_english_company && (
+                        <span class="text-sm sm:text-base bg-[#CCd9ED] text-[#002383] px-2 py-1 rounded font-semibold align-middle ml-2">
+                            EN
+                        </span>
+                    )
+                }
+            </h1>
+            {company.total_positions > 0 && (
+                <CompanyGauge
+                    englishPositions={company.english_positions}
+                    totalPositions={company.total_positions}
+                />
+            )}
+        </div>
 
-        <!-- Position list (Preact island) -->
         {
             positions.length > 0 && (
                 <StatsDescription>
@@ -84,10 +94,11 @@ const positions = await getPositionsByCompany(
                     <strong class="font-semibold text-gray-900">
                         {company.total_positions.toLocaleString()}
                     </strong>{' '}
-                    {company.total_positions === 1 ? 'position' : 'positions'} at{' '}
-                    {company.name}{' '}
-                    {company.english_positions === 1 ? "doesn't" : "don't"} require
-                    the local language(s).
+                    open{' '}
+                    {company.total_positions === 1 ? 'position' : 'positions'}{' '}
+                    at {company.name}{' '}
+                    {company.english_positions === 1 ? "doesn't" : "don't"}{' '}
+                    require the local language(s).
                 </StatsDescription>
             )
         }
