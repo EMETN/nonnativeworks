@@ -48,6 +48,15 @@ iptables -A OUTPUT -o lo -j ACCEPT
 # Create ipset with CIDR support
 ipset create allowed-domains hash:net
 
+echo "Adding Cloudflare IP ranges..."
+for cidr in \
+    104.16.0.0/13 \
+    172.64.0.0/13 \
+    131.0.72.0/22
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)
@@ -94,6 +103,7 @@ for domain in \
     "op-careers.fi" \
     "jobs.nokia.com" \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
     "nordea.com" \
     "www.nordea.com" \
@@ -103,12 +113,15 @@ for domain in \
     "posti.wd3.myworkdayjobs.com" \
     "sok.wd502.myworkdayjobs.com" \
     "ag.wd3.myworkdayjobs.com" \
+    "if.wd3.myworkdayjobs.com" \
     "equinor.wd3.myworkdayjobs.com" \
     "storaenso.wd502.myworkdayjobs.com" \
     "kone.wd3.myworkdayjobs.com" \
     "finnair.wd103.myworkdayjobs.com" \
+    "maersk.wd3.myworkdayjobs.com" \
     "careers.abb" \
     "baronacareers.com" \
+    "barona.fi" \
     "nitor.com" \
     "alpha-sense.com" \
     "rovio.com" \
@@ -130,6 +143,14 @@ for domain in \
     "bmwgroup.jobs" \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
+    "happeo.recruitee.com" \
+    "jobs.arla.com" \
+    "jobs.ericsson.com" \
+    "teliacompany.com" \
+    "jobs.fortum.com" \
+    "novonordisk.com" \
+    "careers.carlsberg.com" \
+    "careers.orkla.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
@@ -199,15 +220,26 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # Then allow only specific outbound traffic to allowed domains
-iptables -A OUTPUT -m set --match-set allowed-domains dst -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 443 -m set --match-set allowed-domains dst -j ACCEPT
+
+# Allow CDP (Chrome DevTools Protocol) to the Windows host for Playwright dev use.
+# Port 9222 is plain HTTP — it's only needed on host.docker.internal so we target
+# the resolved IP directly rather than opening port 9222 to all allowed domains.
+CDP_HOST_IP=$(dig +noall +answer A "host.docker.internal" | awk '$4 == "A" {print $5}' | head -1)
+if [ -n "$CDP_HOST_IP" ]; then
+    echo "Adding CDP rule for host.docker.internal ($CDP_HOST_IP:9222)"
+    iptables -A OUTPUT -p tcp --dport 9222 -d "$CDP_HOST_IP" -j ACCEPT
+else
+    echo "WARNING: Could not resolve host.docker.internal — CDP rule not added"
+fi
 
 # Explicitly REJECT all other outbound traffic for immediate feedback
 iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
 echo "Firewall configuration complete"
 echo "Verifying firewall rules..."
-if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - was able to reach https://example.com"
+if curl --connect-timeout 5 https://8.8.8.8 >/dev/null 2>&1; then
+    echo "ERROR: Firewall verification failed - was able to reach https://8.8.8.8"
     exit 1
 else
     echo "Firewall verification passed - unable to reach https://example.com as expected"

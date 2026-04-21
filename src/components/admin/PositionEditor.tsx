@@ -20,8 +20,18 @@ interface PositionRow {
   url: string | null;
   requires_native_language: boolean;
   local_language_advantage: boolean;
+  required_education: string | null;
   category: CategoryInfo | null;
 }
+
+const EDUCATION_OPTIONS = [
+  { value: '',           label: '— not specified —' },
+  { value: 'vocational', label: 'Vocational' },
+  { value: 'bachelor',   label: "Bachelor's" },
+  { value: 'master',     label: "Master's" },
+  { value: 'mba',        label: 'MBA' },
+  { value: 'phd',        label: 'PhD' },
+];
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -106,6 +116,14 @@ export default function PositionEditor() {
     patchPosition(pos.id, { local_language_advantage: value });
   }
 
+  function handleEducationChange(pos: PositionRow, value: string) {
+    const education = value === '' ? null : value;
+    setPositions((prev) =>
+      prev.map((p) => (p.id === pos.id ? { ...p, required_education: education } : p))
+    );
+    patchPosition(pos.id, { required_education: education });
+  }
+
   // Full category list from the canonical source — not derived from loaded positions,
   // which would omit categories not yet used by this company.
   const knownCategories = CATEGORIES;
@@ -162,6 +180,7 @@ export default function PositionEditor() {
                     <th class="px-4 py-2.5 font-medium text-gray-600">Category</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600 text-center">Requires local lang.</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600 text-center">Local advantage</th>
+                    <th class="px-4 py-2.5 font-medium text-gray-600">Education</th>
                     <th class="px-4 py-2.5 w-16" />
                   </tr>
                 </thead>
@@ -225,6 +244,21 @@ export default function PositionEditor() {
                               handleAdvantageChange(pos, (e.target as HTMLInputElement).checked)
                             }
                           />
+                        </td>
+
+                        {/* Education */}
+                        <td class="px-4 py-2.5">
+                          <select
+                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                            value={pos.required_education ?? ''}
+                            onChange={(e) =>
+                              handleEducationChange(pos, (e.target as HTMLSelectElement).value)
+                            }
+                          >
+                            {EDUCATION_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
                         </td>
 
                         {/* Save indicator */}

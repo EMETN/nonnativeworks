@@ -24,8 +24,9 @@ export function classifyJobVerbose(
   const rawDesc = job.descriptionHtml ?? job.descriptionText;
   const descText = rawDesc ? stripHtml(rawDesc) : undefined;
 
-  const { category, matchedKeyword, source } = classifyCategoryVerbose(job.title, descText, job.jobFunction);
-  const langResult = detectNativeLanguage(job.title, descText, countryCode);
+  const classifierTitle = job.classifierTitle ?? job.title;
+  const { category, matchedKeyword, source } = classifyCategoryVerbose(classifierTitle, descText, job.jobFunction);
+  const langResult = detectNativeLanguage(classifierTitle, descText, countryCode);
 
   return {
     classified: {
