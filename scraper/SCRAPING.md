@@ -4,6 +4,61 @@ How the system fetches jobs, resolves countries, and classifies language require
 
 ---
 
+## Local scraping script (`run-local.sh`)
+
+Some companies use Cloudflare or similar bot protection that blocks GitHub Actions runner IPs. These must be scraped locally (or from a VPS with a residential IP) using `scraper/run-local.sh`.
+
+The script mirrors the GitHub Actions workflow: it builds the Astro app, starts a local Node server, and calls `batch_run.py` against it — the only difference is it reads from `scraper/companies-local.yaml` instead of `scraper/companies.yaml`.
+
+### Prerequisites
+
+1. **Doppler CLI** authenticated, with a config (default: `dev_personal`) that contains:
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — database credentials
+   - `SCRAPER_SECRET` — matches the server's auth header
+   - `PLAYWRIGHT_CDP_URL` — e.g. `http://192.168.65.254:9222` (see below)
+
+2. **Chrome running with remote debugging** (required for Playwright-based scrapers):
+   ```
+   chrome.exe --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --remote-allow-origins=*
+   ```
+   All existing Chrome windows must be closed before launching with these flags — Chrome ignores them if an instance is already running.
+
+   Verify it's reachable from inside the container:
+   ```bash
+   curl http://192.168.65.254:9222/json/version
+   ```
+
+3. **Python dependencies** installed in `/opt/scraper-venv` or `scraper/.venv`:
+   ```bash
+   pip install -r scraper/requirements.txt
+   ```
+
+### Usage
+
+```bash
+# Scrape into the dev database (default)
+bash scraper/run-local.sh
+
+# Scrape into production
+DOPPLER_CONFIG=prd bash scraper/run-local.sh
+
+# Test without uploading
+bash scraper/run-local.sh --dry-run
+
+# Force a fresh build (if scrape.ts or other server code changed)
+bash scraper/run-local.sh --rebuild
+```
+
+### Adding companies
+
+Edit `scraper/companies-local.yaml`. The format is the same as `scraper/companies.yaml`. Add a company here (instead of the main file) when:
+- The career site uses Cloudflare or bot protection that blocks GitHub Actions IPs
+- The scraper requires a Playwright browser session (njoyn, Barona Phase 2)
+
+Test the company via the admin scraper tab first, then add it here.
+
+---
+
 ## Overview
 
 When the admin submits a career page URL, the scrape API (`/api/admin/scrape`) runs through up to four layers in sequence, stopping as soon as any layer returns jobs.
@@ -29,6 +84,7 @@ The URL is inspected by `detectAts()` to see if it matches a known ATS hostname:
 | `jobs.lever.co/{slug}` | Lever |
 | `jobs.ashbyhq.com/{slug}` | Ashby |
 | `apply.workable.com/api/v1/widget/accounts/{slug}` | Workable |
+| `{slug}.recruitee.com/api/offers` | Recruitee
 
 If matched, the company slug is extracted and the corresponding API is called directly (e.g. `boards-api.greenhouse.io/v1/boards/{slug}/jobs`). These APIs return structured JSON with titles, locations, and descriptions already included — no HTML scraping needed.
 
@@ -154,10 +210,7 @@ Skips any keywords belonging to the country's own language (already covered by P
 **Phase 2b — "Depending on location" conditional**
 Catches phrases like `"Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."` A regex detects the trigger phrase and then checks if any of the country's languages appear anywhere in the text. Returns `required` when matched. (The language may not be the first listed, so a simple substring match on `"depending on the location, {lang}"` would miss Swedish and Lithuanian in this example.)
 
-**Phase 2c — English-only confirmation**
-Checks for explicit English-only phrases like `"working language is English"`, `"English-speaking environment"`. Returns `not required`.
-
-**Phase 2d — Default**
+**Phase 2c — Default**
 No signals found. Returns `not required` — absence of any local-language mention is itself a strong signal that English is sufficient.
 
 ### Classification outputs

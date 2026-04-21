@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
   // Pre-load lookup tables
   const { data: countryRows } = await supabase.from('countries').select('id, slug, sort_order');
   const { data: categoryRows } = await supabase.from('categories').select('id, slug');
+  const { data: skillRows } = await supabase.from('skills').select('id, canonical_name');
 
   if (!countryRows || !categoryRows) {
     return json({ error: 'Could not load reference data' }, 500);
@@ -40,6 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const countryMap = new Map(countryRows.map((c: { slug: string; id: string }) => [c.slug, c.id]));
   const categoryMap = new Map(categoryRows.map((c: { slug: string; id: string }) => [c.slug, c.id]));
+  const skillIdMap = new Map((skillRows ?? []).map((s: { canonical_name: string; id: string }) => [s.canonical_name, s.id]));
   const maxSortOrder = Math.max(0, ...countryRows.map((c: { sort_order: number }) => c.sort_order));
 
   const results: { company: string; country: string; positions: number; countryCreated?: boolean }[] = [];
@@ -57,7 +59,7 @@ export const POST: APIRoute = async ({ request }) => {
         nextSortOrder++;
       }
 
-      const result = await upsertEntry(supabase, entry, countryMap, categoryMap);
+      const result = await upsertEntry(supabase, entry, countryMap, categoryMap, skillIdMap);
       results.push(result);
     } catch (err) {
       console.error(`Upload error for ${entry.company_name}:`, err);
@@ -106,6 +108,7 @@ async function upsertEntry(
   entry: CompanyEntry,
   countryMap: Map<string, string>,
   categoryMap: Map<string, string>,
+  skillIdMap: Map<string, string>,
 ) {
   const { company_name, country, career_page_url, is_english_company, positions } = entry;
 
@@ -143,14 +146,17 @@ async function upsertEntry(
     local_language_advantage: p.local_language_advantage ?? false,
     required_languages: p.required_languages ?? [],
     preferred_languages: p.preferred_languages ?? [],
+    skills: p.skills ?? [],
+    required_education: p.required_education ?? null,
     extracted_at: new Date().toISOString(),
   }));
 
   const { error: insertErr } = await supabase.from('positions').insert(positionRows);
   if (insertErr) throw new Error(`Could not insert positions: ${insertErr.message}`);
 
-  // Daily snapshot — one record per (company, country) per calendar day
+  // Daily snapshots — one record per (company, country) per calendar day
   await takeSnapshotIfNeeded(supabase, company_name, countryId, positions);
+  await takeSkillSnapshotIfNeeded(supabase, companyRow.id, countryId, positions, categoryMap, skillIdMap);
 
   return { company: company_name, country, positions: positions.length };
 }
@@ -183,6 +189,58 @@ async function takeSnapshotIfNeeded(
   } catch (err) {
     // Snapshot failure must not fail the upload
     console.error('Snapshot insert failed (non-fatal):', err);
+  }
+}
+
+async function takeSkillSnapshotIfNeeded(
+  supabase: SupabaseClient,
+  companyId: string,
+  countryId: string,
+  positions: CompanyEntry['positions'],
+  categoryMap: Map<string, string>,
+  skillIdMap: Map<string, string>,
+) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Aggregate: count (category_id, skill_id) pairs across positions
+    const counts = new Map<string, number>();
+    const meta = new Map<string, { category_id: string; skill_id: string }>();
+
+    for (const pos of positions) {
+      if (!pos.skills?.length) continue;
+      const categoryId = categoryMap.get(pos.category) ?? categoryMap.get('other');
+      if (!categoryId) continue;
+
+      for (const skill of pos.skills) {
+        const skillId = skillIdMap.get(skill);
+        if (!skillId) continue;
+        const key = `${categoryId}:${skillId}`;
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+        meta.set(key, { category_id: categoryId, skill_id: skillId });
+      }
+    }
+
+    if (counts.size === 0) return;
+
+    const rows = Array.from(counts.entries()).map(([key, count]) => ({
+      captured_at: today,
+      company_id: companyId,
+      country_id: countryId,
+      category_id: meta.get(key)!.category_id,
+      skill_id: meta.get(key)!.skill_id,
+      position_count: count,
+    }));
+
+    await supabase
+      .from('skill_snapshots')
+      .upsert(rows, {
+        onConflict: 'captured_at,company_id,country_id,category_id,skill_id',
+        ignoreDuplicates: true,
+      });
+  } catch (err) {
+    // Snapshot failure must not fail the upload
+    console.error('Skill snapshot insert failed (non-fatal):', err);
   }
 }
 

@@ -58,7 +58,7 @@ export interface CompanyApiConfig {
   pagination:
     | { type: 'none' }
     | { type: 'page';   param?: string; startPage?: number; totalCountPath?: string }
-    | { type: 'offset'; param?: string; pageSize: number }
+    | { type: 'offset'; param?: string; pageSize: number; totalCountPath?: string }
     /**
      * Oracle HCM finder-string pagination. The offset is injected directly into the
      * finder=... parameter value (e.g. "limit=200,offset=200,sortBy=...") rather than
@@ -177,6 +177,25 @@ export interface CompanyApiConfig {
    */
   descriptionApiWorkModelField?: string;
   /**
+   * When set, the language-requirement API URL is built from job.url rather than job.sourceId.
+   * The regex (one or more capture groups) is applied to job.url; the replacement string forms
+   * the value substituted for {jobPath} in descriptionApiUrl.
+   * Unlike {sourceId}, {jobPath} is NOT URL-encoded — slashes are preserved.
+   * Example (Barona): match "https://www\.baronacareers\.com(/\w+)/\w+(/jobs/.+)", replace "$1/en$2"
+   * transforms "https://www.baronacareers.com/fi/fi/jobs/slug" → "/fi/en/jobs/slug".
+   */
+  descriptionApiUrlFromJobUrl?: { match: string; replace: string };
+  /**
+   * Dot-path (relative to descriptionApiItemsPath) to a languages array in the per-job
+   * detail API response (e.g. Barona's page_info.job.requirements.languages → ["Finnish","English"]).
+   * When set, job.requires_native_language is set directly from this array — any language other
+   * than English means the job requires a native language. This overrides the text classifier.
+   * Only processed for jobs whose title appears to be in English (non-English titles are already
+   * flagged by Phase 1a of the classifier and don't need the extra API call).
+   * If the array is missing or null, the field is left unset (classifier decides instead).
+   */
+  descriptionApiLanguagesPath?: string;
+  /**
    * Secondary API endpoint to fetch the same jobs in a different language (e.g. English locale).
    * Jobs are matched to primary jobs by fields.id and their descriptions take priority for
    * language classification. The primary fetch provides the complete position list for statistics;
@@ -196,23 +215,39 @@ export interface CompanyApiConfig {
    */
   secondaryUrlTemplate?: string;
   /**
-   * When set, each job is duplicated for every additional country found in this
-   * nested array. Use when a single job posting covers multiple countries
-   * (e.g. Nokia's secondaryLocations). Each duplicate gets the secondary country
-   * as its location so the classifier assigns it to the correct country.
+   * When set, handles multi-location job postings. Three modes:
    *
-   * path      — dot-path from each job item to the secondary locations array
-   * countryName — dot-path within each secondary location element to the country name string
+   * Country mode (countryName set): each job is duplicated for every additional
+   * country found in the nested array. Use when a single posting covers multiple
+   * countries (e.g. Nokia). Each duplicate gets the secondary country as its
+   * location so the classifier assigns it to the correct country.
+   *
+   * City mode (cityField set): secondary entries are treated as additional cities
+   * within the same country. Their names are collected into job.cities alongside
+   * the primary city — no duplicate jobs are created.
+   *
+   * Parallel mode (parallelCitiesPath set): path points to a flat string array of
+   * country names; parallelCitiesPath points to a comma-separated city string whose
+   * entries are positionally aligned with the countries array (country[i] → city[i]).
+   * Each country becomes a separate job entry with its corresponding city.
+   * Use when the API returns parallel country and city arrays (e.g. Telia).
+   *
+   * path               — dot-path from each job item to the countries array
+   * countryName        — dot-path within each element to the country name string (country mode)
+   * cityField          — dot-path within each element to the city name string (city mode)
+   * parallelCitiesPath — dot-path to a comma-separated city string (parallel mode)
    */
   expandSecondaryLocations?: {
     path: string;
-    countryName: string;
+    countryName?: string;
+    cityField?: string;
+    parallelCitiesPath?: string;
   };
   /**
-   * When set, one full paginated fetch is made per entry, with each entry's fields merged
-   * into the base body as overrides. All results are merged and deduplicated.
-   * Use when the API requires separate requests per filter value (e.g. Accenture requires
-   * one jobCountry + matching countrySite per request).
+   * When set, one full paginated fetch is made per entry. All results are merged and deduplicated.
+   * POST requests: entry fields are merged into the request body.
+   * GET requests: entry fields are appended as URL query params.
+   * Use when the API requires separate requests per filter value (e.g. one country per request).
    */
   repeatFor?: {
     body: Record<string, string>[];
@@ -311,6 +346,40 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
   },
 
+  'fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com': {
+    // Oracle HCM Recruiting Cloud endpoint for Orion (Finnish pharma).
+    // Same structure as Nokia — site number is OrionCareers.
+    url: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=OrionCareers,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+    method: 'GET',
+    headers: {
+      'accept': '*/*',
+      'accept-language': 'en',
+      'content-type': 'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+      'ora-irc-language': 'en',
+      'origin': 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com',
+      'referer': 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    },
+    pagination: { type: 'finder-offset', pageSize: 200 },
+    itemsPath: 'items.0.requisitionList',
+    fields: {
+      title: 'Title',
+      location: 'PrimaryLocation',
+      id: 'Id',
+    },
+    urlTemplate: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers/job/{Id}',
+    companyName: 'Orion',
+    descriptionApiUrl: 'https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=OrionCareers',
+    descriptionApiFields: ['ExternalDescriptionStr'],
+    descriptionApiLocationField: 'workLocation.0.TownOrCity',
+    descriptionApiJobFunctionField: 'JobFunction',
+    descriptionApiWorkModelField: 'WorkplaceType',
+    expandSecondaryLocations: {
+      path: 'secondaryLocations',
+      cityField: 'Name',
+    },
+  },
+
   'gofore.com': {
     // WordPress REST API with Polylang (lang=en returns English-language postings).
     // No location field in the API response — city names are extracted from the HTML
@@ -387,7 +456,80 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
   },
 
  
-  'nordea.com': {
+   'jobs.ericsson.com': {
+    url: 'https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com&query=&sort_by=hot',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+      'Referer': 'https://jobs.ericsson.com/careers',
+    },
+    repeatFor: {
+      body: [
+        { location: 'Finland' },
+        { location: 'Sweden' },
+        { location: 'Norway' },
+        { location: 'Denmark' },
+        { location: 'Netherlands' },
+        { location: 'Germany' },
+        { location: 'Estonia' },
+        { location: 'Latvia' },
+        { location: 'Lithuania' },
+        { location: 'Iceland' },
+      ],
+    },
+    pagination: { type: 'offset', param: 'start', pageSize: 10, totalCountPath: 'data.count' },
+    itemsPath: 'data.positions',
+    fields: {
+      title: 'name',
+      location: 'locations',
+      cities: 'locations',
+      id: 'id',
+      department: 'department',
+      jobFunction: 'efcustomTextJobfuntionAdvancefilterpcs',
+    },
+    urlTemplate: 'https://jobs.ericsson.com{positionUrl}',
+    companyName: 'Ericsson',
+    descriptionApiUrl: 'https://jobs.ericsson.com/api/pcsx/position_details?position_id={sourceId}&domain=ericsson.com&hl=en',
+    descriptionApiItemsPath: 'data',
+    descriptionApiFields: ['jobDescription'],
+    descriptionApiWorkModelField: 'workLocationOption',
+  },
+
+ 'teliacompany.com': {
+    url: 'https://www.teliacompany.com/api/job',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0',
+      'Accept': '*/*',
+      'Referer': 'https://www.teliacompany.com/en/careers/open-positions',
+    },
+    pagination: { type: 'none' },
+    // Root of the response is the jobs array directly
+    fields: {
+      title: 'position',
+      location: 'country',  // array like ["SWEDEN", "LITHUANIA"] — first element used as primary location
+      department: 'jobCategory',
+      jobFunction: 'subCategory',
+      id: 'slug',           // slug is the key used by the per-job detail API
+    },
+    // country is a flat string array; city is a comma-separated string aligned by index.
+    // Parallel mode splits the city string and assigns city[i] to country[i] per duplicate job.
+    expandSecondaryLocations: {
+      path: 'country',
+      parallelCitiesPath: 'city',
+    },
+    urlTemplate: 'https://www.teliacompany.com/en/careers/open-positions/{slug}',
+    companyName: 'Telia',
+    // Per-job detail API returns description HTML and a more specific jobFamily field.
+    // Response root is the item itself (no wrapper), so itemsPath is empty string.
+    descriptionApiUrl: 'https://www.teliacompany.com/api/job?id={sourceId}',
+    descriptionApiItemsPath: '',
+    descriptionApiFields: ['jobDescription'],
+    descriptionApiJobFunctionField: 'jobFamily',
+  },
+
+ 'nordea.com': {
     url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
     method: 'GET',
 
@@ -426,4 +568,18 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
   // careers.abb is ABB's branded career site; the actual jobs live on Workday.
   // The locationCountry params pre-filter to tracked countries only.
   'careers.abb': 'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa',
+  // maersk.com is Maersk's branded career site; jobs live on Workday.
+  'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
 };
+
+// ─── Python scraper company names ────────────────────────────────────────────
+// Display names for companies scraped via the Python/Layer 2 scraper, keyed by
+// a substring of their career page URL. Used as a fallback when no ATS API
+// provides a canonical company name — prevents slug-derived names like
+// "Academicwork" instead of "Academic Work".
+export const PYTHON_SCRAPER_COMPANY_NAMES: Array<{ urlSubstring: string; name: string }> = [
+  { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
+  { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
+  { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
+  { urlSubstring: 'jobs.arla.com', name: 'Arla' },
+];

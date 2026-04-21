@@ -57,7 +57,7 @@ def extract_from_job_containers(soup, base_url: str) -> list[dict]:
         title, url = extract_title_and_url(tag, base_url)
         if not title or title.lower() in seen_titles:
             continue
-        if len(title) > 120:
+        if len(title) < 2 or len(title) > 120:
             continue
 
         seen_titles.add(title.lower())
@@ -80,7 +80,7 @@ def extract_from_lists(soup, base_url: str) -> list[dict]:
         candidate_jobs = []
         for li in items:
             title, url = extract_title_and_url(li, base_url)
-            if not title or len(title) > 120:
+            if not title or len(title) < 2 or len(title) > 120:
                 continue
             location = extract_location(li)
             candidate_jobs.append(build_job(title, url, location))
