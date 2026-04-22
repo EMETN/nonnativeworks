@@ -153,6 +153,7 @@ for domain in \
     "careers.orkla.com" \
     "metso.com" \
     "www.metso.com" \
+    "career2.successfactors.eu" \
     "proton.me" \
     "jobs.booking.com" \
     "akqa.com" \

@@ -70,12 +70,12 @@
 
 scrapers:
     # ── Metso ────────────────────────────────────────────────────────────────────
-  - match: "metso.com/corporate/open-jobs"
+  - match: "metso.com/corporate/careers/open-jobs"
     name: Metso
     extract_mode: attribute_json
     pagination:
       type: none
-    container_selector: "career-list-page"
+    container_selector: "careers-list-page"
     attribute_name: "open-positions"
     description_selector: ".jobdescription"
     fields:
