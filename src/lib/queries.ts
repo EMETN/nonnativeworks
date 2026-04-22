@@ -44,34 +44,32 @@ export async function getCompanyCountsByCountry(request: Request, cookies: Astro
 export async function getGlobalStats(request: Request, cookies: AstroCookies): Promise<GlobalStats> {
   const supabase = client(request, cookies);
 
-  const { data: positionData, error: posErr } = await supabase
-    .from('positions')
-    .select('requires_native_language', { count: 'exact' });
+  const [
+    { count: totalCount, error: posErr },
+    { count: englishCount, error: engErr },
+    { data: companyCountData, error: compErr },
+    { count: countryCount, error: countryErr },
+  ] = await Promise.all([
+    supabase.from('positions').select('*', { count: 'exact', head: true }),
+    supabase.from('positions').select('*', { count: 'exact', head: true }).eq('requires_native_language', false),
+    supabase.rpc('count_distinct_companies'),
+    supabase.from('countries').select('*', { count: 'exact', head: true }),
+  ]);
 
   if (posErr) { console.error('getGlobalStats positions:', posErr.message); throw new Error('Failed to load global stats'); }
-
-  const { data: companyCountData, error: compErr } = await supabase
-    .rpc('count_distinct_companies');
-
+  if (engErr) { console.error('getGlobalStats english positions:', engErr.message); throw new Error('Failed to load global stats'); }
   if (compErr) { console.error('getGlobalStats companies:', compErr.message); throw new Error('Failed to load global stats'); }
-  const companyCount = companyCountData as number | null;
-
-  const { count: countryCount, error: countryErr } = await supabase
-    .from('countries')
-    .select('*', { count: 'exact', head: true });
-
   if (countryErr) { console.error('getGlobalStats countries:', countryErr.message); throw new Error('Failed to load global stats'); }
 
-  const positions = positionData ?? [];
-  const total = positions.length;
-  const english = positions.filter((p) => !p.requires_native_language).length;
+  const total = totalCount ?? 0;
+  const english = englishCount ?? 0;
 
   return {
     total_positions: total,
     english_positions: english,
     english_percentage: total > 0 ? Math.round((english / total) * 1000) / 10 : 0,
     total_countries: countryCount ?? 0,
-    total_companies: companyCount ?? 0,
+    total_companies: (companyCountData as number | null) ?? 0,
   };
 }
 
