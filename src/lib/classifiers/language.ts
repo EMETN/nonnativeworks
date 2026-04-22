@@ -671,6 +671,19 @@ export function detectNativeLanguage(
   const combined = `${title} ${descText}`.toLowerCase()
     .replace(/[()]/g, ' ')
     .replace(/&/g, 'and')
+    // Expand slash-separated language alternatives so that per-language signal
+    // phrases match each option independently — but only when the slash group is
+    // followed by a language-context word (speaking, skills, etc.) to avoid
+    // expanding unrelated slash patterns (e.g. "ruby/python skills").
+    // "norwegian/swedish/danish speaking" → "norwegian speaking swedish speaking danish speaking"
+    // "norwegian/swedish/danish language skills" → "norwegian language skills swedish language skills danish language skills"
+    .replace(
+      /([a-z]+)((?:\/[a-z]+)+)(\s+(?:speaking|speaker|languages?|skills|knowledge|proficiency|fluency|required|native|communication)(?:\s+[a-z]+)?)/g,
+      (_, first, rest, suffix) => {
+        const parts = [first, ...rest.slice(1).split('/')];
+        return parts.map(p => p + suffix).join(' ');
+      },
+    )
     .replace(/\s+/g, ' ');
 
   // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
