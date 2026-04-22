@@ -2,16 +2,24 @@
 #
 # Each entry matches a URL substring and drives generic_paginated.py.
 # Use this for career sites that render jobs as plain HTML (no JavaScript
-# required) and paginate via a query parameter.
+# required). Two extraction modes are supported; choose based on how the
+# site structures its job data.
 #
-# Required fields
-# ───────────────
-#   match         Substring matched against the career page URL
-#   card_selector CSS selector for the repeating element that wraps one job
-#                 (e.g. "tr.data-row", "li.job-card", "div.vacancy-item")
+# ── Shared fields (all modes) ─────────────────────────────────────────────────
 #
-# Pagination (required unless the whole list fits on one page)
-# ───────────────────────────────────────────────────────────
+#   match             Substring matched against the career page URL (required)
+#   name              Display name used in log messages
+#   extract_mode      css_cards (default) | attribute_json
+#   list_url          Override the URL used for listing pages (use when the
+#                     input URL differs from the first page URL)
+#   extra_params          Fixed query params always appended (e.g. sort order)
+#   description_selector  CSS selector for the job description on the detail page
+#                         Used for language classification (English-titled jobs only).
+#                         Default: tries .jobdescription, .job-description,
+#                                  [class*="description"], article, main
+#
+# ── Pagination (shared, required unless the whole list fits on one page) ──────
+#
 #   pagination.type       offset | page | index | none
 #                           offset — param = page_number * page_size  (e.g. startrow=0,25,50)
 #                           page   — param = page_number + 1          (e.g. page=1,2,3)
@@ -21,25 +29,62 @@
 #   pagination.page_size  Expected results per page; stop when fewer are returned
 #   pagination.max_pages  Safety ceiling (default: 200)
 #
-# Optional selector overrides (sensible defaults used when omitted)
-# ─────────────────────────────────────────────────────────────────
-#   list_url              Override the URL used for listing pages (use when the
-#                         input URL needs a different path than the first page)
-#   extra_params          Fixed query params always appended (e.g. sort order)
+# ── extract_mode: css_cards (default) ────────────────────────────────────────
+#
+# Jobs are repeating HTML elements. Inspect the page source and find the
+# element that wraps one job row or card.
+#
+#   card_selector         CSS selector for the repeating element that wraps one job
+#                         (required) e.g. "tr.data-row", "li.job-card"
 #   title_selector        CSS selector for the job title within a card
 #                         Default: first <a> or first heading (h2–h4)
 #   location_selector     CSS selector for the location within a card
 #                         Default: first element whose class matches a location pattern
-#   description_selector  CSS selector for the job description on the detail page
-#                         Default: tries .jobdescription, .job-description,
-#                                  [class*="description"], article, main
 #   job_function_selector CSS selector for the job function/area on the detail page
-#                         Used as the primary category classification signal (higher weight
-#                         than title or description). Only fetched for English-titled jobs,
-#                         during the same page fetch as description_selector.
+#                         Extracted during the same fetch as description_selector.
+#                         Used as the primary category classification signal (higher
+#                         weight than title or description).
 #                         Example: "[data-careersite-propertyid='department']"
+#
+# ── extract_mode: attribute_json ─────────────────────────────────────────────
+#
+# All jobs are encoded as a JSON array in an HTML attribute on a single
+# container element (common with web components). Open the page source and
+# find the element — e.g. <career-list-page open-positions='[{...}]'>.
+# Pagination is usually not needed (all jobs load in one request).
+#
+#   container_selector    CSS selector for the element that holds the attribute
+#                         (required) e.g. "career-list-page"
+#   attribute_name        Name of the HTML attribute containing the JSON array
+#                         (required) e.g. "open-positions"
+#   fields.title          Key name for the job title in each JSON object
+#                         Default: "title"
+#   fields.url            Key name for the job URL
+#                         Default: "url"
+#   fields.location       Key name for the location (string or array — first used)
+#   fields.country        Key name for the country (string or array). When an array,
+#                         one job entry is created per country (fan-out).
+#                         countries[i] and locations[i] are treated as parallel arrays.
+#   fields.job_function   Key name for the job function/department. Set directly on
+#                         the job — no detail page fetch needed.
 
 scrapers:
+    # ── Metso ────────────────────────────────────────────────────────────────────
+  - match: "metso.com/corporate/open-jobs"
+    name: Metso
+    extract_mode: attribute_json
+    pagination:
+      type: none
+    container_selector: "career-list-page"
+    attribute_name: "open-positions"
+    description_selector: ".jobdescription"
+    fields:
+      title: title
+      url: url
+      location: locations
+      country: countries
+      job_function: jobFamily
+  
   # ── Neste ────────────────────────────────────────────────────────────────────
   - match: "jobs.neste.com"
     name: Neste
@@ -55,3 +100,4 @@ scrapers:
     location_selector: "td.colLocation"
     description_selector: ".jobdescription"
     job_function_selector: "[data-careersite-propertyid='department']"
+

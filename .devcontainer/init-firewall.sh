@@ -151,6 +151,11 @@ for domain in \
     "novonordisk.com" \
     "careers.carlsberg.com" \
     "careers.orkla.com" \
+    "metso.com" \
+    "proton.me" \
+    "jobs.booking.com" \
+    "akqa.com" \
+    "deptagency.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
