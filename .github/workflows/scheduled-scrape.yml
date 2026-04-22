@@ -70,6 +70,8 @@ jobs:
             # The Doppler service token must be scoped to the config that contains:
             #   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SCRAPER_SECRET
             DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+            # Opt into Node.js 24 for all JavaScript actions ahead of the June 2026 forced migration.
+            FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
         steps:
             - name: Checkout
