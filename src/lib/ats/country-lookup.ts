@@ -781,6 +781,27 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'san francisco':            { name: 'United States', code: 'US', slug: 'united-states' },
   'san jose':                 { name: 'United States', code: 'US', slug: 'united-states' },
   'seattle':                  { name: 'United States', code: 'US', slug: 'united-states' },
+  // ── Canada (provinces) ───────────────────────────────────────────────────
+  'alberta':               { name: 'Canada', code: 'CA', slug: 'canada' },
+  'british columbia':      { name: 'Canada', code: 'CA', slug: 'canada' },
+  'manitoba':              { name: 'Canada', code: 'CA', slug: 'canada' },
+  'new brunswick':         { name: 'Canada', code: 'CA', slug: 'canada' },
+  'newfoundland':          { name: 'Canada', code: 'CA', slug: 'canada' },
+  'nova scotia':           { name: 'Canada', code: 'CA', slug: 'canada' },
+  'ontario':               { name: 'Canada', code: 'CA', slug: 'canada' },
+  'prince edward island':  { name: 'Canada', code: 'CA', slug: 'canada' },
+  'quebec':                { name: 'Canada', code: 'CA', slug: 'canada' },
+  'québec':                { name: 'Canada', code: 'CA', slug: 'canada' },
+  'saskatchewan':          { name: 'Canada', code: 'CA', slug: 'canada' },
+  // ── Canada (major cities) ─────────────────────────────────────────────────
+  'calgary':               { name: 'Canada', code: 'CA', slug: 'canada' },
+  'edmonton':              { name: 'Canada', code: 'CA', slug: 'canada' },
+  'montreal':              { name: 'Canada', code: 'CA', slug: 'canada' },
+  'montréal':              { name: 'Canada', code: 'CA', slug: 'canada' },
+  'ottawa':                { name: 'Canada', code: 'CA', slug: 'canada' },
+  'toronto':               { name: 'Canada', code: 'CA', slug: 'canada' },
+  'vancouver':             { name: 'Canada', code: 'CA', slug: 'canada' },
+  'winnipeg':              { name: 'Canada', code: 'CA', slug: 'canada' },
   // ── India ────────────────────────────────────────────────────────────────
   'ahmedabad':                { name: 'India', code: 'IN', slug: 'india' },
   'bengaluru':                { name: 'India', code: 'IN', slug: 'india' },
@@ -871,6 +892,9 @@ function lookupCityByPrefix(key: string): CountryInfo | undefined {
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
+// Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
+const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
+
 /**
  * Extract a work model from a raw location string by looking for prefixes like
  * "Hybrid - ", "Remote - ", "On-site - ".
@@ -904,7 +928,7 @@ export function extractCitiesForCountry(location: string, countryCode: string): 
   if (!location?.trim()) return [];
   const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
   const segments = parts.flatMap((part) => {
-    const stripped = part.replace(LOCATION_PREFIX_RE, '');
+    const stripped = part.replace(LOCATION_PREFIX_RE, '').replace(LOCATION_SUFFIX_RE, '');
     return stripped.split(',').map((s) => s.trim()).filter(Boolean);
   });
   const results: string[] = [];
@@ -934,7 +958,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
   // then by comma within each part. Strip work-mode prefixes before lookup.
   const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
   const segments = parts.flatMap((part) => {
-    const stripped = part.replace(LOCATION_PREFIX_RE, '');
+    const stripped = part.replace(LOCATION_PREFIX_RE, '').replace(LOCATION_SUFFIX_RE, '');
     return stripped.split(',').map((s) => s.trim()).filter(Boolean);
   });
 

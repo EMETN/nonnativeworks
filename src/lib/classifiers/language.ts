@@ -290,25 +290,46 @@ function descriptionContainsNativeChars(
 // Helpers
 // ---------------------------------------------------------------------------
 
+const HTML_ENTITIES: Record<string, string> = {
+  '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"',
+  '&apos;': "'", '&nbsp;': ' ', '&ndash;': '–', '&mdash;': '—',
+  '&lsquo;': '\u2018', '&rsquo;': '\u2019', '&ldquo;': '\u201C', '&rdquo;': '\u201D',
+};
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&[a-z]+;/gi, (e) => HTML_ENTITIES[e.toLowerCase()] ?? e)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)));
+}
+
 export function stripHtml(html: string): string {
+  // Decode entities first so that doubly-encoded HTML (e.g. Greenhouse returns
+  // "&lt;li&gt;" as literal text in the JSON) becomes real tags before the
+  // stripping regexes run. A second decode pass at the end handles any
+  // remaining entities in the text content itself (e.g. "&amp;" → "&").
+  const decoded = decodeHtmlEntities(html);
+
   // Remove entire sections that are never part of the job description body.
   // These are stripped with their contents to prevent navigation/footer text
   // (often in the local language) from triggering the tinyld language detector
   // on otherwise English job ads. Script/style contents are removed for the
   // same reason — minified JS produces garbage chunks.
-  const stripped = html.replace(
+  const stripped = decoded.replace(
     /<(script|style|nav|footer)[^>]*>[\s\S]*?<\/\1>/gi,
     '',
   );
   // Convert block-level tags to newlines so paragraph structure survives for
   // tinyld chunk detection. Inline tags become spaces.
-  return stripped
-    .replace(/<\/?(p|div|li|h[1-6]|br|section|article|blockquote|tr)[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n[ \t]*/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  return decodeHtmlEntities(
+    stripped
+      .replace(/<\/?(p|div|li|h[1-6]|br|section|article|blockquote|tr)[^>]*>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n[ \t]*/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
 }
 
 
@@ -454,6 +475,7 @@ function buildRequirementSignals(lang: string): string[] {
     // "Both X and English" — local language is co-required alongside English
     `both ${lang} and`,
     `in both ${lang}`,
+    `both english and ${lang}`,
     `${lang} and english`,
     `english and ${lang}`,
     `english, and ${lang}`,
@@ -473,6 +495,10 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} and in english`,
     // Discussion / communication ability
     `discussions in ${lang}`,
+    // Prerequisite / mastery phrasing
+    `mastering ${lang}`,
+    `${lang} is a prerequisite`,
+    `${lang} is prerequisite`,
     // Minimum level requirements — even basic knowledge means English alone isn't enough
     `basic ${lang}`,
     `basic in ${lang}`,
@@ -568,7 +594,7 @@ const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
 
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
-const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
 /**
@@ -844,15 +870,23 @@ export function detectNativeLanguage(
 
   // ── Phase 2b: "depending on location" conditional requirement ───────────
   // e.g. "Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."
-  // The country's language may not be the first listed, so we can't rely on
-  // substring order — we check for the trigger phrase + language anywhere in the text.
-  if (/depending on (?:the |your )?location/i.test(combined)) {
-    for (const lang of languages) {
-      if (combined.includes(lang)) {
-        return {
-          value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
-          signals: [{ phase: '2b', description: 'location-conditional requirement', matched: `depending on location + ${lang}` }],
-        };
+  // Requires the language to appear within 150 characters of the trigger phrase
+  // to avoid spurious matches when the language is mentioned elsewhere in the text.
+  {
+    const LOC_WINDOW = 60;
+    const triggerRe = /depending on (?:the |your )?location/gi;
+    let triggerMatch: RegExpExecArray | null;
+    while ((triggerMatch = triggerRe.exec(combined)) !== null) {
+      const start = Math.max(0, triggerMatch.index - LOC_WINDOW);
+      const end = Math.min(combined.length, triggerMatch.index + triggerMatch[0].length + LOC_WINDOW);
+      const window = combined.slice(start, end);
+      for (const lang of languages) {
+        if (window.includes(lang)) {
+          return {
+            value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+            signals: [{ phase: '2b', description: 'location-conditional requirement', matched: `depending on location + ${lang}` }],
+          };
+        }
       }
     }
   }

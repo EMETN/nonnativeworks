@@ -41,6 +41,10 @@ companies:
       url: https://jobs.arla.com
       min_positions: 10
 
+    - name: Dept
+      url: https://www.deptagency.com/careers/roles/
+      min_positions: 5
+
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
       min_positions: 10
@@ -64,6 +68,10 @@ companies:
     - name: Maersk
       url: https://www.maersk.com/careers
       min_positions: 5
+
+    - name: Metso
+      url: https://metso.com/corporate/careers/open-jobs
+      min_positions: 1
 
     - name: Neste
       url: https://jobs.neste.com/search

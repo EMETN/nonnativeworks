@@ -162,7 +162,6 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "informatie",     # information
         "innovatie",      # innovation
         "medewerker",     # employee / associate
-        "medior",         # mid-level
         "netwerk",        # network
         "ontwikkelaar",   # developer
         "openbaar",       # public

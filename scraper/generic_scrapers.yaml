@@ -69,6 +69,8 @@
 #                         the job — no detail page fetch needed.
 
 scrapers:
+  
+  
     # ── Metso ────────────────────────────────────────────────────────────────────
   - match: "metso.com/corporate/careers/open-jobs"
     name: Metso
