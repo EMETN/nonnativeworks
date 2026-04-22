@@ -125,7 +125,7 @@ export default function JsonUploader() {
           setReportedTotal(null);
         }}
         rows={12}
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#1A4DB8] resize-y"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#12956B] resize-y"
       />
 
       {/* Validation errors */}
@@ -153,7 +153,7 @@ export default function JsonUploader() {
         const actualTotal = previewEntries.reduce((sum, e) => sum + e.positions.length, 0);
         const mismatch = reportedTotal !== null && reportedTotal !== actualTotal;
         return (
-          <div class={`border rounded-lg p-3 text-sm ${mismatch ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-[#E6ECF6] border-[#99B3DB] text-[#001C6A]'}`}>
+          <div class={`border rounded-lg p-3 text-sm ${mismatch ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-[#E5F3EC] border-[#8BBDA3] text-[#084A2F]'}`}>
             <div class="font-semibold mb-1">
               ✓ JSON is valid — {actualTotal} positions across {previewEntries.length} {previewEntries.length === 1 ? 'country entry' : 'country entries'}
               {reportedTotal !== null && (
@@ -215,7 +215,7 @@ export default function JsonUploader() {
         <button
           onClick={handleUpload}
           disabled={!raw.trim() || isLoading}
-          class="bg-[#002EA2] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#002383] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? 'Uploading…' : 'Upload to Supabase'}
         </button>

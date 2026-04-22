@@ -176,7 +176,7 @@ function GridRow({
               {item.name}
             </span>
             {item.englishBadge && (
-              <span class="text-[0.4rem] sm:text-xs bg-[#CCd9ED] text-[#002383] px-0.5 sm:px-1.5 py-0.5 rounded font-semibold shrink-0">
+              <span class="text-[0.4rem] sm:text-xs bg-[#C2E0D1] text-[#0B5E3C] px-0.5 sm:px-1.5 py-0.5 rounded font-semibold shrink-0">
                 EN
               </span>
             )}
@@ -191,7 +191,7 @@ function GridRow({
               </span>
             </div>
             <div class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}>
-              <span class={`${textSize} font-semibold text-[#002EA2] leading-none tabular-nums`} style={numFont}>
+              <span class={`${textSize} font-semibold text-[#0F7A4F] leading-none tabular-nums`} style={numFont}>
                 {formatNumber(item.english_positions)}
               </span>
             </div>
