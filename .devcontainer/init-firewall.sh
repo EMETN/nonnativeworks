@@ -152,6 +152,7 @@ for domain in \
     "careers.carlsberg.com" \
     "careers.orkla.com" \
     "metso.com" \
+    "www.metso.com" \
     "proton.me" \
     "jobs.booking.com" \
     "akqa.com" \
