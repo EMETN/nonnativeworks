@@ -1,6 +1,7 @@
 import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglish } from './title-language';
+import { lookupCountryFromLocation } from './country-lookup';
 
 const MAX_PAGES = 50;        // safety cap to avoid infinite loops
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
@@ -759,6 +760,24 @@ export async function fetchCompanyApiJobs(
               .map((c) => c.split(',')[0].trim())
               .filter(Boolean);
             job.cities = matched.length > 0 ? matched : undefined;
+          }
+        }
+      } else if (config.repeatForCountryField) {
+        // POST repeatFor: filter cities to only those belonging to the queried country.
+        // Uses CITY_MAP lookup — cities not recognised by CITY_MAP are kept (unknown city
+        // in the current country) while cities that resolve to a different country are removed.
+        const countryName = override[config.repeatForCountryField];
+        if (typeof countryName === 'string') {
+          const targetCode = lookupCountryFromLocation(countryName)[0]?.code;
+          for (const job of jobs) {
+            job.country_code = countryName;
+            if (job.cities && targetCode) {
+              const filtered = job.cities.filter((city) => {
+                const resolved = lookupCountryFromLocation(city);
+                return resolved.length === 0 || resolved.some((i) => i.code === targetCode);
+              });
+              job.cities = filtered.length > 0 ? filtered : undefined;
+            }
           }
         }
       }
