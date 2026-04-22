@@ -442,6 +442,7 @@ function buildRequirementSignals(lang: string): string[] {
     `communicative ${lang}`,
     `${lang} communicative`,
     // Native / mother tongue
+    `native level of ${lang}`,
     `native ${lang}`,
     `${lang} native`,
     `mother tongue ${lang}`,
@@ -506,6 +507,21 @@ function buildRequirementSignals(lang: string): string[] {
     `basic level of ${lang}`,
     `some ${lang}`,
   ];
+}
+
+// Language-context words that legitimately follow "knowledge of {lang}".
+// Any other word suggests the language is used as a geographic adjective
+// (e.g. "knowledge of Dutch law") rather than a language requirement.
+const KNOWLEDGE_OF_LANG_CONTEXT_RE =
+  /^(?:is\b|are\b|was\b|were\b|would\b|will\b|required\b|needed\b|mandatory\b|essential\b|language\b|skills\b|proficiency\b|fluency\b|spoken\b|written\b|level\b|and\b|or\b)/;
+
+function knowledgeOfSignalIsAdjective(combined: string, signal: string): boolean {
+  if (!signal.startsWith('knowledge of ')) return false;
+  const idx = combined.indexOf(signal);
+  if (idx === -1) return false;
+  const after = combined.slice(idx + signal.length).replace(/^[ \t]+/, '');
+  if (!after || !/^[a-z]/.test(after)) return false; // punctuation/EOS → genuine signal
+  return !KNOWLEDGE_OF_LANG_CONTEXT_RE.test(after);
 }
 
 // Negation patterns that immediately follow a requirement signal phrase
@@ -594,7 +610,7 @@ const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
 
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
-const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl', 'hu']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
 /**
@@ -823,6 +839,7 @@ export function detectNativeLanguage(
   for (const lang of languages) {
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
+        if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
         if (requirementNegatedByContext(combined, signal)) {
           return {
             value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
@@ -866,6 +883,7 @@ export function detectNativeLanguage(
       }
       for (const signal of buildRequirementSignals(kw)) {
         if (combined.includes(signal)) {
+          if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
           if (requirementNegatedByContext(combined, signal)) {
             return {
               value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
