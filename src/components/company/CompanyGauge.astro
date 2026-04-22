@@ -87,10 +87,14 @@ const offset = circumference * (1 - pct / 100);
   }
   .gauge .gauge-pct { opacity: 0; }
   .gauge .gauge-counts { opacity: 1; }
-  .gauge:hover .gauge-pct,
-  .gauge.active .gauge-pct { opacity: 1; }
-  .gauge:hover .gauge-counts,
-  .gauge.active .gauge-counts { opacity: 0; }
+  @media (hover: hover) {
+    .gauge:hover .gauge-pct { opacity: 1; }
+    .gauge:hover .gauge-counts { opacity: 0; }
+  }
+  @media (hover: none) {
+    .gauge.active .gauge-pct { opacity: 1; }
+    .gauge.active .gauge-counts { opacity: 0; }
+  }
 </style>
 
 <script>
