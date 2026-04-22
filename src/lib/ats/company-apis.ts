@@ -501,7 +501,6 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // used to filter the cities array to only cities in the queried country.
     repeatForCountryField: 'jobCountry',
   },
-
  
    'jobs.ericsson.com': {
     url: 'https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com&query=&sort_by=hot',
@@ -601,6 +600,32 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
 
     companyName: 'Nordea',
     fetchDescription: true,
+  },
+
+  'jobs.booking.com': {
+    url: 'https://jobs.booking.com/api/jobs?limit=100',
+    method: 'GET',
+
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0',
+      'Accept': 'application/json',
+      'Referer': 'https://jobs.booking.com/booking/jobs',
+    },
+
+    pagination: { type: 'page', param: 'page', startPage: 1 },
+
+    itemsPath: 'jobs',
+
+    fields: {
+      title: 'data.title',
+      location: 'data.city',
+      department: 'data.category',
+      id: 'data.req_id',
+      url: 'data.meta_data.canonical_url',
+    },
+
+    companyName: 'Booking.com',
+    descriptionFields: ['data.description'],
   },
 };
 

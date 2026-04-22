@@ -187,7 +187,8 @@ done
 # CDN-backed domains resolve to different IPs depending on which Akamai/CDN node responds.
 # Query from multiple public DNS servers to capture more of the IP pool.
 for cdn_domain in \
-    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" ; do
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "jobs.booking.com" ; do
     for dns_server in "8.8.8.8" "1.1.1.1"; do
         echo "Resolving $cdn_domain via $dns_server..."
         cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
