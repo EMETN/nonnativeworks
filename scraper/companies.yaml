@@ -61,6 +61,10 @@ companies:
       url: https://www.maersk.com/careers
       min_positions: 5
 
+    - name: Neste
+      url: https://jobs.neste.com/search
+      min_positions: 5
+
     - name: Nokia
       url: https://jobs.nokia.com/en
       min_positions: 10
@@ -89,21 +93,17 @@ companies:
       url: https://www.reaktor.com/careers
       min_positions: 2
 
-    - name: Neste
-      url: https://jobs.neste.com/search
-      min_positions: 5
-
     - name: Rovio
       url: https://www.rovio.com/open-positions
       min_positions: 1
 
-    - name: SOK
-      url: https://sok.wd502.myworkdayjobs.com/S-ryhman-avoimet-tyopaikat
-      min_positions: 5
-
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2
+
+    - name: SOK
+      url: https://sok.wd502.myworkdayjobs.com/S-ryhman-avoimet-tyopaikat
+      min_positions: 5
     
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
