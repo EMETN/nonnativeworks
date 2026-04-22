@@ -558,6 +558,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'nyköping':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'örebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'orebro':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'sala':                     { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'skelleftea':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'skellefteå':               { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'skillingaryd':             { name: 'Sweden', code: 'SE', slug: 'sweden' },

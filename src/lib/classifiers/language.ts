@@ -568,7 +568,7 @@ const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
 
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
-const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
 /**
@@ -755,6 +755,19 @@ export function detectNativeLanguage(
       value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
       signals: [{ phase: '2a', description: 'generic native language phrase', matched: genericMatch[0] }],
     };
+  }
+
+  // "your local language (LANG)" — parens are already stripped from combined,
+  // so "(Lithuanian)" becomes "lithuanian". Capture the first word after the phrase.
+  const localLangParenMatch = combined.match(/your local language\s+(\w+)/);
+  if (localLangParenMatch) {
+    const canonicalName = KEYWORD_TO_CANONICAL_NAME[localLangParenMatch[1]];
+    if (canonicalName) {
+      return {
+        value: true, local_language_advantage: false, requiredLanguages: [canonicalName], preferredLanguages: [],
+        signals: [{ phase: '2a', description: 'local language parenthetical phrase', matched: localLangParenMatch[0] }],
+      };
+    }
   }
 
   if (NORDIC_COUNTRY_CODES.has(cc)) {
