@@ -618,8 +618,9 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
 
     fields: {
       title: 'data.title',
-      location: 'data.city',
-      department: 'data.category',
+      location: 'data.country',
+      cities: 'data.city',
+      jobFunction: 'data.category',
       id: 'data.req_id',
       url: 'data.meta_data.canonical_url',
     },
