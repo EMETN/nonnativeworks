@@ -4,6 +4,7 @@
 - Academic Work
 - Accenture
 - Airbus
+- AlphaSense
 - Arla
 - Barona (local script)
 - CGI (local script)
@@ -20,6 +21,7 @@
 - OP Financial Group
 - Oura
 - Posti
+- Proton
 - Reaktor
 - Rovio
 - Smartly
@@ -43,7 +45,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
-| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician |
+| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense |
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
