@@ -287,6 +287,15 @@ export interface CompanyApiConfig {
   repeatFor?: {
     body: Record<string, string>[];
   };
+  /**
+   * For POST repeatFor requests: the key within each body override entry that holds the
+   * country name (e.g. 'jobCountry'). When set, jobs returned for each iteration have
+   * their cities array filtered to only cities that belong to that country (via CITY_MAP
+   * lookup), removing cities from untracked or other countries. Unknown cities (not in
+   * CITY_MAP) are kept. Analogous to the country-based city filtering that GET repeatFor
+   * does automatically via string inclusion.
+   */
+  repeatForCountryField?: string;
 }
 
 // ─── Company registry ────────────────────────────────────────────────────────
@@ -488,6 +497,9 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'Accenture',
     // Description fields visible in the response — adjust once full item shape is confirmed
     descriptionFields: ['jobDescriptionClean', 'qualificationClean'],
+    // 'jobCountry' in the body override contains the country name (e.g. "Finland")
+    // used to filter the cities array to only cities in the queried country.
+    repeatForCountryField: 'jobCountry',
   },
 
  

@@ -594,7 +594,7 @@ const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
 
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
-const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
 /**
