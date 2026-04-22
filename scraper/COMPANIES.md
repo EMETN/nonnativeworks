@@ -8,12 +8,14 @@
 - Arla
 - Barona (local script)
 - CGI (local script)
+- Dept
 - Ericsson
 - Gofore
 - Happeo
 - If
 - Konecranes
 - Maersk
+- Metso
 - Neste
 - Nokia
 - Nordea
@@ -45,7 +47,7 @@ Detected automatically from the career page URL. No per-company config needed �
 
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
-| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense |
+| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept |
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
@@ -83,17 +85,27 @@ Detected by `attrax-vacancy-tile` in the page HTML. Uses a paginated Attrax-spec
 | Konecranes | `konecranes.careers/jobs` | |
 | Tieto | `careers.tieto.com` | URL override applied — filtered to tracked countries to bypass 250-job cap |
 
-#### Generic heuristics (all other sites)
+#### Config-driven generic scraper (`scraper/generic_scrapers.yaml`)
 
-Any company not matched by layers 1, 1.5, or Attrax detection falls here. The scraper tries three parallel strategies (container scan, list scan, link scan) and uses whichever returns the most results.
+Declarative YAML config — no code changes needed to add a company. Two extraction modes:
+- **`css_cards`** — jobs are repeating HTML elements; configure a card selector + field selectors
+- **`attribute_json`** — all jobs are encoded as a JSON array in an HTML attribute (common with web components)
+
+| Company | Hostname | Mode | Notes |
+|---------|----------|------|-------|
+| Metso | `metso.com/corporate/careers/open-jobs` | `attribute_json` | `<careers-list-page open-positions='[…]'>`; fan-out per country via `countries[]` array |
+| Neste | `jobs.neste.com` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+
+#### Platform-specific scrapers (`scraper/platforms/`)
+
+Dedicated per-platform Python modules for sites with non-standard structures.
 
 | Company | Hostname | Notes |
 |---------|----------|-------|
-| Academic Work | `academicwork.fi` | Staffing agency; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions enriched via static fetch |
-| Arla | `jobs.arla.com` | Paginated `?startrow=N`, HTML; descriptions enriched via static fetch |
+| Academic Work | `academicwork.fi` | Staffing agency; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions fetched from English URL (`/en/jobs/j/…?lang=en`) to avoid Finnish boilerplate |
+| Arla | `jobs.arla.com` | Jobs JSON embedded in a `<script>` block (`phApp.ddo`); paginated `?from=N`; descriptions enriched via static fetch |
 | Barona | `barona.fi` | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs |
-| CGI | `cgi.njoyn.com` | Playwright |
-| Neste | `jobs.neste.com` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| CGI | `cgi.njoyn.com` | Njoyn ATS; Playwright |
 | Rovio | `rovio.com` | Custom `c-open-po-card` HTML; descriptions enriched via static fetch |
 | Zalando | `jobs.zalando.com` | Next.js RSC payload parsed from `self.__next_f.push` chunks; offices mapped to country codes; descriptions enriched via static fetch |
 
