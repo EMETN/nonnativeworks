@@ -81,11 +81,16 @@ const offset = circumference * (1 - pct / 100);
 </div>
 
 <style>
-  .gauge .gauge-pct { display: none; }
-  .gauge:hover .gauge-counts,
-  .gauge.active .gauge-counts { display: none; }
+  .gauge .gauge-pct,
+  .gauge .gauge-counts {
+    transition: opacity 0.25s ease;
+  }
+  .gauge .gauge-pct { opacity: 0; }
+  .gauge .gauge-counts { opacity: 1; }
   .gauge:hover .gauge-pct,
-  .gauge.active .gauge-pct { display: block; }
+  .gauge.active .gauge-pct { opacity: 1; }
+  .gauge:hover .gauge-counts,
+  .gauge.active .gauge-counts { opacity: 0; }
 </style>
 
 <script>
