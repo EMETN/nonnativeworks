@@ -7,6 +7,7 @@ import type { AtsDetectionResult } from './types';
  */
 const HOSTNAME_SLUG_OVERRIDES: Record<string, { ats: AtsDetectionResult['ats']; slug: string }> = {
   'ouraring.com': { ats: 'greenhouse', slug: 'oura' },
+  'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
