@@ -7,6 +7,7 @@
 - AlphaSense
 - Arla
 - Barona (local script)
+- Booking.com
 - CGI (local script)
 - Dept
 - Ericsson
@@ -69,6 +70,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Nordea | `nordea.com` | Custom Nordea API |
 | Telia | `teliacompany.com` | Custom JSON API (`/api/job`) |
 | Accenture | `accenture.com` | Custom API |
+| Booking.com | `jobs.booking.com` | Custom API |
 
 ---
 
