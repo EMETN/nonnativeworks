@@ -42,7 +42,7 @@ const countryItems = topCountries.map((c) => ({
 }));
 
 const companyItems = topCompanies.map((c) => ({
-  href: `/${c.primary_country_slug}/${c.primary_company_slug}`,
+  href: `/companies/${c.primary_company_slug}`,
   name: c.name,
   english: c.english_positions,
   total: c.total_positions,
@@ -119,13 +119,13 @@ const companyItems = topCompanies.map((c) => ({
         <TopList
           title="Top Countries"
           items={countryItems}
-          seeAllHref="#countries"
+          seeAllHref="/countries"
           seeAllLabel="See all countries"
         />
         <TopList
           title="Top Companies"
           items={companyItems}
-          seeAllHref="#companies"
+          seeAllHref="/companies"
           seeAllLabel="See all companies"
         />
       </div>

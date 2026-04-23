@@ -102,10 +102,10 @@ export async function getTopCompanies(request: Request, cookies: AstroCookies, l
     grouped.set(key, entry);
   }
 
-  const sorted = [...grouped.entries()]
+  const all = [...grouped.entries()]
     .map(([name, g]) => ({ name, ...g }))
-    .sort((a, b) => b.english - a.english)
-    .slice(0, limit);
+    .sort((a, b) => b.english - a.english);
+  const sorted = limit > 0 ? all.slice(0, limit) : all;
 
   const countryIds = [...new Set(sorted.flatMap((s) => s.entries.map((e) => e.country_id)))];
   const { data: countryData } = await supabase
@@ -360,4 +360,97 @@ export async function getCategoryBreakdownByCompany(
       english_percentage: e.total > 0 ? Math.round((e.english / e.total) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.english_positions - a.english_positions);
+}
+
+export interface GlobalCompanyData {
+  name: string;
+  is_english_company: boolean;
+  career_page_url: string | null;
+  total_positions: number;
+  english_positions: number;
+  updated_at: string;
+  entries: {
+    company_id: string;
+    country_id: string;
+    country_name: string;
+    country_slug: string;
+    country_code: string;
+    total_positions: number;
+    english_positions: number;
+    positions: PositionDetail[];
+  }[];
+}
+
+export async function getGlobalCompanyBySlug(
+  request: Request,
+  cookies: AstroCookies,
+  companySlug: string
+): Promise<GlobalCompanyData | null> {
+  const supabase = client(request, cookies);
+
+  const { data: allStats, error: statsErr } = await supabase
+    .from('company_stats')
+    .select('*');
+  if (statsErr) { console.error('getGlobalCompanyBySlug:', statsErr.message); return null; }
+
+  const matches = (allStats ?? []).filter((c: any) => nameToSlug(c.name) === companySlug) as CompanyStats[];
+  if (matches.length === 0) return null;
+
+  const countryIds = [...new Set(matches.map((m) => m.country_id))];
+  const companyIds = matches.map((m) => m.company_id);
+
+  const [{ data: countryData }, { data: posData }] = await Promise.all([
+    supabase.from('countries').select('id, name, slug, code').in('id', countryIds),
+    supabase.from('positions').select(`
+      id, company_id, title, url, city, work_model,
+      requires_native_language, local_language_advantage,
+      category:categories(name)
+    `).in('company_id', companyIds),
+  ]);
+
+  const countryMap = new Map((countryData ?? []).map((c: any) => [c.id, c]));
+  const positionsByCompany = new Map<string, PositionDetail[]>();
+  for (const row of posData ?? []) {
+    const r = row as any;
+    const list = positionsByCompany.get(r.company_id) ?? [];
+    list.push({
+      id: r.id,
+      company_id: r.company_id,
+      title: r.title,
+      url: r.url ?? null,
+      city: r.city ?? null,
+      work_model: r.work_model ?? null,
+      category_name: r.category?.name ?? 'Other',
+      requires_native_language: r.requires_native_language,
+      local_language_advantage: r.local_language_advantage ?? false,
+    });
+    positionsByCompany.set(r.company_id, list);
+  }
+
+  const first = matches[0];
+  const entries = matches
+    .map((m) => {
+      const country = countryMap.get(m.country_id);
+      return {
+        company_id: m.company_id,
+        country_id: m.country_id,
+        country_name: country?.name ?? '',
+        country_slug: country?.slug ?? '',
+        country_code: country?.code ?? '',
+        total_positions: m.total_positions,
+        english_positions: m.english_positions,
+        positions: positionsByCompany.get(m.company_id) ?? [],
+      };
+    })
+    .sort((a, b) => b.english_positions - a.english_positions);
+
+  return {
+    name: first.name,
+    is_english_company: first.is_english_company,
+    career_page_url: first.career_page_url,
+    total_positions: matches.reduce((s, m) => s + m.total_positions, 0),
+    english_positions: matches.reduce((s, m) => s + m.english_positions, 0),
+    updated_at: matches.reduce((latest, m) => m.updated_at > latest ? m.updated_at : latest, matches[0].updated_at),
+    entries,
+  };
 }

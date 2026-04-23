@@ -11,8 +11,8 @@ interface ListItem {
 interface Props {
     title: string;
     items: ListItem[];
-    seeAllHref: string;
-    seeAllLabel: string;
+    seeAllHref?: string;
+    seeAllLabel?: string;
 }
 
 const { title, items, seeAllHref, seeAllLabel } = Astro.props;
@@ -30,7 +30,7 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif;";
             items.map((item, i) => (
                 <a
                     href={item.href}
-                    class="top-list-item flex items-center gap-3 sm:gap-5 py-3.5 sm:py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-opacity rounded-lg px-0 md:px-3 md:-mx-3"
+                    class="top-list-item flex items-center gap-3 sm:gap-5 py-3.5 sm:py-4 border-b border-gray-100 last:border-b-0 transition-opacity rounded-lg px-0 md:px-3 md:-mx-3"
                 >
                     <span class="text-xl md:text-lg lg:text-2xl font-bold text-gray-300">
                         {i + 1}
@@ -80,13 +80,15 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif;";
             ))
         }
     </div>
-    <div class="flex justify-center mt-5">
-        <a
-            href={seeAllHref}
-            class="text-sm sm:text-base font-medium text-gray-900 border border-gray-200 hover:border-gray-400 px-5 py-2 rounded-lg transition-colors"
-            >{seeAllLabel}</a
-        >
-    </div>
+    {seeAllHref && seeAllLabel && (
+        <div class="flex justify-center mt-5">
+            <a
+                href={seeAllHref}
+                class="text-sm sm:text-base font-medium text-gray-900 border border-gray-200 hover:border-gray-400 px-5 py-2 rounded-lg transition-colors"
+                >{seeAllLabel}</a
+            >
+        </div>
+    )}
 </div>
 
 <style is:global>
