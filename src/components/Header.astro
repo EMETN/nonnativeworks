@@ -16,18 +16,87 @@
                     >NonNativeWorks</span
                 >
             </a>
-            <nav class="flex items-center gap-1 sm:gap-2" aria-label="Main navigation">
+
+            <!-- Desktop nav -->
+            <nav class="hidden sm:flex items-center gap-2" aria-label="Main navigation">
                 <a
                     href="/countries"
-                    class="text-sm font-medium text-gray-500 hover:text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                    class="text-sm font-medium text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
                     >Countries</a
                 >
                 <a
                     href="/companies"
-                    class="text-sm font-medium text-gray-500 hover:text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                    class="text-sm font-medium text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
                     >Companies</a
                 >
             </nav>
+
+            <!-- Mobile hamburger -->
+            <button
+                id="mobile-menu-btn"
+                class="sm:hidden p-2 rounded-md text-gray-900 hover:bg-gray-100 transition-colors"
+                aria-label="Open menu"
+                aria-expanded="false"
+                aria-controls="mobile-menu"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
     </div>
+
+    <!-- Mobile menu panel -->
+    <nav
+        id="mobile-menu"
+        class="hidden sm:hidden absolute left-0 right-0 top-full border-t border-gray-200 bg-white shadow-lg"
+        aria-label="Mobile navigation"
+    >
+        <div class="px-4 py-3 space-y-1">
+            <a
+                href="/countries"
+                class="block text-base font-medium text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                >Countries</a
+            >
+            <a
+                href="/companies"
+                class="block text-base font-medium text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                >Companies</a
+            >
+        </div>
+    </nav>
 </header>
+
+<script>
+    const btn = document.getElementById('mobile-menu-btn')!;
+    const menu = document.getElementById('mobile-menu')!;
+    const hamburger = document.getElementById('hamburger-icon')!;
+    const close = document.getElementById('close-icon')!;
+
+    function closeMenu() {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+        hamburger.classList.remove('hidden');
+        close.classList.add('hidden');
+    }
+
+    btn.addEventListener('click', () => {
+        const isHidden = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!isHidden));
+        hamburger.classList.toggle('hidden');
+        close.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!menu.classList.contains('hidden') && !menu.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+            closeMenu();
+        }
+    });
+
+    window.addEventListener('scroll', () => {
+        if (!menu.classList.contains('hidden')) {
+            closeMenu();
+        }
+    }, { passive: true });
+</script>
