@@ -1,23 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import InfographicGrid from '../components/infographic/InfographicGrid.tsx';
-import { getCountryStats, getCompanyCountsByCountry, getGlobalStats } from '../lib/queries';
+import TopList from '../components/shared/TopList.astro';
+import { getCountryStats, getGlobalStats, getTopCompanies } from '../lib/queries';
 import type { CountryStats, GlobalStats } from '../lib/types';
+import type { TopCompany } from '../lib/queries';
 
 let countries: CountryStats[] = [];
-let companyCounts: Record<string, number> = {};
+let topCompanies: TopCompany[] = [];
 let stats: GlobalStats | null = null;
 let loadError = false;
 
 try {
-  const [allCountries, cc, globalStats] = await Promise.all([
+  const [allCountries, globalStats, tc] = await Promise.all([
     getCountryStats(Astro.request, Astro.cookies),
-    getCompanyCountsByCountry(Astro.request, Astro.cookies),
     getGlobalStats(Astro.request, Astro.cookies),
+    getTopCompanies(Astro.request, Astro.cookies, 5),
   ]);
   countries = allCountries.filter((c) => c.total_positions > 0);
-  companyCounts = cc;
   stats = globalStats;
+  topCompanies = tc;
 } catch (err) {
   console.error('Homepage data load error:', err);
   loadError = true;
@@ -26,6 +27,27 @@ try {
 const totalPositions = stats?.total_positions ?? 0;
 const englishPositions = stats?.english_positions ?? 0;
 const totalCompanies = stats?.total_companies ?? 0;
+
+const topCountries = [...countries]
+  .sort((a, b) => b.english_positions - a.english_positions)
+  .slice(0, 5);
+
+const countryItems = topCountries.map((c) => ({
+  href: `/${c.slug}`,
+  name: c.name,
+  english: c.english_positions,
+  total: c.total_positions,
+  pct: c.total_positions > 0 ? Math.round((c.english_positions / c.total_positions) * 100) : 0,
+  flag: `/flags/${c.code.toLowerCase()}.png`,
+}));
+
+const companyItems = topCompanies.map((c) => ({
+  href: `/${c.primary_country_slug}/${c.primary_company_slug}`,
+  name: c.name,
+  english: c.english_positions,
+  total: c.total_positions,
+  pct: c.english_percentage,
+}));
 ---
 
 <BaseLayout
@@ -80,7 +102,7 @@ const totalCompanies = stats?.total_companies ?? 0;
     )}
   </div>
 
-  <!-- Country list — full width, same margins as header -->
+  <!-- Top lists -->
   <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     {loadError ? (
       <div class="text-center py-8 text-gray-400">
@@ -93,7 +115,20 @@ const totalCompanies = stats?.total_companies ?? 0;
         <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
       </div>
     ) : (
-      <InfographicGrid countries={countries} companyCounts={companyCounts} client:load />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+        <TopList
+          title="Top Countries"
+          items={countryItems}
+          seeAllHref="#countries"
+          seeAllLabel="See all countries"
+        />
+        <TopList
+          title="Top Companies"
+          items={companyItems}
+          seeAllHref="#companies"
+          seeAllLabel="See all companies"
+        />
+      </div>
     )}
   </div>
 </BaseLayout>
