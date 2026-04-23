@@ -608,6 +608,23 @@ function findNativeLanguageChunk(
 // Derived from COUNTRY_LANG_CODES — only these codes are trusted for cross-language detection.
 const TRUSTED_LANG_CODES = new Set(Object.values(COUNTRY_LANG_CODES).flat());
 
+// English boilerplate suffixes that appear at the end of job descriptions regardless of
+// the job's actual language (e.g. company equal-opportunity statements). Everything from
+// the first match onwards is stripped before language classification so these English
+// paragraphs don't dilute the native-language signal.
+const DESCRIPTION_BOILERPLATE_MARKERS = [
+  'At KONE, we are focused on creating an innovative and collaborative working culture',
+];
+
+function stripDescriptionBoilerplate(text: string): string {
+  const lower = text.toLowerCase();
+  for (const marker of DESCRIPTION_BOILERPLATE_MARKERS) {
+    const idx = lower.indexOf(marker.toLowerCase());
+    if (idx !== -1) return text.slice(0, idx).trimEnd();
+  }
+  return text;
+}
+
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
 const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl', 'hu']);
@@ -677,7 +694,7 @@ export function detectNativeLanguage(
     };
   }
 
-  const descText = descriptionText ?? '';
+  const descText = stripDescriptionBoilerplate(descriptionText ?? '');
   // Flatten whitespace (including newlines from stripHtml block-tag conversion)
   // so signal phrases aren't broken by HTML structure. tinyld uses descText
   // directly and still gets the original paragraph breaks.

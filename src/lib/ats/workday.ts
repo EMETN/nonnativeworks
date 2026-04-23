@@ -233,6 +233,7 @@ export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
 
     const FACET_PARAMS = [
       "locationCountry",
+      "Country",
       "locationRegionStateProvince",
       "workerSubType",
       "jobFamilyGroup",
