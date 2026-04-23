@@ -65,6 +65,10 @@ companies:
       url: https://if.wd3.myworkdayjobs.com/Careers
       min_positions: 5
 
+    - name: Kone
+      url: https://kone.wd3.myworkdayjobs.com/en-US/Careers
+      min_positions: 5
+
     - name: Konecranes
       url: https://konecranes.careers/jobs
       min_positions: 10
