@@ -74,10 +74,10 @@ function SizingRow({
         (a, b) => b.total_positions - a.total_positions,
     )[0];
     if (!widest) return null;
-    const ts = 'text-xl sm:text-2xl md:text-4xl xl:text-6xl';
-    const ss = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
-    const ys = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
-    const as = 'w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10';
+    const ts = 'text-xl md:text-lg lg:text-2xl';
+    const ss = 'text-sm md:text-xs lg:text-base';
+    const ys = 'text-sm md:text-xs lg:text-base';
+    const as = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
     const maxCompanies = compact
         ? Math.max(...items.map((i) => i.company_count ?? 0))
         : 0;
@@ -176,11 +176,11 @@ function GridRow({
 
     const fadeMask =
         'linear-gradient(to right, black calc(100% - 4rem), transparent)';
-    const textSize = 'text-xl sm:text-2xl md:text-4xl xl:text-6xl';
-    const slashSize = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
-    const totalSize = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
-    const arrowSize = 'w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10';
-    const rowPy = 'py-3.5 sm:py-5 md:py-7';
+    const textSize = 'text-xl md:text-lg lg:text-2xl';
+    const slashSize = 'text-sm md:text-xs lg:text-base';
+    const totalSize = 'text-sm md:text-xs lg:text-base';
+    const arrowSize = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
+    const rowPy = 'py-3.5 sm:py-4';
 
     return (
         <li
@@ -213,11 +213,11 @@ function GridRow({
                         }
                     >
                         {item.flag && (
-                            <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] sm:w-[1.875rem] md:w-[3rem] xl:w-[4.5rem]">
+                            <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] md:w-[1.6875rem] lg:w-[2.25rem]">
                                 <img
                                     src={item.flag}
                                     alt=""
-                                    class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] sm:h-[1.05rem] md:h-[1.75rem] xl:h-[2.625rem]"
+                                    class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
                                 />
                             </span>
                         )}
