@@ -222,7 +222,7 @@ function GridRow({
                             </span>
                         )}
                         <span
-                            class={`${textSize} font-semibold text-gray-900 leading-none tracking-tight ${isSmall.value ? 'truncate' : 'whitespace-nowrap'}`}
+                            class={`${textSize} font-semibold text-gray-900 leading-tight tracking-tight ${isSmall.value ? 'truncate' : 'whitespace-nowrap'}`}
                             style={numFont}
                         >
                             {item.name}
