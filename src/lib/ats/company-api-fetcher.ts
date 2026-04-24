@@ -2,7 +2,6 @@ import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglish } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
-import { getCached, setCached, flushCache } from './description-cache';
 
 const MAX_PAGES = 50;        // safety cap to avoid infinite loops
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
@@ -240,9 +239,6 @@ async function fetchPage(
 
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
-  const cached = getCached(url);
-  if (cached !== undefined) return cached;
-
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -251,9 +247,7 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
       console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
       return undefined;
     }
-    const html = await res.text();
-    setCached(url, html);
-    return html;
+    return await res.text();
   } catch (err) {
     console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
     return undefined;
@@ -315,8 +309,6 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
   if (locationRegex) {
     console.log(`[enrichDescriptions] location extraction: ${locationsSet} set, ${regexMissed} regex misses, ${htmlFailed} fetch failures`);
   }
-
-  flushCache();
 }
 
 /**
