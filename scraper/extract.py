@@ -55,13 +55,14 @@ def extract_from_job_containers(soup, base_url: str) -> list[dict]:
             continue
 
         title, url = extract_title_and_url(tag, base_url)
-        if not title or title.lower() in seen_titles:
+        if not title or len(title) < 2 or len(title) > 120:
             continue
-        if len(title) < 2 or len(title) > 120:
+        location = extract_location(tag)
+        key = job_key(build_job(title, url, location))
+        if key in seen_titles:
             continue
 
-        seen_titles.add(title.lower())
-        location = extract_location(tag)
+        seen_titles.add(key)
         jobs.append(build_job(title, url, location))
 
     return jobs
@@ -91,8 +92,9 @@ def extract_from_lists(soup, base_url: str) -> list[dict]:
             continue
 
         for job in candidate_jobs:
-            if job["title"].lower() not in seen_titles:
-                seen_titles.add(job["title"].lower())
+            key = job_key(job)
+            if key not in seen_titles:
+                seen_titles.add(key)
                 jobs.append(job)
 
     return jobs
@@ -113,11 +115,11 @@ def extract_from_links(soup, base_url: str) -> list[dict]:
         title = a.get_text(separator=" ", strip=True)
         if not title or len(title) < 4 or len(title) > 120:
             continue
-        if title.lower() in seen:
-            continue
-        seen.add(title.lower())
-        # Try to find location text near the link
         location = extract_location(a.parent or a)
+        key = job_key(build_job(title, abs_url, location))
+        if key in seen:
+            continue
+        seen.add(key)
         jobs.append(build_job(title, abs_url, location))
 
     return jobs
@@ -169,11 +171,15 @@ def build_job(title: str, url: str | None, location: str | None) -> dict:
     return job
 
 
+def job_key(job: dict) -> str:
+    return job.get("url") or f"{job['title'].lower()}|{job.get('location', '')}"
+
+
 def deduplicate(jobs: list[dict]) -> list[dict]:
     seen: set[str] = set()
     result = []
     for job in jobs:
-        key = job["title"].lower()
+        key = job_key(job)
         if key not in seen:
             seen.add(key)
             result.append(job)
