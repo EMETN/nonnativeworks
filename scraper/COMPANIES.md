@@ -7,6 +7,7 @@
 - AlphaSense
 - Arla
 - Barona (local script)
+- Bolt
 - Booking.com
 - CGI (local script)
 - Dept
@@ -98,6 +99,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 |---------|----------|------|-------|
 | Metso | `metso.com/corporate/careers/open-jobs` | `attribute_json` | `<careers-list-page open-positions='[…]'>`; fan-out per country via `countries[]` array |
 | Neste | `jobs.neste.com` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

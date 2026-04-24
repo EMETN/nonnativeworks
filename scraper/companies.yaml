@@ -41,6 +41,10 @@ companies:
       url: https://jobs.arla.com
       min_positions: 10
 
+    - name: Bolt
+      url: https://bolt.eu/en/careers/positions
+      min_positions: 10
+
     - name: Booking.com
       url: https://jobs.booking.com
       min_positions: 10

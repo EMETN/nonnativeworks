@@ -379,6 +379,8 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'ng': { name: 'Nigeria', code: 'NG', slug: 'nigeria' },
   'ke': { name: 'Kenya', code: 'KE', slug: 'kenya' },
   'ma': { name: 'Morocco', code: 'MA', slug: 'morocco' },
+  'gh': { name: 'Ghana', code: 'GH', slug: 'ghana' },
+  'tz': { name: 'Tanzania', code: 'TZ', slug: 'tanzania' },
 };
 
 // City-to-country map for when job APIs return city names instead of country names.
@@ -500,6 +502,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'faßberg':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'frankfurt':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'frankfurt am main':        { name: 'Germany', code: 'DE', slug: 'germany' },
+  'halle':                    { name: 'Germany', code: 'DE', slug: 'germany' },
   'hamburg':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'hannover':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'hanover':                  { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -515,6 +518,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'köln':                     { name: 'Germany', code: 'DE', slug: 'germany' },
   'cologne':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'koln':                     { name: 'Germany', code: 'DE', slug: 'germany' },
+  'langenfeld':               { name: 'Germany', code: 'DE', slug: 'germany' },
   'laupheim':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'leipzig':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'ludwigsburg':              { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -537,6 +541,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'rosenheim':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'rostock':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'saarbrücken':              { name: 'Germany', code: 'DE', slug: 'germany' },
+  'solingen':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'straubing':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'stuttgart':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'taufkirchen':              { name: 'Germany', code: 'DE', slug: 'germany' },
