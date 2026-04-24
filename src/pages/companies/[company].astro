@@ -1,71 +1,37 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
-import PositionList from '../../components/company/PositionList.tsx';
+import CompanyCountryGrid from '../../components/company/CompanyCountryGrid.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
-import {
-    getCountryBySlug,
-    getCompanyBySlugInCountry,
-    getPositionsByCompany,
-} from '../../lib/queries';
+import { getGlobalCompanyBySlug } from '../../lib/queries';
+import { nameToSlug } from '../../lib/country-flags';
 
-const { country: countrySlug, company: companySlug } = Astro.params;
+const { company: companySlug } = Astro.params;
 const { request, cookies } = Astro;
 
-const country = await getCountryBySlug(request, cookies, countrySlug!);
-
-if (!country) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
-}
-
-const company = await getCompanyBySlugInCountry(
-    request,
-    cookies,
-    country.country_id,
-    companySlug!,
-);
+const company = await getGlobalCompanyBySlug(request, cookies, companySlug!);
 
 if (!company) {
     return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
-const positions = await getPositionsByCompany(
-    request,
-    cookies,
-    company.company_id,
-);
-
+const entries = company.entries.map((e) => ({
+    country_name: e.country_name,
+    country_slug: e.country_slug,
+    country_code: e.country_code,
+    english_positions: e.english_positions,
+    total_positions: e.total_positions,
+}));
 ---
 
 <BaseLayout
-    title={`${company.name} — ${country.name}`}
-    description={`${company.name} has ${company.total_positions} open positions in ${country.name} — ${company.english_positions} don't require the local language(s).`}
+    title={`${company.name}`}
+    description={`${company.name} has ${company.total_positions} open positions across ${company.entries.length} ${company.entries.length === 1 ? 'country' : 'countries'} — ${company.english_positions} don't require the local language(s).`}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <nav id="breadcrumb-country" class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
-            <a
-                href="/"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Home</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href="/countries"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Countries</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href={`/${country.slug}`}
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">{country.name}</a
-            >
-            <span class="mx-1.5">›</span>
-            <span class="text-gray-900 font-medium">{company.name}</span>
-        </nav>
-        <nav id="breadcrumb-company" class="text-sm text-gray-400 mb-2 md:mb-4 hidden" aria-label="Breadcrumb">
+        <nav class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
             <a
                 href="/"
                 data-astro-prefetch
@@ -78,16 +44,9 @@ const positions = await getPositionsByCompany(
                 class="hover:text-gray-700 transition-colors">Companies</a
             >
             <span class="mx-1.5">›</span>
-            <a
-                href={`/companies/${companySlug}`}
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">{company.name}</a
-            >
-            <span class="mx-1.5">›</span>
-            <span class="text-gray-900 font-medium">{country.name}</span>
+            <span class="text-gray-900 font-medium">{company.name}</span>
         </nav>
 
-        <!-- Title + Gauge -->
         <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
@@ -111,7 +70,7 @@ const positions = await getPositionsByCompany(
         </div>
 
         {
-            positions.length > 0 && (
+            company.total_positions > 0 && (
                 <StatsDescription>
                     <strong class="font-semibold text-gray-900">
                         {company.english_positions.toLocaleString()}
@@ -122,23 +81,27 @@ const positions = await getPositionsByCompany(
                     </strong>{' '}
                     open{' '}
                     {company.total_positions === 1 ? 'position' : 'positions'}{' '}
-                    at {company.name}{' '}
+                    across{' '}
+                    <strong class="font-semibold text-gray-900">
+                        {company.entries.length}
+                    </strong>{' '}
+                    {company.entries.length === 1 ? 'country' : 'countries'}{' '}
                     {company.english_positions === 1 ? "doesn't" : "don't"}{' '}
                     require the local language(s).
                 </StatsDescription>
             )
         }
         {
-            positions.length === 0 ? (
+            company.total_positions === 0 ? (
                 <div class="text-center py-16 text-gray-400">
-                    No positions tracked yet for <strong>{company.name}</strong>
-                    . Check back soon!
+                    No positions tracked yet for <strong>{company.name}</strong>.
+                    Check back soon!
                 </div>
             ) : (
                 <>
-                    <PositionList
-                        positions={positions}
-                        careerPageUrl={company.career_page_url}
+                    <CompanyCountryGrid
+                        entries={entries}
+                        companySlug={companySlug!}
                         client:visible
                     />
                     <p class="text-xs sm:text-sm text-gray-400 mt-4">
@@ -156,12 +119,7 @@ const positions = await getPositionsByCompany(
             )
         }
     </div>
-    <script is:inline>
-        const fromCompany = sessionStorage.getItem('nav-from-company');
-        if (fromCompany) {
-            document.getElementById('breadcrumb-country').classList.add('hidden');
-            document.getElementById('breadcrumb-company').classList.remove('hidden');
-            sessionStorage.removeItem('nav-from-company');
-        }
+    <script is:inline define:vars={{ companySlug: companySlug! }}>
+        sessionStorage.setItem('nav-from-company', companySlug);
     </script>
 </BaseLayout>

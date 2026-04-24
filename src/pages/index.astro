@@ -1,24 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import InfographicGrid from '../components/infographic/InfographicGrid.tsx';
-import StatsDescription from '../components/shared/StatsDescription.astro';
-import { getCountryStats, getCompanyCountsByCountry, getGlobalStats } from '../lib/queries';
+import TopList from '../components/shared/TopList.astro';
+import { getCountryStats, getGlobalStats, getTopCompanies } from '../lib/queries';
 import type { CountryStats, GlobalStats } from '../lib/types';
+import type { TopCompany } from '../lib/queries';
 
 let countries: CountryStats[] = [];
-let companyCounts: Record<string, number> = {};
+let topCompanies: TopCompany[] = [];
 let stats: GlobalStats | null = null;
 let loadError = false;
 
 try {
-  const [allCountries, cc, globalStats] = await Promise.all([
+  const [allCountries, globalStats, tc] = await Promise.all([
     getCountryStats(Astro.request, Astro.cookies),
-    getCompanyCountsByCountry(Astro.request, Astro.cookies),
     getGlobalStats(Astro.request, Astro.cookies),
+    getTopCompanies(Astro.request, Astro.cookies, 5),
   ]);
   countries = allCountries.filter((c) => c.total_positions > 0);
-  companyCounts = cc;
   stats = globalStats;
+  topCompanies = tc;
 } catch (err) {
   console.error('Homepage data load error:', err);
   loadError = true;
@@ -27,6 +27,27 @@ try {
 const totalPositions = stats?.total_positions ?? 0;
 const englishPositions = stats?.english_positions ?? 0;
 const totalCompanies = stats?.total_companies ?? 0;
+
+const topCountries = [...countries]
+  .sort((a, b) => b.english_positions - a.english_positions)
+  .slice(0, 5);
+
+const countryItems = topCountries.map((c) => ({
+  href: `/${c.slug}`,
+  name: c.name,
+  english: c.english_positions,
+  total: c.total_positions,
+  pct: c.total_positions > 0 ? Math.round((c.english_positions / c.total_positions) * 100) : 0,
+  flag: `/flags/${c.code.toLowerCase()}.png`,
+}));
+
+const companyItems = topCompanies.map((c) => ({
+  href: `/companies/${c.primary_company_slug}`,
+  name: c.name,
+  english: c.english_positions,
+  total: c.total_positions,
+  pct: c.english_percentage,
+}));
 ---
 
 <BaseLayout
@@ -35,19 +56,53 @@ const totalCompanies = stats?.total_companies ?? 0;
 >
   <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12">
     <!-- Intro -->
-    <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
+    <div class="max-w-3xl mx-auto text-center mb-4 sm:mb-8">
       <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
         <span class="text-gray-900">No native language?</span><br />
-        <span class="text-[#002EA2]">NonNativeWorks!</span>
+        <span class="text-[#0F7A4F]">NonNativeWorks!</span>
       </h1>
-      <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
-        Discover companies that welcome non-native language speakers.
-        Track open positions across countries worldwide.
-      </p>
     </div>
+
+    {!loadError && countries.length > 0 && (
+      <div class="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8 sm:mb-16">
+        <p class="text-base sm:text-lg text-gray-500 md:flex-1 text-center md:text-left">
+          Discover companies that welcome non-native language speakers.
+          Track open positions across countries worldwide.
+        </p>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-0 md:flex-1">
+          <div class="text-center py-3">
+            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">{totalPositions.toLocaleString()}</span>
+            <span class="text-xs sm:text-sm text-gray-500">positions tracked</span>
+          </div>
+          <div class="text-center py-3">
+            <span class="block text-2xl sm:text-3xl font-bold text-[#0F7A4F]">{englishPositions.toLocaleString()}</span>
+            <span class="text-xs sm:text-sm text-gray-500">English-friendly</span>
+          </div>
+          <div class="border-t border-gray-200"></div>
+          <div class="border-t border-gray-200"></div>
+          <div class="text-center py-3">
+            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">{totalCompanies.toLocaleString()}</span>
+            <span class="text-xs sm:text-sm text-gray-500">{totalCompanies === 1 ? 'company' : 'companies'}</span>
+          </div>
+          <div class="text-center py-3">
+            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">{countries.length}</span>
+            <span class="text-xs sm:text-sm text-gray-500">{countries.length === 1 ? 'country' : 'countries'}</span>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {(loadError || countries.length === 0) && (
+      <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
+        <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
+          Discover companies that welcome non-native language speakers.
+          Track open positions across countries worldwide.
+        </p>
+      </div>
+    )}
   </div>
 
-  <!-- Country list — full width, same margins as header -->
+  <!-- Top lists -->
   <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     {loadError ? (
       <div class="text-center py-8 text-gray-400">
@@ -60,10 +115,20 @@ const totalCompanies = stats?.total_companies ?? 0;
         <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
       </div>
     ) : (
-      <StatsDescription>
-        Tracking <strong class="font-semibold text-gray-900">{totalPositions.toLocaleString()}</strong> {totalPositions === 1 ? 'position' : 'positions'} — <strong class="font-semibold text-gray-900">{englishPositions.toLocaleString()}</strong> English-friendly — across <strong class="font-semibold text-gray-900">{totalCompanies.toLocaleString()}</strong> {totalCompanies === 1 ? 'company' : 'companies'} in <strong class="font-semibold text-gray-900">{countries.length}</strong> {countries.length === 1 ? 'country' : 'countries'}.
-      </StatsDescription>
-      <InfographicGrid countries={countries} companyCounts={companyCounts} client:load />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+        <TopList
+          title="Top Countries"
+          items={countryItems}
+          seeAllHref="/countries"
+          seeAllLabel="See all countries"
+        />
+        <TopList
+          title="Top Companies"
+          items={companyItems}
+          seeAllHref="/companies"
+          seeAllLabel="See all companies"
+        />
+      </div>
     )}
   </div>
 </BaseLayout>

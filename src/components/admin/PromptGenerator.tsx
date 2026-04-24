@@ -47,12 +47,12 @@ export default function PromptGenerator() {
             placeholder="https://company.com/careers"
             value={url}
             onInput={(e) => handleUrlInput((e.target as HTMLInputElement).value)}
-            class={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A4DB8] ${urlError ? 'border-red-400' : 'border-gray-300'}`}
+            class={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] ${urlError ? 'border-red-400' : 'border-gray-300'}`}
           />
           <button
             onClick={handleGenerate}
             disabled={!url.trim()}
-            class="bg-[#002EA2] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#002383] disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
           >
             Generate prompt
           </button>
@@ -73,7 +73,7 @@ export default function PromptGenerator() {
           <div class="flex justify-end mt-2">
             <button
               onClick={handleCopy}
-              class="bg-[#002EA2] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#002383] transition-colors"
+              class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors"
             >
               {copied ? '✓ Copied' : 'Copy prompt'}
             </button>

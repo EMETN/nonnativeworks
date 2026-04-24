@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import InfographicGrid from '../components/infographic/InfographicGrid.tsx';
+import CompanyGauge from '../components/company/CompanyGauge.astro';
+import StatsDescription from '../components/shared/StatsDescription.astro';
+import {
+    getCountryStats,
+    getCompanyCountsByCountry,
+    getGlobalStats,
+} from '../lib/queries';
+import type { CountryStats, GlobalStats } from '../lib/types';
+
+let countries: CountryStats[] = [];
+let companyCounts: Record<string, number> = {};
+let stats: GlobalStats | null = null;
+let loadError = false;
+
+try {
+    const [allCountries, cc, globalStats] = await Promise.all([
+        getCountryStats(Astro.request, Astro.cookies),
+        getCompanyCountsByCountry(Astro.request, Astro.cookies),
+        getGlobalStats(Astro.request, Astro.cookies),
+    ]);
+    countries = allCountries.filter((c) => c.total_positions > 0);
+    companyCounts = cc;
+    stats = globalStats;
+} catch (err) {
+    console.error('Countries page data load error:', err);
+    loadError = true;
+}
+
+const totalPositions = stats?.total_positions ?? 0;
+const englishPositions = stats?.english_positions ?? 0;
+---
+
+<BaseLayout
+    title="Countries"
+    description="Browse all countries with English-friendly job positions — no local language required."
+>
+    <div
+        class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
+    >
+        <nav class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
+            <a
+                href="/"
+                data-astro-prefetch
+                class="hover:text-gray-700 transition-colors">Home</a
+            >
+            <span class="mx-1.5">›</span>
+            <span class="text-gray-900 font-medium">Countries</span>
+        </nav>
+
+        <div
+            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
+        >
+            <h1
+                class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
+                style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+            >
+                Countries
+            </h1>
+            {
+                totalPositions > 0 && (
+                    <CompanyGauge
+                        englishPositions={englishPositions}
+                        totalPositions={totalPositions}
+                    />
+                )
+            }
+        </div>
+
+        {
+            loadError ? (
+                <div class="text-center py-8 text-gray-400">
+                    <p class="text-lg mb-2">
+                        Something went wrong loading the data.
+                    </p>
+                    <p class="text-sm">Please try again later.</p>
+                </div>
+            ) : countries.length === 0 ? (
+                <div class="text-center py-16 text-gray-400">
+                    No countries tracked yet. Check back soon!
+                </div>
+            ) : (
+                <>
+                    <StatsDescription>
+                        <strong class="font-semibold text-gray-900">
+                            {countries.length}
+                        </strong>{' '}
+                        {countries.length === 1 ? 'country' : 'countries'} —{' '}
+                        <strong class="font-semibold text-gray-900">
+                            {englishPositions.toLocaleString()}
+                        </strong>{' '}
+                        of{' '}
+                        <strong class="font-semibold text-gray-900">
+                            {totalPositions.toLocaleString()}
+                        </strong>{' '}
+                        open {totalPositions === 1 ? 'position' : 'positions'}{' '}
+                        {englishPositions === 1 ? "doesn't" : "don't"} require
+                        the local language(s).
+                    </StatsDescription>
+                    <InfographicGrid
+                        countries={countries}
+                        companyCounts={companyCounts}
+                        client:visible
+                    />
+                </>
+            )
+        }
+    </div>
+</BaseLayout>
