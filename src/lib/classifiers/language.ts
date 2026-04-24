@@ -506,6 +506,11 @@ function buildRequirementSignals(lang: string): string[] {
     `basic knowledge of ${lang}`,
     `basic level of ${lang}`,
     `some ${lang}`,
+    // Confident communication
+    `communicate confidently in ${lang}`,
+    // Comma-separated language lists: "English, {lang} and {other}", "{lang}, English"
+    `english, ${lang}`,
+    `${lang}, english`,
   ];
 }
 
@@ -525,10 +530,15 @@ function knowledgeOfSignalIsAdjective(combined: string, signal: string): boolean
 }
 
 // Negation patterns that immediately follow a requirement signal phrase
-// (within ~80 characters), indicating the language is actually optional.
+// (within ~80 characters), indicating the language is a nice-to-have.
 // e.g. "fluent Dutch being a nice-to-have but certainly not compulsory"
-const REQUIREMENT_NEGATION_RE =
+const REQUIREMENT_NEGATION_ADVANTAGE_RE =
   /\b(?:nice-?to-?have|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
+
+// Negation patterns indicating English alone is fully sufficient — not even an advantage signal.
+// e.g. "fluent in German or English" → English is enough, German is not preferred
+const REQUIREMENT_NEGATION_NONE_RE =
+  /\bor\s+(?:in\s+)?english\b/;
 
 // Advantage prefix patterns that immediately precede a requirement signal phrase
 // (within ~80 characters), indicating the language is actually a nice-to-have.
@@ -536,21 +546,25 @@ const REQUIREMENT_NEGATION_RE =
 const REQUIREMENT_ADVANTAGE_PREFIX_RE =
   /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
 
+type NegationKind = 'advantage' | 'none' | false;
+
 /**
- * Returns true when a requirement-signal match is immediately qualified by
- * optional/negation language in the ~80 characters that follow it.
- * e.g. "fluent Dutch being a nice-to-have but certainly not compulsory"
- *   → signal "fluent dutch" is found, but the trailing context negates it.
+ * Returns the negation kind when a requirement-signal match is immediately
+ * qualified by optional/negation language in the surrounding ~80 characters:
+ * - 'advantage': language is a nice-to-have (e.g. "not compulsory", "nice-to-have")
+ * - 'none': English alone is sufficient (e.g. "or English") — not even an advantage
+ * - false: no negation found
  */
-function requirementNegatedByContext(combined: string, signal: string): boolean {
+function requirementNegatedByContext(combined: string, signal: string): NegationKind {
   const idx = combined.indexOf(signal);
   if (idx === -1) return false;
   const after = combined.slice(idx + signal.length, idx + signal.length + 80);
-  if (REQUIREMENT_NEGATION_RE.test(after)) return true;
+  if (REQUIREMENT_NEGATION_NONE_RE.test(after)) return 'none';
+  if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(after)) return 'advantage';
   // Also check for advantage context in the ~80 characters *before* the signal,
   // e.g. "bonus points if you speak German" where "speak german" is the signal.
   const before = combined.slice(Math.max(0, idx - 80), idx);
-  return REQUIREMENT_ADVANTAGE_PREFIX_RE.test(before);
+  return REQUIREMENT_ADVANTAGE_PREFIX_RE.test(before) ? 'advantage' : false;
 }
 
 // ---------------------------------------------------------------------------
@@ -820,7 +834,7 @@ export function detectNativeLanguage(
   // Generic "native local/country language" phrase — doesn't name the language
   // but clearly means native fluency in the local language is required.
   const genericMatch = languages.length > 0
-    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required/)
+    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills/)
     : null;
   if (genericMatch) {
     return {
@@ -857,7 +871,9 @@ export function detectNativeLanguage(
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
         if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
-        if (requirementNegatedByContext(combined, signal)) {
+        const negation = requirementNegatedByContext(combined, signal);
+        if (negation === 'none') continue;
+        if (negation === 'advantage') {
           return {
             value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
             signals: [{ phase: '2a', description: `"${lang}" requirement phrase negated by context`, matched: signal }],
@@ -901,7 +917,9 @@ export function detectNativeLanguage(
       for (const signal of buildRequirementSignals(kw)) {
         if (combined.includes(signal)) {
           if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
-          if (requirementNegatedByContext(combined, signal)) {
+          const negation = requirementNegatedByContext(combined, signal);
+          if (negation === 'none') continue;
+          if (negation === 'advantage') {
             return {
               value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
               signals: [{ phase: '2a-cross', description: `cross-language requirement negated by context: ${canonicalName}`, matched: signal }],
