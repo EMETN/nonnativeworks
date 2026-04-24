@@ -47,7 +47,9 @@ function PositionRow({
               <span class="capitalize mr-1">{pos.work_model}</span>
             )}
             {pos.work_model && pos.city && pos.city.length > 0 && '· '}
-            {pos.city && pos.city.length > 0 && pos.city.join(', ')}
+            {pos.city && pos.city.length > 1
+              ? 'Multiple locations'
+              : pos.city && pos.city.length === 1 && pos.city[0]}
           </div>
         )}
       </div>
