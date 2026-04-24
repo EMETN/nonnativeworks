@@ -35,8 +35,8 @@ function PositionRow({
                     {pos.title}
                 </span>
                 {pos.local_language_advantage && (
-                    <div class="sm:inline">
-                        <span class="text-xs sm:text-sm text-amber-600 bg-amber-50 px-1 sm:px-1.5 py-0.5 rounded font-medium whitespace-nowrap sm:ml-2">
+                    <div class="leading-none" style={numFont}>
+                        <span class="text-xs sm:text-sm text-amber-600 font-medium">
                             Local language advantage
                         </span>
                     </div>
