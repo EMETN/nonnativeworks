@@ -2,6 +2,9 @@
 dist/
 .netlify/
 
+# description cache (populated at runtime, persisted via GitHub Actions cache)
+cache/
+
 # generated types
 .astro/
 
