@@ -4,7 +4,7 @@ Config-driven static HTML scraper.
 Handles career sites that render jobs as plain HTML. Driven by entries in
 scraper/generic_scrapers.yaml — no new Python file needed to add a company.
 
-Two extraction modes (set via extract_mode in config):
+Three extraction modes (set via extract_mode in config):
 
   css_cards (default)
     Jobs are repeating HTML elements selected by card_selector. Field values
@@ -15,15 +15,23 @@ Two extraction modes (set via extract_mode in config):
     container element (e.g. a web component). Fields are mapped by key name
     from each JSON object. No pagination needed — all jobs arrive at once.
 
-Both modes share the same two-phase structure:
+  script_json
+    All jobs are encoded as a JSON array stored under a key in a Next.js RSC
+    script tag (self.__next_f.push([id, "...escaped payload..."])). Fields
+    support dot notation for nested access (e.g. "header.roleTitle"). Location
+    fan-out works via a locations array of objects with location_subfield and
+    country_subfield keys.
+
+All modes share the same two-phase structure:
   1. Listing — fetch page(s) and extract jobs.
   2. Description enrichment — detail pages are always fetched for English-titled
      jobs so the language classifier has content to work with. In attribute_json
-     mode, jobFunction is already set from the JSON so that assignment is skipped,
-     but the description fetch itself still runs.
+     and script_json modes, jobFunction is already set from the JSON so that
+     assignment is skipped, but the description fetch itself still runs.
 """
 
 import json as json_mod
+import re
 import sys
 from urllib.parse import urljoin
 
@@ -224,6 +232,117 @@ def _fetch_attribute_json_page(
     return _extract_attribute_json(resp.text, cfg)
 
 
+# ── script_json helpers ───────────────────────────────────────────────────────
+
+def _get_nested(obj, path: str):
+    """Dot-notation access into a nested dict, e.g. 'header.roleTitle'."""
+    for part in path.split("."):
+        if not isinstance(obj, dict):
+            return None
+        obj = obj.get(part)
+    return obj
+
+
+def _search_rsc_pushes(text: str, script_key: str) -> list | None:
+    """
+    Search all self.__next_f.push([id, "..."]) calls in a script tag's text
+    for a JSON array stored under script_key. Returns the parsed list or None.
+    """
+    key_str = f'"{script_key}":'
+    for m in re.finditer(r'__next_f\.push\(\[\d+,\s*"((?:[^"\\]|\\.)*)"\]', text):
+        try:
+            content = json_mod.loads('"' + m.group(1) + '"')
+        except Exception:
+            continue
+        idx = content.find(key_str)
+        if idx == -1:
+            continue
+        value_start = idx + len(key_str)
+        while value_start < len(content) and content[value_start] in " \t\n\r":
+            value_start += 1
+        try:
+            value, _ = json_mod.JSONDecoder().raw_decode(content, value_start)
+            if isinstance(value, list):
+                return value
+        except Exception:
+            continue
+    return None
+
+
+def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
+    """Extract jobs from a JSON array embedded in a Next.js RSC script tag."""
+    fields          = cfg.get("fields", {})
+    script_key      = cfg["script_key"]
+    title_field     = fields.get("title", "title")
+    url_field       = fields.get("url", "url")
+    locations_field = fields.get("locations")
+    loc_subfield    = fields.get("location_subfield")
+    ctry_subfield   = fields.get("country_subfield")
+    jf_field        = fields.get("job_function")
+
+    soup = BeautifulSoup(html, "html.parser")
+    items = None
+    for script in soup.find_all("script"):
+        text = script.string or ""
+        if script_key not in text:
+            continue
+        items = _search_rsc_pushes(text, script_key)
+        if items is not None:
+            break
+
+    if items is None:
+        print(f"generic: script_json key '{script_key}' not found", file=sys.stderr)
+        return []
+
+    jobs = []
+    for item in items:
+        title = _get_nested(item, title_field) if title_field else None
+        if not title:
+            continue
+
+        raw_url  = _get_nested(item, url_field) if url_field else None
+        job_url  = urljoin(base_url, raw_url) if raw_url else None
+        jf       = _get_nested(item, jf_field) if jf_field else None
+        loc_objs = _get_nested(item, locations_field) if locations_field else []
+        if not isinstance(loc_objs, list):
+            loc_objs = []
+
+        if loc_objs and ctry_subfield:
+            for loc_obj in loc_objs:
+                if not isinstance(loc_obj, dict):
+                    continue
+                country  = loc_obj.get(ctry_subfield)
+                location = loc_obj.get(loc_subfield) if loc_subfield else None
+                job = build_job(title, job_url, location)
+                if country:
+                    job["country_code"] = country
+                if jf:
+                    job["jobFunction"] = jf
+                jobs.append(job)
+        else:
+            job = build_job(title, job_url, None)
+            if jf:
+                job["jobFunction"] = jf
+            jobs.append(job)
+
+    return jobs
+
+
+def _fetch_script_json_page(
+    session: requests.Session,
+    list_url: str,
+    params: dict,
+    cfg: dict,
+) -> list[dict]:
+    try:
+        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        return []
+    return _extract_script_json(resp.text, cfg, list_url)
+
+
 # ── detail page enrichment (shared) ──────────────────────────────────────────
 
 def _fetch_detail_page(
@@ -272,10 +391,12 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     list_url     = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
 
-    fetch_page = (
-        _fetch_attribute_json_page if extract_mode == "attribute_json"
-        else _fetch_css_cards_page
-    )
+    if extract_mode == "attribute_json":
+        fetch_page = _fetch_attribute_json_page
+    elif extract_mode == "script_json":
+        fetch_page = _fetch_script_json_page
+    else:
+        fetch_page = _fetch_css_cards_page
 
     session = requests.Session()
 

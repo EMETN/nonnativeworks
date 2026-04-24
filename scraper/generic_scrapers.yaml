@@ -9,7 +9,7 @@
 #
 #   match             Substring matched against the career page URL (required)
 #   name              Display name used in log messages
-#   extract_mode      css_cards (default) | attribute_json
+#   extract_mode      css_cards (default) | attribute_json | script_json
 #   list_url          Override the URL used for listing pages (use when the
 #                     input URL differs from the first page URL)
 #   extra_params          Fixed query params always appended (e.g. sort order)
@@ -67,9 +67,43 @@
 #                         countries[i] and locations[i] are treated as parallel arrays.
 #   fields.job_function   Key name for the job function/department. Set directly on
 #                         the job — no detail page fetch needed.
+#
+# ── extract_mode: script_json ────────────────────────────────────────────────
+#
+# Jobs are embedded as a JSON array under a named key inside a Next.js RSC
+# script tag (self.__next_f.push([id, "...escaped payload..."])). All fields
+# support dot notation for nested access (e.g. "header.roleTitle").
+# Location fan-out works via an array of location objects.
+#
+#   script_key            Key name for the jobs array in the RSC payload
+#                         (required) e.g. "parsedJobs"
+#   fields.title          Dot-path to job title (default: "title")
+#   fields.url            Dot-path to job URL (relative URLs are resolved)
+#   fields.locations      Dot-path to array of location objects
+#   fields.location_subfield  Key within each location object for city/location string
+#   fields.country_subfield   Key within each location object for country code
+#                             One job is created per location object (fan-out).
+#   fields.job_function   Dot-path to job function/department string
 
 scrapers:
   
+  # ── Bolt ────────────────────────────────────────────────────────────────────
+  - match: "bolt.eu/en/careers/positions"
+    name: Bolt
+    extract_mode: script_json
+    script_key: parsedJobs
+    pagination:
+      type: page
+      param: page
+      page_size: 20
+    description_selector: "main"
+    fields:
+      title: header.roleTitle
+      url: body.applyLinkProps.href
+      locations: header.locations
+      location_subfield: city
+      country_subfield: countryCode
+      job_function: header.teamTitle
   
     # ── Metso ────────────────────────────────────────────────────────────────────
   - match: "metso.com/corporate/careers/open-jobs"
