@@ -29,7 +29,7 @@ function PositionRow({
     >
       <div class="min-w-0 flex-1">
         <span
-          class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight"
+          class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight line-clamp-2"
           style={numFont}
         >
           {pos.title}
@@ -102,7 +102,9 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
     return nonNativePositions.filter(
       (p) =>
         p.title.toLowerCase().includes(searchQuery) ||
-        p.category_name.toLowerCase().includes(searchQuery)
+        p.category_name.toLowerCase().includes(searchQuery) ||
+        (p.work_model && p.work_model.toLowerCase().includes(searchQuery)) ||
+        (p.city && p.city.some((c) => c.toLowerCase().includes(searchQuery)))
     );
   }, [nonNativePositions, searchQuery]);
 
