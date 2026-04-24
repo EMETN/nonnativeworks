@@ -146,6 +146,14 @@ jobs:
               if: steps.playwright-cache.outputs.cache-hit == 'true'
               run: playwright install-deps chromium
 
+            - name: Restore description cache
+              uses: actions/cache@v4
+              with:
+                  path: cache/descriptions.json
+                  key: description-cache-${{ runner.os }}-${{ github.run_id }}
+                  restore-keys: |
+                      description-cache-${{ runner.os }}-
+
             - name: Start Astro server
               run: |
                 doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
