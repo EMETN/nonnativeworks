@@ -74,14 +74,10 @@ function SizingRow({
         (a, b) => b.total_positions - a.total_positions,
     )[0];
     if (!widest) return null;
-    const ts = compact
-        ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
-        : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
-    const ss = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
-    const ys = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
-    const as = compact
-        ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
-        : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
+    const ts = 'text-xl sm:text-2xl md:text-4xl xl:text-6xl';
+    const ss = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
+    const ys = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
+    const as = 'w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10';
     const maxCompanies = compact
         ? Math.max(...items.map((i) => i.company_count ?? 0))
         : 0;
@@ -89,12 +85,7 @@ function SizingRow({
     return (
         <li
             aria-hidden="true"
-            class="h-0 overflow-hidden invisible"
-            style={{
-                display: 'grid',
-                gridTemplateColumns: 'subgrid',
-                gridColumn: '1 / -1',
-            }}
+            class="h-0 overflow-hidden invisible hidden sm:!block dg-subgrid"
         >
             <div class="pr-2 sm:pr-4 md:pr-8 xl:pr-12">
                 <span class={ts} style={numFont}>
@@ -163,6 +154,7 @@ function GridRow({
 }) {
     const nameRef = useRef<HTMLDivElement>(null);
     const isOverflowing = useSignal(false);
+    const isSmall = useSignal(false);
 
     useEffect(() => {
         const el = nameRef.current;
@@ -173,40 +165,34 @@ function GridRow({
         check();
         const ro = new ResizeObserver(check);
         ro.observe(el);
-        return () => ro.disconnect();
+
+        const mq = window.matchMedia('(max-width: 639px)');
+        isSmall.value = mq.matches;
+        const onMq = (e: MediaQueryListEvent) => { isSmall.value = e.matches; };
+        mq.addEventListener('change', onMq);
+
+        return () => { ro.disconnect(); mq.removeEventListener('change', onMq); };
     }, []);
 
     const fadeMask =
         'linear-gradient(to right, black calc(100% - 4rem), transparent)';
-    const textSize = compact
-        ? 'text-base sm:text-2xl md:text-4xl xl:text-6xl'
-        : 'text-base sm:text-xl md:text-2xl xl:text-4xl';
-    const slashSize = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
-    const totalSize = 'text-xs sm:text-lg md:text-xl xl:text-3xl';
-    const arrowSize = compact
-        ? 'w-3 h-3 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10'
-        : 'w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 xl:w-8 xl:h-8';
-    const rowPy = compact ? 'py-2 sm:py-5 md:py-7' : 'py-2 sm:py-4 md:py-5';
+    const textSize = 'text-xl sm:text-2xl md:text-4xl xl:text-6xl';
+    const slashSize = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
+    const totalSize = 'text-sm sm:text-lg md:text-xl xl:text-3xl';
+    const arrowSize = 'w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 xl:w-10 xl:h-10';
+    const rowPy = 'py-3.5 sm:py-5 md:py-7';
 
     return (
         <li
-            class="border-b border-gray-100"
-            style={{
-                display: 'grid',
-                gridTemplateColumns: 'subgrid',
-                gridColumn: '1 / -1',
-            }}
+            class="border-b border-gray-100 dg-subgrid"
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
         >
             <a
                 href={item.href}
                 data-astro-prefetch
-                class="no-underline rounded-lg"
+                class="no-underline rounded-lg dg-subgrid"
                 style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'subgrid',
-                    gridColumn: '1 / -1',
                     opacity: faded ? 0.4 : 1,
                     transition: 'opacity 0.3s',
                 }}
@@ -218,7 +204,7 @@ function GridRow({
                         ref={nameRef}
                         class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0"
                         style={
-                            isOverflowing.value
+                            isOverflowing.value && !isSmall.value
                                 ? {
                                       maskImage: fadeMask,
                                       WebkitMaskImage: fadeMask,
@@ -227,16 +213,16 @@ function GridRow({
                         }
                     >
                         {item.flag && (
-                            <span class={`inline-flex items-center justify-center shrink-0 ${compact ? 'w-[1.25rem] sm:w-[1.875rem] md:w-[3rem] xl:w-[4.5rem]' : 'w-[1.25rem] sm:w-[1.5rem] md:w-[1.85rem] xl:w-[2.75rem]'}`}>
+                            <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] sm:w-[1.875rem] md:w-[3rem] xl:w-[4.5rem]">
                                 <img
                                     src={item.flag}
                                     alt=""
-                                    class={`w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] ${compact ? 'h-[0.7rem] sm:h-[1.05rem] md:h-[1.75rem] xl:h-[2.625rem]' : 'h-[0.7rem] sm:h-[0.9rem] md:h-[1.1rem] xl:h-[1.65rem]'}`}
+                                    class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] sm:h-[1.05rem] md:h-[1.75rem] xl:h-[2.625rem]"
                                 />
                             </span>
                         )}
                         <span
-                            class={`${textSize} font-semibold text-gray-900 whitespace-nowrap leading-none tracking-tight`}
+                            class={`${textSize} font-semibold text-gray-900 leading-none tracking-tight ${isSmall.value ? 'truncate' : 'whitespace-nowrap'}`}
                             style={numFont}
                         >
                             {item.name}
@@ -392,24 +378,21 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
 
     return (
         <div class="w-full">
+            <style>{`
+                .dg-subgrid {
+                    display: grid;
+                    grid-template-columns: subgrid;
+                    grid-column: 1 / -1;
+                }
+            `}</style>
             <ul
                 class="w-full"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
-                {/* Always-present sizing row from full items list — keeps columns stable */}
                 <SizingRow items={items} compact={compact} />
 
-                {/* Header row — inside grid via subgrid, aligned with columns */}
-                <li
-                    class="border-b border-gray-200"
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'subgrid',
-                        gridColumn: '1 / -1',
-                        alignItems: 'center',
-                    }}
-                >
-                    {/* Search */}
+                {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
+                <li class="border-b border-gray-200 dg-subgrid" style={{ alignItems: 'center' }}>
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
@@ -470,15 +453,14 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
 
                     {compact ? (
                         <>
-                            {/* Companies sort */}
-                            <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+                            <div class="relative overflow-visible">
                                 <button
                                     onClick={() => toggleSort('companies')}
-                                    class={
+                                    class={`absolute right-0 top-1/2 -translate-y-1/2 ${
                                         sortField.value === 'companies'
                                             ? labelActive
                                             : labelInactive
-                                    }
+                                    }`}
                                     style={numFont}
                                 >
                                     {compactLabel}
@@ -492,16 +474,14 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                                     />
                                 </button>
                             </div>
-
-                            {/* Positions sort */}
-                            <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+                            <div class="relative overflow-visible">
                                 <button
                                     onClick={() => toggleSort('positions')}
-                                    class={
+                                    class={`absolute right-0 top-1/2 -translate-y-1/2 ${
                                         sortField.value === 'positions'
                                             ? labelActive
                                             : labelInactive
-                                    }
+                                    }`}
                                     style={numFont}
                                 >
                                     Positions
@@ -517,14 +497,14 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                             </div>
                         </>
                     ) : (
-                        <div class="flex items-center justify-end pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
+                        <div class="relative overflow-visible">
                             <button
                                 onClick={() => toggleSort('positions')}
-                                class={
+                                class={`absolute right-0 top-1/2 -translate-y-1/2 ${
                                     sortField.value === 'positions'
                                         ? labelActive
                                         : labelInactive
-                                }
+                                }`}
                                 style={numFont}
                             >
                                 Positions
@@ -540,11 +520,9 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                         </div>
                     )}
 
-                    {/* Arrow spacer */}
                     <div />
                 </li>
 
-                {/* Data rows */}
                 {hasResults &&
                     filtered.value.map((c, i) => (
                         <GridRow
