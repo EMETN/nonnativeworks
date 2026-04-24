@@ -38,7 +38,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import build_job, LOCATION_CLASS_PATTERNS
+from extract import build_job, job_key, LOCATION_CLASS_PATTERNS
 from title_language import _title_appears_non_english
 
 _HEADERS = {
@@ -415,9 +415,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             jobs = fetch_page(session, list_url, params, cfg)
             print(f"generic [{name}]: {param_name}={params[param_name]} → {len(jobs)} jobs", file=sys.stderr)
 
-            new_jobs = [j for j in jobs if j["title"].lower() not in seen_titles]
+            new_jobs = [j for j in jobs if job_key(j) not in seen_titles]
             for j in new_jobs:
-                seen_titles.add(j["title"].lower())
+                seen_titles.add(job_key(j))
             all_jobs.extend(new_jobs)
 
             if len(jobs) < page_size:
