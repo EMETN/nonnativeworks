@@ -63,7 +63,7 @@ function PositionRow({
             </div>
             <div class="flex items-center gap-2 sm:gap-4 shrink-0">
                 <span
-                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-400 max-w-20 sm:max-w-none text-right line-clamp-2"
+                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-400 max-w-24 sm:max-w-none text-right line-clamp-2"
                     style={numFont}
                 >
                     {pos.category_name}
@@ -242,7 +242,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                         class="text-xs sm:text-sm text-[#0F7A4F] hover:text-[#084A2F] font-semibold"
                         style={numFont}
                     >
-                        All positions ↗
+                        All positions ↗︎
                     </a>
                 )}
             </div>
