@@ -40,6 +40,7 @@ from bs4 import BeautifulSoup
 
 from extract import build_job, job_key, LOCATION_CLASS_PATTERNS
 from title_language import _title_appears_non_english
+import description_cache
 
 _HEADERS = {
     "User-Agent": (
@@ -433,10 +434,21 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     print(f"generic [{name}]: fetching descriptions for {len(unique_urls)} English-titled jobs", file=sys.stderr)
 
     detail_cache: dict[str, tuple[str, str | None]] = {}
+    cache_hits = 0
     for i, job_url in enumerate(unique_urls):
-        detail_cache[job_url] = _fetch_detail_page(session, job_url, desc_sel, jf_sel)
+        cached = description_cache.get(job_url)
+        if cached is not None:
+            detail_cache[job_url] = cached
+            cache_hits += 1
+        else:
+            result = _fetch_detail_page(session, job_url, desc_sel, jf_sel)
+            detail_cache[job_url] = result
+            if result[0]:  # only cache successful fetches
+                description_cache.set(job_url, result[0], result[1])
         if (i + 1) % 10 == 0:
             print(f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}", file=sys.stderr)
+    print(f"generic [{name}]: description cache hits {cache_hits}/{len(unique_urls)}", file=sys.stderr)
+    description_cache.flush()
 
     for job in english_jobs:
         desc_html, job_function = detail_cache.get(job.get("url", ""), ("", None))
