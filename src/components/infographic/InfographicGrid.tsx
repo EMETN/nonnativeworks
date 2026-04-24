@@ -23,6 +23,7 @@ export default function InfographicGrid({ countries, companyCounts }: Props) {
         id: c.slug,
         name: c.name,
         href: `/${c.slug}`,
+        flag: `/flags/${c.code.toLowerCase()}.png`,
         english_positions: c.english_positions,
         total_positions: c.total_positions,
         english_percentage: c.english_percentage,
