@@ -36,7 +36,7 @@ function PositionRow({
     >
       <div class="min-w-0 flex-1">
         <span
-          class="text-sm sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight"
+          class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight"
           style={numFont}
         >
           {pos.title}
