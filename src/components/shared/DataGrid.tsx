@@ -18,6 +18,7 @@ interface Props {
     items: DataGridItem[];
     compact?: boolean;
     compactLabel?: string;
+    entityName?: string;
 }
 
 type SortField = 'positions' | 'total' | 'companies';
@@ -85,7 +86,7 @@ function SizingRow({
     return (
         <li
             aria-hidden="true"
-            class="h-0 overflow-hidden invisible hidden sm:!block dg-subgrid"
+            class="h-0 overflow-hidden invisible dg-subgrid"
         >
             <div class="pr-2 sm:pr-4 md:pr-8 xl:pr-12">
                 <span class={ts} style={numFont}>
@@ -319,7 +320,7 @@ function GridRow({
     );
 }
 
-export default function DataGrid({ items, compact, compactLabel = 'Companies' }: Props) {
+export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
     const sortField = useSignal<SortField>('positions');
     const sortDir = useSignal<SortDir>('desc');
     const search = useSignal('');
@@ -372,7 +373,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
     const labelActive = `${labelBase} text-gray-900`;
     const labelInactive = `${labelBase} text-gray-400 hover:text-gray-500`;
 
-    const entityLabel = compact ? 'country' : 'company';
+    const entityLabel = entityName ?? (compact ? 'country' : 'company');
     const hasResults = filtered.value.length > 0;
     const gridCols = compact ? compactGridCols : fullGridCols;
 
@@ -412,6 +413,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                             </svg>
                             <input
                                 type="text"
+                                aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
                                 placeholder="Search..."
                                 value={search.value}
                                 onInput={(e) => {
@@ -551,7 +553,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                         No {entityLabel} found matching "{search.value}"
                     </p>
-                    <p class="text-sm text-gray-300">
+                    <p class="text-sm text-gray-400">
                         {compact
                             ? "This country hasn't been added yet — we're expanding regularly."
                             : "This company isn't tracked here yet. Check back soon."}

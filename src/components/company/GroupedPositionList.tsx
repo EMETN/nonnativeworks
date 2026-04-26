@@ -143,6 +143,7 @@ export default function GroupedPositionList({ groups, careerPageUrl }: Props) {
           </svg>
           <input
             type="text"
+            aria-label="Search positions"
             placeholder="Search..."
             value={search}
             onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
@@ -206,7 +207,7 @@ export default function GroupedPositionList({ groups, careerPageUrl }: Props) {
               <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                 No positions found matching "{search}"
               </p>
-              <p class="text-sm text-gray-300">Try a different search term.</p>
+              <p class="text-sm text-gray-400">Try a different search term.</p>
             </>
           ) : (
             <p class="text-base sm:text-lg" style={numFont}>
