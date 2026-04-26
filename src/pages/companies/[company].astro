@@ -27,6 +27,11 @@ const entries = company.entries.map((e) => ({
 <BaseLayout
     title={`${company.name}`}
     description={`${company.name} has ${company.total_positions} open positions across ${company.entries.length} ${company.entries.length === 1 ? 'country' : 'countries'} — ${company.english_positions} don't require the local language(s).`}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Companies', href: '/companies' },
+        { name: company.name },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"

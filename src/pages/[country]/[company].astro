@@ -40,6 +40,12 @@ const positions = await getPositionsByCompany(
 <BaseLayout
     title={`${company.name} — ${country.name}`}
     description={`${company.name} has ${company.total_positions} open positions in ${country.name} — ${company.english_positions} don't require the local language(s).`}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Countries', href: '/countries' },
+        { name: country.name, href: `/${country.slug}` },
+        { name: company.name },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
