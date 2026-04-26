@@ -26,6 +26,11 @@
 
 }
 
+.breadcrumb-list li + li::before {
+  content: '›';
+  margin: 0 0.375rem;
+}
+
 .hover-fade-item {
   transition: opacity 0.2s ease;
 }
