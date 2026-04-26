@@ -26,6 +26,24 @@
 
 }
 
+.mobile-menu-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+  transition: grid-template-rows 0.2s ease, opacity 0.15s ease;
+}
+
+.mobile-menu-panel.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-menu-inner {
+  overflow: hidden;
+}
+
 .breadcrumb-list li + li::before {
   content: '›';
   margin: 0 0.375rem;

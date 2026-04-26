@@ -80,11 +80,12 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
     </div>
 
     <!-- Mobile menu panel -->
-    <nav
+    <div
         id="mobile-menu"
-        class="hidden sm:hidden absolute left-0 right-0 top-full border-t border-gray-200 bg-white shadow-lg"
-        aria-label="Mobile navigation"
+        class="sm:hidden absolute left-0 right-0 top-full border-t border-gray-200 bg-white shadow-lg mobile-menu-panel"
+        aria-hidden="true"
     >
+        <nav aria-label="Mobile navigation" class="mobile-menu-inner">
         <div class="px-4 py-3 space-y-1">
             <a
                 href="/countries"
@@ -97,7 +98,8 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
                 aria-current={isCompanies ? 'true' : undefined}>Companies</a
             >
         </div>
-    </nav>
+        </nav>
+    </div>
 </header>
 
 <script>
@@ -106,37 +108,31 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
     const hamburger = document.getElementById('hamburger-icon')!;
     const close = document.getElementById('close-icon')!;
 
-    function closeMenu() {
-        menu.classList.add('hidden');
-        btn.setAttribute('aria-expanded', 'false');
-        hamburger.classList.remove('hidden');
-        close.classList.add('hidden');
+    function toggle(open: boolean) {
+        menu.classList.toggle('is-open', open);
+        menu.setAttribute('aria-hidden', String(!open));
+        btn.setAttribute('aria-expanded', String(open));
+        hamburger.classList.toggle('hidden', open);
+        close.classList.toggle('hidden', !open);
     }
 
     btn.addEventListener('click', () => {
-        const isHidden = menu.classList.toggle('hidden');
-        btn.setAttribute('aria-expanded', String(!isHidden));
-        hamburger.classList.toggle('hidden');
-        close.classList.toggle('hidden');
+        toggle(!menu.classList.contains('is-open'));
     });
 
     document.addEventListener('click', (e) => {
         if (
-            !menu.classList.contains('hidden') &&
+            menu.classList.contains('is-open') &&
             !menu.contains(e.target as Node) &&
             !btn.contains(e.target as Node)
         ) {
-            closeMenu();
+            toggle(false);
         }
     });
 
     window.addEventListener(
         'scroll',
-        () => {
-            if (!menu.classList.contains('hidden')) {
-                closeMenu();
-            }
-        },
+        () => { if (menu.classList.contains('is-open')) toggle(false); },
         { passive: true },
     );
 </script>
