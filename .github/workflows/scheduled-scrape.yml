@@ -146,13 +146,13 @@ jobs:
               if: steps.playwright-cache.outputs.cache-hit == 'true'
               run: playwright install-deps chromium
 
-            - name: Restore description cache
+            - name: Restore outcome cache
               uses: actions/cache@v4
               with:
-                  path: cache/descriptions.json
-                  key: description-cache-${{ runner.os }}-${{ github.run_id }}
+                  path: cache/outcomes.json
+                  key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
                   restore-keys: |
-                      description-cache-${{ runner.os }}-
+                      outcome-cache-${{ runner.os }}-
 
             - name: Start Astro server
               run: |

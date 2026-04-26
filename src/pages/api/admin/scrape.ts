@@ -28,6 +28,7 @@ import {
 } from "../../../lib/ats/country-lookup";
 import { classifyJobVerbose } from "../../../lib/classifier";
 import { stripHtml } from "../../../lib/classifiers/language";
+import type { SignalEntry } from "../../../lib/classifiers/language";
 import {
   logScrapeRun,
   type PositionLogEntry,
@@ -54,11 +55,21 @@ import {
   extractEducationRequirement,
   type SkillEntry,
 } from "../../../lib/ats/skills-extractor";
+import {
+  load as loadOutcomeCache,
+  get as getOutcome,
+  set as setOutcome,
+  flush as flushOutcomeCache,
+  cachedUrls as getOutcomeCachedUrls,
+  titleHash,
+  CLASSIFIER_VERSION,
+} from "../../../lib/outcome-cache";
 
 // Must exceed Python's internal NJOYN_SUBPROCESS_TIMEOUT (3600s) so Python can handle
 // its own cleanup and exit cleanly. SIGKILL ensures the process cannot ignore the signal
 // (Python's multiprocessing.Queue.get blocks SIGTERM, causing Node to wait indefinitely).
 const PYTHON_TIMEOUT_MS = 3_900_000; // 65 min
+const OUTCOME_CACHE_PATH = join(process.cwd(), "cache", "outcomes.json");
 
 // Batch scraping spawns many Python subprocesses over the lifetime of the server
 // process. Each spawn registers internal cleanup listeners on the Node.js process
@@ -107,6 +118,7 @@ export const POST: APIRoute = async ({ request }) => {
 async function scrape(rawUrl: string): Promise<ScrapeResult> {
   // Load skills taxonomy once for this scrape run — used to extract skills from descriptions.
   const skills: SkillEntry[] = await loadSkills();
+  loadOutcomeCache(OUTCOME_CACHE_PATH);
   // Remap friendly branded career URLs (e.g. careers.abb) to the actual ATS URL.
   const urlHostname = (() => {
     try {
@@ -173,7 +185,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
             TRACKED_COUNTRY_CODES.has(c.code),
           );
         });
-        await enrichWorkdayDescriptions(workdayTracked);
+        await enrichWorkdayDescriptions(workdayTracked, getOutcomeCachedUrls());
         companyName =
           parts.company.charAt(0).toUpperCase() + parts.company.slice(1);
         ats = "workday";
@@ -195,7 +207,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
             TRACKED_COUNTRY_CODES.has(c.code),
           );
         });
-        await enrichWorkableDescriptions(trackedJobs, detection.companySlug);
+        await enrichWorkableDescriptions(trackedJobs, detection.companySlug, getOutcomeCachedUrls());
         rawJobs = jobs;
         companyName = name;
         ats = "workable";
@@ -212,10 +224,13 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
     const companyApiConfig = COMPANY_APIS[careerHostname];
     if (companyApiConfig) {
       try {
-        rawJobs = await fetchCompanyApiJobs(companyApiConfig, (location) =>
-          lookupCountryFromLocation(location).some((c) =>
-            TRACKED_COUNTRY_CODES.has(c.code),
-          ),
+        rawJobs = await fetchCompanyApiJobs(
+          companyApiConfig,
+          (location) =>
+            lookupCountryFromLocation(location).some((c) =>
+              TRACKED_COUNTRY_CODES.has(c.code),
+            ),
+          getOutcomeCachedUrls(),
         );
         if (rawJobs.length > 0) {
           companyName = companyApiConfig.companyName ?? careerHostname;
@@ -254,7 +269,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
     }
     rawJobs = await runPythonScraper(scraperPath, careerUrl);
     ats = "python";
-    await enrichDescriptions(rawJobs);
+    await enrichDescriptions(rawJobs, undefined, undefined, getOutcomeCachedUrls());
   }
 
   if (rawJobs.length === 0) {
@@ -291,6 +306,7 @@ function buildScrapeResult(
   const groups = new Map<string, ScrapeCountryGroup>();
   let skipped = 0;
   let skippedUntracked = 0;
+  let cacheHits = 0;
   const positionLogs: PositionLogEntry[] = [];
   const skippedUnknownLocationJobs: Array<{ title: string; location: string }> = [];
 
@@ -322,12 +338,6 @@ function buildScrapeResult(
     }
 
     for (const countryInfo of trackedCountries) {
-      const { classified, signals } = classifyJobVerbose(job, countryInfo.code);
-      // Scraper-provided explicit language data overrides the classifier.
-      if (job.requires_native_language !== undefined) {
-        classified.requires_native_language = job.requires_native_language;
-      }
-
       const cities =
         job.cities ??
         (job.city
@@ -344,22 +354,83 @@ function buildScrapeResult(
           jobs: [],
         });
       }
-      // Derive plain text from HTML when the scraper only populated descriptionHtml
-      // (e.g. Greenhouse, Ashby, Workable). Workday and Lever already set descriptionText.
-      const plainText = job.descriptionText ?? (job.descriptionHtml ? stripHtml(job.descriptionHtml) : '');
-      const jobSkills = extractSkills(plainText, skills);
-      const education = extractEducationRequirement(plainText);
+
+      const tHash = titleHash(job.title);
+      const cached = job.url ? getOutcome(job.url, countryInfo.code, tHash) : null;
+
+      let category: string;
+      let categorySignal: string | undefined;
+      let categorySource: 'title' | 'description' | 'jobFunction' | 'default';
+      let requires_native_language: boolean;
+      let local_language_advantage: boolean;
+      let requiredLanguages: string[];
+      let preferredLanguages: string[];
+      let languageSignals: SignalEntry[];
+      let jobSkills: string[];
+      let education: string | undefined;
+
+      if (cached) {
+        cacheHits++;
+        category = cached.category;
+        categorySignal = cached.categorySignal;
+        categorySource = cached.categorySource;
+        requires_native_language = cached.requires_native_language;
+        local_language_advantage = cached.local_language_advantage;
+        requiredLanguages = cached.requiredLanguages;
+        preferredLanguages = cached.preferredLanguages;
+        languageSignals = cached.languageSignals;
+        jobSkills = cached.skills;
+        education = cached.required_education;
+      } else {
+        const { classified, signals } = classifyJobVerbose(job, countryInfo.code);
+        const plainText = job.descriptionText ?? (job.descriptionHtml ? stripHtml(job.descriptionHtml) : '');
+        jobSkills = extractSkills(plainText, skills);
+        education = extractEducationRequirement(plainText);
+
+        category = classified.category;
+        categorySignal = signals.categorySignal;
+        categorySource = signals.categorySource;
+        requires_native_language = classified.requires_native_language;
+        local_language_advantage = classified.local_language_advantage;
+        requiredLanguages = classified.requiredLanguages;
+        preferredLanguages = classified.preferredLanguages;
+        languageSignals = signals.languageSignals;
+
+        if (job.url) {
+          setOutcome(job.url, countryInfo.code, {
+            category,
+            categorySignal,
+            categorySource,
+            requires_native_language,
+            local_language_advantage,
+            requiredLanguages,
+            preferredLanguages,
+            languageSignals,
+            skills: jobSkills,
+            required_education: education,
+            titleHash: tHash,
+            countryCode: countryInfo.code,
+            classifierVersion: CLASSIFIER_VERSION,
+            cachedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Scraper-provided explicit language data overrides the classifier.
+      if (job.requires_native_language !== undefined) {
+        requires_native_language = job.requires_native_language;
+      }
 
       positionLogs.push({
-        title: classified.title,
-        category: classified.category,
-        categorySignal: signals.categorySignal,
-        categorySource: signals.categorySource,
-        requires_native_language: classified.requires_native_language,
-        local_language_advantage: classified.local_language_advantage,
-        requiredLanguages: classified.requiredLanguages,
-        preferredLanguages: classified.preferredLanguages,
-        languageSignals: signals.languageSignals,
+        title: job.title,
+        category,
+        categorySignal,
+        categorySource,
+        requires_native_language,
+        local_language_advantage,
+        requiredLanguages,
+        preferredLanguages,
+        languageSignals,
         countryCode: countryInfo.code,
         countryName: countryInfo.name,
         city: cities.length > 0 ? cities : undefined,
@@ -369,7 +440,13 @@ function buildScrapeResult(
       });
 
       groups.get(countryInfo.code)!.jobs.push({
-        ...classified,
+        title: job.title,
+        url: job.url,
+        category,
+        requires_native_language,
+        local_language_advantage,
+        requiredLanguages,
+        preferredLanguages,
         city: cities.length > 0 ? cities : undefined,
         work_model: workModel ?? undefined,
         skills: jobSkills.length > 0 ? jobSkills : undefined,
@@ -377,6 +454,11 @@ function buildScrapeResult(
       });
     }
   }
+
+  if (cacheHits > 0) {
+    console.log(`[outcome-cache] ${cacheHits} cache hits for ${companyName}`);
+  }
+  flushOutcomeCache(OUTCOME_CACHE_PATH);
 
   logScrapeRun({
     companyName,
