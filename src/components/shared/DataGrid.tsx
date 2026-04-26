@@ -383,7 +383,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                             <input
                                 type="text"
                                 aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
-                                placeholder="Search..."
+                                placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
                                 value={search.value}
                                 onInput={(e) => {
                                     search.value = (
