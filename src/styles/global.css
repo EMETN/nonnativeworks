@@ -25,3 +25,19 @@
   }
 
 }
+
+.hover-fade-item {
+  transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hover-fade-list:hover .hover-fade-item {
+    opacity: 0.12;
+  }
+  .hover-fade-soft:hover .hover-fade-item {
+    opacity: 0.5;
+  }
+  .hover-fade-list .hover-fade-item:hover {
+    opacity: 1;
+  }
+}

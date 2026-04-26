@@ -15,25 +15,10 @@ interface Props {
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
-function PositionRow({
-  pos,
-  faded,
-  onEnter,
-  onLeave,
-}: {
-  pos: PositionDetail;
-  faded: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-}) {
+function PositionRow({ pos }: { pos: PositionDetail }) {
   const inner = (
-    <div
-      class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6"
-      style={{
-        opacity: faded ? 0.4 : 1,
-        transition: 'opacity 0.3s',
-      }}
-    >
+    <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
+
       <div class="min-w-0 flex-1">
         <span
           class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight"
@@ -70,11 +55,7 @@ function PositionRow({
   );
 
   return (
-    <li
-      class="border-b border-gray-100"
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-    >
+    <li class="border-b border-gray-100 hover-fade-item">
       {pos.url ? (
         <a
           href={pos.url}
@@ -94,7 +75,6 @@ function PositionRow({
 export default function GroupedPositionList({ groups, careerPageUrl }: Props) {
   const [search, setSearch] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const allNonNative = useMemo(
@@ -253,15 +233,9 @@ export default function GroupedPositionList({ groups, careerPageUrl }: Props) {
                 </span>
               </button>
               {!isCollapsed && (
-                <ul>
+                <ul class="hover-fade-list">
                   {group.positions.map((pos) => (
-                    <PositionRow
-                      key={pos.id}
-                      pos={pos}
-                      faded={hoveredId !== null && hoveredId !== pos.id}
-                      onEnter={() => setHoveredId(pos.id)}
-                      onLeave={() => setHoveredId(null)}
-                    />
+                    <PositionRow key={pos.id} pos={pos} />
                   ))}
                 </ul>
               )}
