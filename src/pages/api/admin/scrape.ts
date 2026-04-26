@@ -455,9 +455,6 @@ function buildScrapeResult(
     }
   }
 
-  if (cacheHits > 0) {
-    console.log(`[outcome-cache] ${cacheHits} cache hits for ${companyName}`);
-  }
   flushOutcomeCache(OUTCOME_CACHE_PATH);
 
   logScrapeRun({
@@ -468,6 +465,8 @@ function buildScrapeResult(
     skippedUnknownLocation: skipped,
     skippedUnknownLocationJobs,
     skippedUntrackedCountry: skippedUntracked,
+    outcomeCacheHits: cacheHits,
+    outcomeCacheTotal: positionLogs.length,
   });
 
   return {

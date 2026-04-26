@@ -70,6 +70,8 @@ export function logScrapeRun(params: {
   skippedUnknownLocation: number;
   skippedUnknownLocationJobs?: Array<{ title: string; location: string }>;
   skippedUntrackedCountry: number;
+  outcomeCacheHits?: number;
+  outcomeCacheTotal?: number;
   error?: string;
   alsoToStderr?: boolean;
 }): void {
@@ -81,6 +83,11 @@ export function logScrapeRun(params: {
   lines.push(sep);
   lines.push(`SCRAPE  ${timestamp}  ${params.companyName}  (${params.ats ?? 'unknown'})`);
   lines.push(`URL     ${params.careerUrl}`);
+  if (params.outcomeCacheTotal !== undefined && params.outcomeCacheTotal > 0) {
+    const hits = params.outcomeCacheHits ?? 0;
+    const misses = params.outcomeCacheTotal - hits;
+    lines.push(`CACHE   ${hits} hits  ${misses} misses  (${params.outcomeCacheTotal} total)`);
+  }
   lines.push(sep);
   lines.push('');
 
