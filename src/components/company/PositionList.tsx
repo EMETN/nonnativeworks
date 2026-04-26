@@ -155,6 +155,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                     </svg>
                     <input
                         type="text"
+                        aria-label="Search positions"
                         placeholder="Search..."
                         value={search}
                         onInput={(e) =>
@@ -202,7 +203,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                                 >
                                     No positions found matching "{search}"
                                 </p>
-                                <p class="text-sm text-gray-300">
+                                <p class="text-sm text-gray-400">
                                     Try a different search term.
                                 </p>
                             </>

@@ -26,5 +26,5 @@ export default function CompanyCountryGrid({ entries, companySlug }: Props) {
     updated_at: null,
   }));
 
-  return <DataGrid items={items} />;
+  return <DataGrid items={items} entityName="country" />;
 }
