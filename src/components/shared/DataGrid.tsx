@@ -141,17 +141,11 @@ function SizingRow({
 function GridRow({
     item,
     isLast,
-    faded,
     compact,
-    onEnter,
-    onLeave,
 }: {
     item: DataGridItem;
     isLast: boolean;
-    faded: boolean;
     compact?: boolean;
-    onEnter: () => void;
-    onLeave: () => void;
 }) {
     const nameRef = useRef<HTMLDivElement>(null);
     const isOverflowing = useSignal(false);
@@ -185,18 +179,12 @@ function GridRow({
 
     return (
         <li
-            class="border-b border-gray-100 dg-subgrid"
-            onMouseEnter={onEnter}
-            onMouseLeave={onLeave}
+            class="border-b border-gray-100 dg-subgrid hover-fade-item"
         >
             <a
                 href={item.href}
                 data-astro-prefetch
                 class="no-underline rounded-lg dg-subgrid"
-                style={{
-                    opacity: faded ? 0.4 : 1,
-                    transition: 'opacity 0.3s',
-                }}
             >
                 <div
                     class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
@@ -324,25 +312,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
     const sortField = useSignal<SortField>('positions');
     const sortDir = useSignal<SortDir>('desc');
     const search = useSignal('');
-    const hoveredId = useSignal<string | null>(null);
-    const canHover = useSignal(false);
-
-    useEffect(() => {
-        const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
-        canHover.value = mq.matches;
-        const onChange = (e: MediaQueryListEvent) => {
-            canHover.value = e.matches;
-        };
-        mq.addEventListener('change', onChange);
-        const onPageShow = () => {
-            hoveredId.value = null;
-        };
-        window.addEventListener('pageshow', onPageShow);
-        return () => {
-            mq.removeEventListener('change', onChange);
-            window.removeEventListener('pageshow', onPageShow);
-        };
-    }, []);
 
     function toggleSort(field: SortField) {
         if (sortField.value === field) {
@@ -387,7 +356,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 }
             `}</style>
             <ul
-                class="w-full"
+                class="w-full hover-fade-list hover-fade-soft"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
                 <SizingRow items={items} compact={compact} />
@@ -532,17 +501,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                             item={c}
                             isLast={i === filtered.value.length - 1}
                             compact={compact}
-                            faded={
-                                canHover.value &&
-                                hoveredId.value !== null &&
-                                hoveredId.value !== c.id
-                            }
-                            onEnter={() => {
-                                if (canHover.value) hoveredId.value = c.id;
-                            }}
-                            onLeave={() => {
-                                hoveredId.value = null;
-                            }}
                         />
                     ))}
             </ul>
