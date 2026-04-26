@@ -30,6 +30,10 @@ const englishPositions = stats?.english_positions ?? 0;
 <BaseLayout
     title="Companies"
     description="Browse all companies with English-friendly job positions — no local language required."
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Companies' },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"

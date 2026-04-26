@@ -24,6 +24,11 @@ const companies = await getCompanyStatsByCountry(
 <BaseLayout
     title={country.name}
     description={`Browse ${country.total_positions} open positions in ${country.name} — ${country.english_positions} can be done in English without knowing the local language.`}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Countries', href: '/countries' },
+        { name: country.name },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
