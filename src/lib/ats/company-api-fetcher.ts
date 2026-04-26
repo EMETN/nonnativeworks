@@ -261,9 +261,10 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
  * When descriptionRegex is provided, only the matched HTML fragment is stored as
  * descriptionHtml instead of the full page (avoids native-language nav/chrome false positives).
  */
-export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp, descriptionRegex?: RegExp): Promise<void> {
+export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp, descriptionRegex?: RegExp, skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter((j) => {
     if (!j.url) return false;
+    if (skipUrls?.has(j.url)) return false;
     const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml && !j.descriptionText;
     const wantsLocation = !!locationRegex && !j.location;
     return wantsDescription || wantsLocation;
@@ -696,6 +697,8 @@ export async function fetchCompanyApiJobs(
   config: CompanyApiConfig,
   /** When provided, description enrichment is skipped for jobs not in a tracked country. */
   isTrackedLocation?: (location: string) => boolean,
+  /** URLs with cached classification outcomes — skip description fetching for these. */
+  skipUrls?: Set<string>,
 ): Promise<RawJob[]> {
   const method = config.method ?? 'GET';
   const headers = {
@@ -822,7 +825,7 @@ export async function fetchCompanyApiJobs(
 
     if (config.fetchDescription) {
       console.log(`[fetchCompanyApiJobs] enriching descriptions for ${englishJobs.length} English jobs`);
-      await enrichDescriptions(englishJobs);
+      await enrichDescriptions(englishJobs, undefined, undefined, skipUrls);
     }
 
     // Index primary jobs by sourceId for O(1) lookup
@@ -871,7 +874,7 @@ export async function fetchCompanyApiJobs(
   if (config.fetchDescription || config.locationFromHtml) {
     const locationRegex = config.locationFromHtml ? new RegExp(config.locationFromHtml) : undefined;
     const descriptionRegex = config.descriptionFromHtml ? new RegExp(config.descriptionFromHtml, 's') : undefined;
-    await enrichDescriptions(enrichmentTargets, locationRegex, descriptionRegex);
+    await enrichDescriptions(enrichmentTargets, locationRegex, descriptionRegex, skipUrls);
   }
 
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {

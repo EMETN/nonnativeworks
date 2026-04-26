@@ -145,9 +145,9 @@ function publicUrlToDetailApiUrl(publicUrl: string): string | null {
   }
 }
 
-export async function enrichWorkdayDescriptions(jobs: RawJob[]): Promise<void> {
+export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter(
-    (j) => j.url && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
+    (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
   );
   console.log(
     `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
