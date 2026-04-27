@@ -644,6 +644,13 @@ function stripDescriptionBoilerplate(text: string): string {
 const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl', 'hu']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
+// Languages that use a non-Latin script: require at least one native-script
+// character in the chunk before trusting tinyld. English text can never
+// legitimately be Greek, Arabic, Hebrew, etc., so zero native chars = false positive.
+const SCRIPT_GATED_LANGS: Partial<Record<string, RegExp>> = {
+  'el': /[\u0370-\u03FF\u1F00-\u1FFF]/, // Greek
+};
+
 /**
  * Checks whether any chunk of the text is detected as a non-English language
  * by tinyld. Used as a fallback when the description is written in a language
@@ -661,6 +668,8 @@ function findAnyNonEnglishChunk(
     if (!code || code.length !== 2 || code === 'en') continue;
     if (!TRUSTED_LANG_CODES.has(code)) continue;
     if (MEDIUM_CONFIDENCE_LANGS.has(code) && chunk.length < MEDIUM_CONFIDENCE_MIN_CHUNK) continue;
+    const scriptGate = SCRIPT_GATED_LANGS[code];
+    if (scriptGate && !scriptGate.test(chunk)) continue;
     return { chunk, detectedCode: code };
   }
   return null;
@@ -737,8 +746,12 @@ export function detectNativeLanguage(
   // Check for explicit "X is a plus / an advantage" phrases before running
   // tinyld. See the JSDoc above for why this ordering matters.
   for (const lang of languages) {
+    const hasRequirement = buildRequirementSignals(lang).some(
+      (s) => combined.includes(s) && !knowledgeOfSignalIsAdjective(combined, s) && requirementNegatedByContext(combined, s) !== 'none',
+    );
     for (const signal of buildAdvantageSignals(lang)) {
       if (combined.includes(signal)) {
+        if (hasRequirement) break; // requirement wins — fall through to phase 2a
         return {
           value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
           signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: signal }],
@@ -747,10 +760,12 @@ export function detectNativeLanguage(
     }
     const advMatch = buildAdvantageRegex(lang).exec(combined);
     if (advMatch) {
-      return {
-        value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
-        signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: advMatch[0] }],
-      };
+      if (!hasRequirement) {
+        return {
+          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+          signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: advMatch[0] }],
+        };
+      }
     }
   }
 
@@ -763,6 +778,23 @@ export function detectNativeLanguage(
           signals: [{ phase: '1b', description: 'Nordic/Scandinavian advantage phrase', matched: phrase }],
         };
       }
+    }
+    // "{Language} or other Nordic/Scandinavian languages are a plus"
+    // "Knowledge of Nordic or Baltic languages is an advantage"
+    const LANG_GROUP_RE = /(?:nordic|scandinavian|baltic)/;
+    const ADVANTAGE_SUFFIX_RE = /(?:(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+)?(?:a(?:n)?\s+)?(?:advantage|plus|bonus|asset)\b/;
+    const nordicOrOtherMatch = combined.match(
+      new RegExp(`\\b\\w+\\s+or\\s+other\\s+${LANG_GROUP_RE.source}\\s+languages?\\s+${ADVANTAGE_SUFFIX_RE.source}`),
+    );
+    const nordicGroupMatch = !nordicOrOtherMatch && combined.match(
+      new RegExp(`knowledge\\s+of\\s+(?:\\w+\\s+or\\s+)?${LANG_GROUP_RE.source}\\s+languages?\\s+${ADVANTAGE_SUFFIX_RE.source}`),
+    );
+    const nordicAdvMatch = nordicOrOtherMatch ?? nordicGroupMatch;
+    if (nordicAdvMatch) {
+      return {
+        value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+        signals: [{ phase: '1b', description: 'Nordic/Scandinavian advantage phrase', matched: nordicAdvMatch[0] }],
+      };
     }
   }
 
@@ -896,22 +928,16 @@ export function detectNativeLanguage(
     const countryKeywordSet = new Set(languages);
     for (const [kw, canonicalName] of Object.entries(KEYWORD_TO_CANONICAL_NAME)) {
       if (countryKeywordSet.has(kw)) continue; // already covered by Phase 2a
-      // Advantage signals are checked before requirement signals — a phrase like
-      // "proficiency in Finnish is a big advantage" contains "proficiency in finnish"
-      // which is also a requirement signal substring, so advantage must win.
+      // Collect any advantage match first, but only commit to it after confirming
+      // no requirement signal also fires. A requirement always wins over an advantage
+      // (e.g. "excellent written and spoken Dutch" + "additional languages is an asset"
+      // should flag Dutch as required, not as a nice-to-have).
+      let foundAdvantage: string | null = null;
       const advMatch = buildAdvantageRegex(kw).exec(combined);
-      if (advMatch) {
-        return {
-          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
-          signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: advMatch[0] }],
-        };
-      }
-      for (const signal of buildAdvantageSignals(kw)) {
-        if (combined.includes(signal)) {
-          return {
-            value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
-            signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: signal }],
-          };
+      if (advMatch) foundAdvantage = advMatch[0];
+      if (!foundAdvantage) {
+        for (const signal of buildAdvantageSignals(kw)) {
+          if (combined.includes(signal)) { foundAdvantage = signal; break; }
         }
       }
       for (const signal of buildRequirementSignals(kw)) {
@@ -930,6 +956,12 @@ export function detectNativeLanguage(
             signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
           };
         }
+      }
+      if (foundAdvantage) {
+        return {
+          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: [canonicalName],
+          signals: [{ phase: '2a-cross', description: `cross-language advantage: ${canonicalName}`, matched: foundAdvantage }],
+        };
       }
     }
   }
