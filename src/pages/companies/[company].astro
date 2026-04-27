@@ -5,6 +5,7 @@ import CompanyCountryGrid from '../../components/company/CompanyCountryGrid.tsx'
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import { getGlobalCompanyBySlug } from '../../lib/queries';
+import { timeAgo } from '../../lib/time';
 
 const { company: companySlug } = Astro.params;
 const { request, cookies } = Astro;
@@ -92,16 +93,8 @@ const entries = company.entries.map((e) => ({
                         companySlug={companySlug!}
                         client:visible
                     />
-                    <p class="text-xs sm:text-sm text-gray-500 mt-4">
-                        Updated{' '}
-                        {new Date(company.updated_at).toLocaleDateString(
-                            'en-GB',
-                            {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            },
-                        )}
+                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                        Updated {timeAgo(company.updated_at)}
                     </p>
                 </>
             )

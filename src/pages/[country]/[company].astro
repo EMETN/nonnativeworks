@@ -9,6 +9,7 @@ import {
     getCompanyBySlugInCountry,
     getPositionsByCompany,
 } from '../../lib/queries';
+import { timeAgo } from '../../lib/time';
 
 const { country: countrySlug, company: companySlug } = Astro.params;
 const { request, cookies } = Astro;
@@ -118,16 +119,8 @@ const positions = await getPositionsByCompany(
                         careerPageUrl={company.career_page_url}
                         client:visible
                     />
-                    <p class="text-xs sm:text-sm text-gray-500 mt-4">
-                        Updated{' '}
-                        {new Date(company.updated_at).toLocaleDateString(
-                            'en-GB',
-                            {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            },
-                        )}
+                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                        Updated {timeAgo(company.updated_at)}
                     </p>
                 </>
             )
