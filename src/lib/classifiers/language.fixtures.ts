@@ -124,11 +124,9 @@ export const CASES: FixtureCase[] = [
     advantage: true,
   },
   {
-    // "Finnish language skills" is itself a requirement signal, so hasRequirement=true
-    // suppresses the advantage path — use bare language name to get the advantage branch.
-    label: '1b — "Finnish is a bonus" (bare name → advantage regex)',
+    label: '1b — "Finnish language skills is a bonus"',
     title: 'Sales Specialist',
-    desc: 'Strong English required. Finnish is a bonus.',
+    desc: 'Strong English required. Finnish language skills is a bonus.',
     country: 'FI',
     requires: false,
     advantage: true,
@@ -142,11 +140,9 @@ export const CASES: FixtureCase[] = [
     advantage: true,
   },
   {
-    // "proficiency in norwegian" is a requirement signal, so the cross-language scan
-    // returns requires:true for this FI job. Use bare language name to reach advantage.
-    label: '1b — "Norwegian is preferred" cross-language advantage on FI job',
+    label: '1b — "proficiency in Norwegian is preferred" cross-language advantage on FI job',
     title: 'Project Manager',
-    desc: 'Strong English is required. Norwegian is preferred.',
+    desc: 'Strong English is required. Proficiency in Norwegian is preferred.',
     country: 'FI',
     requires: false,
     advantage: true,
@@ -200,21 +196,17 @@ export const CASES: FixtureCase[] = [
     advantage: true,
   },
   {
-    // "knowledge of Finnish" is a requirement signal — use "Finnish language" (without "skills")
-    // which is not a requirement signal so the advantage regex can fire.
-    label: '1b — "Finnish language is an advantage" (compound mention → advantage regex)',
+    label: '1b — "knowledge of Finnish is an advantage"',
     title: 'Marketing Manager',
-    desc: 'Experience in digital marketing. Finnish language is an advantage.',
+    desc: 'Experience in digital marketing. Knowledge of Finnish is an advantage.',
     country: 'FI',
     requires: false,
     advantage: true,
   },
   {
-    // "Finnish language skills" is a requirement signal — drop "skills" so only the
-    // compound mention "Finnish language" is present, which the advantage regex catches.
-    label: '1b — "Finnish language would be a plus" (compound mention → advantage regex)',
+    label: '1b — "Finnish language skills would be a plus"',
     title: 'Sales Engineer',
-    desc: 'Technical background required. Finnish language would be a plus.',
+    desc: 'Technical background required. Finnish language skills would be a plus.',
     country: 'FI',
     requires: false,
     advantage: true,
@@ -228,10 +220,9 @@ export const CASES: FixtureCase[] = [
     advantage: true,
   },
   {
-    // "Swedish skills" is a requirement signal — use bare language name instead.
-    label: '1b — "Swedish is a plus" bare name (Swedish country)',
+    label: '1b — "Swedish skills is a plus" (Swedish country)',
     title: 'Software Developer',
-    desc: 'Join our team. Swedish is a plus.',
+    desc: 'Join our team. Swedish skills is a plus.',
     country: 'SE',
     requires: false,
     advantage: true,
@@ -245,10 +236,9 @@ export const CASES: FixtureCase[] = [
     advantage: true,
   },
   {
-    // "Dutch language skills" is a requirement signal — use "Dutch language" without "skills".
-    label: '1b — "Dutch language is a plus" (Netherlands)',
+    label: '1b — "Dutch language skills are a plus" (Netherlands)',
     title: 'Product Manager',
-    desc: 'Road-mapping experience needed. Dutch language is a plus.',
+    desc: 'Road-mapping experience needed. Dutch language skills are a plus.',
     country: 'NL',
     requires: false,
     advantage: true,
@@ -351,6 +341,38 @@ export const CASES: FixtureCase[] = [
     label: '1b override — requirement wins over co-present advantage phrase',
     title: 'Customer Manager',
     desc: 'Fluent Finnish is required for this role. Finnish is a plus for career growth.',
+    country: 'FI',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a negation-advantage — "proficiency in Norwegian is preferred" → advantage',
+    title: 'Project Manager',
+    desc: 'Proficiency in Norwegian is preferred for this Nordic-focused role.',
+    country: 'NO',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '2a negation-advantage — "Norwegian language skills is a bonus" → advantage',
+    title: 'Sales Director',
+    desc: 'Norwegian language skills is a bonus in our Oslo office.',
+    country: 'NO',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '2a negation-advantage — "fluent Finnish is a plus" → advantage (not requirement wins)',
+    title: 'Support Engineer',
+    desc: 'Fluent Finnish is a plus for working with Finnish clients.',
+    country: 'FI',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '2a — "Fluent Finnish required. Swedish is preferred." — Finnish still required',
+    title: 'Nordic Manager',
+    desc: 'Fluent Finnish required. Swedish is preferred for the Nordic team.',
     country: 'FI',
     requires: true,
     advantage: false,
