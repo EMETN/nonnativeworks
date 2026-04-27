@@ -61,7 +61,9 @@
     opacity: 0.5;
   }
   .hover-fade-list .hover-fade-item:hover,
+  .hover-fade-list .hover-fade-item:focus-within,
   .hover-fade-list:has(.hover-fade-header:hover) .hover-fade-item {
     opacity: 1;
   }
 }
+
