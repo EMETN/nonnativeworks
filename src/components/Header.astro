@@ -103,58 +103,36 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
 </header>
 
 <script>
-    function initMobileMenu() {
-        const btn = document.getElementById('mobile-menu-btn');
-        const menu = document.getElementById('mobile-menu');
-        const hamburger = document.getElementById('hamburger-icon');
-        const close = document.getElementById('close-icon');
-        if (!btn || !menu || !hamburger || !close) return;
+    const btn = document.getElementById('mobile-menu-btn')!;
+    const menu = document.getElementById('mobile-menu')! as HTMLElement;
+    const hamburger = document.getElementById('hamburger-icon')!;
+    const close = document.getElementById('close-icon')!;
 
-        function toggle(open: boolean) {
-            menu!.classList.toggle('is-open', open);
-            menu!.inert = !open;
-            btn!.setAttribute('aria-expanded', String(open));
-            hamburger!.classList.toggle('hidden', open);
-            close!.classList.toggle('hidden', !open);
-        }
-
-        btn.addEventListener('click', () => {
-            toggle(!menu.classList.contains('is-open'));
-        });
+    function toggle(open: boolean) {
+        menu.classList.toggle('is-open', open);
+        menu.inert = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        hamburger.classList.toggle('hidden', open);
+        close.classList.toggle('hidden', !open);
     }
 
-    initMobileMenu();
-    document.addEventListener('astro:after-swap', initMobileMenu);
+    btn.addEventListener('click', () => {
+        toggle(!menu.classList.contains('is-open'));
+    });
 
     document.addEventListener('click', (e) => {
-        const menu = document.getElementById('mobile-menu');
-        const btn = document.getElementById('mobile-menu-btn');
         if (
-            menu && btn &&
             menu.classList.contains('is-open') &&
             !menu.contains(e.target as Node) &&
             !btn.contains(e.target as Node)
         ) {
-            menu.classList.remove('is-open');
-            menu.inert = true;
-            btn.setAttribute('aria-expanded', 'false');
-            document.getElementById('hamburger-icon')?.classList.remove('hidden');
-            document.getElementById('close-icon')?.classList.add('hidden');
+            toggle(false);
         }
     });
 
     window.addEventListener(
         'scroll',
-        () => {
-            const menu = document.getElementById('mobile-menu');
-            if (menu?.classList.contains('is-open')) {
-                menu.classList.remove('is-open');
-                menu.inert = true;
-                document.getElementById('mobile-menu-btn')?.setAttribute('aria-expanded', 'false');
-                document.getElementById('hamburger-icon')?.classList.remove('hidden');
-                document.getElementById('close-icon')?.classList.add('hidden');
-            }
-        },
+        () => { if (menu.classList.contains('is-open')) toggle(false); },
         { passive: true },
     );
 </script>

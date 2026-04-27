@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
@@ -82,7 +81,6 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
             type="font/woff2"
             crossorigin
         />
-        <ClientRouter />
     </head>
     <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
         {import.meta.env.PUBLIC_POSTHOG_KEY && (
@@ -111,12 +109,6 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
                         });
                     };
                     document.head.appendChild(s);
-                    if (!window.__phNavInit) {
-                        window.__phNavInit = true;
-                        document.addEventListener('astro:page-load', function() {
-                            if (window.posthog) window.posthog.capture('$pageview');
-                        });
-                    }
                 })();
             </script>
         )}

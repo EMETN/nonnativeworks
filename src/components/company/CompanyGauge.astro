@@ -98,14 +98,7 @@ const offset = circumference * (1 - pct / 100);
 </style>
 
 <script>
-  function initGauges() {
-    document.querySelectorAll('[data-gauge]').forEach(el => {
-      if (!el.hasAttribute('data-gauge-init')) {
-        el.setAttribute('data-gauge-init', '');
-        el.addEventListener('click', () => el.classList.toggle('active'));
-      }
-    });
-  }
-  initGauges();
-  document.addEventListener('astro:after-swap', initGauges);
+  document.querySelectorAll('[data-gauge]').forEach(el => {
+    el.addEventListener('click', () => el.classList.toggle('active'));
+  });
 </script>
