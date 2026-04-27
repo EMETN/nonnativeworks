@@ -635,6 +635,33 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     fetchDescription: true,
   },
 
+  'careers.capgemini.com': {
+    // Capgemini's internal job-stream API. country_code is a comma-separated list of
+    // locale/ISO codes covering all tracked countries. location is a comma-separated
+    // city string (e.g. "Stockholm, Malmö, Göteborg") — lookupCountryFromLocation splits
+    // it and resolves via CITY_MAP. fetchDescription fetches the job detail page for
+    // English-titled jobs so the language classifier gets the full rendered description.
+    url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL&size=200',
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://www.capgemini.com/',
+      'Origin': 'https://www.capgemini.com',
+    },
+    pagination: { type: 'page', param: 'page', startPage: 1, totalCountPath: 'count' },
+    itemsPath: 'data',
+    fields: {
+      title: 'title',
+      location: 'location',
+      url: 'apply_job_url',
+      id: 'id',
+    },
+    companyName: 'Capgemini',
+    fetchDescription: true,
+  },
+
   'jobs.booking.com': {
     url: 'https://jobs.booking.com/api/jobs?limit=100',
     method: 'GET',
@@ -676,6 +703,8 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
   'careers.abb': 'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa',
   // maersk.com is Maersk's branded career site; jobs live on Workday.
   'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
+  // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
+  'capgemini.com': 'https://careers.capgemini.com/',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────

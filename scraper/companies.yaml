@@ -49,6 +49,10 @@ companies:
       url: https://jobs.booking.com
       min_positions: 10
 
+    - name: Capgemini
+      url: https://careers.capgemini.com
+      min_positions: 10
+
     - name: Dept
       url: https://www.deptagency.com/careers/roles/
       min_positions: 5
