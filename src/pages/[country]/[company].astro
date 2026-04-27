@@ -78,13 +78,6 @@ const positions = await getPositionsByCompany(
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
-                {
-                    company.is_english_company && (
-                        <span class="text-sm sm:text-base bg-[#C2E0D1] text-[#0B5E3C] px-2 py-1 rounded font-semibold align-middle ml-2">
-                            EN
-                        </span>
-                    )
-                }
             </h1>
             {company.total_positions > 0 && (
                 <CompanyGauge
