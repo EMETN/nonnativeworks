@@ -20,7 +20,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
                 </span>
                 {pos.local_language_advantage && (
                     <div class="leading-none" style={numFont}>
-                        <span class="text-xs sm:text-sm text-amber-600 font-medium">
+                        <span class="text-xs sm:text-sm text-amber-700 font-medium">
                             Local language advantage
                         </span>
                     </div>
