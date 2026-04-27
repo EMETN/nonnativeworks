@@ -362,7 +362,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 <SizingRow items={items} compact={compact} />
 
                 {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
-                <li class="border-b border-gray-200 dg-subgrid" style={{ alignItems: 'center' }}>
+                <li class="border-b border-gray-200 dg-subgrid hover-fade-header" style={{ alignItems: 'center' }}>
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
