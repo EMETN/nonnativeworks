@@ -134,11 +134,15 @@ const positions = await getPositionsByCompany(
         }
     </div>
     <script is:inline>
-        const fromCompany = sessionStorage.getItem('nav-from-company');
-        if (fromCompany) {
-            document.getElementById('breadcrumb-country').classList.add('hidden');
-            document.getElementById('breadcrumb-company').classList.remove('hidden');
-            sessionStorage.removeItem('nav-from-company');
+        function updateBreadcrumb() {
+            const fromCompany = sessionStorage.getItem('nav-from-company');
+            if (fromCompany) {
+                document.getElementById('breadcrumb-country').classList.add('hidden');
+                document.getElementById('breadcrumb-company').classList.remove('hidden');
+                sessionStorage.removeItem('nav-from-company');
+            }
         }
+        updateBreadcrumb();
+        document.addEventListener('astro:page-load', updateBreadcrumb);
     </script>
 </BaseLayout>
