@@ -6,7 +6,6 @@ export interface DataGridItem {
     name: string;
     href: string;
     flag?: string;
-    englishBadge?: boolean;
     english_positions: number;
     total_positions: number;
     english_percentage: number;
@@ -216,11 +215,6 @@ function GridRow({
                         >
                             {item.name}
                         </span>
-                        {item.englishBadge && (
-                            <span class="text-[0.4rem] sm:text-xs bg-[#C2E0D1] text-[#0B5E3C] px-0.5 sm:px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                EN
-                            </span>
-                        )}
                     </div>
                 </div>
 
