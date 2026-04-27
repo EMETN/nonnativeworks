@@ -3,7 +3,7 @@ import { dirname } from 'path';
 import { createHash } from 'crypto';
 import type { SignalEntry } from './classifiers/language';
 
-export const CLASSIFIER_VERSION = 1;
+export const CLASSIFIER_VERSION = 3;
 
 const TTL_DAYS = 14;
 
@@ -92,10 +92,13 @@ export function set(
   _dirty = true;
 }
 
-/** Returns the set of job URLs that have at least one valid cached outcome. */
+/** Returns the set of job URLs that have at least one valid (non-expired, current-version) cached outcome. */
 export function cachedUrls(): Set<string> {
   const urls = new Set<string>();
-  for (const key of Object.keys(_store)) {
+  const now = Date.now();
+  for (const [key, entry] of Object.entries(_store)) {
+    if (entry.classifierVersion !== CLASSIFIER_VERSION) continue;
+    if (now - new Date(entry.cachedAt).getTime() > TTL_DAYS * 86_400_000) continue;
     const pipe = key.indexOf('|');
     if (pipe > 0) urls.add(key.slice(0, pipe));
   }
