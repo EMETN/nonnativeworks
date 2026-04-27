@@ -65,14 +65,14 @@ const englishPositions = stats?.english_positions ?? 0;
 
         {
             loadError ? (
-                <div class="text-center py-8 text-gray-400">
+                <div class="text-center py-8 text-gray-500">
                     <p class="text-lg mb-2">
                         Something went wrong loading the data.
                     </p>
                     <p class="text-sm">Please try again later.</p>
                 </div>
             ) : companies.length === 0 ? (
-                <div class="text-center py-16 text-gray-400">
+                <div class="text-center py-16 text-gray-500">
                     <p>No companies tracked yet. Check back soon!</p>
                     <a href="/countries" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse countries instead</a>
                 </div>
