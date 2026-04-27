@@ -105,6 +105,10 @@ companies:
       url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
       min_positions: 5
 
+    - name: Orkla
+      url: https://careers.orkla.com
+      min_positions: 1
+
     - name: Oura
       url: https://boards.greenhouse.io/oura
       min_positions: 5

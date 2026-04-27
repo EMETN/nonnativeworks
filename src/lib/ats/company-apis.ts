@@ -350,6 +350,39 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     secondaryUrlTemplate: 'https://op-careers.fi/job/{response.urlTitle}/{response.id}-en_GB',
   },
 
+  'careers.orkla.com': {
+    url: 'https://careers.orkla.com/services/recruiting/v1/jobs',
+    method: 'POST',
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Content-Type': 'application/json',
+      'Origin': 'https://careers.orkla.com',
+    },
+    body: {
+      locale: 'en_GB',
+      sortBy: '',
+      keywords: '',
+      location: '',
+      facetFilters: { mfield2: ['Sweden', 'Denmark', 'Norway', 'Finland', 'Latvia', 'Netherlands'] },
+      brand: '',
+      skills: [],
+      categoryId: 9516901,
+      alertId: '',
+      rcmCandidateId: '',
+    },
+    pagination: { type: 'page', param: 'pageNumber', startPage: 0, totalCountPath: 'totalJobs' },
+    itemsPath: 'jobSearchResult',
+    fields: {
+      title: 'response.unifiedStandardTitle',
+      location: 'response.jobLocationShort',
+      id: 'response.id',
+    },
+    // URL: https://careers.orkla.com/{brandUrl}/job/{urlTitle}/{id}-en_GB
+    urlTemplate: 'https://careers.orkla.com/{response.brandUrl}/job/{response.urlTitle}/{response.id}-en_GB',
+    companyName: 'Orkla',
+    fetchDescription: true,
+  },
+
   'jobs.nokia.com': {
     // Oracle HCM Recruiting Cloud endpoint (Nokia's career site is jobs.nokia.com)
     // The outer `items` array is a facet wrapper — actual jobs live in items[0].requisitionList.

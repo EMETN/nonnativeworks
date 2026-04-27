@@ -158,6 +158,17 @@ for domain in \
     "jobs.booking.com" \
     "akqa.com" \
     "deptagency.com" \
+    "cg-jobstream-api.azurewebsites.net" \
+    "capgemini.com" \
+    "careers.publicisgroupe.com" \
+    "careers.stellantis.com" \
+    "careers.telekom.com" \
+    "jobs.ikea.com" \
+    "www.randstad.com" \
+    "randstad.com" \
+    "revolut.com" \
+    "careers.wartsila.com" \
+    "edenred.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

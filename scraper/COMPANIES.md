@@ -22,8 +22,9 @@
 - Neste
 - Nokia
 - Nordea
-- Orion
 - OP Financial Group
+- Orion
+- Orkla
 - Oura
 - Posti
 - Proton
@@ -73,6 +74,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Telia | `teliacompany.com` | Custom JSON API (`/api/job`) |
 | Accenture | `accenture.com` | Custom API |
 | Booking.com | `jobs.booking.com` | Custom API |
+| Orkla | `careers.orkla.com` | Custom API (POST) | 
 
 ---
 
