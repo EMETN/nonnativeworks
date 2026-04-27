@@ -104,7 +104,7 @@ function SizingRow({
                             {formatNumber(widest.english_positions)}
                         </span>
                         <span
-                            class={`${ss} font-light text-gray-300`}
+                            class={`${ss} font-light text-gray-400`}
                             style={numFont}
                         >
                             /
@@ -120,7 +120,7 @@ function SizingRow({
                         {formatNumber(widest.english_positions)}
                     </span>
                     <span
-                        class={`${ss} font-light text-gray-300`}
+                        class={`${ss} font-light text-gray-400`}
                         style={numFont}
                     >
                         /
@@ -232,21 +232,24 @@ function GridRow({
                         </div>
                         <div
                             class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
+                            title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                            aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                         >
                             <span
-                                class={`${textSize} font-semibold text-[#0F7A4F] leading-none tabular-nums`}
+                                class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.english_positions)}
                             </span>
                             <span
-                                class={`${slashSize} font-light text-gray-300 leading-none`}
+                                class={`${slashSize} font-light text-gray-500 leading-none`}
                                 style={numFont}
+                                aria-hidden="true"
                             >
                                 /
                             </span>
                             <span
-                                class={`${totalSize} font-semibold text-gray-300 leading-none tabular-nums`}
+                                class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.total_positions)}
@@ -256,21 +259,24 @@ function GridRow({
                 ) : (
                     <div
                         class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
+                        title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                        aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                     >
                         <span
-                            class={`${textSize} font-semibold text-[#0F7A4F] leading-none tabular-nums`}
+                            class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.english_positions)}
                         </span>
                         <span
-                            class={`${slashSize} font-light text-gray-300 leading-none`}
+                            class={`${slashSize} font-light text-gray-500 leading-none`}
                             style={numFont}
+                            aria-hidden="true"
                         >
                             /
                         </span>
                         <span
-                            class={`${totalSize} font-semibold text-gray-300 leading-none tabular-nums`}
+                            class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.total_positions)}
