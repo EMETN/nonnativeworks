@@ -508,13 +508,21 @@ export async function fetchWorkdayJobs(
             // resolve to "FI" and are merged, rather than being treated as separate
             // groups by the last-comma-segment heuristic.
             const byCountry = new Map<string, string[]>();
+            const anyResolved = locations.some((l) => lookupCountryFromLocation(l).length > 0);
             for (const loc of locations) {
               const resolved = lookupCountryFromLocation(loc);
-              const groupKey = resolved.length > 0
-                ? resolved[0].code
-                : (loc.split(",").map((p) => p.trim()).pop() ?? loc);
-              if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
-              byCountry.get(groupKey)!.push(loc);
+              if (resolved.length === 0) {
+                // Skip region strings like "Nordic" when other locations in the
+                // same posting resolve to a specific country.
+                if (anyResolved) continue;
+                const groupKey = loc.split(",").map((p) => p.trim()).pop() ?? loc;
+                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
+                byCountry.get(groupKey)!.push(loc);
+              } else {
+                const groupKey = resolved[0].code;
+                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
+                byCountry.get(groupKey)!.push(loc);
+              }
             }
             for (const [countryKey, locs] of byCountry) {
               const citySet = new Set<string>();
