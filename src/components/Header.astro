@@ -103,36 +103,58 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
 </header>
 
 <script>
-    const btn = document.getElementById('mobile-menu-btn')!;
-    const menu = document.getElementById('mobile-menu')!;
-    const hamburger = document.getElementById('hamburger-icon')!;
-    const close = document.getElementById('close-icon')!;
+    function initMobileMenu() {
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        const hamburger = document.getElementById('hamburger-icon');
+        const close = document.getElementById('close-icon');
+        if (!btn || !menu || !hamburger || !close) return;
 
-    function toggle(open: boolean) {
-        menu.classList.toggle('is-open', open);
-        menu.setAttribute('aria-hidden', String(!open));
-        btn.setAttribute('aria-expanded', String(open));
-        hamburger.classList.toggle('hidden', open);
-        close.classList.toggle('hidden', !open);
+        function toggle(open: boolean) {
+            menu!.classList.toggle('is-open', open);
+            menu!.setAttribute('aria-hidden', String(!open));
+            btn!.setAttribute('aria-expanded', String(open));
+            hamburger!.classList.toggle('hidden', open);
+            close!.classList.toggle('hidden', !open);
+        }
+
+        btn.addEventListener('click', () => {
+            toggle(!menu.classList.contains('is-open'));
+        });
     }
 
-    btn.addEventListener('click', () => {
-        toggle(!menu.classList.contains('is-open'));
-    });
+    initMobileMenu();
+    document.addEventListener('astro:after-swap', initMobileMenu);
 
     document.addEventListener('click', (e) => {
+        const menu = document.getElementById('mobile-menu');
+        const btn = document.getElementById('mobile-menu-btn');
         if (
+            menu && btn &&
             menu.classList.contains('is-open') &&
             !menu.contains(e.target as Node) &&
             !btn.contains(e.target as Node)
         ) {
-            toggle(false);
+            menu.classList.remove('is-open');
+            menu.setAttribute('aria-hidden', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+            document.getElementById('hamburger-icon')?.classList.remove('hidden');
+            document.getElementById('close-icon')?.classList.add('hidden');
         }
     });
 
     window.addEventListener(
         'scroll',
-        () => { if (menu.classList.contains('is-open')) toggle(false); },
+        () => {
+            const menu = document.getElementById('mobile-menu');
+            if (menu?.classList.contains('is-open')) {
+                menu.classList.remove('is-open');
+                menu.setAttribute('aria-hidden', 'true');
+                document.getElementById('mobile-menu-btn')?.setAttribute('aria-expanded', 'false');
+                document.getElementById('hamburger-icon')?.classList.remove('hidden');
+                document.getElementById('close-icon')?.classList.add('hidden');
+            }
+        },
         { passive: true },
     );
 </script>

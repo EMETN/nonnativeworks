@@ -111,9 +111,12 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
                         });
                     };
                     document.head.appendChild(s);
-                    document.addEventListener('astro:page-load', function() {
-                        if (window.posthog) window.posthog.capture('$pageview');
-                    });
+                    if (!window.__phNavInit) {
+                        window.__phNavInit = true;
+                        document.addEventListener('astro:page-load', function() {
+                            if (window.posthog) window.posthog.capture('$pageview');
+                        });
+                    }
                 })();
             </script>
         )}
