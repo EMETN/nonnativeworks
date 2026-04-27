@@ -546,6 +546,15 @@ const REQUIREMENT_NEGATION_NONE_RE =
 const REQUIREMENT_ADVANTAGE_PREFIX_RE =
   /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
 
+// Advantage modifiers that appear DIRECTLY after a requirement signal (no gap words).
+// Anchored with ^ so we only match when the modifier is the immediate continuation of
+// the signal — prevents "Fluent Finnish required. Swedish is preferred." from falsely
+// downgrading the Finnish requirement (the 80-char window check would catch it otherwise).
+// Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
+// the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
+const DIRECT_ADVANTAGE_SUFFIX_RE =
+  /^\s+(?:is\s+(?:preferred|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b)\b/;
+
 type NegationKind = 'advantage' | 'none' | false;
 
 /**
@@ -561,6 +570,12 @@ function requirementNegatedByContext(combined: string, signal: string): Negation
   const after = combined.slice(idx + signal.length, idx + signal.length + 80);
   if (REQUIREMENT_NEGATION_NONE_RE.test(after)) return 'none';
   if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(after)) return 'advantage';
+  // Check for an advantage modifier that DIRECTLY follows the signal (anchored, no gap
+  // words). Uses a tighter window than the 80-char checks above to avoid false negatives
+  // where the modifier belongs to a later clause about a different language.
+  // e.g. "proficiency in Norwegian is preferred" → 'advantage'
+  // but NOT "Fluent Finnish required. Swedish is preferred." → no match here (falls through)
+  if (DIRECT_ADVANTAGE_SUFFIX_RE.test(after)) return 'advantage';
   // Also check for advantage context in the ~80 characters *before* the signal,
   // e.g. "bonus points if you speak German" where "speak german" is the signal.
   const before = combined.slice(Math.max(0, idx - 80), idx);
