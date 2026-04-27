@@ -13,7 +13,7 @@ interface Props {
 const { items, id, class: className } = Astro.props;
 ---
 
-<nav id={id} class:list={["text-sm text-gray-400 mb-2 md:mb-4", className]} aria-label="Breadcrumb">
+<nav id={id} class:list={["text-sm text-gray-500 mb-2 md:mb-4", className]} aria-label="Breadcrumb">
     <ol class="flex items-center breadcrumb-list" style="list-style:none;padding:0;margin:0">
         {items.map((item, i) => {
             const isLast = i === items.length - 1;

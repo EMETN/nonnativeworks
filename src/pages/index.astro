@@ -105,12 +105,12 @@ const companyItems = topCompanies.map((c) => ({
   <!-- Top lists -->
   <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     {loadError ? (
-      <div class="text-center py-8 text-gray-400">
+      <div class="text-center py-8 text-gray-500">
         <p class="text-lg mb-2">Something went wrong loading the data.</p>
         <p class="text-sm">Please try again later.</p>
       </div>
     ) : countries.length === 0 ? (
-      <div class="text-center py-8 text-gray-400">
+      <div class="text-center py-8 text-gray-500">
         <p class="text-lg mb-2">No positions tracked yet.</p>
         <p class="text-sm">Check back soon — we're adding new countries and companies regularly.</p>
         <a href="/companies" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse companies</a>

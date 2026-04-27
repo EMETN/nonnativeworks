@@ -27,7 +27,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
                 )}
                 {(pos.work_model || (pos.city && pos.city.length > 0)) && (
                     <div
-                        class="text-xs sm:text-sm text-gray-400 mt-1.5"
+                        class="text-xs sm:text-sm text-gray-500 mt-1.5"
                         style={numFont}
                     >
                         {pos.work_model && (
@@ -47,7 +47,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
             </div>
             <div class="flex items-center gap-2 sm:gap-4 shrink-0">
                 <span
-                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-400 max-w-24 sm:max-w-none text-right line-clamp-2"
+                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-500 max-w-24 sm:max-w-none text-right line-clamp-2"
                     style={numFont}
                 >
                     {pos.category_name}
@@ -173,7 +173,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             {/* Position list */}
             <ul class="hover-fade-list">
                 {filtered.length === 0 ? (
-                    <li class="py-12 text-center text-gray-400">
+                    <li class="py-12 text-center text-gray-500">
                         {searchQuery ? (
                             <>
                                 <p
@@ -182,7 +182,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                                 >
                                     No positions found matching "{search}"
                                 </p>
-                                <p class="text-sm text-gray-400">
+                                <p class="text-sm text-gray-500">
                                     Try a different search term.
                                 </p>
                             </>
@@ -203,7 +203,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             {/* Footer */}
             <div class="mt-4 flex items-center justify-between">
                 <span
-                    class="text-[0.6rem] sm:text-xs text-gray-400 font-semibold tracking-wider uppercase"
+                    class="text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
                     style={numFont}
                 >
                     {filtered.length} of {nonNativePositions.length} positions

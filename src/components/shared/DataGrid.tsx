@@ -288,7 +288,7 @@ function GridRow({
                     class={`flex items-center justify-end ${rowPy} pl-1 sm:pl-3 md:pl-6 xl:pl-10`}
                 >
                     <svg
-                        class={`${arrowSize} text-gray-300`}
+                        class={`${arrowSize} text-gray-400`}
                         width="12"
                         height="12"
                         fill="none"
@@ -340,7 +340,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
     const labelBase =
         'text-[0.6rem] sm:text-[0.7rem] md:text-xs font-semibold tracking-wider uppercase whitespace-nowrap cursor-pointer transition-colors select-none inline-flex items-center';
     const labelActive = `${labelBase} text-gray-900`;
-    const labelInactive = `${labelBase} text-gray-400 hover:text-gray-500`;
+    const labelInactive = `${labelBase} text-gray-500 hover:text-gray-700`;
 
     const entityLabel = entityName ?? (compact ? 'country' : 'company');
     const hasResults = filtered.value.length > 0;
@@ -507,11 +507,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
 
             {/* Empty state — outside grid, never affects columns */}
             {!hasResults && (
-                <div class="py-20 text-center text-gray-400">
+                <div class="py-20 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                         No {entityLabel} found matching "{search.value}"
                     </p>
-                    <p class="text-sm text-gray-400">
+                    <p class="text-sm text-gray-500">
                         {compact
                             ? "This country hasn't been added yet — we're expanding regularly."
                             : "This company isn't tracked here yet. Check back soon."}
