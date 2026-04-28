@@ -94,7 +94,7 @@ const englishPositions = stats?.english_positions ?? 0;
                         {englishPositions === 1 ? "doesn't" : "don't"} require
                         the local language(s).
                     </StatsDescription>
-                    <AllCompaniesGrid companies={companies} client:visible />
+                    <AllCompaniesGrid companies={companies} client:idle />
                 </>
             )
         }
