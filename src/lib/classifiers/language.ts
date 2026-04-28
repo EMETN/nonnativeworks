@@ -191,6 +191,14 @@ const NORDIC_LANGUAGE_REQUIREMENT_PHRASES = [
   'fluency in english and a scandinavian language',
   'in english and in one nordic language',
   'in english and in one scandinavian language',
+  'a nordic language is mandatory',
+  'a nordic language is required',
+  'a scandinavian language is mandatory',
+  'a scandinavian language is required',
+  'at least one nordic language is required',
+  'at least one scandinavian language is required',
+  'at least one nordic language is mandatory',
+  'at least one scandinavian language is mandatory',
 ];
 
 const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
@@ -384,6 +392,7 @@ function buildAdvantageSignals(lang: string): string[] {
     ' is beneficial',
     ' would be beneficial',
     ' is considered an additional qualification',
+    ' is highly valuable',
   ];
 
   const signals: string[] = [];
