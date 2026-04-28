@@ -98,7 +98,8 @@ const offset = circumference * (1 - pct / 100);
 </style>
 
 <script>
-  document.querySelectorAll('[data-gauge]').forEach(el => {
-    el.addEventListener('click', () => el.classList.toggle('active'));
+  document.addEventListener('click', (e) => {
+    const gauge = (e.target as HTMLElement).closest('[data-gauge]');
+    if (gauge) gauge.classList.toggle('active');
   });
 </script>
