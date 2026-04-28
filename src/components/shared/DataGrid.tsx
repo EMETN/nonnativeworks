@@ -167,6 +167,8 @@ function GridRow({
                                 <img
                                     src={item.flag}
                                     alt=""
+                                    loading="lazy"
+                                    decoding="async"
                                     class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
                                 />
                             </span>
