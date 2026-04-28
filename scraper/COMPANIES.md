@@ -9,6 +9,7 @@
 - Barona (local script)
 - Bolt
 - Booking.com
+- Capgemini
 - CGI (local script)
 - Dept
 - Ericsson
@@ -30,11 +31,13 @@
 - Proton
 - Reaktor
 - Rovio
+- SAP
 - Smartly
 - SOK
 - Stora Enso
 - Telia
 - Tieto
+- Vaisala
 - Wolt
 - Zalando
 - Yousician
@@ -74,7 +77,8 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Telia | `teliacompany.com` | Custom JSON API (`/api/job`) |
 | Accenture | `accenture.com` | Custom API |
 | Booking.com | `jobs.booking.com` | Custom API |
-| Orkla | `careers.orkla.com` | Custom API (POST) | 
+| Orkla | `careers.orkla.com` | Custom API (POST) |
+| Capgemini | `capgemini.com/careers` | Custom API |
 
 ---
 
@@ -101,6 +105,8 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 |---------|----------|------|-------|
 | Metso | `metso.com/corporate/careers/open-jobs` | `attribute_json` | `<careers-list-page open-positions='[…]'>`; fan-out per country via `countries[]` array |
 | Neste | `jobs.neste.com` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Vaisala | `careers.vaisala.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| SAP | `jobs.sap.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 
 #### Platform-specific scrapers (`scraper/platforms/`)

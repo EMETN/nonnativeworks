@@ -717,4 +717,5 @@ export const PYTHON_SCRAPER_COMPANY_NAMES: Array<{ urlSubstring: string; name: s
   { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
   { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
   { urlSubstring: 'jobs.arla.com', name: 'Arla' },
+  { urlSubstring: 'jobs.sap.com', name: 'SAP' },
 ];
