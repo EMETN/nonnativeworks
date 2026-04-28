@@ -61,7 +61,7 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
         {breadcrumbs && breadcrumbs.length > 0 && (
-            <script type="application/ld+json" set:html={JSON.stringify({
+            <script is:inline type="application/ld+json" set:html={JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
                 "itemListElement": breadcrumbs.map((item, i) => ({

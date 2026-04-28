@@ -69,5 +69,4 @@ export function nameToSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-/** @deprecated Use nameToSlug instead */
-export const countryNameToSlug = nameToSlug;
+

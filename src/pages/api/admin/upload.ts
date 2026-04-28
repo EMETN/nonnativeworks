@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 import { UploadSchema, normaliseUpload } from '../../../lib/validation';
 import type { CompanyEntry } from '../../../lib/validation';
-import { getFlagColors, countryNameToSlug } from '../../../lib/country-flags';
+import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
 
 const MAX_BODY_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -83,7 +83,7 @@ async function ensureCountry(
   entry: CompanyEntry,
   sortOrder: number,
 ): Promise<string> {
-  const slug = countryNameToSlug(entry.country_name);
+  const slug = nameToSlug(entry.country_name);
   const { data, error } = await supabase
     .from('countries')
     .insert({
