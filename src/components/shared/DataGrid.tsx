@@ -6,7 +6,6 @@ export interface DataGridItem {
     name: string;
     href: string;
     flag?: string;
-    englishBadge?: boolean;
     english_positions: number;
     total_positions: number;
     english_percentage: number;
@@ -18,6 +17,7 @@ interface Props {
     items: DataGridItem[];
     compact?: boolean;
     compactLabel?: string;
+    entityName?: string;
 }
 
 type SortField = 'positions' | 'total' | 'companies';
@@ -85,7 +85,7 @@ function SizingRow({
     return (
         <li
             aria-hidden="true"
-            class="h-0 overflow-hidden invisible hidden sm:!block dg-subgrid"
+            class="h-0 overflow-hidden invisible dg-subgrid"
         >
             <div class="pr-2 sm:pr-4 md:pr-8 xl:pr-12">
                 <span class={ts} style={numFont}>
@@ -104,7 +104,7 @@ function SizingRow({
                             {formatNumber(widest.english_positions)}
                         </span>
                         <span
-                            class={`${ss} font-light text-gray-300`}
+                            class={`${ss} font-light text-gray-400`}
                             style={numFont}
                         >
                             /
@@ -120,7 +120,7 @@ function SizingRow({
                         {formatNumber(widest.english_positions)}
                     </span>
                     <span
-                        class={`${ss} font-light text-gray-300`}
+                        class={`${ss} font-light text-gray-400`}
                         style={numFont}
                     >
                         /
@@ -140,17 +140,11 @@ function SizingRow({
 function GridRow({
     item,
     isLast,
-    faded,
     compact,
-    onEnter,
-    onLeave,
 }: {
     item: DataGridItem;
     isLast: boolean;
-    faded: boolean;
     compact?: boolean;
-    onEnter: () => void;
-    onLeave: () => void;
 }) {
     const nameRef = useRef<HTMLDivElement>(null);
     const isOverflowing = useSignal(false);
@@ -184,18 +178,12 @@ function GridRow({
 
     return (
         <li
-            class="border-b border-gray-100 dg-subgrid"
-            onMouseEnter={onEnter}
-            onMouseLeave={onLeave}
+            class="border-b border-gray-100 dg-subgrid hover-fade-item"
         >
             <a
                 href={item.href}
                 data-astro-prefetch
                 class="no-underline rounded-lg dg-subgrid"
-                style={{
-                    opacity: faded ? 0.4 : 1,
-                    transition: 'opacity 0.3s',
-                }}
             >
                 <div
                     class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
@@ -227,11 +215,6 @@ function GridRow({
                         >
                             {item.name}
                         </span>
-                        {item.englishBadge && (
-                            <span class="text-[0.4rem] sm:text-xs bg-[#C2E0D1] text-[#0B5E3C] px-0.5 sm:px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                EN
-                            </span>
-                        )}
                     </div>
                 </div>
 
@@ -249,21 +232,24 @@ function GridRow({
                         </div>
                         <div
                             class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
+                            title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                            aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                         >
                             <span
-                                class={`${textSize} font-semibold text-[#0F7A4F] leading-none tabular-nums`}
+                                class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.english_positions)}
                             </span>
                             <span
-                                class={`${slashSize} font-light text-gray-300 leading-none`}
+                                class={`${slashSize} font-light text-gray-500 leading-none`}
                                 style={numFont}
+                                aria-hidden="true"
                             >
                                 /
                             </span>
                             <span
-                                class={`${totalSize} font-semibold text-gray-300 leading-none tabular-nums`}
+                                class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.total_positions)}
@@ -273,21 +259,24 @@ function GridRow({
                 ) : (
                     <div
                         class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
+                        title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                        aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                     >
                         <span
-                            class={`${textSize} font-semibold text-[#0F7A4F] leading-none tabular-nums`}
+                            class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.english_positions)}
                         </span>
                         <span
-                            class={`${slashSize} font-light text-gray-300 leading-none`}
+                            class={`${slashSize} font-light text-gray-500 leading-none`}
                             style={numFont}
+                            aria-hidden="true"
                         >
                             /
                         </span>
                         <span
-                            class={`${totalSize} font-semibold text-gray-300 leading-none tabular-nums`}
+                            class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.total_positions)}
@@ -299,7 +288,7 @@ function GridRow({
                     class={`flex items-center justify-end ${rowPy} pl-1 sm:pl-3 md:pl-6 xl:pl-10`}
                 >
                     <svg
-                        class={`${arrowSize} text-gray-300`}
+                        class={`${arrowSize} text-gray-400`}
                         width="12"
                         height="12"
                         fill="none"
@@ -319,29 +308,10 @@ function GridRow({
     );
 }
 
-export default function DataGrid({ items, compact, compactLabel = 'Companies' }: Props) {
+export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
     const sortField = useSignal<SortField>('positions');
     const sortDir = useSignal<SortDir>('desc');
     const search = useSignal('');
-    const hoveredId = useSignal<string | null>(null);
-    const canHover = useSignal(false);
-
-    useEffect(() => {
-        const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
-        canHover.value = mq.matches;
-        const onChange = (e: MediaQueryListEvent) => {
-            canHover.value = e.matches;
-        };
-        mq.addEventListener('change', onChange);
-        const onPageShow = () => {
-            hoveredId.value = null;
-        };
-        window.addEventListener('pageshow', onPageShow);
-        return () => {
-            mq.removeEventListener('change', onChange);
-            window.removeEventListener('pageshow', onPageShow);
-        };
-    }, []);
 
     function toggleSort(field: SortField) {
         if (sortField.value === field) {
@@ -370,9 +340,9 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
     const labelBase =
         'text-[0.6rem] sm:text-[0.7rem] md:text-xs font-semibold tracking-wider uppercase whitespace-nowrap cursor-pointer transition-colors select-none inline-flex items-center';
     const labelActive = `${labelBase} text-gray-900`;
-    const labelInactive = `${labelBase} text-gray-400 hover:text-gray-500`;
+    const labelInactive = `${labelBase} text-gray-500 hover:text-gray-700`;
 
-    const entityLabel = compact ? 'country' : 'company';
+    const entityLabel = entityName ?? (compact ? 'country' : 'company');
     const hasResults = filtered.value.length > 0;
     const gridCols = compact ? compactGridCols : fullGridCols;
 
@@ -386,13 +356,13 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                 }
             `}</style>
             <ul
-                class="w-full"
+                class="w-full hover-fade-list hover-fade-soft"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
                 <SizingRow items={items} compact={compact} />
 
                 {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
-                <li class="border-b border-gray-200 dg-subgrid" style={{ alignItems: 'center' }}>
+                <li class="border-b border-gray-200 dg-subgrid hover-fade-header" style={{ alignItems: 'center' }}>
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
@@ -412,7 +382,8 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                             </svg>
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
+                                placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
                                 value={search.value}
                                 onInput={(e) => {
                                     search.value = (
@@ -530,28 +501,17 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies' }:
                             item={c}
                             isLast={i === filtered.value.length - 1}
                             compact={compact}
-                            faded={
-                                canHover.value &&
-                                hoveredId.value !== null &&
-                                hoveredId.value !== c.id
-                            }
-                            onEnter={() => {
-                                if (canHover.value) hoveredId.value = c.id;
-                            }}
-                            onLeave={() => {
-                                hoveredId.value = null;
-                            }}
                         />
                     ))}
             </ul>
 
             {/* Empty state — outside grid, never affects columns */}
             {!hasResults && (
-                <div class="py-20 text-center text-gray-400">
+                <div class="py-20 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                         No {entityLabel} found matching "{search.value}"
                     </p>
-                    <p class="text-sm text-gray-300">
+                    <p class="text-sm text-gray-500">
                         {compact
                             ? "This country hasn't been added yet — we're expanding regularly."
                             : "This company isn't tracked here yet. Check back soon."}

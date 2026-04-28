@@ -3,11 +3,17 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+interface BreadcrumbItem {
+    name: string;
+    href?: string;
+}
+
 interface Props {
     title: string;
     description?: string;
     ogImage?: string;
     noindex?: boolean;
+    breadcrumbs?: BreadcrumbItem[];
 }
 
 const {
@@ -15,6 +21,7 @@ const {
     description = 'Find companies where English is enough — browse positions by country.',
     ogImage,
     noindex = false,
+    breadcrumbs,
 } = Astro.props;
 
 const siteTitle =
@@ -52,6 +59,19 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
 
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+        {breadcrumbs && breadcrumbs.length > 0 && (
+            <script type="application/ld+json" set:html={JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": breadcrumbs.map((item, i) => ({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "name": item.name,
+                    ...(item.href ? { "item": new URL(item.href, Astro.url.origin).href } : {}),
+                })),
+            })} />
+        )}
 
         <!-- Self-hosted Inter variable font — preload to avoid swap flicker -->
         <link
@@ -100,7 +120,12 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
             Skip to content
         </a>
 
-        <Header />
+        <script>
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') (document.activeElement as HTMLElement)?.blur();
+            });
+        </script>
+<Header />
         <main id="main-content" class="flex-1 flex flex-col">
             <slot />
         </main>

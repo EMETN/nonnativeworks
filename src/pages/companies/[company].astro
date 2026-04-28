@@ -3,8 +3,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import CompanyCountryGrid from '../../components/company/CompanyCountryGrid.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
+import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import { getGlobalCompanyBySlug } from '../../lib/queries';
-import { nameToSlug } from '../../lib/country-flags';
+import { timeAgo } from '../../lib/time';
 
 const { company: companySlug } = Astro.params;
 const { request, cookies } = Astro;
@@ -27,25 +28,20 @@ const entries = company.entries.map((e) => ({
 <BaseLayout
     title={`${company.name}`}
     description={`${company.name} has ${company.total_positions} open positions across ${company.entries.length} ${company.entries.length === 1 ? 'country' : 'countries'} — ${company.english_positions} don't require the local language(s).`}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Companies', href: '/companies' },
+        { name: company.name },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <nav class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
-            <a
-                href="/"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Home</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href="/companies"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Companies</a
-            >
-            <span class="mx-1.5">›</span>
-            <span class="text-gray-900 font-medium">{company.name}</span>
-        </nav>
+        <Breadcrumb items={[
+            { label: 'Home', href: '/' },
+            { label: 'Companies', href: '/companies' },
+            { label: company.name },
+        ]} />
 
         <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
@@ -53,13 +49,6 @@ const entries = company.entries.map((e) => ({
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
-                {
-                    company.is_english_company && (
-                        <span class="text-sm sm:text-base bg-[#C2E0D1] text-[#0B5E3C] px-2 py-1 rounded font-semibold align-middle ml-2">
-                            EN
-                        </span>
-                    )
-                }
             </h1>
             {company.total_positions > 0 && (
                 <CompanyGauge
@@ -93,9 +82,9 @@ const entries = company.entries.map((e) => ({
         }
         {
             company.total_positions === 0 ? (
-                <div class="text-center py-16 text-gray-400">
-                    No positions tracked yet for <strong>{company.name}</strong>.
-                    Check back soon!
+                <div class="text-center py-16 text-gray-500">
+                    <p>No positions tracked yet for <strong>{company.name}</strong>. Check back soon!</p>
+                    <a href="/companies" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse all companies</a>
                 </div>
             ) : (
                 <>
@@ -104,16 +93,8 @@ const entries = company.entries.map((e) => ({
                         companySlug={companySlug!}
                         client:visible
                     />
-                    <p class="text-xs sm:text-sm text-gray-400 mt-4">
-                        Updated{' '}
-                        {new Date(company.updated_at).toLocaleDateString(
-                            'en-GB',
-                            {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            },
-                        )}
+                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                        Updated {timeAgo(company.updated_at)}
                     </p>
                 </>
             )
