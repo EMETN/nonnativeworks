@@ -92,48 +92,19 @@ export interface TopCompany {
 export async function getTopCompanies(request: Request, cookies: AstroCookies, limit = 5): Promise<TopCompany[]> {
   const supabase = client(request, cookies);
   const { data, error } = await supabase
-    .from('company_stats')
-    .select('*');
+    .rpc('top_companies_by_english', { lim: limit });
 
   if (error) { console.error('getTopCompanies:', error.message); throw new Error('Failed to load top companies'); }
 
-  const rows = (data ?? []) as CompanyStats[];
-  const grouped = new Map<string, { total: number; english: number; entries: { country_id: string; english: number; name: string }[] }>();
-  for (const row of rows) {
-    const key = row.name;
-    const entry = grouped.get(key) ?? { total: 0, english: 0, entries: [] };
-    entry.total += row.total_positions;
-    entry.english += row.english_positions;
-    entry.entries.push({ country_id: row.country_id, english: row.english_positions, name: row.name });
-    grouped.set(key, entry);
-  }
-
-  const all = [...grouped.entries()]
-    .map(([name, g]) => ({ name, ...g }))
-    .sort((a, b) => b.english - a.english);
-  const sorted = limit > 0 ? all.slice(0, limit) : all;
-
-  const countryIds = [...new Set(sorted.flatMap((s) => s.entries.map((e) => e.country_id)))];
-  const { data: countryData } = await supabase
-    .from('countries')
-    .select('id, name, slug')
-    .in('id', countryIds);
-
-  const countryMap = new Map((countryData ?? []).map((c: any) => [c.id, { name: c.name, slug: c.slug }]));
-
-  return sorted.map((s) => {
-    const best = s.entries.sort((a, b) => b.english - a.english)[0];
-    const country = countryMap.get(best.country_id);
-    return {
-      name: s.name,
-      total_positions: s.total,
-      english_positions: s.english,
-      english_percentage: s.total > 0 ? Math.round((s.english / s.total) * 100) : 0,
-      country_count: s.entries.length,
-      primary_country_slug: country?.slug ?? '',
-      primary_company_slug: nameToSlug(best.name),
-    };
-  });
+  return ((data ?? []) as TopCompany[]).map((r) => ({
+    name: r.name,
+    total_positions: Number(r.total_positions),
+    english_positions: Number(r.english_positions),
+    english_percentage: Number(r.english_percentage),
+    country_count: Number(r.country_count),
+    primary_country_slug: r.primary_country_slug,
+    primary_company_slug: r.primary_company_slug,
+  }));
 }
 
 export async function getCountryBySlug(
