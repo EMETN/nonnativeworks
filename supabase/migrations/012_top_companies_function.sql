@@ -32,7 +32,7 @@ RETURNS TABLE (
     FROM per_company_country pcc
     GROUP BY pcc.name
     ORDER BY english_positions DESC
-    LIMIT lim
+    LIMIT CASE WHEN lim > 0 THEN lim ELSE NULL END
   ),
   best_country AS (
     SELECT DISTINCT ON (pcc.name)
