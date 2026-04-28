@@ -1,10 +1,4 @@
-import { useSignal, useComputed, type Signal } from '@preact/signals';
-import { useRef, useEffect } from 'preact/hooks';
-
-interface OverflowState {
-    observer: ResizeObserver;
-    signals: Map<Element, Signal<boolean>>;
-}
+import { useSignal, useComputed } from '@preact/signals';
 
 export interface DataGridItem {
     id: string;
@@ -146,28 +140,11 @@ function GridRow({
     item,
     isLast,
     compact,
-    overflowRef,
 }: {
     item: DataGridItem;
     isLast: boolean;
     compact?: boolean;
-    overflowRef: { current: OverflowState | null };
 }) {
-    const nameRef = useRef<HTMLDivElement>(null);
-    const isOverflowing = useSignal(false);
-
-    useEffect(() => {
-        const el = nameRef.current;
-        const state = overflowRef.current;
-        if (!el || !state) return;
-        state.signals.set(el, isOverflowing);
-        state.observer.observe(el);
-        isOverflowing.value = el.scrollWidth > el.clientWidth;
-        return () => {
-            state.signals.delete(el);
-            state.observer.unobserve(el);
-        };
-    }, []);
     const textSize = 'text-xl md:text-lg lg:text-2xl';
     const slashSize = 'text-sm md:text-xs lg:text-base';
     const totalSize = 'text-sm md:text-xs lg:text-base';
@@ -186,10 +163,7 @@ function GridRow({
                 <div
                     class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
                 >
-                    <div
-                        ref={nameRef}
-                        class={`flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0${isOverflowing.value ? ' name-fade' : ''}`}
-                    >
+                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0">
                         {item.flag && (
                             <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] md:w-[1.6875rem] lg:w-[2.25rem]">
                                 <img
@@ -200,7 +174,7 @@ function GridRow({
                             </span>
                         )}
                         <span
-                            class={`${textSize} font-semibold text-gray-900 leading-tight tracking-tight truncate sm:overflow-visible sm:text-clip`}
+                            class={`${textSize} font-semibold text-gray-900 leading-tight tracking-tight truncate`}
                             style={numFont}
                         >
                             {item.name}
@@ -303,21 +277,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
     const sortDir = useSignal<SortDir>('desc');
     const search = useSignal('');
 
-    const overflowRef = useRef<OverflowState | null>(null);
-    if (!overflowRef.current && typeof ResizeObserver !== 'undefined') {
-        const signals = new Map<Element, Signal<boolean>>();
-        overflowRef.current = {
-            observer: new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const sig = signals.get(entry.target);
-                    if (sig) sig.value = entry.target.scrollWidth > entry.target.clientWidth;
-                }
-            }),
-            signals,
-        };
-    }
-    useEffect(() => () => overflowRef.current?.observer.disconnect(), []);
-
     function toggleSort(field: SortField) {
         if (sortField.value === field) {
             sortDir.value = sortDir.value === 'desc' ? 'asc' : 'desc';
@@ -358,12 +317,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                     display: grid;
                     grid-template-columns: subgrid;
                     grid-column: 1 / -1;
-                }
-                @media (min-width: 640px) {
-                    .name-fade {
-                        mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
-                        -webkit-mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
-                    }
                 }
             `}</style>
             <ul
@@ -512,7 +465,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                             item={c}
                             isLast={i === filtered.value.length - 1}
                             compact={compact}
-                            overflowRef={overflowRef}
                         />
                     ))}
             </ul>
