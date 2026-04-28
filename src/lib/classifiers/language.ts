@@ -169,6 +169,7 @@ const KEYWORD_TO_CANONICAL_NAME: Record<string, string> = {
   'bosnian': 'Bosnian', 'macedonian': 'Macedonian', 'montenegrin': 'Montenegrin',
   'albanian': 'Albanian', 'shqip': 'Albanian',
   'belarusian': 'Belarusian',
+  'arabic': 'Arabic',
 };
 
 // Nordic/Scandinavian countries — used to gate group-language advantage phrases.
@@ -374,7 +375,7 @@ const LANG_MENTIONS = (lang: string) => [
  */
 function buildAdvantageRegex(lang: string): RegExp {
   const [bare, ...compound] = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)|advantageous)\\b`;
+  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)|advantageous|preferred)\\b`;
   const parts = [
     `${bare}${operatorSuffix}`,
     ...(compound.length > 0 ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,6}${operatorSuffix}`] : []),
@@ -393,6 +394,12 @@ function buildAdvantageSignals(lang: string): string[] {
     ' would be beneficial',
     ' is considered an additional qualification',
     ' is highly valuable',
+    ' is preferable',
+    ' are preferable',
+    ' is of added value',
+    ' are of added value',
+    ' is of great added value',
+    ' are of great added value',
   ];
 
   const signals: string[] = [];
@@ -408,6 +415,8 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`preferably also ${lang}`);
   signals.push(`preferably also in ${lang}`);
   signals.push(`${lang} preferred`);
+  signals.push(`${lang} a plus`);
+  signals.push(`${lang} a bonus`);
   return signals;
 }
 
@@ -450,9 +459,16 @@ function buildRequirementSignals(lang: string): string[] {
     `strong ${lang}`,
     `communicative ${lang}`,
     `${lang} communicative`,
+    // CEFR level suffixes (parens are stripped: "German (C1 level)" → "german c1 level")
+    `${lang} a1`, `${lang} a2`, `${lang} b1`, `${lang} b2`, `${lang} c1`, `${lang} c2`,
+    // Level descriptors
+    `elementary ${lang}`,
+    `good ${lang}`,
+    `good in ${lang}`,
     // Native / mother tongue
     `native level of ${lang}`,
     `native ${lang}`,
+    `native in ${lang}`,
     `${lang} native`,
     `mother tongue ${lang}`,
     `${lang} as mother tongue`,
@@ -520,6 +536,8 @@ function buildRequirementSignals(lang: string): string[] {
     // Comma-separated language lists: "English, {lang} and {other}", "{lang}, English"
     `english, ${lang}`,
     `${lang}, english`,
+    // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
+    `local language ${lang}`,
   ];
 }
 
@@ -562,7 +580,7 @@ const REQUIREMENT_ADVANTAGE_PREFIX_RE =
 // Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
 // the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
 const DIRECT_ADVANTAGE_SUFFIX_RE =
-  /^\s+(?:is\s+(?:preferred|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b)\b/;
+  /^\s+(?:is\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
 
 type NegationKind = 'advantage' | 'none' | false;
 
@@ -751,6 +769,7 @@ export function detectNativeLanguage(
   const combined = `${title} ${descText}`.toLowerCase()
     .replace(/[()]/g, ' ')
     .replace(/&/g, 'and')
+    .replace(/\s\+\s/g, ' and ')
     // Expand slash-separated language alternatives so that per-language signal
     // phrases match each option independently — but only when the slash group is
     // followed by a language-context word (speaking, skills, etc.) to avoid
@@ -818,6 +837,20 @@ export function detectNativeLanguage(
       return {
         value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
         signals: [{ phase: '1b', description: 'Nordic/Scandinavian advantage phrase', matched: nordicAdvMatch[0] }],
+      };
+    }
+  }
+
+  // Generic "local language is a plus/advantage" — doesn't name the specific language
+  // but signals it is a nice-to-have (e.g. "local language is a plus i.e. French, Dutch").
+  if (languages.length > 0) {
+    const genericAdvantageMatch = combined.match(
+      /\b(?:a\s+)?local language[^.]{0,80}(?:is|are|would\s+be)\s+(?:a\s+)?(?:plus|bonus|advantage|preferred|beneficial|preferable|an?\s+asset)\b/,
+    );
+    if (genericAdvantageMatch) {
+      return {
+        value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+        signals: [{ phase: '1b', description: 'generic local-language advantage phrase', matched: genericAdvantageMatch[0] }],
       };
     }
   }
@@ -890,7 +923,7 @@ export function detectNativeLanguage(
   // Generic "native local/country language" phrase — doesn't name the language
   // but clearly means native fluency in the local language is required.
   const genericMatch = languages.length > 0
-    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills/)
+    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)/)
     : null;
   if (genericMatch) {
     return {
