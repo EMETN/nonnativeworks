@@ -34,6 +34,7 @@
 - SAP
 - Smartly
 - SOK
+- Solita
 - Stora Enso
 - Telia
 - Tieto
@@ -54,7 +55,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
-| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept |
+| Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita |
 | Lever | `jobs.lever.co/{slug}` | |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
