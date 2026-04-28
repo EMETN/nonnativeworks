@@ -112,6 +112,24 @@ scrapers:
       location_subfield: city
       country_subfield: countryCode
       job_function: header.teamTitle
+
+  # ── Allianz ────────────────────────────────────────────────────────────────────
+  - match: "careers.allianz.com/global/en/search-results"
+    name: Allianz
+    extract_mode: script_json
+    script_key: jobs
+    pagination:
+      type: page
+      param: page
+      page_size: 10
+    description_selector: "description"
+    fields:
+      title: title
+      url: body.applyLinkProps.href
+      locations: header.locations
+      location_subfield: city
+      country_subfield: countryCode
+      job_function: header.teamTitle
   
     # ── Metso ────────────────────────────────────────────────────────────────────
   - match: "metso.com/corporate/careers/open-jobs"
@@ -172,6 +190,22 @@ scrapers:
   # ── Vaisala ──────────────────────────────────────────────────────────────────
   - match: "careers.vaisala.com"
     name: Vaisala
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+
+  # ── Fortum ──────────────────────────────────────────────────────────────────
+  - match: "jobs.fortum.com"
+    name: Fortum
     extra_params:
       sortColumn: referencedate
       sortDirection: desc

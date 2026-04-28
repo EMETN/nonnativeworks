@@ -13,6 +13,7 @@
 - CGI (local script)
 - Dept
 - Ericsson
+- Fortum
 - Gofore
 - Happeo
 - If
@@ -108,6 +109,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Neste | `jobs.neste.com` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Vaisala | `careers.vaisala.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | SAP | `jobs.sap.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Fortum | `obs.fortum.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 
 #### Platform-specific scrapers (`scraper/platforms/`)

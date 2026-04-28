@@ -61,6 +61,10 @@ companies:
       url: https://jobs.ericsson.com/careers
       min_positions: 10
 
+    - name: Fortum
+      url: https://jobs.fortum.com/search
+      min_positions: 5
+
     - name: Gofore
       url: https://gofore.com/en/careers/
       min_positions: 1
