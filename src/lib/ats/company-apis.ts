@@ -639,8 +639,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // Capgemini's internal job-stream API. country_code is a comma-separated list of
     // locale/ISO codes covering all tracked countries. location is a comma-separated
     // city string (e.g. "Stockholm, Malmö, Göteborg") — lookupCountryFromLocation splits
-    // it and resolves via CITY_MAP. fetchDescription fetches the job detail page for
-    // English-titled jobs so the language classifier gets the full rendered description.
+    // it and resolves via CITY_MAP. description_stripped contains the full job description
+    // as plain text (no HTML, actual Unicode characters) — sufficient for language classification.
     url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL&size=200',
     method: 'GET',
     headers: {
@@ -658,8 +658,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       url: 'apply_job_url',
       id: 'id',
     },
+    descriptionFields: ['description_stripped'],
     companyName: 'Capgemini',
-    fetchDescription: true,
   },
 
   'jobs.booking.com': {
