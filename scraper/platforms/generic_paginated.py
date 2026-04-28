@@ -390,6 +390,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     jf_sel       = cfg.get("job_function_selector")
     list_url     = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
+    country_filter_param: str | None = cfg.get("country_filter_param")
+    countries: list[str] = cfg.get("countries", [])
 
     if extract_mode == "attribute_json":
         fetch_page = _fetch_attribute_json_page
@@ -401,27 +403,42 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     session = requests.Session()
 
     # ── Phase 1: listing ──────────────────────────────────────────────────────
+    # When country_filter_param + countries are set, iterate one paginated fetch
+    # per country and merge results. Otherwise, a single fetch set runs as before.
     all_jobs: list[dict] = []
-    seen_titles: set[str] = set()
+    seen_keys: set[str] = set()
 
-    if ptype == "none":
-        jobs = fetch_page(session, list_url, dict(extra_params), cfg)
-        print(f"generic [{name}]: single page → {len(jobs)} jobs", file=sys.stderr)
-        all_jobs = jobs
-    else:
-        param_name = pagination["param"]
-        for page_num in range(max_pages):
-            params = {**extra_params, param_name: _page_param_value(pagination, page_num)}
-            jobs = fetch_page(session, list_url, params, cfg)
-            print(f"generic [{name}]: {param_name}={params[param_name]} → {len(jobs)} jobs", file=sys.stderr)
+    param_sets: list[dict] = (
+        [{**extra_params, country_filter_param: cc} for cc in countries]
+        if country_filter_param and countries
+        else [dict(extra_params)]
+    )
 
-            new_jobs = [j for j in jobs if job_key(j) not in seen_titles]
+    for base_params in param_sets:
+        label = base_params.get(country_filter_param, "") if country_filter_param else ""
+        prefix = f"generic [{name}]{f' ({label})' if label else ''}"
+
+        if ptype == "none":
+            jobs = fetch_page(session, list_url, base_params, cfg)
+            print(f"{prefix}: single page → {len(jobs)} jobs", file=sys.stderr)
+            new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
             for j in new_jobs:
-                seen_titles.add(job_key(j))
+                seen_keys.add(job_key(j))
             all_jobs.extend(new_jobs)
+        else:
+            param_name = pagination["param"]
+            for page_num in range(max_pages):
+                params = {**base_params, param_name: _page_param_value(pagination, page_num)}
+                jobs = fetch_page(session, list_url, params, cfg)
+                print(f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs", file=sys.stderr)
 
-            if len(jobs) < page_size:
-                break
+                new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
+                for j in new_jobs:
+                    seen_keys.add(job_key(j))
+                all_jobs.extend(new_jobs)
+
+                if len(jobs) < page_size:
+                    break
 
     print(f"generic [{name}]: collected {len(all_jobs)} jobs", file=sys.stderr)
 

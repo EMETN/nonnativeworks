@@ -40,6 +40,14 @@
 #                         Default: first <a> or first heading (h2–h4)
 #   location_selector     CSS selector for the location within a card
 #                         Default: first element whose class matches a location pattern
+#   country_filter_param  Query-parameter name used by the site to filter by country
+#                         (e.g. "optionsFacetsDD_country"). When combined with
+#                         countries, the scraper runs one paginated fetch per country
+#                         and merges results before description enrichment. Use this
+#                         when the site does not support multi-value country params.
+#   countries             List of ISO alpha-2 country codes to fetch when
+#                         country_filter_param is set (e.g. [FI, SE, NO]).
+#                         Ignored if country_filter_param is absent.
 #   job_function_selector CSS selector for the job function/area on the detail page
 #                         Extracted during the same fetch as description_selector.
 #                         Used as the primary category classification signal (higher
@@ -137,3 +145,42 @@ scrapers:
     description_selector: ".jobdescription"
     job_function_selector: "[data-careersite-propertyid='department']"
 
+  # ── SAP ──────────────────────────────────────────────────────────────────────
+  # Taleo instance that only accepts one country per request. country_filter_param
+  # + countries makes the scraper iterate one paginated fetch per country and
+  # merge results before description enrichment.
+  - match: "jobs.sap.com"
+    name: SAP
+    country_filter_param: "optionsFacetsDD_country"
+    countries:
+      - DE
+      - SE
+      - DK
+      - NL
+      - FI
+      - "NO"
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+
+  # ── Vaisala ──────────────────────────────────────────────────────────────────
+  - match: "careers.vaisala.com"
+    name: Vaisala
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"

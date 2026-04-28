@@ -133,6 +133,10 @@ companies:
       url: https://www.rovio.com/open-positions
       min_positions: 1
 
+    - name: SAP
+      url: https://jobs.sap.com/search/?createNewAlert=false&q=
+      min_positions: 5
+
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2
@@ -152,6 +156,10 @@ companies:
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10
+
+    - name: Vaisala
+      url: https://careers.vaisala.com
+      min_positions: 3
 
     - name: Wolt
       url: https://careers.wolt.com/en/jobs

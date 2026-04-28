@@ -683,7 +683,7 @@ function stripDescriptionBoilerplate(text: string): string {
 
 // Languages where tinyld is prone to false positives on corporate English text.
 // Require a longer chunk before accepting a match.
-const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl', 'hu']);
+const MEDIUM_CONFIDENCE_LANGS = new Set(['fr', 'es', 'it', 'pt', 'ro', 'el', 'nl', 'de', 'cs', 'sk', 'pl', 'hr', 'sl', 'hu', 'no']);
 const MEDIUM_CONFIDENCE_MIN_CHUNK = 400;
 
 // Languages that use a non-Latin script: require at least one native-script
