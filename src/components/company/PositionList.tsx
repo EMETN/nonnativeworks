@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'preact/hooks';
+import { useSignal, useComputed } from '@preact/signals';
+import { useRef } from 'preact/hooks';
 import type { PositionDetail } from '../../lib/types';
 
 interface Props {
@@ -90,27 +91,25 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
 }
 
 export default function PositionList({ positions, careerPageUrl }: Props) {
-    const [search, setSearch] = useState('');
+    const inputValue = useSignal('');
+    const search = useSignal('');
+    const debounceRef = useRef(0);
 
-    const nonNativePositions = useMemo(
-        () => positions.filter((p) => !p.requires_native_language),
-        [positions],
-    );
+    const nonNativePositions = positions.filter((p) => !p.requires_native_language);
 
-    const searchQuery = search.trim().toLowerCase();
-
-    const filtered = useMemo(() => {
-        if (!searchQuery) return nonNativePositions;
+    const filtered = useComputed(() => {
+        const q = search.value.trim().toLowerCase();
+        if (!q) return nonNativePositions;
         return nonNativePositions.filter(
             (p) =>
-                p.title.toLowerCase().includes(searchQuery) ||
-                p.category_name.toLowerCase().includes(searchQuery) ||
+                p.title.toLowerCase().includes(q) ||
+                p.category_name.toLowerCase().includes(q) ||
                 (p.work_model &&
-                    p.work_model.toLowerCase().includes(searchQuery)) ||
+                    p.work_model.toLowerCase().includes(q)) ||
                 (p.city &&
-                    p.city.some((c) => c.toLowerCase().includes(searchQuery))),
+                    p.city.some((c) => c.toLowerCase().includes(q))),
         );
-    }, [nonNativePositions, searchQuery]);
+    });
 
     return (
         <div>
@@ -136,17 +135,24 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                         type="text"
                         aria-label="Search by title, city, or category"
                         placeholder="Search by title, city, category..."
-                        value={search}
-                        onInput={(e) =>
-                            setSearch((e.target as HTMLInputElement).value)
-                        }
-                        class={`w-full text-xs sm:text-sm bg-transparent pl-5 sm:pl-6 ${search ? 'pr-6' : 'pr-1'} py-1 outline-none`}
+                        value={inputValue.value}
+                        onInput={(e) => {
+                            const val = (e.target as HTMLInputElement).value;
+                            inputValue.value = val;
+                            clearTimeout(debounceRef.current);
+                            debounceRef.current = window.setTimeout(() => { search.value = val; }, 200);
+                        }}
+                        class={`w-full text-xs sm:text-sm bg-transparent pl-5 sm:pl-6 ${inputValue.value ? 'pr-6' : 'pr-1'} py-1 outline-none`}
                         style={numFont}
                     />
-                    {search && (
+                    {inputValue.value && (
                         <button
                             type="button"
-                            onClick={() => setSearch('')}
+                            onClick={() => {
+                                inputValue.value = '';
+                                search.value = '';
+                                clearTimeout(debounceRef.current);
+                            }}
                             class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                             aria-label="Clear search"
                         >
@@ -172,15 +178,15 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
 
             {/* Position list */}
             <ul class="hover-fade-list">
-                {filtered.length === 0 ? (
+                {filtered.value.length === 0 ? (
                     <li class="py-12 text-center text-gray-500">
-                        {searchQuery ? (
+                        {search.value ? (
                             <>
                                 <p
                                     class="text-base sm:text-lg mb-1.5"
                                     style={numFont}
                                 >
-                                    No positions found matching "{search}"
+                                    No positions found matching "{inputValue.value}"
                                 </p>
                                 <p class="text-sm text-gray-500">
                                     Try a different search term.
@@ -194,7 +200,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                         )}
                     </li>
                 ) : (
-                    filtered.map((pos) => (
+                    filtered.value.map((pos) => (
                         <PositionRow key={pos.id} pos={pos} />
                     ))
                 )}
@@ -206,7 +212,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                     class="text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
                     style={numFont}
                 >
-                    {filtered.length} of {nonNativePositions.length} positions
+                    {filtered.value.length} of {nonNativePositions.length} positions
                 </span>
                 {careerPageUrl && (
                     <a
