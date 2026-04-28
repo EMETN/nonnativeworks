@@ -161,7 +161,7 @@ const defaultTab = scraperEnabled ? 'scraper' : 'upload';
   </div>
 </AdminLayout>
 
-<script define:vars={{ defaultTab }}>
+<script is:inline define:vars={{ defaultTab }}>
   const ALL_TABS = ['scraper', 'upload', 'companies', 'positions', 'skills'];
 
   function activateTab(target) {

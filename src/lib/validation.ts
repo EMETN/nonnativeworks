@@ -6,7 +6,7 @@ const VALID_CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
 const urlTransform = z
   .string()
   .transform((val) => val.replace(/^\[.*?\]\((.*?)\)$/, '$1').trim())
-  .pipe(z.string().url().or(z.literal('')))
+  .pipe(z.url().or(z.literal('')))
   .optional();
 
 export const PositionSchema = z.object({
