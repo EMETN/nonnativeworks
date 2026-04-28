@@ -144,6 +144,10 @@ companies:
     - name: SOK
       url: https://sok.wd502.myworkdayjobs.com/S-ryhman-avoimet-tyopaikat
       min_positions: 5
+
+    - name: Solita
+      url: https://www.solita.fi/join-us
+      min_positions: 1
     
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
