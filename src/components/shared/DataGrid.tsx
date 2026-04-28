@@ -138,11 +138,9 @@ function SizingRow({
 
 function GridRow({
     item,
-    isLast,
     compact,
 }: {
     item: DataGridItem;
-    isLast: boolean;
     compact?: boolean;
 }) {
     const textSize = 'text-xl md:text-lg lg:text-2xl';
@@ -463,7 +461,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                         <GridRow
                             key={c.id}
                             item={c}
-                            isLast={i === filtered.value.length - 1}
                             compact={compact}
                         />
                     ))}
