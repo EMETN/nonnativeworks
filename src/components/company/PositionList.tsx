@@ -8,25 +8,9 @@ interface Props {
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
-function PositionRow({
-    pos,
-    faded,
-    onEnter,
-    onLeave,
-}: {
-    pos: PositionDetail;
-    faded: boolean;
-    onEnter: () => void;
-    onLeave: () => void;
-}) {
+function PositionRow({ pos }: { pos: PositionDetail }) {
     const inner = (
-        <div
-            class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6"
-            style={{
-                opacity: faded ? 0.12 : 1,
-                transition: 'opacity 0.3s',
-            }}
-        >
+        <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
             <div class="min-w-0 flex-1">
                 <span
                     class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight line-clamp-2"
@@ -36,14 +20,14 @@ function PositionRow({
                 </span>
                 {pos.local_language_advantage && (
                     <div class="leading-none" style={numFont}>
-                        <span class="text-xs sm:text-sm text-amber-600 font-medium">
+                        <span class="text-xs sm:text-sm text-amber-700 font-medium">
                             Local language advantage
                         </span>
                     </div>
                 )}
                 {(pos.work_model || (pos.city && pos.city.length > 0)) && (
                     <div
-                        class="text-xs sm:text-sm text-gray-400 mt-1.5"
+                        class="text-xs sm:text-sm text-gray-500 mt-1.5"
                         style={numFont}
                     >
                         {pos.work_model && (
@@ -63,7 +47,7 @@ function PositionRow({
             </div>
             <div class="flex items-center gap-2 sm:gap-4 shrink-0">
                 <span
-                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-400 max-w-24 sm:max-w-none text-right line-clamp-2"
+                    class="text-[0.65rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-500 max-w-24 sm:max-w-none text-right line-clamp-2"
                     style={numFont}
                 >
                     {pos.category_name}
@@ -88,11 +72,7 @@ function PositionRow({
     );
 
     return (
-        <li
-            class="border-b border-gray-100"
-            onMouseEnter={onEnter}
-            onMouseLeave={onLeave}
-        >
+        <li class="border-b border-gray-100 hover-fade-item">
             {pos.url ? (
                 <a
                     href={pos.url}
@@ -111,7 +91,6 @@ function PositionRow({
 
 export default function PositionList({ positions, careerPageUrl }: Props) {
     const [search, setSearch] = useState('');
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const nonNativePositions = useMemo(
         () => positions.filter((p) => !p.requires_native_language),
@@ -155,7 +134,8 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                     </svg>
                     <input
                         type="text"
-                        placeholder="Search..."
+                        aria-label="Search by title, city, or category"
+                        placeholder="Search by title, city, category..."
                         value={search}
                         onInput={(e) =>
                             setSearch((e.target as HTMLInputElement).value)
@@ -191,9 +171,9 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             </div>
 
             {/* Position list */}
-            <ul>
+            <ul class="hover-fade-list">
                 {filtered.length === 0 ? (
-                    <li class="py-12 text-center text-gray-400">
+                    <li class="py-12 text-center text-gray-500">
                         {searchQuery ? (
                             <>
                                 <p
@@ -202,7 +182,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                                 >
                                     No positions found matching "{search}"
                                 </p>
-                                <p class="text-sm text-gray-300">
+                                <p class="text-sm text-gray-500">
                                     Try a different search term.
                                 </p>
                             </>
@@ -215,13 +195,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                     </li>
                 ) : (
                     filtered.map((pos) => (
-                        <PositionRow
-                            key={pos.id}
-                            pos={pos}
-                            faded={hoveredId !== null && hoveredId !== pos.id}
-                            onEnter={() => setHoveredId(pos.id)}
-                            onLeave={() => setHoveredId(null)}
-                        />
+                        <PositionRow key={pos.id} pos={pos} />
                     ))
                 )}
             </ul>
@@ -229,7 +203,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             {/* Footer */}
             <div class="mt-4 flex items-center justify-between">
                 <span
-                    class="text-[0.6rem] sm:text-xs text-gray-400 font-semibold tracking-wider uppercase"
+                    class="text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
                     style={numFont}
                 >
                     {filtered.length} of {nonNativePositions.length} positions
@@ -243,7 +217,21 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                         style={numFont}
                     >
                         All positions
-                        <svg class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 inline-block ml-1" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width={1.5}><path stroke-linecap="round" stroke-linejoin="round" d="M10.0002 5H8.2002C7.08009 5 6.51962 5 6.0918 5.21799C5.71547 5.40973 5.40973 5.71547 5.21799 6.0918C5 6.51962 5 7.08009 5 8.2002V15.8002C5 16.9203 5 17.4801 5.21799 17.9079C5.40973 18.2842 5.71547 18.5905 6.0918 18.7822C6.5192 19 7.07899 19 8.19691 19H15.8031C16.921 19 17.48 19 17.9074 18.7822C18.2837 18.5905 18.5905 18.2839 18.7822 17.9076C19 17.4802 19 16.921 19 15.8031V14M20 9V4M20 4H15M20 4L13 11" /></svg>
+                        <svg
+                            class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 inline-block ml-1"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width={1.5}
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M10.0002 5H8.2002C7.08009 5 6.51962 5 6.0918 5.21799C5.71547 5.40973 5.40973 5.71547 5.21799 6.0918C5 6.51962 5 7.08009 5 8.2002V15.8002C5 16.9203 5 17.4801 5.21799 17.9079C5.40973 18.2842 5.71547 18.5905 6.0918 18.7822C6.5192 19 7.07899 19 8.19691 19H15.8031C16.921 19 17.48 19 17.9074 18.7822C18.2837 18.5905 18.5905 18.2839 18.7822 17.9076C19 17.4802 19 16.921 19 15.8031V14M20 9V4M20 4H15M20 4L13 11"
+                            />
+                        </svg>
                     </a>
                 )}
             </div>

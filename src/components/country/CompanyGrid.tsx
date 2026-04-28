@@ -13,7 +13,6 @@ export default function CompanyGrid({ companies, countrySlug }: Props) {
     id: c.company_id,
     name: c.name,
     href: `/${countrySlug}/${nameToSlug(c.name)}`,
-    englishBadge: c.is_english_company,
     english_positions: c.english_positions,
     total_positions: c.total_positions,
     english_percentage: c.english_percentage,

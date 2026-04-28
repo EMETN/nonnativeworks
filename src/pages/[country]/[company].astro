@@ -3,11 +3,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import PositionList from '../../components/company/PositionList.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
+import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import {
     getCountryBySlug,
     getCompanyBySlugInCountry,
     getPositionsByCompany,
 } from '../../lib/queries';
+import { timeAgo } from '../../lib/time';
 
 const { country: countrySlug, company: companySlug } = Astro.params;
 const { request, cookies } = Astro;
@@ -40,52 +42,35 @@ const positions = await getPositionsByCompany(
 <BaseLayout
     title={`${company.name} — ${country.name}`}
     description={`${company.name} has ${company.total_positions} open positions in ${country.name} — ${company.english_positions} don't require the local language(s).`}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: 'Countries', href: '/countries' },
+        { name: country.name, href: `/${country.slug}` },
+        { name: company.name },
+    ]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <nav id="breadcrumb-country" class="text-sm text-gray-400 mb-2 md:mb-4" aria-label="Breadcrumb">
-            <a
-                href="/"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Home</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href="/countries"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Countries</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href={`/${country.slug}`}
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">{country.name}</a
-            >
-            <span class="mx-1.5">›</span>
-            <span class="text-gray-900 font-medium">{company.name}</span>
-        </nav>
-        <nav id="breadcrumb-company" class="text-sm text-gray-400 mb-2 md:mb-4 hidden" aria-label="Breadcrumb">
-            <a
-                href="/"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Home</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href="/companies"
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">Companies</a
-            >
-            <span class="mx-1.5">›</span>
-            <a
-                href={`/companies/${companySlug}`}
-                data-astro-prefetch
-                class="hover:text-gray-700 transition-colors">{company.name}</a
-            >
-            <span class="mx-1.5">›</span>
-            <span class="text-gray-900 font-medium">{country.name}</span>
-        </nav>
+        <Breadcrumb
+            id="breadcrumb-country"
+            items={[
+                { label: 'Home', href: '/' },
+                { label: 'Countries', href: '/countries' },
+                { label: country.name, href: `/${country.slug}` },
+                { label: company.name },
+            ]}
+        />
+        <Breadcrumb
+            id="breadcrumb-company"
+            class="hidden"
+            items={[
+                { label: 'Home', href: '/' },
+                { label: 'Companies', href: '/companies' },
+                { label: company.name, href: `/companies/${companySlug}` },
+                { label: country.name },
+            ]}
+        />
 
         <!-- Title + Gauge -->
         <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
@@ -94,13 +79,6 @@ const positions = await getPositionsByCompany(
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
-                {
-                    company.is_english_company && (
-                        <span class="text-sm sm:text-base bg-[#C2E0D1] text-[#0B5E3C] px-2 py-1 rounded font-semibold align-middle ml-2">
-                            EN
-                        </span>
-                    )
-                }
             </h1>
             {company.total_positions > 0 && (
                 <CompanyGauge
@@ -130,9 +108,9 @@ const positions = await getPositionsByCompany(
         }
         {
             positions.length === 0 ? (
-                <div class="text-center py-16 text-gray-400">
-                    No positions tracked yet for <strong>{company.name}</strong>
-                    . Check back soon!
+                <div class="text-center py-16 text-gray-500">
+                    <p>No positions tracked yet for <strong>{company.name}</strong>. Check back soon!</p>
+                    <a href={`/${countrySlug}`} class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse other companies in {country.name}</a>
                 </div>
             ) : (
                 <>
@@ -141,16 +119,8 @@ const positions = await getPositionsByCompany(
                         careerPageUrl={company.career_page_url}
                         client:visible
                     />
-                    <p class="text-xs sm:text-sm text-gray-400 mt-4">
-                        Updated{' '}
-                        {new Date(company.updated_at).toLocaleDateString(
-                            'en-GB',
-                            {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                            },
-                        )}
+                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                        Updated {timeAgo(company.updated_at)}
                     </p>
                 </>
             )
