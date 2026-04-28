@@ -1,4 +1,5 @@
 import { useSignal, useComputed } from '@preact/signals';
+import { useRef } from 'preact/hooks';
 
 export interface DataGridItem {
     id: string;
@@ -275,7 +276,9 @@ function GridRow({
 export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
     const sortField = useSignal<SortField>('positions');
     const sortDir = useSignal<SortDir>('desc');
+    const inputValue = useSignal('');
     const search = useSignal('');
+    const debounceRef = useRef(0);
 
     function toggleSort(field: SortField) {
         if (sortField.value === field) {
@@ -348,20 +351,23 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 type="text"
                                 aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
                                 placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
-                                value={search.value}
+                                value={inputValue.value}
                                 onInput={(e) => {
-                                    search.value = (
-                                        e.target as HTMLInputElement
-                                    ).value;
+                                    const val = (e.target as HTMLInputElement).value;
+                                    inputValue.value = val;
+                                    clearTimeout(debounceRef.current);
+                                    debounceRef.current = window.setTimeout(() => { search.value = val; }, 200);
                                 }}
-                                class={`w-full pl-5 sm:pl-6 ${search.value ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
+                                class={`w-full pl-5 sm:pl-6 ${inputValue.value ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
                                 style={numFont}
                             />
-                            {search.value && (
+                            {inputValue.value && (
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        inputValue.value = '';
                                         search.value = '';
+                                        clearTimeout(debounceRef.current);
                                     }}
                                     class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                                     aria-label="Clear search"
@@ -472,7 +478,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
             {!hasResults && (
                 <div class="py-20 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
-                        No {entityLabel} found matching "{search.value}"
+                        No {entityLabel} found matching "{inputValue.value}"
                     </p>
                     <p class="text-sm text-gray-500">
                         {compact
