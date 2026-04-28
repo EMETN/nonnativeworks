@@ -388,12 +388,22 @@ export async function getGlobalCompanyBySlug(
 ): Promise<GlobalCompanyData | null> {
   const supabase = client(request, cookies);
 
-  const { data: allStats, error: statsErr } = await supabase
+  const { data: nameRows, error: nameErr } = await supabase
+    .from('companies')
+    .select('name');
+  if (nameErr) { console.error('getGlobalCompanyBySlug names:', nameErr.message); return null; }
+
+  const uniqueNames = [...new Set((nameRows ?? []).map((r: any) => r.name as string))];
+  const matchedName = uniqueNames.find((n) => nameToSlug(n) === companySlug);
+  if (!matchedName) return null;
+
+  const { data: statsData, error: statsErr } = await supabase
     .from('company_stats')
-    .select('*');
+    .select('*')
+    .eq('name', matchedName);
   if (statsErr) { console.error('getGlobalCompanyBySlug:', statsErr.message); return null; }
 
-  const matches = (allStats ?? []).filter((c: any) => nameToSlug(c.name) === companySlug) as CompanyStats[];
+  const matches = (statsData ?? []) as CompanyStats[];
   if (matches.length === 0) return null;
 
   const countryIds = [...new Set(matches.map((m) => m.country_id))];
