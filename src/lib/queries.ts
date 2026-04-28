@@ -8,7 +8,6 @@ import type {
   Country,
   Category,
   PositionDetail,
-  Company,
 } from './types';
 import { nameToSlug } from './country-flags';
 

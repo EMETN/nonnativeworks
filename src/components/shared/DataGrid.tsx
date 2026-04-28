@@ -465,7 +465,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 </li>
 
                 {hasResults &&
-                    filtered.value.map((c, i) => (
+                    filtered.value.map((c) => (
                         <GridRow
                             key={c.id}
                             item={c}
