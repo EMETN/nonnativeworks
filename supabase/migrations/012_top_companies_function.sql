@@ -5,8 +5,7 @@ RETURNS TABLE (
   english_positions bigint,
   english_percentage numeric,
   country_count    bigint,
-  primary_country_slug text,
-  primary_company_slug text
+  primary_country_slug text
 ) AS $$
   WITH per_company_country AS (
     SELECT
@@ -49,15 +48,7 @@ RETURNS TABLE (
     g.english_positions,
     g.english_percentage,
     g.country_count,
-    bc.country_slug AS primary_country_slug,
-    LOWER(
-      REGEXP_REPLACE(
-        REGEXP_REPLACE(
-          TRANSLATE(g.name, 'àáâãäåèéêëìíîïòóôõöùúûüýÿñçÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝŸÑÇ',
-                             'aaaaaaeeeeiiiioooooouuuuyyncAAAAAAEEEEIIIIOOOOOUUUUYYNC'),
-          '[^a-zA-Z0-9]+', '-', 'g'),
-        '^-|-$', '', 'g')
-    ) AS primary_company_slug
+    bc.country_slug AS primary_country_slug
   FROM grouped g
   JOIN best_country bc ON bc.name = g.name
   ORDER BY g.english_positions DESC;

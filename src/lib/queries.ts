@@ -103,7 +103,7 @@ export async function getTopCompanies(request: Request, cookies: AstroCookies, l
     english_percentage: Number(r.english_percentage),
     country_count: Number(r.country_count),
     primary_country_slug: r.primary_country_slug,
-    primary_company_slug: r.primary_company_slug,
+    primary_company_slug: nameToSlug(r.name),
   }));
 }
 
