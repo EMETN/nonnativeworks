@@ -679,6 +679,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'skillingaryd':             { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'skoghall':                 { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'solna':                    { name: 'Sweden', code: 'SE', slug: 'sweden' },
+  'sth solna':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'stockholm':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'sundsvall':                { name: 'Sweden', code: 'SE', slug: 'sweden' },
   'torsby':                   { name: 'Sweden', code: 'SE', slug: 'sweden' },
