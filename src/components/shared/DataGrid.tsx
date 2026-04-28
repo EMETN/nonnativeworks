@@ -1,5 +1,5 @@
 import { useSignal, useComputed } from '@preact/signals';
-import { useRef, useEffect } from 'preact/hooks';
+import { useRef } from 'preact/hooks';
 
 export interface DataGridItem {
     id: string;
@@ -139,37 +139,11 @@ function SizingRow({
 
 function GridRow({
     item,
-    isLast,
     compact,
 }: {
     item: DataGridItem;
-    isLast: boolean;
     compact?: boolean;
 }) {
-    const nameRef = useRef<HTMLDivElement>(null);
-    const isOverflowing = useSignal(false);
-    const isSmall = useSignal(false);
-
-    useEffect(() => {
-        const el = nameRef.current;
-        if (!el) return;
-        const check = () => {
-            isOverflowing.value = el.scrollWidth > el.clientWidth;
-        };
-        check();
-        const ro = new ResizeObserver(check);
-        ro.observe(el);
-
-        const mq = window.matchMedia('(max-width: 639px)');
-        isSmall.value = mq.matches;
-        const onMq = (e: MediaQueryListEvent) => { isSmall.value = e.matches; };
-        mq.addEventListener('change', onMq);
-
-        return () => { ro.disconnect(); mq.removeEventListener('change', onMq); };
-    }, []);
-
-    const fadeMask =
-        'linear-gradient(to right, black calc(100% - 4rem), transparent)';
     const textSize = 'text-xl md:text-lg lg:text-2xl';
     const slashSize = 'text-sm md:text-xs lg:text-base';
     const totalSize = 'text-sm md:text-xs lg:text-base';
@@ -188,29 +162,20 @@ function GridRow({
                 <div
                     class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
                 >
-                    <div
-                        ref={nameRef}
-                        class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0"
-                        style={
-                            isOverflowing.value && !isSmall.value
-                                ? {
-                                      maskImage: fadeMask,
-                                      WebkitMaskImage: fadeMask,
-                                  }
-                                : undefined
-                        }
-                    >
+                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0">
                         {item.flag && (
                             <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] md:w-[1.6875rem] lg:w-[2.25rem]">
                                 <img
                                     src={item.flag}
                                     alt=""
+                                    loading="lazy"
+                                    decoding="async"
                                     class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
                                 />
                             </span>
                         )}
                         <span
-                            class={`${textSize} font-semibold text-gray-900 leading-tight tracking-tight ${isSmall.value ? 'truncate' : 'whitespace-nowrap'}`}
+                            class={`${textSize} font-semibold text-gray-900 leading-tight tracking-tight truncate`}
                             style={numFont}
                         >
                             {item.name}
@@ -311,7 +276,9 @@ function GridRow({
 export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
     const sortField = useSignal<SortField>('positions');
     const sortDir = useSignal<SortDir>('desc');
+    const inputValue = useSignal('');
     const search = useSignal('');
+    const debounceRef = useRef(0);
 
     function toggleSort(field: SortField) {
         if (sortField.value === field) {
@@ -384,20 +351,23 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 type="text"
                                 aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
                                 placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
-                                value={search.value}
+                                value={inputValue.value}
                                 onInput={(e) => {
-                                    search.value = (
-                                        e.target as HTMLInputElement
-                                    ).value;
+                                    const val = (e.target as HTMLInputElement).value;
+                                    inputValue.value = val;
+                                    clearTimeout(debounceRef.current);
+                                    debounceRef.current = window.setTimeout(() => { search.value = val; }, 200);
                                 }}
-                                class={`w-full pl-5 sm:pl-6 ${search.value ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
+                                class={`w-full pl-5 sm:pl-6 ${inputValue.value ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
                                 style={numFont}
                             />
-                            {search.value && (
+                            {inputValue.value && (
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        inputValue.value = '';
                                         search.value = '';
+                                        clearTimeout(debounceRef.current);
                                     }}
                                     class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                                     aria-label="Clear search"
@@ -499,7 +469,6 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                         <GridRow
                             key={c.id}
                             item={c}
-                            isLast={i === filtered.value.length - 1}
                             compact={compact}
                         />
                     ))}
@@ -509,7 +478,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
             {!hasResults && (
                 <div class="py-20 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
-                        No {entityLabel} found matching "{search.value}"
+                        No {entityLabel} found matching "{inputValue.value}"
                     </p>
                     <p class="text-sm text-gray-500">
                         {compact

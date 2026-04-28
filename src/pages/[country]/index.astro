@@ -96,7 +96,7 @@ const companies = await getCompanyStatsByCountry(
                 <CompanyGrid
                     companies={companies}
                     countrySlug={country.slug}
-                    client:visible
+                    client:idle
                 />
             )
         }
