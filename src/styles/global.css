@@ -24,6 +24,9 @@
     @apply bg-white text-gray-900 antialiased;
   }
 
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 .mobile-menu-panel {
