@@ -16,6 +16,12 @@ function client(request: Request, cookies: AstroCookies) {
   return createSupabaseClient(request, cookies);
 }
 
+const VALID_SLUG = /^[a-z0-9-]+$/;
+
+function isValidSlug(slug: string): boolean {
+  return VALID_SLUG.test(slug);
+}
+
 export async function getCountryStats(request: Request, cookies: AstroCookies): Promise<CountryStats[]> {
   const supabase = client(request, cookies);
   const { data, error } = await supabase
@@ -135,6 +141,8 @@ export async function getCountryBySlug(
   cookies: AstroCookies,
   slug: string
 ): Promise<CountryStats | null> {
+  if (!isValidSlug(slug)) return null;
+
   const supabase = client(request, cookies);
   const { data, error } = await supabase
     .from('country_stats')
@@ -272,6 +280,8 @@ export async function getCompanyBySlugInCountry(
   countryId: string,
   companySlug: string
 ): Promise<CompanyStats | null> {
+  if (!isValidSlug(companySlug)) return null;
+
   const supabase = client(request, cookies);
   const { data, error } = await supabase
     .from('company_stats')
@@ -386,6 +396,8 @@ export async function getGlobalCompanyBySlug(
   cookies: AstroCookies,
   companySlug: string
 ): Promise<GlobalCompanyData | null> {
+  if (!isValidSlug(companySlug)) return null;
+
   const supabase = client(request, cookies);
 
   const { data: nameRows, error: nameErr } = await supabase
