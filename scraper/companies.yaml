@@ -73,6 +73,10 @@ companies:
       url: https://happeo.recruitee.com
       min_positions: 1
 
+    - name: Hiab
+      url: https://careers.hiab.com/search
+      min_positions: 3
+
     - name: If
       url: https://if.wd3.myworkdayjobs.com/Careers
       min_positions: 5

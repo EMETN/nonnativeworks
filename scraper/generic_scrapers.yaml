@@ -218,3 +218,19 @@ scrapers:
     location_selector: "td.colLocation"
     description_selector: ".jobdescription"
     job_function_selector: "[data-careersite-propertyid='department']"
+  
+    # ── Hiab ──────────────────────────────────────────────────────────────────
+  - match: "careers.hiab.com/search"
+    name: Hiab
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "td.colTitle a.jobTitle-link"
+    location_selector: "td.colLocation .jobLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "td.colFacility jobFacility"
