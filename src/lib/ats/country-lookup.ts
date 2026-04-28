@@ -552,6 +552,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'passau':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   'plattling':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'pronsfeld':                { name: 'Germany', code: 'DE', slug: 'germany' },
+  'ratingen':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'regensburg':               { name: 'Germany', code: 'DE', slug: 'germany' },
   'remptendorf':              { name: 'Germany', code: 'DE', slug: 'germany' },
   'rosenheim':                { name: 'Germany', code: 'DE', slug: 'germany' },
