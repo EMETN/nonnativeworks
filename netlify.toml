@@ -6,3 +6,11 @@
   to = "https://eu.i.posthog.com/:splat"
   status = 200
   force = true
+
+[[headers]]
+  for = "/countries"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "public, max-age=60, s-maxage=300, stale-while-revalidate=86400"
