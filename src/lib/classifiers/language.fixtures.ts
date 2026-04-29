@@ -863,6 +863,22 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: true,
   },
+  {
+    label: '2a negation-NOT — "nice-to-have Skills:" section heading must not negate prior requirement',
+    title: 'Software Engineer',
+    desc: 'Language Skills: Fluency both written and spoken in English and German\nNice-to-have Skills: Experience with Kubernetes.',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a adv-overlap — "Dutch speaking skills on top of that are preferred" → advantage',
+    title: 'Account Executive',
+    desc: 'High level of English (written and oral) is required, Dutch speaking skills on top of that are preferred.',
+    country: 'NL',
+    requires: false,
+    advantage: true,
+  },
 
   // ── Phase 2a: Advantage prefix — "bonus points if / plus if" ─────────────
 

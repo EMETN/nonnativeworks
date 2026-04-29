@@ -362,6 +362,7 @@ const LANG_MENTIONS = (lang: string) => [
   `communicate in ${lang}`,
   `ability to communicate in ${lang}`,
   `preferably also ${lang}`,
+  `${lang} speaking`,
 ];
 
 /**
@@ -559,8 +560,10 @@ function knowledgeOfSignalIsAdjective(combined: string, signal: string): boolean
 // Negation patterns that immediately follow a requirement signal phrase
 // (within ~80 characters), indicating the language is a nice-to-have.
 // e.g. "fluent Dutch being a nice-to-have but certainly not compulsory"
+// The negative lookahead on nice-to-have prevents section headings like
+// "Nice-to-have Skills:" from being mistaken for a negation qualifier.
 const REQUIREMENT_NEGATION_ADVANTAGE_RE =
-  /\b(?:nice-?to-?have|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
+  /\b(?:nice-?to-?have(?!\s+\w+\s*:|\s*:)|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
 
 // Negation patterns indicating English alone is fully sufficient — not even an advantage signal.
 // e.g. "fluent in German or English" → English is enough, German is not preferred
@@ -957,6 +960,7 @@ export function detectNativeLanguage(
   }
 
   for (const lang of languages) {
+    const langAdvRegex = buildAdvantageRegex(lang);
     for (const signal of buildRequirementSignals(lang)) {
       if (combined.includes(signal)) {
         if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
@@ -966,6 +970,17 @@ export function detectNativeLanguage(
           return {
             value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
             signals: [{ phase: '2a', description: `"${lang}" requirement phrase negated by context`, matched: signal }],
+          };
+        }
+        // If the advantage regex fully contains the requirement signal's match position,
+        // the requirement phrase is part of a larger advantage phrase (e.g. "dutch speaking
+        // skills on top of that are preferred") — the advantage wins.
+        const sigIdx = combined.indexOf(signal);
+        const advOverlap = langAdvRegex.exec(combined);
+        if (advOverlap && advOverlap.index <= sigIdx && advOverlap.index + advOverlap[0].length >= sigIdx + signal.length) {
+          return {
+            value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+            signals: [{ phase: '2a', description: `"${lang}" requirement phrase contained in advantage phrase`, matched: advOverlap[0] }],
           };
         }
         return {
