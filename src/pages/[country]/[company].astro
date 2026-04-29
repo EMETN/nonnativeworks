@@ -5,35 +5,53 @@ import PositionList from '../../components/company/PositionList.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import {
+    getCountryStats,
+    getCompanyStatsByCountry,
     getCountryBySlug,
     getCompanyBySlugInCountry,
     getPositionsByCompany,
 } from '../../lib/queries';
+import { nameToSlug } from '../../lib/country-flags';
 import { timeAgo } from '../../lib/time';
 
-const { country: countrySlug, company: companySlug } = Astro.params;
-const { request, cookies } = Astro;
+export const prerender = true;
 
-const country = await getCountryBySlug(request, cookies, countrySlug!);
+export async function getStaticPaths() {
+    const countries = await getCountryStats();
+    const paths = [];
+    for (const c of countries.filter((c) => c.total_positions > 0)) {
+        const companies = await getCompanyStatsByCountry(undefined, undefined, c.country_id);
+        for (const co of companies) {
+            paths.push({
+                params: { country: c.slug, company: nameToSlug(co.name) },
+            });
+        }
+    }
+    return paths;
+}
+
+const { country: countrySlug, company: companySlug } = Astro.params;
+
+const country = await getCountryBySlug(undefined, undefined, countrySlug!);
 
 if (!country) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    return Astro.redirect('/404');
 }
 
 const company = await getCompanyBySlugInCountry(
-    request,
-    cookies,
+    undefined,
+    undefined,
     country.country_id,
     companySlug!,
 );
 
 if (!company) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    return Astro.redirect('/404');
 }
 
 const positions = await getPositionsByCompany(
-    request,
-    cookies,
+    undefined,
+    undefined,
     company.company_id,
 );
 
