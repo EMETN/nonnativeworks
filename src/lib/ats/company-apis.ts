@@ -100,7 +100,14 @@ export interface CompanyApiConfig {
      * appended as a standalone query param, which is what Oracle HCM expects.
      * pageSize must match the limit=N value already in the URL.
      */
-    | { type: 'finder-offset'; pageSize: number };
+    | { type: 'finder-offset'; pageSize: number }
+    /**
+     * Cursor pagination: the response body contains a next-page URL at nextPagePath.
+     * The first request uses the configured method/body; subsequent requests follow the
+     * next-page URL as GET with no body. Stops when the path is null/empty or items is empty.
+     * Example: { type: 'cursor', nextPagePath: 'pagination_info.next_page' }
+     */
+    | { type: 'cursor'; nextPagePath: string };
   /** Dot-paths into each item in the jobs array. Arrays return their first element. */
   fields: {
     title: string;
@@ -611,26 +618,20 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
  'nordea.com': {
     url: 'https://www.nordea.com/en/api/jobs-list?_format=json&items_per_page=200&page=0&search=',
     method: 'GET',
-
     headers: {
       'User-Agent': 'Mozilla/5.0',
       'Accept': 'application/json',
       'Referer': 'https://www.nordea.com/en/careers/open-jobs',
     },
-
     pagination: { type: 'none' },
-
     itemsPath: 'results',
-
     fields: {
       title: 'title',
       location: 'location_name',
       id: 'nid',
       url: 'field_ad_url',
     },
-
     urlTemplate: '{field_ad_url}',
-
     companyName: 'Nordea',
     fetchDescription: true,
   },
@@ -660,6 +661,34 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
     descriptionFields: ['description_stripped'],
     companyName: 'Capgemini',
+  },
+
+  'careers.telekom.com': {
+    url: 'https://careers.telekom.com/api/jobs-proxy/search',
+    method: 'POST',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': '*/*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://careers.telekom.com/en/jobs',
+      'Origin': 'https://careers.telekom.com',
+    },
+    body: {
+      user_query: '',
+      locale: 'en',
+    },
+    pagination: { type: 'cursor', nextPagePath: 'pagination_info.next_page' },
+    itemsPath: 'data',
+    fields: {
+      title: 'title',
+      location: 'country',
+      cities: 'city',
+      jobFunction: 'category',
+      id: 'requisition_id',
+    },
+    urlTemplate: 'https://careers.telekom.com/en/jobs/{title|slug}-{requisition_id}',
+    companyName: 'Deutsche Telekom',
+    descriptionFields: ['requirement_description_md'],
   },
 
   'jobs.booking.com': {

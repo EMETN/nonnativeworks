@@ -116,20 +116,19 @@ scrapers:
   # ── Allianz ────────────────────────────────────────────────────────────────────
   - match: "careers.allianz.com/global/en/search-results"
     name: Allianz
-    extract_mode: script_json
-    script_key: jobs
+    extract_mode: script_var_json
+    var_name: phApp
+    data_path: data.jobs
     pagination:
-      type: page
-      param: page
+      type: offset
+      param: from
       page_size: 10
-    description_selector: "description"
+    extra_params:
+      s: 1
     fields:
       title: title
-      url: body.applyLinkProps.href
-      locations: header.locations
-      location_subfield: city
-      country_subfield: countryCode
-      job_function: header.teamTitle
+      url: applyUrl
+      location: city
   
     # ── Metso ────────────────────────────────────────────────────────────────────
   - match: "metso.com/corporate/careers/open-jobs"
