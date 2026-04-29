@@ -2,13 +2,7 @@
   SECRETS_SCAN_OMIT_KEYS = "PUBLIC_POSTHOG_HOST,PUBLIC_POSTHOG_KEY,PUBLIC_SENTRY_DSN,PUBLIC_SUPABASE_ANON_KEY,PUBLIC_SUPABASE_URL,SENTRY_ORG,SENTRY_PROJECT,SENTRY_DSN,SUPABASE_URL,SUPABASE_ANON_KEY,DOPPLER_PROJECT"
 
 [[redirects]]
-  from = "/ph-events/*"
+  from = "/t/*"
   to = "https://eu.i.posthog.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/ph-static/*"
-  to = "https://eu-assets.i.posthog.com/:splat"
   status = 200
   force = true

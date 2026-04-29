@@ -6,7 +6,7 @@ const VALID_CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
 const urlTransform = z
   .string()
   .transform((val) => val.replace(/^\[.*?\]\((.*?)\)$/, '$1').trim())
-  .pipe(z.string().url('Must be a valid URL').or(z.literal('')))
+  .pipe(z.url().or(z.literal('')))
   .optional();
 
 export const PositionSchema = z.object({
@@ -16,7 +16,7 @@ export const PositionSchema = z.object({
   city: z.array(z.string()).optional(),
   work_model: z.enum(['remote', 'hybrid', 'on-site']).optional(),
   requires_native_language: z.boolean({
-    required_error: 'requires_native_language must be true or false',
+    error: 'requires_native_language must be true or false',
   }),
   local_language_advantage: z.boolean().default(false),
   required_languages: z.array(z.string()).default([]),
@@ -25,10 +25,14 @@ export const PositionSchema = z.object({
   required_education: z.enum(['vocational', 'bachelor', 'master', 'mba', 'phd']).optional(),
   category: z
     .string()
-    .refine(
-      (val) => VALID_CATEGORY_SLUGS.includes(val),
-      (val) => ({ message: `Invalid category "${val}". Must be one of: ${VALID_CATEGORY_SLUGS.join(', ')}` })
-    ),
+    .superRefine((val, ctx) => {
+      if (!VALID_CATEGORY_SLUGS.includes(val)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `Invalid category "${val}". Must be one of: ${VALID_CATEGORY_SLUGS.join(', ')}`,
+        });
+      }
+    }),
 });
 
 export const CompanyEntrySchema = z.object({

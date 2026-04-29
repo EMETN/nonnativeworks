@@ -31,17 +31,15 @@ export default defineConfig({
     ],
     vite: {
         plugins: [tailwindcss()],
+        optimizeDeps: {
+            include: ['posthog-js/dist/module.full.no-external'],
+        },
         server: {
             proxy: {
-                '/ph-events': {
+                '/t': {
                     target: 'https://eu.i.posthog.com',
                     changeOrigin: true,
-                    rewrite: (path) => path.replace(/^\/ph-events/, ''),
-                },
-                '/ph-static': {
-                    target: 'https://eu-assets.i.posthog.com',
-                    changeOrigin: true,
-                    rewrite: (path) => path.replace(/^\/ph-static/, ''),
+                    rewrite: (path) => path.replace(/^\/t/, ''),
                 },
             },
         },
