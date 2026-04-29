@@ -1,23 +1,31 @@
 ---
+export const prerender = true;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CompanyGrid from '../../components/country/CompanyGrid.tsx';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
-import { getCountryBySlug, getCompanyStatsByCountry } from '../../lib/queries';
+import { getCountryStats, getCountryBySlug, getCompanyStatsByCountry } from '../../lib/queries';
+
+export async function getStaticPaths() {
+    const countries = await getCountryStats();
+    return countries
+        .filter((c) => c.total_positions > 0)
+        .map((c) => ({ params: { country: c.slug } }));
+}
 
 const { country: slug } = Astro.params;
-const { request, cookies } = Astro;
 
-const country = await getCountryBySlug(request, cookies, slug!);
+const country = await getCountryBySlug(undefined, undefined, slug!);
 
 if (!country) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    return Astro.redirect('/404');
 }
 
 const companies = await getCompanyStatsByCountry(
-    request,
-    cookies,
+    undefined,
+    undefined,
     country.country_id,
 );
 ---

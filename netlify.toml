@@ -8,17 +8,18 @@
   force = true
 
 [[headers]]
-  for = "/countries"
+  for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/countries"
+  [headers.values]
     Cache-Control = "public, max-age=60, s-maxage=300, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/companies"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
     Cache-Control = "public, max-age=60, s-maxage=300, stale-while-revalidate=86400"
