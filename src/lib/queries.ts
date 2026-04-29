@@ -110,14 +110,15 @@ export async function getTopCompanies(request?: Request, cookies?: AstroCookies,
 }
 
 export async function getCountryBySlug(
-  request: Request,
-  cookies: AstroCookies,
-  slug: string
+  request?: Request,
+  cookies?: AstroCookies,
+  slug?: string,
+  supabase?: SupabaseClient,
 ): Promise<CountryStats | null> {
-  if (!isValidSlug(slug)) return null;
+  if (!slug || !isValidSlug(slug)) return null;
 
-  const supabase = client(request, cookies);
-  const { data, error } = await supabase
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
     .from('country_stats')
     .select('*')
     .eq('slug', slug)
@@ -139,12 +140,14 @@ export async function getAllCountries(request: Request, cookies: AstroCookies): 
 }
 
 export async function getCompanyStatsByCountry(
-  request: Request,
-  cookies: AstroCookies,
-  countryId: string
+  request?: Request,
+  cookies?: AstroCookies,
+  countryId?: string,
+  supabase?: SupabaseClient,
 ): Promise<CompanyStats[]> {
-  const supabase = client(request, cookies);
-  const { data, error } = await supabase
+  if (!countryId) return [];
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
     .from('company_stats')
     .select('*')
     .eq('country_id', countryId)
