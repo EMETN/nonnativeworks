@@ -4,16 +4,22 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import CompanyCountryGrid from '../../components/company/CompanyCountryGrid.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
-import { getGlobalCompanyBySlug } from '../../lib/queries';
+import { getTopCompanies, getGlobalCompanyBySlug } from '../../lib/queries';
 import { timeAgo } from '../../lib/time';
 
-const { company: companySlug } = Astro.params;
-const { request, cookies } = Astro;
+export const prerender = true;
 
-const company = await getGlobalCompanyBySlug(request, cookies, companySlug!);
+export async function getStaticPaths() {
+    const companies = await getTopCompanies(undefined, undefined, 0);
+    return companies.map((c) => ({ params: { company: c.primary_company_slug } }));
+}
+
+const { company: companySlug } = Astro.params;
+
+const company = await getGlobalCompanyBySlug(undefined, undefined, companySlug!);
 
 if (!company) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    return Astro.redirect('/404');
 }
 
 const entries = company.entries.map((e) => ({
