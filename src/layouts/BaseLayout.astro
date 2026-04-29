@@ -83,35 +83,27 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         />
     </head>
     <body class="flex flex-col overflow-x-hidden" style="min-height: 100vh; min-height: 100dvh;">
-        {import.meta.env.PUBLIC_POSTHOG_KEY && (
-            <script is:inline define:vars={{ posthogKey: import.meta.env.PUBLIC_POSTHOG_KEY }}>
-                (function() {
-                    var origin = window.location.origin;
-                    var isDev = window.location.hostname === 'localhost';
-                    var s = document.createElement('script');
-                    s.src = isDev
-                        ? '/node_modules/posthog-js/dist/array.full.js'
-                        : origin + '/ph-events/static/array.full.js';
-                    s.onload = function() {
-                        window.posthog.init(posthogKey, {
-                            api_host: origin + '/ph-events',
-                            ui_host: origin + '/ph-static',
-                            autocapture: true,
-                            capture_pageview: true,
-                            capture_pageleave: false,
-                            request_batching: true,
-                            advanced_disable_flags: true,
-                            disable_external_dependency_loading: isDev,
-                            disable_session_recording: isDev,
-                            capture_dead_clicks: !isDev,
-                            capture_performance: !isDev,
-                            debug: false,
-                        });
-                    };
-                    document.head.appendChild(s);
-                })();
-            </script>
-        )}
+        <script>
+            const key = import.meta.env.PUBLIC_POSTHOG_KEY
+            if (key) {
+                import('../lib/wa').then(({ default: posthog }) => {
+                    posthog.init(key, {
+                        api_host: window.location.origin + '/t',
+                        ui_host: 'https://eu.posthog.com',
+                        autocapture: true,
+                        capture_pageview: true,
+                        capture_pageleave: false,
+                        request_batching: true,
+                        advanced_disable_flags: true,
+                        disable_external_dependency_loading: true,
+                        disable_session_recording: import.meta.env.DEV,
+                        capture_dead_clicks: !import.meta.env.DEV,
+                        capture_performance: !import.meta.env.DEV,
+                        debug: false,
+                    })
+                })
+            }
+        </script>
         <!-- Skip to content (accessibility) -->
         <a
             href="#main-content"
