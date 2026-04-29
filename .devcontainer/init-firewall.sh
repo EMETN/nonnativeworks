@@ -119,8 +119,8 @@ for domain in \
     "kone.wd3.myworkdayjobs.com" \
     "finnair.wd103.myworkdayjobs.com" \
     "maersk.wd3.myworkdayjobs.com" \
-    "careers.abb" \
-    "baronacareers.com" \
+    "sanoma.wd3.myworkdayjobs.com" \
+    "fiskars.wd3.myworkdayjobs.com" \
     "barona.fi" \
     "nitor.com" \
     "alpha-sense.com" \
@@ -169,6 +169,20 @@ for domain in \
     "revolut.com" \
     "careers.wartsila.com" \
     "edenred.com" \
+    "careers.thalesgroup.com" \
+    "careers.publicisgroupe.com" \
+    "careers.telekom.com" \
+    "uber.com" \
+    "jobs.ikea.com" \
+    "careers.deliveryhero.com" \
+    "swecogroup.com" \
+    "lifeatspotify.com" \
+    "futurice.com" \
+    "nexigroup.com" \
+    "jobs.deel.com" \
+    "aiven.io" \
+    "upcloud.teamtailor.com" \
+    "career.nordnetab.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
