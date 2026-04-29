@@ -13,6 +13,7 @@ const isNetlify = !!process.env.NETLIFY;
 
 // https://astro.build/config
 export default defineConfig({
+    site: 'https://nonnativeworks.com',
     output: 'server',
     adapter,
     prefetch: {
