@@ -9,6 +9,7 @@ import sentry from '@sentry/astro';
 // Use the Netlify adapter when building on Netlify (NETLIFY env var is set automatically).
 // Fall back to the Node standalone adapter for local dev and GitHub Actions CI.
 const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
+const isNetlify = !!process.env.NETLIFY;
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,15 +20,17 @@ export default defineConfig({
     },
     integrations: [
         preact(),
-        sentry({
-            clientInitPath: 'src/lib/sentry-client.ts',
-            serverInitPath: 'src/lib/sentry-server.ts',
-            sourceMapsUploadOptions: {
-                org: process.env.SENTRY_ORG,
-                project: process.env.SENTRY_PROJECT,
-                authToken: process.env.SENTRY_AUTH_TOKEN,
-            },
-        }),
+        ...(isNetlify
+            ? [sentry({
+                  clientInitPath: 'src/lib/sentry-client.ts',
+                  serverInitPath: 'src/lib/sentry-server.ts',
+                  sourceMapsUploadOptions: {
+                      org: process.env.SENTRY_ORG,
+                      project: process.env.SENTRY_PROJECT,
+                      authToken: process.env.SENTRY_AUTH_TOKEN,
+                  },
+              })]
+            : []),
     ],
     vite: {
         plugins: [tailwindcss()],
