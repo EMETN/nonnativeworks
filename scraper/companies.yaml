@@ -142,7 +142,7 @@ companies:
       min_positions: 1
 
     - name: SAP
-      url: https://jobs.sap.com/search/?createNewAlert=false&q=
+      url: https://jobs.sap.com/search
       min_positions: 5
 
     - name: Smartly
