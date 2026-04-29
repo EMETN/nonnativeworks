@@ -91,9 +91,9 @@ export interface TopCompany {
   primary_company_slug: string;
 }
 
-export async function getTopCompanies(request: Request, cookies: AstroCookies, limit = 5): Promise<TopCompany[]> {
-  const supabase = client(request, cookies);
-  const { data, error } = await supabase
+export async function getTopCompanies(request?: Request, cookies?: AstroCookies, limit = 5, supabase?: SupabaseClient): Promise<TopCompany[]> {
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
     .rpc('top_companies_by_english', { lim: limit });
 
   if (error) { console.error('getTopCompanies:', error.message); throw new Error('Failed to load top companies'); }
