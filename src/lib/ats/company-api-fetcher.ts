@@ -66,10 +66,19 @@ function extractItems(data: unknown, itemsPath: string | undefined): unknown[] {
   return Array.isArray(raw) ? raw : [];
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function buildUrlFromTemplate(item: unknown, template: string): string {
-  return template.replace(/\{([^}]+)\}/g, (_, path: string) => {
+  return template.replace(/\{([^}]+)\}/g, (_, expr: string) => {
+    const [path, modifier] = expr.split('|');
     const val = getString(item, path);
-    return val ?? '';
+    if (!val) return '';
+    return modifier === 'slug' ? slugify(val) : val;
   });
 }
 
@@ -663,6 +672,38 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
       }
       if (items.length < pageSize) {
         console.log(`[${label}] stopping: partial page (${items.length} < ${pageSize}) at finder-offset=${offset}`);
+        break;
+      }
+
+      await sleep(randomDelay());
+    }
+  } else if (pagination.type === 'cursor') {
+    let nextUrl: string | undefined;
+
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const isFirst = i === 0;
+      const pageUrl = isFirst ? url : nextUrl!;
+      const pageMethod = isFirst ? method : 'GET';
+      const pageBody = isFirst ? body : undefined;
+
+      console.log(`[${label}] fetching cursor page=${i + 1}: ${pageUrl}`);
+      const data = await fetchPage(pageUrl, pageMethod, pageBody, headers, bodyType);
+      if (!data) break;
+
+      const items = extractItems(data, itemsPath);
+      const before = jobs.length;
+      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
+      console.log(`[${label}] cursor page=${i + 1} → ${items.length} items, mapped ${jobs.length - before}, cumulative=${jobs.length}`, paginationMeta(data));
+
+      if (items.length === 0) {
+        console.log(`[${label}] stopping: empty page at cursor page=${i + 1}`);
+        break;
+      }
+
+      const rawNext = getPath(data, pagination.nextPagePath);
+      nextUrl = typeof rawNext === 'string' && rawNext ? rawNext : undefined;
+      if (!nextUrl) {
+        console.log(`[${label}] stopping: no next_page at cursor page=${i + 1}`);
         break;
       }
 

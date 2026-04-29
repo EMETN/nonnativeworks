@@ -22,6 +22,13 @@ Three extraction modes (set via extract_mode in config):
     fan-out works via a locations array of objects with location_subfield and
     country_subfield keys.
 
+  script_var_json
+    Jobs are embedded as a plain JavaScript variable assignment in a <script>
+    tag, e.g. var phApp = phApp || {"data": {"jobs": [...]}}. var_name
+    identifies the variable; data_path (dot-notation) navigates to the jobs
+    array inside the parsed object. Fields support the same dot-notation access
+    as script_json.
+
 All modes share the same two-phase structure:
   1. Listing — fetch page(s) and extract jobs.
   2. Description enrichment — detail pages are always fetched for English-titled
@@ -232,7 +239,7 @@ def _fetch_attribute_json_page(
     return _extract_attribute_json(resp.text, cfg)
 
 
-# ── script_json helpers ───────────────────────────────────────────────────────
+# ── script_json / script_var_json helpers ─────────────────────────────────────
 
 def _get_nested(obj, path: str):
     """Dot-notation access into a nested dict, e.g. 'header.roleTitle'."""
@@ -342,6 +349,106 @@ def _fetch_script_json_page(
         return []
     return _extract_script_json(resp.text, cfg, list_url)
 
+def _find_jobs_payload(html: str):
+    """
+    Search raw HTML for:
+        {"status":...,"hits":...,"totalHits":...,"data":{"jobs":[...]}}
+
+    Return jobs list or None.
+    """
+    marker = '"totalHits"'
+    decoder = json_mod.JSONDecoder()
+
+    pos = 0
+    while True:
+        idx = html.find(marker, pos)
+        if idx == -1:
+            return None
+
+        # walk backward to nearest opening {
+        start = idx
+        while start >= 0 and html[start] != "{":
+            start -= 1
+
+        if start < 0:
+            pos = idx + len(marker)
+            continue
+
+        try:
+            obj, _ = decoder.raw_decode(html, start)
+        except Exception:
+            pos = idx + len(marker)
+            continue
+
+        if not isinstance(obj, dict):
+            pos = idx + len(marker)
+            continue
+
+        data = obj.get("data")
+        if isinstance(data, dict) and isinstance(data.get("jobs"), list):
+            return data["jobs"]
+
+        pos = idx + len(marker)
+
+
+def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
+    """
+    Extract jobs from embedded JSON payload in raw HTML.
+    """
+    fields = cfg.get("fields", {})
+
+    title_field = fields.get("title", "title")
+    url_field = fields.get("url", "url")
+    location_field = fields.get("location")
+    jf_field = fields.get("job_function")
+
+    items = _find_jobs_payload(html)
+
+    if not items:
+        print("generic: jobs payload not found", file=sys.stderr)
+        return []
+
+    print(f"generic: found jobs payload ({len(items)} items)", file=sys.stderr)
+
+    jobs = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+
+        title = _get_nested(item, title_field)
+        if not title:
+            continue
+
+        raw_url = _get_nested(item, url_field)
+        job_url = urljoin(base_url, raw_url) if raw_url else None
+
+        location = _get_nested(item, location_field)
+        jf = _get_nested(item, jf_field) if jf_field else None
+
+        job = build_job(title, job_url, location)
+
+        if jf:
+            job["jobFunction"] = jf
+
+        jobs.append(job)
+
+    return jobs
+
+
+def _fetch_script_var_json_page(
+    session: requests.Session,
+    list_url: str,
+    params: dict,
+    cfg: dict,
+) -> list[dict]:
+    try:
+        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        return []
+    return _extract_script_var_json(resp.text, cfg, list_url)
+
 
 # ── detail page enrichment (shared) ──────────────────────────────────────────
 
@@ -397,6 +504,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         fetch_page = _fetch_attribute_json_page
     elif extract_mode == "script_json":
         fetch_page = _fetch_script_json_page
+    elif extract_mode == "script_var_json":
+        fetch_page = _fetch_script_var_json_page
     else:
         fetch_page = _fetch_css_cards_page
 
