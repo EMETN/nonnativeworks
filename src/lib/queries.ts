@@ -368,15 +368,16 @@ export interface GlobalCompanyData {
 }
 
 export async function getGlobalCompanyBySlug(
-  request: Request,
-  cookies: AstroCookies,
-  companySlug: string
+  request?: Request,
+  cookies?: AstroCookies,
+  companySlug?: string,
+  supabase?: SupabaseClient,
 ): Promise<GlobalCompanyData | null> {
-  if (!isValidSlug(companySlug)) return null;
+  if (!companySlug || !isValidSlug(companySlug)) return null;
 
-  const supabase = client(request, cookies);
+  const sb = client(request, cookies, supabase);
 
-  const { data: nameRows, error: nameErr } = await supabase
+  const { data: nameRows, error: nameErr } = await sb
     .from('companies')
     .select('name');
   if (nameErr) { console.error('getGlobalCompanyBySlug names:', nameErr.message); return null; }
@@ -385,7 +386,7 @@ export async function getGlobalCompanyBySlug(
   const matchedName = uniqueNames.find((n) => nameToSlug(n) === companySlug);
   if (!matchedName) return null;
 
-  const { data: statsData, error: statsErr } = await supabase
+  const { data: statsData, error: statsErr } = await sb
     .from('company_stats')
     .select('*')
     .eq('name', matchedName);
@@ -398,8 +399,8 @@ export async function getGlobalCompanyBySlug(
   const companyIds = matches.map((m) => m.company_id);
 
   const [{ data: countryData }, { data: posData }] = await Promise.all([
-    supabase.from('countries').select('id, name, slug, code').in('id', countryIds),
-    supabase.from('positions').select(`
+    sb.from('countries').select('id, name, slug, code').in('id', countryIds),
+    sb.from('positions').select(`
       id, company_id, title, url, city, work_model,
       requires_native_language, local_language_advantage,
       category:categories(name)
