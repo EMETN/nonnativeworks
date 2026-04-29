@@ -1,5 +1,6 @@
 import type { AstroCookies } from 'astro';
-import { createSupabaseClient } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSupabaseClient, createPublicClient } from './supabase';
 import type {
   CountryStats,
   CompanyStats,
@@ -11,8 +12,10 @@ import type {
 } from './types';
 import { nameToSlug } from './country-flags';
 
-function client(request: Request, cookies: AstroCookies) {
-  return createSupabaseClient(request, cookies);
+function client(request?: Request, cookies?: AstroCookies, supabase?: SupabaseClient) {
+  if (supabase) return supabase;
+  if (request && cookies) return createSupabaseClient(request, cookies);
+  return createPublicClient();
 }
 
 const VALID_SLUG = /^[a-z0-9-]+$/;
@@ -21,9 +24,9 @@ function isValidSlug(slug: string): boolean {
   return VALID_SLUG.test(slug);
 }
 
-export async function getCountryStats(request: Request, cookies: AstroCookies): Promise<CountryStats[]> {
-  const supabase = client(request, cookies);
-  const { data, error } = await supabase
+export async function getCountryStats(request?: Request, cookies?: AstroCookies, supabase?: SupabaseClient): Promise<CountryStats[]> {
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
     .from('country_stats')
     .select('*')
     .order('last_updated', { ascending: false, nullsFirst: false });
@@ -32,9 +35,9 @@ export async function getCountryStats(request: Request, cookies: AstroCookies): 
   return (data ?? []) as CountryStats[];
 }
 
-export async function getCompanyCountsByCountry(request: Request, cookies: AstroCookies): Promise<Record<string, number>> {
-  const supabase = client(request, cookies);
-  const { data, error } = await supabase
+export async function getCompanyCountsByCountry(request?: Request, cookies?: AstroCookies, supabase?: SupabaseClient): Promise<Record<string, number>> {
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
     .from('companies')
     .select('country_id');
 
@@ -46,8 +49,8 @@ export async function getCompanyCountsByCountry(request: Request, cookies: Astro
   return counts;
 }
 
-export async function getGlobalStats(request: Request, cookies: AstroCookies): Promise<GlobalStats> {
-  const supabase = client(request, cookies);
+export async function getGlobalStats(request?: Request, cookies?: AstroCookies, supabase?: SupabaseClient): Promise<GlobalStats> {
+  const sb = client(request, cookies, supabase);
 
   const [
     { count: totalCount, error: posErr },
@@ -55,10 +58,10 @@ export async function getGlobalStats(request: Request, cookies: AstroCookies): P
     { data: companyCountData, error: compErr },
     { count: countryCount, error: countryErr },
   ] = await Promise.all([
-    supabase.from('positions').select('*', { count: 'exact', head: true }),
-    supabase.from('positions').select('*', { count: 'exact', head: true }).eq('requires_native_language', false),
-    supabase.rpc('count_distinct_companies'),
-    supabase.from('countries').select('*', { count: 'exact', head: true }),
+    sb.from('positions').select('*', { count: 'exact', head: true }),
+    sb.from('positions').select('*', { count: 'exact', head: true }).eq('requires_native_language', false),
+    sb.rpc('count_distinct_companies'),
+    sb.from('countries').select('*', { count: 'exact', head: true }),
   ]);
 
   if (posErr) { console.error('getGlobalStats positions:', posErr.message); throw new Error('Failed to load global stats'); }
