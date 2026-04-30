@@ -103,11 +103,14 @@ export interface CompanyApiConfig {
     | { type: 'finder-offset'; pageSize: number }
     /**
      * Cursor pagination: the response body contains a next-page URL at nextPagePath.
-     * The first request uses the configured method/body; subsequent requests follow the
-     * next-page URL as GET with no body. Stops when the path is null/empty or items is empty.
-     * Example: { type: 'cursor', nextPagePath: 'pagination_info.next_page' }
+     * All requests use the same method and body as the initial request.
+     * Stops when the path is null/empty or items is empty.
+     * rebaseToOrigin: when true, query params from next_page are applied to the original
+     * base URL instead of following the next_page URL directly. Use when next_page points
+     * to an internal host unreachable from outside (e.g. Telekom's backend proxy).
+     * Example: { type: 'cursor', nextPagePath: 'pagination_info.next_page', rebaseToOrigin: true }
      */
-    | { type: 'cursor'; nextPagePath: string };
+    | { type: 'cursor'; nextPagePath: string; rebaseToOrigin?: boolean };
   /** Dot-paths into each item in the jobs array. Arrays return their first element. */
   fields: {
     title: string;
@@ -677,7 +680,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       user_query: '',
       locale: 'en',
     },
-    pagination: { type: 'cursor', nextPagePath: 'pagination_info.next_page' },
+    pagination: { type: 'cursor', nextPagePath: 'pagination_info.next_page', rebaseToOrigin: true },
     itemsPath: 'data',
     fields: {
       title: 'title',
@@ -741,10 +744,11 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
 // a substring of their career page URL. Used as a fallback when no ATS API
 // provides a canonical company name — prevents slug-derived names like
 // "Academicwork" instead of "Academic Work".
-export const PYTHON_SCRAPER_COMPANY_NAMES: Array<{ urlSubstring: string; name: string }> = [
+export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string }> = [
   { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
   { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
   { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
   { urlSubstring: 'jobs.arla.com', name: 'Arla' },
   { urlSubstring: 'jobs.sap.com', name: 'SAP' },
+  { urlSubstring: 'edenpeople', name: 'Edenred' },
 ];

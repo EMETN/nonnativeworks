@@ -681,13 +681,10 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
     let nextUrl: string | undefined;
 
     for (let i = 0; i < MAX_PAGES; i++) {
-      const isFirst = i === 0;
-      const pageUrl = isFirst ? url : nextUrl!;
-      const pageMethod = isFirst ? method : 'GET';
-      const pageBody = isFirst ? body : undefined;
+      const pageUrl = i === 0 ? url : nextUrl!;
 
       console.log(`[${label}] fetching cursor page=${i + 1}: ${pageUrl}`);
-      const data = await fetchPage(pageUrl, pageMethod, pageBody, headers, bodyType);
+      const data = await fetchPage(pageUrl, method, body, headers, bodyType);
       if (!data) break;
 
       const items = extractItems(data, itemsPath);
@@ -701,7 +698,22 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
       }
 
       const rawNext = getPath(data, pagination.nextPagePath);
-      nextUrl = typeof rawNext === 'string' && rawNext ? rawNext : undefined;
+      if (typeof rawNext === 'string' && rawNext) {
+        if (pagination.rebaseToOrigin) {
+          try {
+            const nextParams = new URL(rawNext).searchParams;
+            const baseUrl = new URL(url);
+            nextParams.forEach((val, key) => baseUrl.searchParams.set(key, val));
+            nextUrl = baseUrl.toString();
+          } catch {
+            nextUrl = rawNext;
+          }
+        } else {
+          nextUrl = rawNext;
+        }
+      } else {
+        nextUrl = undefined;
+      }
       if (!nextUrl) {
         console.log(`[${label}] stopping: no next_page at cursor page=${i + 1}`);
         break;
