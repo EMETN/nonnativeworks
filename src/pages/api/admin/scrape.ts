@@ -42,7 +42,7 @@ import type {
 import {
   COMPANY_APIS,
   CAREER_URL_ALIASES,
-  PYTHON_SCRAPER_COMPANY_NAMES,
+  COMPANY_NAME_OVERRIDES,
 } from "../../../lib/ats/company-apis";
 import {
   fetchCompanyApiJobs,
@@ -282,7 +282,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
   // then to the slug extracted from the hostname (e.g. "tieto" → "Tieto").
   // The admin can correct it in the review UI before uploading.
   const lower = careerUrl.toLowerCase();
-  const nameOverride = PYTHON_SCRAPER_COMPANY_NAMES.find((e) => lower.includes(e.urlSubstring));
+  const nameOverride = COMPANY_NAME_OVERRIDES.find((e) => lower.includes(e.urlSubstring.toLowerCase()));
   if (nameOverride) {
     companyName = nameOverride.name;
   } else if (!companyName) {
