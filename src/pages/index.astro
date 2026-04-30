@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import TopList from '../components/shared/TopList.astro';
 import { getCountryStats, getGlobalStats, getTopCompanies } from '../lib/queries';
@@ -12,9 +14,9 @@ let loadError = false;
 
 try {
   const [allCountries, globalStats, tc] = await Promise.all([
-    getCountryStats(Astro.request, Astro.cookies),
-    getGlobalStats(Astro.request, Astro.cookies),
-    getTopCompanies(Astro.request, Astro.cookies, 5),
+    getCountryStats(),
+    getGlobalStats(),
+    getTopCompanies(),
   ]);
   countries = allCountries.filter((c) => c.total_positions > 0);
   stats = globalStats;
