@@ -229,6 +229,8 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'scandinavian language skills is a plus',
   'a nordic language is a strong advantage',
   'a scandinavian language is a strong advantage',
+  'proficiency in one of the nordic languages is beneficial',
+  'proficiency in one of the scandinavian languages is beneficial',
   'knowledge of other nordic languages is considered an additional qualification',
   'nordic language is considered an additional qualification',
   'scandinavian language is considered an additional qualification',
@@ -376,12 +378,34 @@ const LANG_MENTIONS = (lang: string) => [
  */
 function buildAdvantageRegex(lang: string): RegExp {
   const [bare, ...compound] = LANG_MENTIONS(lang).map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:considered|seen\\s+as))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)|advantageous|preferred)\\b`;
+  // Optional modifier between operator and article: "considered", "considered as", "seen as",
+  // or any single word (handles typos like "considerd" and extras like "also", "really").
+  const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)|advantageous|preferred)\\b`;
   const parts = [
     `${bare}${operatorSuffix}`,
-    ...(compound.length > 0 ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,6}${operatorSuffix}`] : []),
+    // Compound mentions allow up to 8 gap words (e.g. "Finnish skills in both oral and written are seen as…")
+    ...(compound.length > 0 ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,8}${operatorSuffix}`] : []),
   ];
   return new RegExp(`(?:${parts.join('|')})`);
+}
+
+/**
+ * Matches "{lang}[, lang2, ...] or [additional/another/other/similar] [adj] language[s]
+ * followed by an advantage phrase" — e.g.:
+ *   "German, French, or other European languages are a strong advantage"
+ *   "German or additional European languages are a plus"
+ *   "German or another European language considered a strong advantage"
+ */
+function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
+  const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const advantageOp =
+    `(?:considered\\s+)?` +
+    `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
+    `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|plus|asset|bonus|merit|benefit)\\b`;
+  return new RegExp(
+    `\\b${escaped}(?:\\s*,\\s*[a-z]+)*\\s+or\\s+(?:additional|another|other|similar)\\s+[a-z]+\\s+languages?\\s+${advantageOp}`,
+    'i',
+  );
 }
 
 function buildAdvantageSignals(lang: string): string[] {
@@ -418,6 +442,8 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`${lang} preferred`);
   signals.push(`${lang} a plus`);
   signals.push(`${lang} a bonus`);
+  signals.push(`ideally ${lang}`);
+  signals.push(`ideally in ${lang}`);
   return signals;
 }
 
@@ -441,6 +467,7 @@ function buildRequirementSignals(lang: string): string[] {
     // Fluency / proficiency
     `fluent ${lang}`,
     `fluent in ${lang}`,
+    `fluent level in ${lang}`,
     `fluent language skills in ${lang}`,
     `fluency in ${lang}`,
     `proficiency in ${lang}`,
@@ -483,6 +510,7 @@ function buildRequirementSignals(lang: string): string[] {
     `speaks ${lang}`,
     `speak ${lang}`,
     `communicate in ${lang}`,
+    `communicate fluently in ${lang}`,
     `${lang} communication skills`,
     `communication skills in ${lang}`,
     `${lang} language skills`,
@@ -563,7 +591,7 @@ function knowledgeOfSignalIsAdjective(combined: string, signal: string): boolean
 // The negative lookahead on nice-to-have prevents section headings like
 // "Nice-to-have Skills:" from being mistaken for a negation qualifier.
 const REQUIREMENT_NEGATION_ADVANTAGE_RE =
-  /\b(?:nice-?to-?have(?!\s+\w+\s*:|\s*:)|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement))\b/;
+  /\b(?:nice-?to-?have(?!\s+\w+\s*:|\s*:)|not\s+(?:compulsory|required|mandatory|essential|necessary|needed)|is\s+(?:optional|not\s+(?:required|mandatory|compulsory|essential))|not\s+a\s+(?:must|requirement)|considered\s+(?:as\s+)?(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|plus|asset|bonus|merit))\b/;
 
 // Negation patterns indicating English alone is fully sufficient — not even an advantage signal.
 // e.g. "fluent in German or English" → English is enough, German is not preferred
@@ -583,7 +611,7 @@ const REQUIREMENT_ADVANTAGE_PREFIX_RE =
 // Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
 // the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
 const DIRECT_ADVANTAGE_SUFFIX_RE =
-  /^\s+(?:is\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
+  /^\s+(?:is\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
 
 type NegationKind = 'advantage' | 'none' | false;
 
@@ -773,6 +801,9 @@ export function detectNativeLanguage(
     .replace(/[()]/g, ' ')
     .replace(/&/g, 'and')
     .replace(/\s\+\s/g, ' and ')
+    // Normalise "and/or" to "/" so the slash expansion below handles it:
+    // "Finnish and/or Swedish skills" → "Finnish/Swedish skills" → "Finnish skills Swedish skills"
+    .replace(/\band\/or\b/g, '/')
     // Expand slash-separated language alternatives so that per-language signal
     // phrases match each option independently — but only when the slash group is
     // followed by a language-context word (speaking, skills, etc.) to avoid
@@ -812,6 +843,14 @@ export function detectNativeLanguage(
           signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: advMatch[0] }],
         };
       }
+    }
+    // "{lang}[, lang2] or [additional/another/other] [group] languages are a plus/advantage"
+    const langGroupAdvMatch = buildLangOrGroupAdvantageRegex(lang).exec(combined);
+    if (langGroupAdvMatch && !hasRequirement) {
+      return {
+        value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
+        signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: langGroupAdvMatch[0] }],
+      };
     }
   }
 
@@ -1028,6 +1067,10 @@ export function detectNativeLanguage(
             signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
           };
         }
+      }
+      if (!foundAdvantage) {
+        const groupAdvMatch = buildLangOrGroupAdvantageRegex(kw).exec(combined);
+        if (groupAdvMatch) foundAdvantage = groupAdvMatch[0];
       }
       if (foundAdvantage) {
         return {
