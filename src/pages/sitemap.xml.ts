@@ -25,6 +25,8 @@ export const GET: APIRoute = async ({ url }) => {
 
   const staticPages: SitemapPage[] = [
     { loc: base, priority: '1.0', changefreq: 'daily' },
+    { loc: `${base}/countries`, priority: '0.9', changefreq: 'daily' },
+    { loc: `${base}/companies`, priority: '0.9', changefreq: 'daily' },
   ];
 
   const countryPages: SitemapPage[] = (countries ?? []).map((c) => ({
@@ -34,14 +36,28 @@ export const GET: APIRoute = async ({ url }) => {
     lastmod: c.created_at ? c.created_at.slice(0, 10) : undefined,
   }));
 
-  const companyPages: SitemapPage[] = (companies ?? []).map((c: any) => ({
+  const companyCountryPages: SitemapPage[] = (companies ?? []).map((c: any) => ({
     loc: `${base}/${c.country?.slug}/${nameToSlug(c.name)}`,
     priority: '0.6',
     changefreq: 'weekly',
     lastmod: c.updated_at ? c.updated_at.slice(0, 10) : undefined,
   }));
 
-  const allPages = [...staticPages, ...countryPages, ...companyPages];
+  const uniqueSlugs = new Set<string>();
+  const globalCompanyPages: SitemapPage[] = [];
+  for (const c of companies ?? []) {
+    const slug = nameToSlug((c as any).name);
+    if (uniqueSlugs.has(slug)) continue;
+    uniqueSlugs.add(slug);
+    globalCompanyPages.push({
+      loc: `${base}/companies/${slug}`,
+      priority: '0.7',
+      changefreq: 'weekly',
+      lastmod: (c as any).updated_at ? (c as any).updated_at.slice(0, 10) : undefined,
+    });
+  }
+
+  const allPages = [...staticPages, ...countryPages, ...globalCompanyPages, ...companyCountryPages];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

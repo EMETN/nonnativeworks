@@ -9,7 +9,7 @@
  */
 
 import { classifyJobVerbose } from '../src/lib/classifier';
-import { countryNameToSlug } from '../src/lib/country-flags';
+import { nameToSlug } from '../src/lib/country-flags';
 import { extractCitiesForCountry } from '../src/lib/ats/country-lookup';
 import { logScrapeRun, type PositionLogEntry } from '../src/lib/scrape-logger';
 
@@ -113,7 +113,7 @@ for (const [cc, jobs] of byCountry) {
 
   entries.push({
     company_name: companyName,
-    country: countryNameToSlug(countryName),
+    country: nameToSlug(countryName),
     country_name: countryName,
     country_code: cc,
     career_page_url: careerUrl,
