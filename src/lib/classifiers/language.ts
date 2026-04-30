@@ -7,169 +7,215 @@ import { titleAppearsNonEnglish, KEYWORDS_RE } from '../ats/title-language';
 // ---------------------------------------------------------------------------
 
 const COUNTRY_LANGUAGE_MAP: Record<string, string[]> = {
-  FI: ['finnish', 'suomi', 'suomen'],
-  SE: ['swedish', 'svenska'],
-  NO: ['norwegian', 'norsk', 'bokmål', 'nynorsk'],
-  DK: ['danish', 'dansk'],
-  IS: ['icelandic', 'íslenska'],
-  DE: ['german', 'deutsch'],
-  AT: ['german', 'deutsch'],
-  CH: ['german', 'deutsch', 'french', 'français', 'italian', 'italiano'],
-  NL: ['dutch', 'nederlands'],
-  BE: ['dutch', 'nederlands', 'french', 'français', 'flemish'],
-  FR: ['french', 'français', 'francais'],
-  IT: ['italian', 'italiano'],
-  ES: ['spanish', 'español', 'espanol', 'castellano'],
-  PT: ['portuguese', 'português', 'portugues'],
-  PL: ['polish', 'polski'],
-  CZ: ['czech', 'čeština', 'cestina'],
-  SK: ['slovak', 'slovenčina'],
-  HU: ['hungarian', 'magyar'],
-  RO: ['romanian', 'română', 'romana'],
-  BG: ['bulgarian', 'български'],
-  HR: ['croatian', 'hrvatski'],
-  SI: ['slovenian', 'slovenščina'],
-  RS: ['serbian', 'srpski'],
-  EE: ['estonian', 'eesti'],
-  LV: ['latvian', 'latviešu'],
-  LT: ['lithuanian', 'lietuvių'],
-  GR: ['greek', 'ελληνικά'],
-  TR: ['turkish', 'türkçe'],
-  UA: ['ukrainian', 'українська'],
-  RU: ['russian', 'русский'],
-  GE: ['georgian', 'ქართული'],
-  IL: ['hebrew', 'עברית'],
-  JP: ['japanese', '日本語'],
-  CN: ['chinese', 'mandarin', '普通话'],
-  KR: ['korean', '한국어'],
-  BA: ['bosnian', 'croatian', 'serbian'],
-  MK: ['macedonian'],
-  ME: ['montenegrin'],
-  AL: ['albanian', 'shqip'],
-  MD: ['romanian', 'moldovan'],
-  BY: ['belarusian', 'russian'],
+    FI: ['finnish', 'suomi', 'suomen'],
+    SE: ['swedish', 'svenska'],
+    NO: ['norwegian', 'norsk', 'bokmål', 'nynorsk'],
+    DK: ['danish', 'dansk'],
+    IS: ['icelandic', 'íslenska'],
+    DE: ['german', 'deutsch'],
+    AT: ['german', 'deutsch'],
+    CH: ['german', 'deutsch', 'french', 'français', 'italian', 'italiano'],
+    NL: ['dutch', 'nederlands'],
+    BE: ['dutch', 'nederlands', 'french', 'français', 'flemish'],
+    FR: ['french', 'français', 'francais'],
+    IT: ['italian', 'italiano'],
+    ES: ['spanish', 'español', 'espanol', 'castellano'],
+    PT: ['portuguese', 'português', 'portugues'],
+    PL: ['polish', 'polski'],
+    CZ: ['czech', 'čeština', 'cestina'],
+    SK: ['slovak', 'slovenčina'],
+    HU: ['hungarian', 'magyar'],
+    RO: ['romanian', 'română', 'romana'],
+    BG: ['bulgarian', 'български'],
+    HR: ['croatian', 'hrvatski'],
+    SI: ['slovenian', 'slovenščina'],
+    RS: ['serbian', 'srpski'],
+    EE: ['estonian', 'eesti'],
+    LV: ['latvian', 'latviešu'],
+    LT: ['lithuanian', 'lietuvių'],
+    GR: ['greek', 'ελληνικά'],
+    TR: ['turkish', 'türkçe'],
+    UA: ['ukrainian', 'українська'],
+    RU: ['russian', 'русский'],
+    GE: ['georgian', 'ქართული'],
+    IL: ['hebrew', 'עברית'],
+    JP: ['japanese', '日本語'],
+    CN: ['chinese', 'mandarin', '普通话'],
+    KR: ['korean', '한국어'],
+    BA: ['bosnian', 'croatian', 'serbian'],
+    MK: ['macedonian'],
+    ME: ['montenegrin'],
+    AL: ['albanian', 'shqip'],
+    MD: ['romanian', 'moldovan'],
+    BY: ['belarusian', 'russian'],
 };
 
 // Country → ISO 639-1 codes recognised by tinyld.
 // Regional variants are listed explicitly (e.g. Norwegian: no / nb / nn).
 const COUNTRY_LANG_CODES: Record<string, string[]> = {
-  FI: ['fi'],
-  SE: ['sv'],
-  NO: ['no', 'nb', 'nn', 'da'],  // tinyld often misdetects Norwegian as Danish — treat da as a NO signal too
-  DK: ['da', 'no', 'nb', 'nn'],  // symmetrically, Norwegian misdetected as Danish is also a DK signal
-  IS: ['is'],
-  NL: ['nl'],
-  DE: ['de'],
-  AT: ['de'],
-  CH: ['de', 'fr', 'it'],
-  BE: ['nl', 'fr'],
-  FR: ['fr'],
-  IT: ['it'],
-  ES: ['es'],
-  PT: ['pt'],
-  PL: ['pl'],
-  CZ: ['cs'],
-  SK: ['sk'],
-  HU: ['hu'],
-  RO: ['ro'],
-  HR: ['hr'],
-  SI: ['sl'],
-  RS: ['sr'],
-  EE: ['et'],
-  LV: ['lv'],
-  LT: ['lt'],
-  BG: ['bg'],
-  GR: ['el'],
-  TR: ['tr'],
-  UA: ['uk'],
-  RU: ['ru'],
+    FI: ['fi'],
+    SE: ['sv'],
+    NO: ['no', 'nb', 'nn', 'da'], // tinyld often misdetects Norwegian as Danish — treat da as a NO signal too
+    DK: ['da', 'no', 'nb', 'nn'], // symmetrically, Norwegian misdetected as Danish is also a DK signal
+    IS: ['is'],
+    NL: ['nl'],
+    DE: ['de'],
+    AT: ['de'],
+    CH: ['de', 'fr', 'it'],
+    BE: ['nl', 'fr'],
+    FR: ['fr'],
+    IT: ['it'],
+    ES: ['es'],
+    PT: ['pt'],
+    PL: ['pl'],
+    CZ: ['cs'],
+    SK: ['sk'],
+    HU: ['hu'],
+    RO: ['ro'],
+    HR: ['hr'],
+    SI: ['sl'],
+    RS: ['sr'],
+    EE: ['et'],
+    LV: ['lv'],
+    LT: ['lt'],
+    BG: ['bg'],
+    GR: ['el'],
+    TR: ['tr'],
+    UA: ['uk'],
+    RU: ['ru'],
 };
 
 // Country → canonical English language name(s), used in classification results.
 const COUNTRY_LANGUAGE_NAMES: Record<string, string[]> = {
-  FI: ['Finnish'],
-  SE: ['Swedish'],
-  NO: ['Norwegian'],
-  DK: ['Danish'],
-  IS: ['Icelandic'],
-  DE: ['German'],
-  AT: ['German'],
-  CH: ['German', 'French', 'Italian'],
-  NL: ['Dutch'],
-  BE: ['Dutch', 'French'],
-  FR: ['French'],
-  IT: ['Italian'],
-  ES: ['Spanish'],
-  PT: ['Portuguese'],
-  PL: ['Polish'],
-  CZ: ['Czech'],
-  SK: ['Slovak'],
-  HU: ['Hungarian'],
-  RO: ['Romanian'],
-  BG: ['Bulgarian'],
-  HR: ['Croatian'],
-  SI: ['Slovenian'],
-  RS: ['Serbian'],
-  EE: ['Estonian'],
-  LV: ['Latvian'],
-  LT: ['Lithuanian'],
-  GR: ['Greek'],
-  TR: ['Turkish'],
-  UA: ['Ukrainian'],
-  RU: ['Russian'],
-  GE: ['Georgian'],
-  IL: ['Hebrew'],
-  JP: ['Japanese'],
-  CN: ['Chinese'],
-  KR: ['Korean'],
-  BA: ['Bosnian', 'Croatian', 'Serbian'],
-  MK: ['Macedonian'],
-  ME: ['Montenegrin'],
-  AL: ['Albanian'],
-  MD: ['Romanian'],
-  BY: ['Belarusian', 'Russian'],
+    FI: ['Finnish'],
+    SE: ['Swedish'],
+    NO: ['Norwegian'],
+    DK: ['Danish'],
+    IS: ['Icelandic'],
+    DE: ['German'],
+    AT: ['German'],
+    CH: ['German', 'French', 'Italian'],
+    NL: ['Dutch'],
+    BE: ['Dutch', 'French'],
+    FR: ['French'],
+    IT: ['Italian'],
+    ES: ['Spanish'],
+    PT: ['Portuguese'],
+    PL: ['Polish'],
+    CZ: ['Czech'],
+    SK: ['Slovak'],
+    HU: ['Hungarian'],
+    RO: ['Romanian'],
+    BG: ['Bulgarian'],
+    HR: ['Croatian'],
+    SI: ['Slovenian'],
+    RS: ['Serbian'],
+    EE: ['Estonian'],
+    LV: ['Latvian'],
+    LT: ['Lithuanian'],
+    GR: ['Greek'],
+    TR: ['Turkish'],
+    UA: ['Ukrainian'],
+    RU: ['Russian'],
+    GE: ['Georgian'],
+    IL: ['Hebrew'],
+    JP: ['Japanese'],
+    CN: ['Chinese'],
+    KR: ['Korean'],
+    BA: ['Bosnian', 'Croatian', 'Serbian'],
+    MK: ['Macedonian'],
+    ME: ['Montenegrin'],
+    AL: ['Albanian'],
+    MD: ['Romanian'],
+    BY: ['Belarusian', 'Russian'],
 };
 
 // Flat reverse map: every keyword in COUNTRY_LANGUAGE_MAP → canonical English name.
 // Used by the cross-language scan to identify non-local language requirements
 // (e.g. "fluent Norwegian required" on a job located in Latvia).
 const KEYWORD_TO_CANONICAL_NAME: Record<string, string> = {
-  'finnish': 'Finnish', 'suomi': 'Finnish', 'suomen': 'Finnish',
-  'swedish': 'Swedish', 'svenska': 'Swedish',
-  'norwegian': 'Norwegian', 'norsk': 'Norwegian', 'bokmål': 'Norwegian', 'nynorsk': 'Norwegian',
-  'danish': 'Danish', 'dansk': 'Danish',
-  'icelandic': 'Icelandic', 'íslenska': 'Icelandic',
-  'german': 'German', 'deutsch': 'German',
-  'dutch': 'Dutch', 'nederlands': 'Dutch', 'flemish': 'Dutch',
-  'french': 'French', 'français': 'French', 'francais': 'French',
-  'italian': 'Italian', 'italiano': 'Italian',
-  'spanish': 'Spanish', 'español': 'Spanish', 'espanol': 'Spanish', 'castellano': 'Spanish',
-  'portuguese': 'Portuguese', 'português': 'Portuguese', 'portugues': 'Portuguese',
-  'polish': 'Polish', 'polski': 'Polish',
-  'czech': 'Czech', 'čeština': 'Czech', 'cestina': 'Czech',
-  'slovak': 'Slovak', 'slovenčina': 'Slovak',
-  'hungarian': 'Hungarian', 'magyar': 'Hungarian',
-  'romanian': 'Romanian', 'română': 'Romanian', 'romana': 'Romanian', 'moldovan': 'Romanian',
-  'bulgarian': 'Bulgarian', 'български': 'Bulgarian',
-  'croatian': 'Croatian', 'hrvatski': 'Croatian',
-  'slovenian': 'Slovenian', 'slovenščina': 'Slovenian',
-  'serbian': 'Serbian', 'srpski': 'Serbian',
-  'estonian': 'Estonian', 'eesti': 'Estonian',
-  'latvian': 'Latvian', 'latviešu': 'Latvian',
-  'lithuanian': 'Lithuanian', 'lietuvių': 'Lithuanian',
-  'greek': 'Greek', 'ελληνικά': 'Greek',
-  'turkish': 'Turkish', 'türkçe': 'Turkish',
-  'ukrainian': 'Ukrainian', 'українська': 'Ukrainian',
-  'russian': 'Russian', 'русский': 'Russian',
-  'georgian': 'Georgian', 'ქართული': 'Georgian',
-  'hebrew': 'Hebrew', 'עברית': 'Hebrew',
-  'japanese': 'Japanese', '日本語': 'Japanese',
-  'chinese': 'Chinese', 'mandarin': 'Chinese', '普通话': 'Chinese',
-  'korean': 'Korean', '한국어': 'Korean',
-  'bosnian': 'Bosnian', 'macedonian': 'Macedonian', 'montenegrin': 'Montenegrin',
-  'albanian': 'Albanian', 'shqip': 'Albanian',
-  'belarusian': 'Belarusian',
-  'arabic': 'Arabic',
+    finnish: 'Finnish',
+    suomi: 'Finnish',
+    suomen: 'Finnish',
+    swedish: 'Swedish',
+    svenska: 'Swedish',
+    norwegian: 'Norwegian',
+    norsk: 'Norwegian',
+    bokmål: 'Norwegian',
+    nynorsk: 'Norwegian',
+    danish: 'Danish',
+    dansk: 'Danish',
+    icelandic: 'Icelandic',
+    íslenska: 'Icelandic',
+    german: 'German',
+    deutsch: 'German',
+    dutch: 'Dutch',
+    nederlands: 'Dutch',
+    flemish: 'Dutch',
+    french: 'French',
+    français: 'French',
+    francais: 'French',
+    italian: 'Italian',
+    italiano: 'Italian',
+    spanish: 'Spanish',
+    español: 'Spanish',
+    espanol: 'Spanish',
+    castellano: 'Spanish',
+    portuguese: 'Portuguese',
+    português: 'Portuguese',
+    portugues: 'Portuguese',
+    polish: 'Polish',
+    polski: 'Polish',
+    czech: 'Czech',
+    čeština: 'Czech',
+    cestina: 'Czech',
+    slovak: 'Slovak',
+    slovenčina: 'Slovak',
+    hungarian: 'Hungarian',
+    magyar: 'Hungarian',
+    romanian: 'Romanian',
+    română: 'Romanian',
+    romana: 'Romanian',
+    moldovan: 'Romanian',
+    bulgarian: 'Bulgarian',
+    български: 'Bulgarian',
+    croatian: 'Croatian',
+    hrvatski: 'Croatian',
+    slovenian: 'Slovenian',
+    slovenščina: 'Slovenian',
+    serbian: 'Serbian',
+    srpski: 'Serbian',
+    estonian: 'Estonian',
+    eesti: 'Estonian',
+    latvian: 'Latvian',
+    latviešu: 'Latvian',
+    lithuanian: 'Lithuanian',
+    lietuvių: 'Lithuanian',
+    greek: 'Greek',
+    ελληνικά: 'Greek',
+    turkish: 'Turkish',
+    türkçe: 'Turkish',
+    ukrainian: 'Ukrainian',
+    українська: 'Ukrainian',
+    russian: 'Russian',
+    русский: 'Russian',
+    georgian: 'Georgian',
+    ქართული: 'Georgian',
+    hebrew: 'Hebrew',
+    עברית: 'Hebrew',
+    japanese: 'Japanese',
+    日本語: 'Japanese',
+    chinese: 'Chinese',
+    mandarin: 'Chinese',
+    普通话: 'Chinese',
+    korean: 'Korean',
+    한국어: 'Korean',
+    bosnian: 'Bosnian',
+    macedonian: 'Macedonian',
+    montenegrin: 'Montenegrin',
+    albanian: 'Albanian',
+    shqip: 'Albanian',
+    belarusian: 'Belarusian',
 };
 
 // Nordic/Scandinavian countries — used to gate group-language advantage phrases.
@@ -242,26 +288,6 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'scandinavian languages are not a requirement',
 ];
 
-// Phrases that explicitly confirm English is the working language.
-const ENGLISH_ONLY_PHRASES = [
-  'working language is english',
-  'working language: english',
-  'the working language is english',
-  'company language is english',
-  'our language is english',
-  'english is our official language',
-  'english is our company language',
-  'english as the working language',
-  'all communication in english',
-  'english-speaking environment',
-  'english speaking environment',
-  'we work in english',
-  'we communicate in english',
-  'everything is in english',
-  'english is the language',
-  'english only environment',
-];
-
 // ---------------------------------------------------------------------------
 // Per-country native-character detection
 // Faster and more reliable than tinyld for languages with distinctive scripts.
@@ -271,30 +297,32 @@ const ENGLISH_ONLY_PHRASES = [
 // phase '1b-chars' can be removed from the union type at the same time.
 // ---------------------------------------------------------------------------
 
-const COUNTRY_NATIVE_CHARS: Partial<Record<string, { pattern: RegExp; threshold: number }>> = {
-  FI: { pattern: /[äöÄÖ]/g,              threshold: 15 },
-  SE: { pattern: /[äöåÄÖÅ]/g,            threshold: 15 },
-  NO: { pattern: /[æøåÆØÅ]/g,            threshold: 15  },
-  DK: { pattern: /[æøåÆØÅ]/g,            threshold: 10 },
-  IS: { pattern: /[þðÞÐ]/g,              threshold: 10 }, // þ/ð never appear in English
-  DE: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
-  AT: { pattern: /[äöüßÄÖÜ]/g,           threshold: 10 },
-  EE: { pattern: /[äöõÄÖÕ]/g,            threshold: 10 },
-  LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
-  LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,    threshold: 15 },
-  PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g,       threshold: 10 },
+const COUNTRY_NATIVE_CHARS: Partial<
+    Record<string, { pattern: RegExp; threshold: number }>
+> = {
+    FI: { pattern: /[äöÄÖ]/g, threshold: 15 },
+    SE: { pattern: /[äöåÄÖÅ]/g, threshold: 15 },
+    NO: { pattern: /[æøåÆØÅ]/g, threshold: 15 },
+    DK: { pattern: /[æøåÆØÅ]/g, threshold: 10 },
+    IS: { pattern: /[þðÞÐ]/g, threshold: 10 }, // þ/ð never appear in English
+    DE: { pattern: /[äöüßÄÖÜ]/g, threshold: 10 },
+    AT: { pattern: /[äöüßÄÖÜ]/g, threshold: 10 },
+    EE: { pattern: /[äöõÄÖÕ]/g, threshold: 10 },
+    LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
+    LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g, threshold: 15 },
+    PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g, threshold: 10 },
 };
 
 function descriptionContainsNativeChars(
-  text: string,
-  countryCode: string,
+    text: string,
+    countryCode: string,
 ): { count: number; sample: string } | null {
-  const entry = COUNTRY_NATIVE_CHARS[countryCode];
-  if (!entry) return null;
-  const matches = text.match(entry.pattern);
-  if (!matches || matches.length < entry.threshold) return null;
-  const unique = [...new Set(matches)].sort().join('');
-  return { count: matches.length, sample: unique };
+    const entry = COUNTRY_NATIVE_CHARS[countryCode];
+    if (!entry) return null;
+    const matches = text.match(entry.pattern);
+    if (!matches || matches.length < entry.threshold) return null;
+    const unique = [...new Set(matches)].sort().join('');
+    return { count: matches.length, sample: unique };
 }
 
 // ---------------------------------------------------------------------------
@@ -342,8 +370,6 @@ export function stripHtml(html: string): string {
       .trim()
   );
 }
-
-
 
 /**
  * Builds compound "advantage" signal phrases for a given language keyword, e.g.:
@@ -427,10 +453,11 @@ function buildAdvantageSignals(lang: string): string[] {
     ' are of great added value',
   ];
 
-  const signals: string[] = [];
-  for (const mention of LANG_MENTIONS(lang)) {
-    for (const modifier of advantageModifiers) {
-      signals.push(`${mention}${modifier}`);
+    const signals: string[] = [];
+    for (const mention of LANG_MENTIONS(lang)) {
+        for (const modifier of advantageModifiers) {
+            signals.push(`${mention}${modifier}`);
+        }
     }
   }
   signals.push(`nice to have: ${lang}`);
@@ -602,7 +629,7 @@ const REQUIREMENT_NEGATION_NONE_RE =
 // (within ~80 characters), indicating the language is actually a nice-to-have.
 // e.g. "bonus points if you speak German"
 const REQUIREMENT_ADVANTAGE_PREFIX_RE =
-  /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
+    /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
 
 // Advantage modifiers that appear DIRECTLY after a requirement signal (no gap words).
 // Anchored with ^ so we only match when the modifier is the immediate continuation of
@@ -645,17 +672,28 @@ function requirementNegatedByContext(combined: string, signal: string): Negation
 // ---------------------------------------------------------------------------
 
 export type SignalEntry = {
-  phase: '1a' | '1b' | '1b-chars' | '1c' | '1c-any' | '2a' | '2a-nordic' | '2a-cross' | '2b' | '2c' | '2d-none';
-  description: string;
-  matched?: string; // exact phrase or character that triggered this signal
+    phase:
+        | '1a'
+        | '1b'
+        | '1b-chars'
+        | '1c'
+        | '1c-any'
+        | '2a'
+        | '2a-nordic'
+        | '2a-cross'
+        | '2b'
+        | '2c'
+        | '2d-none';
+    description: string;
+    matched?: string; // exact phrase or character that triggered this signal
 };
 
 export type NativeLanguageResult = {
-  value: boolean;
-  local_language_advantage: boolean;
-  requiredLanguages: string[];
-  preferredLanguages: string[];
-  signals: SignalEntry[];
+    value: boolean;
+    local_language_advantage: boolean;
+    requiredLanguages: string[];
+    preferredLanguages: string[];
+    signals: SignalEntry[];
 };
 
 /**
@@ -669,27 +707,32 @@ export type NativeLanguageResult = {
  * even one unusual character in an otherwise English paragraph.
  */
 function findNativeLanguageChunk(
-  text: string,
-  langCodes: string[],
-  countryCode?: string,
+    text: string,
+    langCodes: string[],
+    countryCode?: string,
 ): { chunk: string; detectedCode: string } | null {
-  if (!langCodes.length) return null;
-  const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 200);
-  const candidates = chunks.length > 0 ? chunks : [text.trim()];
-  const nativeCharEntry = countryCode ? COUNTRY_NATIVE_CHARS[countryCode] : undefined;
-  for (const chunk of candidates) {
-    const code = detect(chunk);
-    if (!langCodes.includes(code)) continue;
-    // If we have a native-char pattern for this country, require at least 2
-    // such characters in the chunk. A single accented letter from one word is
-    // not enough evidence — it too easily misleads tinyld on English text.
-    if (nativeCharEntry) {
-      const matches = chunk.match(nativeCharEntry.pattern);
-      if (!matches || matches.length < 2) continue;
+    if (!langCodes.length) return null;
+    const chunks = text
+        .split(/\n+/)
+        .map((c) => c.trim())
+        .filter((c) => c.length >= 200);
+    const candidates = chunks.length > 0 ? chunks : [text.trim()];
+    const nativeCharEntry = countryCode
+        ? COUNTRY_NATIVE_CHARS[countryCode]
+        : undefined;
+    for (const chunk of candidates) {
+        const code = detect(chunk);
+        if (!langCodes.includes(code)) continue;
+        // If we have a native-char pattern for this country, require at least 2
+        // such characters in the chunk. A single accented letter from one word is
+        // not enough evidence — it too easily misleads tinyld on English text.
+        if (nativeCharEntry) {
+            const matches = chunk.match(nativeCharEntry.pattern);
+            if (!matches || matches.length < 2) continue;
+        }
+        return { chunk, detectedCode: code };
     }
-    return { chunk, detectedCode: code };
-  }
-  return null;
+    return null;
 }
 
 // Derived from COUNTRY_LANG_CODES — only these codes are trusted for cross-language detection.
@@ -732,7 +775,7 @@ const SCRIPT_GATED_LANGS: Partial<Record<string, RegExp>> = {
  * to keep false-positive risk low.
  */
 function findAnyNonEnglishChunk(
-  text: string,
+    text: string,
 ): { chunk: string; detectedCode: string } | null {
   const chunks = text.split(/\n+/).map((c) => c.trim()).filter((c) => c.length >= 200);
   const candidates = chunks.length > 0 ? chunks : (text.trim().length >= 200 ? [text.trim()] : []);
@@ -769,14 +812,14 @@ function findAnyNonEnglishChunk(
  * local language signal is itself strong evidence that English is sufficient.
  */
 export function detectNativeLanguage(
-  title: string,
-  descriptionText: string | undefined,
-  countryCode: string,
+    title: string,
+    descriptionText: string | undefined,
+    countryCode: string,
 ): NativeLanguageResult {
-  const cc = countryCode.toUpperCase();
-  const languages = COUNTRY_LANGUAGE_MAP[cc] ?? [];
-  const langCodes = COUNTRY_LANG_CODES[cc] ?? [];
-  const langNames = COUNTRY_LANGUAGE_NAMES[cc] ?? [];
+    const cc = countryCode.toUpperCase();
+    const languages = COUNTRY_LANGUAGE_MAP[cc] ?? [];
+    const langCodes = COUNTRY_LANG_CODES[cc] ?? [];
+    const langNames = COUNTRY_LANGUAGE_NAMES[cc] ?? [];
 
   // ── Phase 1a: Non-ASCII title ────────────────────────────────────────────
   // A job title with local-language characters is the clearest possible
@@ -830,10 +873,20 @@ export function detectNativeLanguage(
       if (combined.includes(signal)) {
         if (hasRequirement) break; // requirement wins — fall through to phase 2a
         return {
-          value: false, local_language_advantage: true, requiredLanguages: [], preferredLanguages: langNames,
-          signals: [{ phase: '1b', description: 'advantage phrase pre-filter', matched: signal }],
+            value: true,
+            local_language_advantage: false,
+            requiredLanguages: langNames,
+            preferredLanguages: [],
+            signals: [
+                {
+                    phase: '1a',
+                    description: nonAsciiChar
+                        ? 'non-ASCII title'
+                        : 'local-language keyword in title',
+                    matched: nonAsciiChar ?? keyword,
+                },
+            ],
         };
-      }
     }
     const advMatch = buildAdvantageRegex(lang).exec(combined);
     if (advMatch) {
@@ -1102,28 +1155,308 @@ export function detectNativeLanguage(
         }
       }
     }
-  }
 
-  // ── Phase 2c: Explicit English-only confirmation ─────────────────────────
-  // Disabled: "working language is English" can coexist with a local language
-  // requirement (e.g. "our working language is English, but Finnish is required
-  // for client communication"). Falls through to 2d which reaches the same
-  // conclusion by absence of any positive signal.
-  //
-  // for (const phrase of ENGLISH_ONLY_PHRASES) {
-  //   if (combined.includes(phrase)) {
-  //     return {
-  //       value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
-  //       signals: [{ phase: '2c', description: 'English-only confirmation', matched: phrase }],
-  //     };
-  //   }
-  // }
+    // Group-language advantage phrases (e.g. "fluent in a Nordic language").
+    if (NORDIC_COUNTRY_CODES.has(cc)) {
+        for (const phrase of NORDIC_LANGUAGE_ADVANTAGE_PHRASES) {
+            if (combined.includes(phrase)) {
+                return {
+                    value: false,
+                    local_language_advantage: true,
+                    requiredLanguages: [],
+                    preferredLanguages: langNames,
+                    signals: [
+                        {
+                            phase: '1b',
+                            description: 'Nordic/Scandinavian advantage phrase',
+                            matched: phrase,
+                        },
+                    ],
+                };
+            }
+        }
+    }
 
-  // ── Phase 2d default ─────────────────────────────────────────────────────
-  // No explicit signals found — absence of any local language requirement is
-  // itself a strong signal that English is sufficient.
-  return {
-    value: false, local_language_advantage: false, requiredLanguages: [], preferredLanguages: [],
-    signals: [{ phase: '2d-none', description: 'no signal — English assumed' }],
-  };
+    // ── Phase 1b-chars: Description character-frequency check ───────────────
+    // Counts occurrences of language-specific non-ASCII characters in the
+    // description. A sufficient count (see COUNTRY_NATIVE_CHARS thresholds) is
+    // a near-certain indicator that the text is written in the local language —
+    // more reliable than tinyld for short or mixed-language descriptions.
+    // TO REMOVE: delete the block below plus COUNTRY_NATIVE_CHARS and
+    // descriptionContainsNativeChars() above, and '1b-chars' from SignalEntry.
+    if (descText) {
+        const charMatch = descriptionContainsNativeChars(descText, cc);
+        if (charMatch) {
+            return {
+                value: true,
+                local_language_advantage: false,
+                requiredLanguages: langNames,
+                preferredLanguages: [],
+                signals: [
+                    {
+                        phase: '1b-chars',
+                        description: `${charMatch.count} native chars in description`,
+                        matched: charMatch.sample,
+                    },
+                ],
+            };
+        }
+    }
+
+    // ── Phase 1c: tinyld content language detection ──────────────────────────
+    // Fallback for languages without distinctive characters (e.g. French, Spanish).
+    // If any paragraph of the description is detected as the country's language,
+    // the ad is (at least partially) written in that language.
+    const nativeChunk = findNativeLanguageChunk(descText, langCodes, cc);
+    if (nativeChunk) {
+        return {
+            value: true,
+            local_language_advantage: false,
+            requiredLanguages: langNames,
+            preferredLanguages: [],
+            signals: [
+                {
+                    phase: '1c',
+                    description: `tinyld detected "${nativeChunk.detectedCode}" in description`,
+                    matched:
+                        nativeChunk.chunk.slice(0, 80) +
+                        (nativeChunk.chunk.length > 80 ? '…' : ''),
+                },
+            ],
+        };
+    }
+
+    // ── Phase 1c-any: non-English language in description (cross-language) ───
+    // Catches descriptions written in a language other than the country's own —
+    // e.g. a Swedish-language job ad classified under Finland. tinyld detects
+    // "sv" but COUNTRY_LANG_CODES['FI'] = ['fi'], so Phase 1c above misses it.
+    // Any non-English description requires that language → flag accordingly.
+    const nonEnglishChunk = findAnyNonEnglishChunk(descText);
+    if (nonEnglishChunk) {
+        // Map the detected code to a canonical language name if known.
+        const detectedName = Object.entries(COUNTRY_LANG_CODES).find(
+            ([, codes]) => codes.includes(nonEnglishChunk.detectedCode),
+        );
+        const requiredLanguages = detectedName
+            ? (COUNTRY_LANGUAGE_NAMES[detectedName[0]] ?? langNames)
+            : langNames;
+        return {
+            value: true,
+            local_language_advantage: false,
+            requiredLanguages,
+            preferredLanguages: [],
+            signals: [
+                {
+                    phase: '1c-any',
+                    description: `tinyld detected non-English language "${nonEnglishChunk.detectedCode}" in description`,
+                    matched:
+                        nonEnglishChunk.chunk.slice(0, 80) +
+                        (nonEnglishChunk.chunk.length > 80 ? '…' : ''),
+                },
+            ],
+        };
+    }
+
+    // ── Phase 2a: Explicit language requirement signals ──────────────────────
+    // The description is in English — scan for phrases that explicitly require
+    // the local language (e.g. "fluent Finnish", "working language is German").
+
+    // Generic "native local/country language" phrase — doesn't name the language
+    // but clearly means native fluency in the local language is required.
+    const genericMatch =
+        languages.length > 0
+            ? combined.match(
+                  /native (?:local country|local|country|regional) language|local language (?:is |are )?required/,
+              )
+            : null;
+    if (genericMatch) {
+        return {
+            value: true,
+            local_language_advantage: false,
+            requiredLanguages: langNames,
+            preferredLanguages: [],
+            signals: [
+                {
+                    phase: '2a',
+                    description: 'generic native language phrase',
+                    matched: genericMatch[0],
+                },
+            ],
+        };
+    }
+
+    if (NORDIC_COUNTRY_CODES.has(cc)) {
+        for (const phrase of NORDIC_LANGUAGE_REQUIREMENT_PHRASES) {
+            if (combined.includes(phrase)) {
+                return {
+                    value: true,
+                    local_language_advantage: false,
+                    requiredLanguages: langNames,
+                    preferredLanguages: [],
+                    signals: [
+                        {
+                            phase: '2a-nordic',
+                            description:
+                                'Nordic/Scandinavian requirement phrase',
+                            matched: phrase,
+                        },
+                    ],
+                };
+            }
+        }
+    }
+
+    for (const lang of languages) {
+        for (const signal of buildRequirementSignals(lang)) {
+            if (combined.includes(signal)) {
+                if (requirementNegatedByContext(combined, signal)) {
+                    return {
+                        value: false,
+                        local_language_advantage: true,
+                        requiredLanguages: [],
+                        preferredLanguages: langNames,
+                        signals: [
+                            {
+                                phase: '2a',
+                                description: `"${lang}" requirement phrase negated by context`,
+                                matched: signal,
+                            },
+                        ],
+                    };
+                }
+                return {
+                    value: true,
+                    local_language_advantage: false,
+                    requiredLanguages: langNames,
+                    preferredLanguages: [],
+                    signals: [
+                        {
+                            phase: '2a',
+                            description: `"${lang}" requirement phrase`,
+                            matched: signal,
+                        },
+                    ],
+                };
+            }
+        }
+    }
+
+    // ── Phase 2a-cross: Cross-language scan ─────────────────────────────────
+    // Checks requirement and advantage signals for every tracked language,
+    // not just the country's own. Catches cases like "fluent Norwegian required"
+    // on a job located in Latvia. Runs after country-specific phases to keep
+    // those as the authoritative signal when the country language does match.
+    {
+        const countryKeywordSet = new Set(languages);
+        for (const [kw, canonicalName] of Object.entries(
+            KEYWORD_TO_CANONICAL_NAME,
+        )) {
+            if (countryKeywordSet.has(kw)) continue; // already covered by Phase 2a
+            // Advantage signals are checked before requirement signals — a phrase like
+            // "proficiency in Finnish is a big advantage" contains "proficiency in finnish"
+            // which is also a requirement signal substring, so advantage must win.
+            const advMatch = buildAdvantageRegex(kw).exec(combined);
+            if (advMatch) {
+                return {
+                    value: false,
+                    local_language_advantage: true,
+                    requiredLanguages: [],
+                    preferredLanguages: [canonicalName],
+                    signals: [
+                        {
+                            phase: '2a-cross',
+                            description: `cross-language advantage: ${canonicalName}`,
+                            matched: advMatch[0],
+                        },
+                    ],
+                };
+            }
+            for (const signal of buildAdvantageSignals(kw)) {
+                if (combined.includes(signal)) {
+                    return {
+                        value: false,
+                        local_language_advantage: true,
+                        requiredLanguages: [],
+                        preferredLanguages: [canonicalName],
+                        signals: [
+                            {
+                                phase: '2a-cross',
+                                description: `cross-language advantage: ${canonicalName}`,
+                                matched: signal,
+                            },
+                        ],
+                    };
+                }
+            }
+            for (const signal of buildRequirementSignals(kw)) {
+                if (combined.includes(signal)) {
+                    if (requirementNegatedByContext(combined, signal)) {
+                        return {
+                            value: false,
+                            local_language_advantage: true,
+                            requiredLanguages: [],
+                            preferredLanguages: [canonicalName],
+                            signals: [
+                                {
+                                    phase: '2a-cross',
+                                    description: `cross-language requirement negated by context: ${canonicalName}`,
+                                    matched: signal,
+                                },
+                            ],
+                        };
+                    }
+                    return {
+                        value: true,
+                        local_language_advantage: false,
+                        requiredLanguages: [canonicalName],
+                        preferredLanguages: [],
+                        signals: [
+                            {
+                                phase: '2a-cross',
+                                description: `cross-language requirement: ${canonicalName}`,
+                                matched: signal,
+                            },
+                        ],
+                    };
+                }
+            }
+        }
+    }
+
+    // ── Phase 2b: "depending on location" conditional requirement ───────────
+    // e.g. "Fluent English and, depending on the location, Finnish, Swedish or Lithuanian."
+    // The country's language may not be the first listed, so we can't rely on
+    // substring order — we check for the trigger phrase + language anywhere in the text.
+    if (/depending on (?:the |your )?location/i.test(combined)) {
+        for (const lang of languages) {
+            if (combined.includes(lang)) {
+                return {
+                    value: true,
+                    local_language_advantage: false,
+                    requiredLanguages: langNames,
+                    preferredLanguages: [],
+                    signals: [
+                        {
+                            phase: '2b',
+                            description: 'location-conditional requirement',
+                            matched: `depending on location + ${lang}`,
+                        },
+                    ],
+                };
+            }
+        }
+    }
+
+    // ── Phase 2d default ─────────────────────────────────────────────────────
+    // No explicit signals found — absence of any local language requirement is
+    // itself a strong signal that English is sufficient.
+    return {
+        value: false,
+        local_language_advantage: false,
+        requiredLanguages: [],
+        preferredLanguages: [],
+        signals: [
+            { phase: '2d-none', description: 'no signal — English assumed' },
+        ],
+    };
 }

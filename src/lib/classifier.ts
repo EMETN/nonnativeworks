@@ -1,5 +1,5 @@
 import type { RawJob, ClassifiedJob } from './ats/types';
-import { classifyCategory, classifyCategoryVerbose } from './classifiers/category';
+import { classifyCategoryVerbose } from './classifiers/category';
 import { detectNativeLanguage, stripHtml } from './classifiers/language';
 import type { SignalEntry } from './classifiers/language';
 

@@ -1,4 +1,17 @@
 ---
+const pathname = Astro.url.pathname;
+const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+const isHome = pathname === '/';
+const isAdmin = pathname.startsWith('/admin');
+const isCountryCompany =
+    segments.length >= 2 &&
+    segments[0] !== 'companies' &&
+    segments[0] !== 'admin';
+const isCompanies =
+    pathname === '/companies' ||
+    pathname.startsWith('/companies/') ||
+    isCountryCompany;
+const isCountries = !isHome && !isCompanies && !isAdmin;
 ---
 
 <header
@@ -16,6 +29,116 @@
                     >NonNativeWorks</span
                 >
             </a>
+
+            <!-- Desktop nav -->
+            <nav
+                class="hidden sm:flex items-center gap-2"
+                aria-label="Main navigation"
+            >
+                <a
+                    href="/countries"
+                    class={`text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                    aria-current={isCountries ? 'true' : undefined}>Countries</a
+                >
+                <a
+                    href="/companies"
+                    class={`text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                    aria-current={isCompanies ? 'true' : undefined}>Companies</a
+                >
+            </nav>
+
+            <!-- Mobile hamburger -->
+            <button
+                id="mobile-menu-btn"
+                class="sm:hidden p-2 rounded-md text-gray-900 hover:bg-gray-100 transition-colors"
+                aria-label="Open menu"
+                aria-expanded="false"
+                aria-controls="mobile-menu"
+            >
+                <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        id="hamburger-icon"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16"></path>
+                    <path
+                        id="close-icon"
+                        class="hidden"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
         </div>
     </div>
+
+    <!-- Mobile menu panel -->
+    <div
+        id="mobile-menu"
+        class="sm:hidden absolute left-0 right-0 top-full border-t border-gray-200 bg-white shadow-lg mobile-menu-panel"
+        inert
+    >
+        <nav aria-label="Mobile navigation" class="mobile-menu-inner">
+        <div class="px-4 py-3 space-y-1">
+            <a
+                href="/countries"
+                class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                aria-current={isCountries ? 'true' : undefined}>Countries</a
+            >
+            <a
+                href="/companies"
+                class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                aria-current={isCompanies ? 'true' : undefined}>Companies</a
+            >
+        </div>
+        </nav>
+    </div>
 </header>
+
+<script>
+    const btn = document.getElementById('mobile-menu-btn')!;
+    const menu = document.getElementById('mobile-menu')! as HTMLElement;
+    const hamburger = document.getElementById('hamburger-icon')!;
+    const close = document.getElementById('close-icon')!;
+
+    function toggle(open: boolean) {
+        menu.classList.toggle('is-open', open);
+        menu.inert = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        hamburger.classList.toggle('hidden', open);
+        close.classList.toggle('hidden', !open);
+    }
+
+    btn.addEventListener('click', () => {
+        toggle(!menu.classList.contains('is-open'));
+    });
+
+    document.addEventListener('click', (e) => {
+        if (
+            menu.classList.contains('is-open') &&
+            !menu.contains(e.target as Node) &&
+            !btn.contains(e.target as Node)
+        ) {
+            toggle(false);
+        }
+    });
+
+    window.addEventListener(
+        'scroll',
+        () => { if (menu.classList.contains('is-open')) toggle(false); },
+        { passive: true },
+    );
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menu.classList.contains('is-open')) {
+            toggle(false);
+        }
+    });
+</script>
