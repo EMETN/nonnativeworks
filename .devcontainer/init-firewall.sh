@@ -121,6 +121,7 @@ for domain in \
     "maersk.wd3.myworkdayjobs.com" \
     "sanoma.wd3.myworkdayjobs.com" \
     "fiskars.wd3.myworkdayjobs.com" \
+    "wd3.myworkdaysite.com" \
     "barona.fi" \
     "nitor.com" \
     "alpha-sense.com" \
@@ -183,6 +184,7 @@ for domain in \
     "aiven.io" \
     "upcloud.teamtailor.com" \
     "career.nordnetab.com" \
+    "search.prod.gcw.ng.telekom.net" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

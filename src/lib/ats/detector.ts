@@ -80,11 +80,24 @@ export function detectAts(url: string): AtsDetectionResult {
       if (slug) return { ats: 'recruitee', companySlug: slug };
     }
 
-    // Workday
+    // Workday (myworkdayjobs.com)
     // Pattern: {company}.wd{N}.myworkdayjobs.com/{locale}/{site}
     if (hostname.endsWith('.myworkdayjobs.com')) {
       const company = hostname.split('.')[0];
       if (company) return { ats: 'workday', companySlug: company };
+    }
+
+    // Workday (myworkdaysite.com)
+    // Pattern: wd{N}.myworkdaysite.com/{locale}/recruiting/{company}/{site}
+    if (hostname.endsWith('.myworkdaysite.com')) {
+      try {
+        const pathMatch = new URL(url).pathname.match(/\/(?:[a-z]{2}-[A-Z]{2}\/)?recruiting\/([^/]+)/);
+        const slug = pathMatch?.[1] ?? hostname.split('.')[0];
+        if (slug) return { ats: 'workday', companySlug: slug };
+      } catch {
+        const slug = hostname.split('.')[0];
+        if (slug) return { ats: 'workday', companySlug: slug };
+      }
     }
 
     return { ats: null, companySlug: extractCompanySlug(hostname) };
