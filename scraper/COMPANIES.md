@@ -32,6 +32,7 @@
 - Oura
 - Posti
 - Proton
+- Publicis Groupe
 - Reaktor
 - Rovio
 - SAP
@@ -83,6 +84,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Booking.com | `jobs.booking.com` | Custom API |
 | Orkla | `careers.orkla.com` | Custom API (POST) |
 | Capgemini | `capgemini.com/careers` | Custom API |
+| Publicis Groupe | `careers.publicisgroupe.com/jobs` | Customer API |
 
 ---
 

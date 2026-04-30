@@ -137,6 +137,10 @@ companies:
       url: https://proton.me/careers
       min_positions: 1
 
+    - name: Publicis Groupe
+      url: https://careers.publicisgroupe.com/jobs
+      min_positions: 10
+
     - name: Reaktor
       url: https://www.reaktor.com/careers
       min_positions: 2
