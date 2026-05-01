@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { timingSafeEqual } from 'crypto';
 import { createSupabaseClient } from './lib/supabase';
 
 const PROTECTED_PREFIXES = ['/admin', '/api/admin'];
@@ -10,7 +11,9 @@ const SCRAPER_SECRET = process.env.SCRAPER_SECRET;
 
 function hasValidScraperSecret(request: Request): boolean {
   if (!SCRAPER_SECRET) return false;
-  return request.headers.get('x-scraper-secret') === SCRAPER_SECRET;
+  const provided = request.headers.get('x-scraper-secret') ?? '';
+  if (provided.length !== SCRAPER_SECRET.length) return false;
+  return timingSafeEqual(Buffer.from(provided), Buffer.from(SCRAPER_SECRET));
 }
 
 function isProtectedRoute(pathname: string): boolean {
