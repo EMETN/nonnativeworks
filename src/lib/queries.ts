@@ -157,6 +157,17 @@ export async function getCompanyStatsByCountry(
   return (data ?? []) as CompanyStats[];
 }
 
+export async function getAllCompanyStats(request?: Request, cookies?: AstroCookies, supabase?: SupabaseClient): Promise<CompanyStats[]> {
+  const sb = client(request, cookies, supabase);
+  const { data, error } = await sb
+    .from('company_stats')
+    .select('*')
+    .order('name');
+
+  if (error) { console.error('getAllCompanyStats:', error.message); throw new Error('Failed to load company stats'); }
+  return (data ?? []) as CompanyStats[];
+}
+
 export async function getCategoryBreakdown(
   request: Request,
   cookies: AstroCookies,

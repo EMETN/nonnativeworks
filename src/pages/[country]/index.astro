@@ -6,22 +6,16 @@ import CompanyGrid from '../../components/country/CompanyGrid.tsx';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
-import { getCountryStats, getCountryBySlug, getCompanyStatsByCountry } from '../../lib/queries';
+import { getCountryStats, getCompanyStatsByCountry } from '../../lib/queries';
 
 export async function getStaticPaths() {
     const countries = await getCountryStats();
     return countries
         .filter((c) => c.total_positions > 0)
-        .map((c) => ({ params: { country: c.slug } }));
+        .map((c) => ({ params: { country: c.slug }, props: { country: c } }));
 }
 
-const { country: slug } = Astro.params;
-
-const country = await getCountryBySlug(undefined, undefined, slug!);
-
-if (!country) {
-    return Astro.redirect('/404');
-}
+const { country } = Astro.props;
 
 const companies = await getCompanyStatsByCountry(
     undefined,

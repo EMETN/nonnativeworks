@@ -53,15 +53,17 @@ export function createSupabaseServiceClient() {
   });
 }
 
+const _publicClient = createServerClient(supabaseUrl, supabaseAnonKey, {
+  cookies: {
+    getAll() { return []; },
+    setAll() {},
+  },
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
+
 export function createPublicClient() {
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() { return []; },
-      setAll() {},
-    },
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  return _publicClient;
 }

@@ -6,9 +6,7 @@ import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import {
     getCountryStats,
-    getCompanyStatsByCountry,
-    getCountryBySlug,
-    getCompanyBySlugInCountry,
+    getAllCompanyStats,
     getPositionsByCompany,
 } from '../../lib/queries';
 import { nameToSlug } from '../../lib/country-flags';
@@ -17,37 +15,23 @@ import { timeAgo } from '../../lib/time';
 export const prerender = true;
 
 export async function getStaticPaths() {
-    const countries = await getCountryStats();
-    const paths = [];
-    for (const c of countries.filter((c) => c.total_positions > 0)) {
-        const companies = await getCompanyStatsByCountry(undefined, undefined, c.country_id);
-        for (const co of companies) {
-            paths.push({
-                params: { country: c.slug, company: nameToSlug(co.name) },
-            });
-        }
-    }
-    return paths;
+    const [countries, allCompanies] = await Promise.all([
+        getCountryStats(),
+        getAllCompanyStats(),
+    ]);
+    const activeCountries = new Map(
+        countries.filter((c) => c.total_positions > 0).map((c) => [c.country_id, c]),
+    );
+    return allCompanies
+        .filter((co) => activeCountries.has(co.country_id))
+        .map((co) => ({
+            params: { country: activeCountries.get(co.country_id)!.slug, company: nameToSlug(co.name) },
+            props: { country: activeCountries.get(co.country_id)!, company: co },
+        }));
 }
 
-const { country: countrySlug, company: companySlug } = Astro.params;
-
-const country = await getCountryBySlug(undefined, undefined, countrySlug!);
-
-if (!country) {
-    return Astro.redirect('/404');
-}
-
-const company = await getCompanyBySlugInCountry(
-    undefined,
-    undefined,
-    country.country_id,
-    companySlug!,
-);
-
-if (!company) {
-    return Astro.redirect('/404');
-}
+const { country, company } = Astro.props;
+const { company: companySlug } = Astro.params;
 
 const positions = await getPositionsByCompany(
     undefined,
