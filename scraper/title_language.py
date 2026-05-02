@@ -142,7 +142,6 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "studium",        # degree programme
         "teamleiter",     # team lead
         "technischer",    # technical
-        "technologie",    # technology
         "verantwortung",  # responsibility
         "verkehr",        # traffic
         "vertrieb",       # sales

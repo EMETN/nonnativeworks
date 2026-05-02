@@ -44,6 +44,7 @@
 - Tieto
 - Vaisala
 - Wolt
+- Wärtsilä
 - Zalando
 - Yousician
 
@@ -115,6 +116,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | SAP | `jobs.sap.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Fortum | `jobs.fortum.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Hiab | `careers.hiab.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Wärtsilä | `careers.wartsila.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 
 #### Platform-specific scrapers (`scraper/platforms/`)

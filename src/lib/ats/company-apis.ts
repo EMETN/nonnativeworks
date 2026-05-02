@@ -773,4 +773,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'jobs.arla.com', name: 'Arla' },
   { urlSubstring: 'jobs.sap.com', name: 'SAP' },
   { urlSubstring: 'edenpeople', name: 'Edenred' },
+  { urlSubstring: 'wartsila', name: 'Wärtsilä' },
 ];
