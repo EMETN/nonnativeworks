@@ -441,7 +441,9 @@ function buildAdvantageSignals(lang: string): string[] {
   const advantageModifiers = [
     ' is preferred',
     ' is desirable',
+    ' are desirable',
     ' is highly desirable',
+    ' are highly desirable',
     ' is nice to have',
     ' is beneficial',
     ' would be beneficial',

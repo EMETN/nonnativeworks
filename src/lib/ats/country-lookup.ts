@@ -1216,6 +1216,10 @@ function normalizeKey(s: string): string {
 }
 
 /** Returns true if the string is a known country name or abbreviation (COUNTRY_MAP only, not cities). */
+export function getCityNames(): string[] {
+  return Object.keys(CITY_MAP);
+}
+
 export function isCountryKey(s: string): boolean {
   return normalizeKey(s) in COUNTRY_MAP;
 }
