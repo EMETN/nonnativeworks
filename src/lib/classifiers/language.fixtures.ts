@@ -1063,4 +1063,47 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: false,
   },
+
+  // ── Reported signals (2026-05-02) ─────────────────────────────────────────
+
+  {
+    label: '1b — "German is highly desirable" → advantage',
+    title: 'Consultant',
+    desc: 'Proficient English language skills, both written and verbal. German is highly desirable',
+    country: 'DE',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '2a — "German – mandatory" with em-dash separator → requirement',
+    title: 'Specialist',
+    desc: 'German – mandatory (professional working proficiency)',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '1b — "French – nice to have" with em-dash separator → advantage',
+    title: 'Analyst',
+    desc: 'French – nice to have',
+    country: 'FR',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "German, French, or other European languages are a strong advantage" Oxford comma',
+    title: 'Engineer',
+    desc: 'German, French, or other European languages are a strong advantage',
+    country: 'DE',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "Finnish and/or Swedish skills … are seen as a bonus" → advantage',
+    title: 'Engineer',
+    desc: 'Finnish and/or Swedish skills in both oral and written are seen as a bonus',
+    country: 'FI',
+    requires: false,
+    advantage: true,
+  },
 ];
