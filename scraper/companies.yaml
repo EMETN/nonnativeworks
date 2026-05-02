@@ -53,6 +53,10 @@ companies:
       url: https://careers.capgemini.com
       min_positions: 10
 
+    - name: Delivery Hero
+      url: https://careers.deliveryhero.com/jobs?options=745%2C869%2C860&page=1&size=48
+      min_positions: 5
+
     - name: Dept
       url: https://www.deptagency.com/careers/roles/
       min_positions: 5
