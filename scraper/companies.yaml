@@ -185,6 +185,10 @@ companies:
       url: https://careers.wolt.com/en/jobs
       min_positions: 10
 
+    - name: Wärtsilä
+      url: https://careers.wartsila.com/search
+      min_positions: 5
+
     - name: Yousician
       url: https://yousician.com/careers
       min_positions: 1

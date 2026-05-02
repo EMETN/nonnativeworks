@@ -17,22 +17,23 @@ export { detectNativeLanguage } from './classifiers/language';
 
 let _properNounPattern: RegExp | null = null;
 
+function buildPattern(names: string[]): RegExp | null {
+  if (names.length === 0) return null;
+  const escaped = names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  escaped.sort((a, b) => b.length - a.length);
+  return new RegExp(escaped.join('|'), 'gi');
+}
+
 function getProperNounPattern(companyName?: string): RegExp | null {
   if (!companyName) {
     if (!_properNounPattern) {
       const cityNames = getCityNames().filter(n => /[^\x00-\x7F]/.test(n));
-      if (cityNames.length === 0) return null;
-      const escaped = cityNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-      escaped.sort((a, b) => b.length - a.length);
-      _properNounPattern = new RegExp(escaped.join('|'), 'gi');
+      _properNounPattern = buildPattern(cityNames);
     }
     return _properNounPattern;
   }
   const cityNames = getCityNames().filter(n => /[^\x00-\x7F]/.test(n));
-  const names = [companyName, ...cityNames];
-  const escaped = names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  escaped.sort((a, b) => b.length - a.length);
-  return new RegExp(escaped.join('|'), 'gi');
+  return buildPattern([companyName, ...cityNames]);
 }
 
 function stripProperNouns(text: string, companyName?: string): string {

@@ -147,7 +147,6 @@ const DE: string[] = [
   'studium',        // degree programme
   'teamleiter',     // team lead
   'technischer',    // technical
-  'technologie',    // technology
   'verantwortung',  // responsibility
   'verkehr',        // traffic
   'verkäufer',      // salesperson
