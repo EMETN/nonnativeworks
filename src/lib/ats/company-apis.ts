@@ -727,7 +727,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     headers: {
       'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
       'Accept': 'application/json, text/plain, */*',
-      'Referer': 'https://careers.publicisgroupe.com/jobs?locations=Amsterdam,,Netherlands%7CBerlin,,Germany%7CCologne,,Germany%7CCopenhagen,,Denmark%7CDuesseldorf,,Germany%7CFrankfurt,,Germany%7CHamburg,,Germany%7CMunich,,Germany%7COslo,,Norway%7CStockholm,,Sweden',
+      'Referer': 'https://careers.publicisgroupe.com/jobs',
     },
     pagination: { type: 'page', param: 'page', startPage: 1 },
     itemsPath: 'jobs',
