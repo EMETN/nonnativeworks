@@ -139,7 +139,7 @@ companies:
 
     - name: Publicis Groupe
       url: https://careers.publicisgroupe.com/jobs
-      min_positions: 10
+      min_positions: 5
 
     - name: Reaktor
       url: https://www.reaktor.com/careers
