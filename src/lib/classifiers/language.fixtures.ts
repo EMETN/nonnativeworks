@@ -626,7 +626,7 @@ export const CASES: FixtureCase[] = [
     advantage: false,
   },
   {
-    label: '2a — "understand Swedish and English fluently" with "either...or" → not required',
+    label: '2a — "understand Swedish and English fluently" — understanding both is required',
     title: 'Operations Manager',
     desc: 'You understand Swedish and English fluently and can speak either Swedish or English proficiently.',
     country: 'SE',

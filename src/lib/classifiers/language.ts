@@ -660,7 +660,11 @@ function requirementNegatedByContext(combined: string, signal: string): Negation
   const idx = combined.indexOf(signal);
   if (idx === -1) return false;
   const after = combined.slice(idx + signal.length, idx + signal.length + 80);
-  if (REQUIREMENT_NEGATION_NONE_RE.test(after)) return 'none';
+  // "or english" must appear in the same clause as the signal — stop at sentence
+  // boundaries so that a later "speak either X or English" doesn't negate an
+  // earlier "understand X and English" requirement.
+  const sameClause = after.split(/[.;]\s|,?\s+and\s+can\s/)[0];
+  if (REQUIREMENT_NEGATION_NONE_RE.test(sameClause)) return 'none';
   if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(after)) return 'advantage';
   // Check for an advantage modifier that DIRECTLY follows the signal (anchored, no gap
   // words). Uses a tighter window than the 80-char checks above to avoid false negatives
