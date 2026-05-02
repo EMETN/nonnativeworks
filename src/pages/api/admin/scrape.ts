@@ -382,7 +382,7 @@ function buildScrapeResult(
         jobSkills = cached.skills;
         education = cached.required_education;
       } else {
-        const { classified, signals } = classifyJobVerbose(job, countryInfo.code);
+        const { classified, signals } = classifyJobVerbose(job, countryInfo.code, companyName);
         const plainText = job.descriptionText ?? (job.descriptionHtml ? stripHtml(job.descriptionHtml) : '');
         jobSkills = extractSkills(plainText, skills);
         education = extractEducationRequirement(plainText);
