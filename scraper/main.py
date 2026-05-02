@@ -25,7 +25,7 @@ from browser import _open_browser, _block_unnecessary_resources, _run_in_subproc
 from extract import extract_jobs
 from platforms.academicwork import scrape_academicwork_static
 from platforms.arla import scrape_arla_static
-from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright
+from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright, enrich_attrax_descriptions
 from platforms.barona import scrape_barona
 from platforms.generic_paginated import scrape_generic
 from platforms.njoyn import scrape_njoyn_playwright
@@ -268,8 +268,7 @@ def main():
         try:
             jobs_static = scrape_attrax_static(url)
             print(f"Attrax static scrape found {len(jobs_static)} jobs", file=sys.stderr)
-            if len(jobs_static) > len(jobs):
-                jobs = jobs_static
+            jobs = jobs_static
         except Exception as e:
             print(f"Attrax static scrape failed: {e}", file=sys.stderr)
         if len(jobs) < MIN_JOBS_STATIC:
@@ -281,6 +280,10 @@ def main():
                     jobs = jobs_pw
             except Exception as e:
                 print(f"Attrax Playwright failed: {e}", file=sys.stderr)
+        import requests as _req
+        _session = _req.Session()
+        _session.headers["User-Agent"] = "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+        enrich_attrax_descriptions(jobs, _session)
     elif len(jobs) < MIN_JOBS_STATIC:
         print("Falling back to generic Playwright...", file=sys.stderr)
         try:

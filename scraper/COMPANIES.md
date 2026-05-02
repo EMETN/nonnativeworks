@@ -11,6 +11,7 @@
 - Booking.com
 - Capgemini
 - CGI (local script)
+- Delivery Hero
 - Dept
 - Edenred
 - Ericsson
@@ -101,6 +102,7 @@ Detected by `attrax-vacancy-tile` in the page HTML. Uses a paginated Attrax-spec
 |---------|----------|-------|
 | Konecranes | `konecranes.careers/jobs` | |
 | Tieto | `careers.tieto.com` | URL override applied — filtered to tracked countries to bypass 250-job cap |
+| Delivery Hero | `careers.deliveryhero.com` | |
 
 #### Config-driven generic scraper (`scraper/generic_scrapers.yaml`)
 

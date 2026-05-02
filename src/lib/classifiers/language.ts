@@ -542,6 +542,7 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} speaking`,
     `speaks ${lang}`,
     `speak ${lang}`,
+    `understand ${lang}`,
     `communicate in ${lang}`,
     `communicate fluently in ${lang}`,
     `${lang} communication skills`,
@@ -644,7 +645,7 @@ const REQUIREMENT_ADVANTAGE_PREFIX_RE =
 // Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
 // the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
 const DIRECT_ADVANTAGE_SUFFIX_RE =
-  /^\s+(?:is\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
+  /^\s+(?:(?:is|are)\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
 
 type NegationKind = 'advantage' | 'none' | false;
 

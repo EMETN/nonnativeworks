@@ -1,7 +1,7 @@
 """
 Attrax ATS — paginated static + Playwright scraper.
 
-Used by: careers.tieto.com and other Attrax-based career sites.
+Used by: careers.tieto.com, careers.deliveryhero.com and other Attrax-based career sites.
 """
 
 import re
@@ -10,6 +10,19 @@ from urllib.parse import urljoin, urlparse, urlencode, urlunparse, parse_qs
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import build_job, SKIP_LOCATION_PATTERNS
+from title_language import _title_appears_non_english
+from tracked_countries import is_tracked_location
+
+_DESCRIPTION_SELECTORS = [
+    "div[aria-label='Job description']",
+    ".jobdescription",
+    ".job-description",
+    "[class*='description']",
+    "article",
+    "main",
+]
+
+_DESCRIPTION_BATCH = 5
 
 
 def scrape_attrax_static(url: str) -> list[dict]:
@@ -175,6 +188,15 @@ def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
 
         job = build_job(title, job_url, location)
 
+        # Job category (maps to jobFunction for the classifier)
+        cat_tag = tile.find(class_="attrax-vacancy-tile__option-job-category")
+        if cat_tag:
+            val = cat_tag.find(class_="attrax-vacancy-tile__item-value")
+            if val:
+                cat_text = val.get_text(strip=True)
+                if cat_text:
+                    job["jobFunction"] = cat_text
+
         # Work model from the dedicated workplace-type tile
         wm_tag = tile.find(class_="attrax-vacancy-tile__option-workplace-type")
         if wm_tag:
@@ -191,3 +213,37 @@ def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
         jobs.append(job)
 
     return jobs
+
+
+def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
+    """Fetch detail pages for English-titled jobs in tracked countries."""
+    from bs4 import BeautifulSoup
+
+    targets = [
+        j for j in jobs
+        if j.get("url")
+        and not _title_appears_non_english(j.get("title", ""))
+        and is_tracked_location(j.get("location"))
+    ]
+    skipped = len(jobs) - len(targets)
+    print(f"Attrax: fetching descriptions for {len(targets)} jobs ({skipped} skipped — non-English title or untracked country)", file=sys.stderr)
+
+    for i in range(0, len(targets), _DESCRIPTION_BATCH):
+        batch = targets[i:i + _DESCRIPTION_BATCH]
+        for job in batch:
+            try:
+                resp = session.get(job["url"], timeout=20)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.content, "html.parser")
+
+                for sel in _DESCRIPTION_SELECTORS:
+                    tag = soup.select_one(sel)
+                    if tag:
+                        job["descriptionHtml"] = str(tag)
+                        break
+            except Exception as e:
+                print(f"Attrax: detail page error ({job['url']}): {e}", file=sys.stderr)
+
+        done = min(i + _DESCRIPTION_BATCH, len(targets))
+        if done % 10 == 0 or done == len(targets):
+            print(f"Attrax: enriched {done}/{len(targets)}", file=sys.stderr)

@@ -3,7 +3,7 @@ import { dirname } from 'path';
 import { createHash } from 'crypto';
 import type { SignalEntry } from './classifiers/language';
 
-export const CLASSIFIER_VERSION = 18;
+export const CLASSIFIER_VERSION = 1;
 
 const TTL_DAYS = 14;
 

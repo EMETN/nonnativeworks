@@ -47,6 +47,7 @@ from bs4 import BeautifulSoup
 
 from extract import build_job, job_key, LOCATION_CLASS_PATTERNS
 from title_language import _title_appears_non_english
+from tracked_countries import is_tracked_location
 
 _HEADERS = {
     "User-Agent": (
@@ -554,7 +555,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # ── Phase 2: description enrichment for English-titled jobs ──────────────
     # In attribute_json mode, skip detail page fetches for jobs that already
     # have jobFunction from the JSON (description still fetched if needed).
-    english_jobs = [j for j in all_jobs if not _title_appears_non_english(j.get("title", ""))]
+    english_jobs = [j for j in all_jobs if not _title_appears_non_english(j.get("title", "")) and is_tracked_location(j.get("location"))]
     unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
     print(f"generic [{name}]: fetching descriptions for {len(unique_urls)} English-titled jobs", file=sys.stderr)
 
