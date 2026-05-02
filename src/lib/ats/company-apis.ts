@@ -722,7 +722,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
   },
 
   'careers.publicisgroupe.com': {
-    url: 'https://careers.publicisgroupe.com/api/jobs?locations=Amsterdam,,Netherlands%7CBerlin,,Germany%7CCologne,,Germany%7CCopenhagen,,Denmark%7CDuesseldorf,,Germany%7CFrankfurt,,Germany%7CHamburg,,Germany%7CMunich,,Germany%7COslo,,Norway%7CStockholm,,Sweden',
+    url: 'https://careers.publicisgroupe.com/api/jobs?limit=100',
     method: 'GET',
     headers: {
       'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
@@ -737,8 +737,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
       cities: 'data.city',
       jobFunction: 'data.tags',
       id: 'data.req_id',
+      url: 'data.meta_data.canonical_url',
     },
-    urlTemplate: 'https://careers.publicisgroupe.com/jobs/{data.req_id}',
     companyName: 'Publicis Groupe',
     descriptionFields: ['data.description', 'data.qualifications']
   },

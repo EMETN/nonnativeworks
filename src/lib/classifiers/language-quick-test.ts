@@ -83,6 +83,25 @@ const PROBES: Probe[] = [
     expectRequires: false,
     expectAdvantage: true,
   },
+  // ── New signals (2026-05-02) ───────────────────────────────────────────────
+  {
+    desc: 'Proficient English language skills, both written and verbal. German is highly desirable',
+    country: 'DE',
+    expectRequires: false,
+    expectAdvantage: true,
+  },
+  {
+    desc: 'German – mandatory (professional working proficiency)',
+    country: 'DE',
+    expectRequires: true,
+    expectAdvantage: false,
+  },
+  {
+    desc: 'French – nice to have',
+    country: 'FR',
+    expectRequires: false,
+    expectAdvantage: true,
+  },
 ];
 
 // ── runner ────────────────────────────────────────────────────────────────────
