@@ -173,6 +173,10 @@ companies:
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
 
+    - name: Sweco Group
+      url: https://www.swecogroup.com/careers/vacancies/
+      min_positions: 1
+
     - name: Telia
       url: https://www.teliacompany.com/en/careers/open-positions
       min_positions: 5

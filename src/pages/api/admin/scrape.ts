@@ -272,6 +272,12 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
     await enrichDescriptions(rawJobs, undefined, undefined, getOutcomeCachedUrls());
   }
 
+  const goneBefore = rawJobs.length;
+  rawJobs = rawJobs.filter((j) => !j._gone);
+  if (rawJobs.length < goneBefore) {
+    console.log(`[scrape] dropped ${goneBefore - rawJobs.length} expired jobs (404/410)`);
+  }
+
   if (rawJobs.length === 0) {
     throw new Error(
       "No job listings found. The page may require a login or have no open positions.",

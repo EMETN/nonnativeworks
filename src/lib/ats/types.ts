@@ -38,6 +38,8 @@ export interface RawJob {
    * Use only when the source provides a definitive answer — do not set based on inferred signals.
    */
   requires_native_language?: boolean;
+  /** Set by enrichDescriptions when the detail page returns 404/410 — the position no longer exists. */
+  _gone?: boolean;
 }
 
 export interface AtsDetectionResult {

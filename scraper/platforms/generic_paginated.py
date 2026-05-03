@@ -84,6 +84,7 @@ def _page_param_value(pagination: dict, page_number: int) -> int:
 def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
     title_sel = cfg.get("title_selector")
     loc_sel = cfg.get("location_selector")
+    url_sel = cfg.get("url_selector")
 
     title, job_url = None, None
 
@@ -110,6 +111,11 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
                 title = link.get_text(strip=True)
                 job_url = urljoin(base_url, link["href"])
 
+    if url_sel:
+        url_tag = card.select_one(url_sel)
+        if url_tag and url_tag.get("href"):
+            job_url = urljoin(base_url, url_tag["href"])
+
     if not title:
         return None
 
@@ -117,6 +123,8 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
     if loc_sel:
         tag = card.select_one(loc_sel)
         if tag:
+            for label in tag.select(".sm-label"):
+                label.decompose()
             location = tag.get_text(strip=True) or None
     else:
         for child in card.find_all(True):
@@ -453,15 +461,23 @@ def _fetch_script_var_json_page(
 
 # ── detail page enrichment (shared) ──────────────────────────────────────────
 
+_GONE_STATUSES = {404, 410}
+
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
     desc_sel: str | None,
     jf_sel: str | None,
-) -> tuple[str, str | None]:
-    """Fetch a job detail page and return (description_html, job_function)."""
+) -> tuple[str, str | None, bool]:
+    """Fetch a job detail page and return (description_html, job_function, gone).
+
+    gone is True when the page returns 404/410, meaning the position no longer exists.
+    """
     try:
         resp = session.get(job_url, timeout=20, headers=_HEADERS)
+        if resp.status_code in _GONE_STATUSES:
+            print(f"generic: detail page gone (HTTP {resp.status_code}): {job_url}", file=sys.stderr)
+            return "", None, True
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, "html.parser")
 
@@ -479,10 +495,10 @@ def _fetch_detail_page(
             if tag:
                 job_function = tag.get_text(strip=True) or None
 
-        return desc_html, job_function
+        return desc_html, job_function, False
     except Exception as e:
         print(f"generic: detail page fetch error ({job_url}): {e}", file=sys.stderr)
-        return "", None
+        return "", None, False
 
 
 # ── main entry point ──────────────────────────────────────────────────────────
@@ -500,6 +516,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     extra_params: dict = cfg.get("extra_params", {})
     country_filter_param: str | None = cfg.get("country_filter_param")
     countries: list[str] = cfg.get("countries", [])
+    country_values: dict[str, str] = cfg.get("country_values", {})
 
     if extract_mode == "attribute_json":
         fetch_page = _fetch_attribute_json_page
@@ -515,17 +532,21 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # ── Phase 1: listing ──────────────────────────────────────────────────────
     # When country_filter_param + countries are set, iterate one paginated fetch
     # per country and merge results. Otherwise, a single fetch set runs as before.
+    # country_values maps ISO codes to site-specific filter values (e.g. SE → "3").
     all_jobs: list[dict] = []
     seen_keys: set[str] = set()
 
-    param_sets: list[dict] = (
-        [{**extra_params, country_filter_param: cc} for cc in countries]
+    param_sets: list[tuple[dict, str | None]] = (
+        [
+            ({**extra_params, country_filter_param: country_values.get(cc, cc)}, cc)
+            for cc in countries
+        ]
         if country_filter_param and countries
-        else [dict(extra_params)]
+        else [(dict(extra_params), None)]
     )
 
-    for base_params in param_sets:
-        label = base_params.get(country_filter_param, "") if country_filter_param else ""
+    for base_params, country_code in param_sets:
+        label = country_code or ""
         prefix = f"generic [{name}]{f' ({label})' if label else ''}"
 
         if ptype == "none":
@@ -534,6 +555,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
             for j in new_jobs:
                 seen_keys.add(job_key(j))
+                if country_code:
+                    j["country_code"] = country_code
             all_jobs.extend(new_jobs)
         else:
             param_name = pagination["param"]
@@ -545,6 +568,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
                 new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
                 for j in new_jobs:
                     seen_keys.add(job_key(j))
+                    if country_code:
+                        j["country_code"] = country_code
                 all_jobs.extend(new_jobs)
 
                 if len(jobs) < page_size:
@@ -559,18 +584,26 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
     print(f"generic [{name}]: fetching descriptions for {len(unique_urls)} English-titled jobs", file=sys.stderr)
 
-    detail_cache: dict[str, tuple[str, str | None]] = {}
+    detail_cache: dict[str, tuple[str, str | None, bool]] = {}
     for i, job_url in enumerate(unique_urls):
         result = _fetch_detail_page(session, job_url, desc_sel, jf_sel)
         detail_cache[job_url] = result
         if (i + 1) % 10 == 0:
             print(f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}", file=sys.stderr)
 
+    gone_urls: set[str] = {u for u, (_, _, gone) in detail_cache.items() if gone}
+    if gone_urls:
+        before = len(all_jobs)
+        all_jobs = [j for j in all_jobs if j.get("url") not in gone_urls]
+        print(f"generic [{name}]: dropped {before - len(all_jobs)} jobs with expired detail pages", file=sys.stderr)
+
     for job in english_jobs:
-        desc_html, job_function = detail_cache.get(job.get("url", ""), ("", None))
+        url = job.get("url", "")
+        if url in gone_urls:
+            continue
+        desc_html, job_function, _ = detail_cache.get(url, ("", None, False))
         if desc_html:
             job["descriptionHtml"] = desc_html
-        # Only set jobFunction from detail page if not already set from phase 1
         if job_function and not job.get("jobFunction"):
             job["jobFunction"] = job_function
 

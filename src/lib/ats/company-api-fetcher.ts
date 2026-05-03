@@ -247,11 +247,17 @@ async function fetchPage(
 }
 
 
+const GONE_SENTINEL = '\x00GONE';
+
 async function fetchPageHtml(url: string): Promise<string | undefined> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
     });
+    if (res.status === 404 || res.status === 410) {
+      console.warn(`[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`);
+      return GONE_SENTINEL;
+    }
     if (!res.ok) {
       console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
       return undefined;
@@ -284,12 +290,18 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
 
   let locationsSet = 0;
   let htmlFailed = 0;
+  let goneCount = 0;
   let regexMissed = 0;
 
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
         const html = await fetchPageHtml(job.url!);
+        if (html === GONE_SENTINEL) {
+          job._gone = true;
+          goneCount++;
+          return;
+        }
         if (!html) {
           htmlFailed++;
           return;
@@ -316,6 +328,9 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
     );
   }
 
+  if (goneCount) {
+    console.log(`[enrichDescriptions] ${goneCount} jobs marked gone (404/410)`);
+  }
   if (locationRegex) {
     console.log(`[enrichDescriptions] location extraction: ${locationsSet} set, ${regexMissed} regex misses, ${htmlFailed} fetch failures`);
   }
