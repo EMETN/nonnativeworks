@@ -776,4 +776,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'edenpeople', name: 'Edenred' },
   { urlSubstring: 'wartsila', name: 'Wärtsilä' },
   { urlSubstring: 'deliveryhero', name: 'Delivery Hero' },
+  { urlSubstring: 'swecogroup.com', name: 'Sweco Group' },
 ];

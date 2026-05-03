@@ -56,6 +56,8 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "toimiala",         # industry
         "tuotanto",         # production
         "tuotannon",        # production (genitive)
+        "tutkija",          # researcher
+        "valvoja",          # supervisor
         "varasto",          # warehouse
         "vastaanotto",      # reception / front desk
         "vuoromestari",     # shift supervisor
@@ -64,7 +66,9 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "ansvarig",       # responsible / manager
         "arkitekt",       # architect
         "ekonom",         # economist
+        "erfaren",        # experienced
         "förvaltare",     # administrator / manager
+        "gruppchef",      # group leader
         "handläggare",    # administrator / officer
         "informatiker",   # computer scientist
         "konsult",        # consultant
@@ -75,7 +79,10 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "tekniker",       # technician
         "teknisk",        # technical
         "testare",        # tester
+        "uppdragsledare", # project manager
+        "utredare",       # investigator
         "utvecklare",     # developer
+        "validering",     # validation
         "verksamhet",     # operations / business
     ],
     "NO": [
@@ -92,13 +99,22 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     "DK": [
         "afdelingsleder", # department manager
+        "afvanding",      # drainage
         "arkitekt",       # architect
+        "boreformand",    # drilling foreman
+        "fagchef",        # head of department
+        "fagspecialist",  # subject specialist
+        "hjælper",        # assistant
         "karriere",       # career
         "konsulent",      # consultant
         "offentlige",     # public
+        "projectchef",    # project manager
+        "projectleder",   # project manager
         "rådgiver",       # advisor
         "sagsbehandler",  # case officer
         "sælger",         # salesperson
+        "statiker",       # structural engineer
+        "tilbudspartner", # offer partner
         "udvikler",       # developer
         
         
@@ -120,15 +136,22 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "entwicklung",    # development
         "erfahrung",      # experience
         "fachexperte",    # subject matter expert
+        "fachgutachter",  # expert / technical consultant
         "fachkraft",      # skilled worker
+        "fachplaner",     # specialist planner
+        "genehmigung",    # approval
+        "geomatiker",     # geomatics engineer
         "glasfaser",      # fibre optic
         "informatiker",   # computer scientist
         "infrastruktur",  # infrastructure
+        "ingenieur",      # engineer
         "kauffrau",       # merchant / business person (female form)
         "kaufmann",       # merchant / business person
+        "konstrukteur",   # designer / design engineer
         "koordinator",    # coordinator
         "kraftfahrer",    # driver
         "laborant",       # laboratory technician
+        "landschaft",     # landscape
         "logistik",       # logistics
         "masterstudium",  # master's degree/programme
         "mechaniker",     # mechanic
@@ -141,20 +164,26 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "spezialist",     # specialist
         "studium",        # degree programme
         "teamleiter",     # team lead
+        "teamleitung",    # team leader
         "technischer",    # technical
         "verantwortung",  # responsibility
         "verkehr",        # traffic
-        "vertrieb",       # sales
         "verkäufer",      # salesperson
+        "vertrag",        # contract
+        "vertrieb",       # sales
         "werkstudent",    # working student / student employee
         "wirtschaft",     # economy
+        "zeichner",       # illustrator / draftsman
     ],
     "NL": [
         "adviseur",       # advisor
+        "afstudeer",      # graduate
         "afstuderen",     # graduate
         "automatiseerder", # automater
         "automatisering", # automation
         "beheerder",      # administrator
+        "bouwkundig",     # architectural
+        "constructeur",   # constructor / manufacturer
         "coördinator",    # coordinator
         "defensie",       # defence
         "gezocht",        # wanted
@@ -162,9 +191,12 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "innovatie",      # innovation
         "medewerker",     # employee / associate
         "netwerk",        # network
+        "omgeving",       # environment
+        "ontwerp",        # design
         "ontwikkelaar",   # developer
         "openbaar",       # public
         "overheid",       # government
+        "projectleider",  # project manager
         "publieke",       # public
         "spoordomein",    # railway network
         "stagiair",       # intern
@@ -176,12 +208,18 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "verkoper",       # salesperson
         "verzekeringen",  # insurance
         "virtualisatie",  # virtualization
+        "voorbereider",   # planner
+        "voorziening",    # facility
     ],
     "EE": [
         "arendaja",       # developer
+        "insener",       # engineer
         "juht",           # manager / head
+        "konstruktorit",  # design engineer
+        "modelleerija",   # modeler
         "müügijuht",      # sales manager
         "nõustaja",       # advisor
+        "projekteerija",  # designer
         "spetsialist",    # specialist
     ],
     "LV": [

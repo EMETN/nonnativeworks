@@ -48,6 +48,12 @@
 #   countries             List of ISO alpha-2 country codes to fetch when
 #                         country_filter_param is set (e.g. [FI, SE, NO]).
 #                         Ignored if country_filter_param is absent.
+#   country_values        Map of ISO alpha-2 → site-specific filter value.
+#                         When set, the filter param uses the mapped value
+#                         instead of the ISO code, and each job is tagged with
+#                         the ISO country_code. Ignored without country_filter_param.
+#   url_selector          CSS selector for the job link when it is NOT on the
+#                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
 #                         Extracted during the same fetch as description_selector.
 #                         Used as the primary category classification signal (higher
@@ -234,7 +240,7 @@ scrapers:
     description_selector: ".jobdescription"
     job_function_selector: "td.colFacility jobFacility"
 
-    # ── Wärtsilä ──────────────────────────────────────────────────────────────────
+  # ── Wärtsilä ──────────────────────────────────────────────────────────────────
   - match: "careers.wartsila.com/search"
     name: Wärtsilä
     extra_params:
@@ -249,3 +255,36 @@ scrapers:
     location_selector: "td.colLocation .jobLocation"
     description_selector: ".jobdescription"
     job_function_selector: "td.colFacility jobFacility"
+
+  # ── Sweco Group ──────────────────────────────────────────────────────────────────
+  - match: "swecogroup.com/careers/vacancies"
+    name: Sweco Group
+    country_filter_param: country
+    countries:
+      - SE
+      - DK
+      - NL
+      - FI
+      - DE
+      - "NO"
+      - LT
+      - EE
+    country_values:
+      SE: "3"
+      DK: "4"
+      NL: "5"
+      FI: "7"
+      DE: "8"
+      "NO": "13"
+      LT: "16"
+      EE: "21"
+    pagination:
+      type: page
+      param: vacancy-page
+      page_size: 10
+    extra_params:
+      scroll-to: vacancies-top
+    card_selector: "tr.vacancy--list"
+    title_selector: "h3.vacancy__title"
+    location_selector: "em.vacancy__location"
+    url_selector: "a.js-vacancy-link"
