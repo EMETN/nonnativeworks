@@ -11,11 +11,13 @@
 - Booking.com
 - Capgemini
 - CGI (local script)
+- Deel
 - Delivery Hero
 - Dept
 - Edenred
 - Ericsson
 - Fortum
+- Futurice
 - Gofore
 - Happeo
 - Hiab
@@ -25,6 +27,7 @@
 - Maersk
 - Metso
 - Neste
+- Nets/Nexi
 - Nokia
 - Nordea
 - OP Financial Group
@@ -43,6 +46,7 @@
 - Stora Enso
 - Telia
 - Tieto
+- UpCloud
 - Vaisala
 - Wolt
 - Wärtsilä
@@ -63,7 +67,7 @@ Detected automatically from the career page URL. No per-company config needed �
 |-----|-------------|-------------------|
 | Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita |
 | Lever | `jobs.lever.co/{slug}` | |
-| Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
+| Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor, Deel |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
 | Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite) |
 | Recruitee | `{slug}.recruitee.com` | Happeo |
@@ -78,6 +82,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 |---------|----------|----------|
 | OP Financial Group | `op-careers.fi` | Custom recruiting API (POST, Polylang locale) |
 | Nokia | `jobs.nokia.com` | Oracle HCM Recruiting Cloud |
+| Nets/Nexi | `fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud |
 | Orion | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud |
 | Gofore | `gofore.com` | WordPress REST API (Polylang) |
 | Nordea | `nordea.com` | Custom Nordea API |
@@ -120,6 +125,8 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Hiab | `careers.hiab.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Wärtsilä | `careers.wartsila.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
+| UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
+| Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

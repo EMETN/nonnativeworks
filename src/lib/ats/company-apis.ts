@@ -433,6 +433,40 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
   },
 
+  'fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com': {
+    // Oracle HCM Recruiting Cloud endpoint for Nets/Nexi (Nordic payments).
+    // Site number CX_1. Location filters restrict to Nordic countries and Germany.
+    url: 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC,selectedLocationsFacet=300000000459853%3B300000000459886%3B300000000462267%3B300000000459847%3B300000000462177',
+    method: 'GET',
+    headers: {
+      'accept': '*/*',
+      'accept-language': 'en',
+      'content-type': 'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+      'ora-irc-language': 'en',
+      'origin': 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com',
+      'referer': 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    },
+    pagination: { type: 'finder-offset', pageSize: 200 },
+    itemsPath: 'items.0.requisitionList',
+    fields: {
+      title: 'Title',
+      location: 'PrimaryLocation',
+      id: 'Id',
+    },
+    urlTemplate: 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/{Id}',
+    companyName: 'Nets/Nexi',
+    descriptionApiUrl: 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1',
+    descriptionApiFields: ['ExternalDescriptionStr'],
+    descriptionApiLocationField: 'workLocation.0.TownOrCity',
+    descriptionApiJobFunctionField: 'JobFunction',
+    descriptionApiWorkModelField: 'WorkplaceType',
+    expandSecondaryLocations: {
+      path: 'secondaryLocations',
+      countryName: 'Name',
+    },
+  },
+
   'fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com': {
     // Oracle HCM Recruiting Cloud endpoint for Orion (Finnish pharma).
     // Same structure as Nokia — site number is OrionCareers.
@@ -742,6 +776,25 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'Publicis Groupe',
     descriptionFields: ['data.description', 'data.qualifications']
   },
+
+  'novonordisk.com': {
+    url: 'https://www.novonordisk.com/bin/nncorp/careersearch?keyword=&country=&category=&locale=en',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': 'application/json',
+      'Referer': 'https://www.novonordisk.com/careers/find-a-job/career-search-results.html',
+    },
+    pagination: { type: 'none' },
+    itemsPath: 'data.jobs',
+    fields: {
+      title: 'jobTitle',
+      location: 'jobLocationLabel',
+      department: 'jobSubCategory.label',
+    },
+    urlTemplate: 'https://www.novonordisk.com/careers/find-a-job/job-ad.{jobId}.html',
+    companyName: 'Novo Nordisk',
+    fetchDescription: true,
+  },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -777,4 +830,6 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'wartsila', name: 'Wärtsilä' },
   { urlSubstring: 'deliveryhero', name: 'Delivery Hero' },
   { urlSubstring: 'swecogroup.com', name: 'Sweco Group' },
+  { urlSubstring: 'nordnetab.com', name: 'Nordnet' },
+  { urlSubstring: 'upcloud.teamtailor.com', name: 'UpCloud' },
 ];

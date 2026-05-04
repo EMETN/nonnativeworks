@@ -179,6 +179,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
   'guyana': { name: 'Guyana', code: 'GY', slug: 'guyana' },
   'paraguay': { name: 'Paraguay', code: 'PY', slug: 'paraguay' },
   'peru': { name: 'Peru', code: 'PE', slug: 'peru' },
+  'perú': { name: 'Peru', code: 'PE', slug: 'peru' },
   'suriname': { name: 'Suriname', code: 'SR', slug: 'suriname' },
   'uruguay': { name: 'Uruguay', code: 'UY', slug: 'uruguay' },
   'venezuela': { name: 'Venezuela', code: 'VE', slug: 'venezuela' },
@@ -1178,6 +1179,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
 const COMPANY_COUNTRY_FALLBACKS: Array<{ urlSubstring: string; country: CountryInfo }> = [
   { urlSubstring: 'academicwork.fi', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
   { urlSubstring: 'sok.wd', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
+  { urlSubstring: 'upcloud.teamtailor.com', country: { name: 'Finland', code: 'FI', slug: 'finland' } },
 ];
 
 /**

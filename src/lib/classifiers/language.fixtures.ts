@@ -1122,4 +1122,64 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: true,
   },
+  // ── Comma/or-separated language lists with advantage phrases ──────────
+  {
+    label: '1b — "German, Italian, Danish, Swedish a bonus" comma list → DE advantage',
+    title: 'Software Engineer',
+    desc: 'Fluent in English; German, Italian, Danish, Swedish a bonus',
+    country: 'DE',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "German, Italian, Danish, Swedish a bonus" comma list → DK advantage',
+    title: 'Software Engineer',
+    desc: 'Fluent in English; German, Italian, Danish, Swedish a bonus',
+    country: 'DK',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "German or Italian is a plus" → DE advantage',
+    title: 'Software Engineer',
+    desc: 'Fluent in English; German or Italian is a plus.',
+    country: 'DE',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "German or Italian is a plus" → IT advantage',
+    title: 'Software Engineer',
+    desc: 'Fluent in English; German or Italian is a plus.',
+    country: 'IT',
+    requires: false,
+    advantage: true,
+  },
+  // ── "in addition to {lang}" requirement ───────────────────────────────
+  {
+    label: '2a — "In addition to Norwegian, you have excellent English skills" → NO required',
+    title: 'Software Engineer',
+    desc: 'In addition to Norwegian, you have excellent English skills, both written and verbal',
+    country: 'NO',
+    requires: true,
+    advantage: false,
+  },
+  // ── "fluent in at least English and {lang}" requirement ───────────────
+  {
+    label: '2a — "you should be fluent in at least English and Finnish" → FI required',
+    title: 'Software Engineer',
+    desc: 'Value and practice good communication - you should be fluent in at least English and Finnish.',
+    country: 'FI',
+    requires: true,
+    advantage: false,
+  },
+  // ── Swedish advantage alongside Finnish requirement ───────────────────
+  {
+    label: '1b — "Swedish is considered an asset" → SE advantage',
+    title: 'Software Engineer',
+    desc: 'Excellent Finnish and English skills; Swedish is considered an asset.',
+    country: 'SE',
+    requires: false,
+    advantage: true,
+  },
 ];
