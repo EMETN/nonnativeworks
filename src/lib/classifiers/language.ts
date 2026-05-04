@@ -435,6 +435,25 @@ function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
   );
 }
 
+/**
+ * Matches "{lang}" when it appears in a comma/or-separated list of languages
+ * followed by an advantage phrase — e.g.:
+ *   "German, Italian, Danish, Swedish a bonus"   → German matches
+ *   "German or Italian is a plus"                 → German matches
+ *   "German, Italian a plus"                      → German matches
+ * The language can appear at any position in the list. The advantage phrase
+ * uses the same operator patterns as buildAdvantageRegex.
+ */
+function buildLangListAdvantageRegex(lang: string): RegExp {
+  const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Tail: one or more comma/or-separated words after the language
+  const listTail = `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+or\\s+[a-z]+)?`;
+  const advantageSuffix =
+    `\\s+(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
+    `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit)\\b`;
+  return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
+}
+
 function buildAdvantageSignals(lang: string): string[] {
   // Only modifiers that don't follow the "is a(n) [adj] advantage/plus/asset/bonus" pattern —
   // those are handled by buildAdvantageRegex above.
@@ -601,6 +620,8 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang}, english`,
     // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
     `local language ${lang}`,
+    // "in addition to {lang}" — presupposes the language alongside English
+    `in addition to ${lang}`,
   ];
 }
 
@@ -921,6 +942,23 @@ export function detectNativeLanguage(
       }
     }
 
+    // "{lang}, {lang2}, ... a bonus" / "{lang} or {lang2} is a plus"
+    const langListAdvMatch = buildLangListAdvantageRegex(lang).exec(combined);
+    if (langListAdvMatch && !hasRequirement) {
+      return {
+        value: false,
+        local_language_advantage: true,
+        requiredLanguages: [],
+        preferredLanguages: langNames,
+        signals: [
+          { phase: '1b',
+            description: 'advantage phrase pre-filter',
+            matched: langListAdvMatch[0]
+          }
+        ],
+      };
+    }
+
     // "{lang}[, lang2] or [additional/another/other] [group] languages are a plus/advantage"
     const langGroupAdvMatch = buildLangOrGroupAdvantageRegex(lang).exec(combined);
     if (langGroupAdvMatch && !hasRequirement) {
@@ -1204,6 +1242,10 @@ export function detectNativeLanguage(
             signals: [{ phase: '2a-cross', description: `cross-language requirement: ${canonicalName}`, matched: signal }],
           };
         }
+      }
+      if (!foundAdvantage) {
+        const listAdvMatch = buildLangListAdvantageRegex(kw).exec(combined);
+        if (listAdvMatch) foundAdvantage = listAdvMatch[0];
       }
       if (!foundAdvantage) {
         const groupAdvMatch = buildLangOrGroupAdvantageRegex(kw).exec(combined);

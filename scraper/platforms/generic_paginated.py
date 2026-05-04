@@ -29,6 +29,11 @@ Three extraction modes (set via extract_mode in config):
     array inside the parsed object. Fields support the same dot-notation access
     as script_json.
 
+  teamtailor
+    TeamTailor ATS career sites. Jobs are in #jobs_list_container > li. Each
+    card has a link (title + URL) and a metadata div with department, location,
+    and work-type separated by middots. Department is extracted as jobFunction.
+
 All modes share the same two-phase structure:
   1. Listing — fetch page(s) and extract jobs.
   2. Description enrichment — detail pages are always fetched for English-titled
@@ -358,6 +363,79 @@ def _fetch_script_json_page(
         return []
     return _extract_script_json(resp.text, cfg, list_url)
 
+# ── teamtailor helpers ────────────────────────────────────────────────────────
+
+_MIDDOT = "·"
+
+def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
+    link = card.find("a", href=True)
+    if not link:
+        return None
+
+    title = link.get_text(strip=True)
+    if not title:
+        return None
+    job_url = urljoin(base_url, link["href"])
+
+    location = None
+    department = None
+    meta_div = card.select_one("div.text-md")
+    if meta_div:
+        parts = [
+            p.strip()
+            for p in meta_div.get_text(separator=_MIDDOT).split(_MIDDOT)
+            if p.strip()
+        ]
+        if len(parts) >= 2:
+            department = parts[0]
+            location = parts[1]
+        elif len(parts) == 1:
+            location = parts[0]
+
+    # TeamTailor sites often prefix each city with the company/office name,
+    # e.g. "Futurice Helsinki, Futurice Tampere". Strip the prefix so the
+    # country lookup can match the bare city names.
+    if location:
+        company_name = cfg.get("name", "")
+        if company_name:
+            cn_lower = company_name.lower()
+            stripped_parts = []
+            for part in location.split(","):
+                s = part.strip()
+                if s.lower().startswith(cn_lower + " "):
+                    s = s[len(company_name):].strip()
+                stripped_parts.append(s)
+            cleaned = ", ".join(stripped_parts)
+            location = cleaned or location
+
+    job = build_job(title, job_url, location)
+    if department:
+        job["jobFunction"] = department
+    return job
+
+
+def _fetch_teamtailor_page(
+    session: requests.Session,
+    list_url: str,
+    params: dict,
+    cfg: dict,
+) -> list[dict]:
+    try:
+        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
+        return []
+
+    soup = BeautifulSoup(resp.content, "html.parser")
+    jobs = []
+    for card in soup.select("#jobs_list_container > li"):
+        job = _extract_teamtailor_card(card, list_url, cfg)
+        if job and job.get("title"):
+            jobs.append(job)
+    return jobs
+
+
 def _find_jobs_payload(html: str):
     """
     Search raw HTML for:
@@ -524,6 +602,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         fetch_page = _fetch_script_json_page
     elif extract_mode == "script_var_json":
         fetch_page = _fetch_script_var_json_page
+    elif extract_mode == "teamtailor":
+        fetch_page = _fetch_teamtailor_page
     else:
         fetch_page = _fetch_css_cards_page
 

@@ -53,6 +53,10 @@ companies:
       url: https://careers.capgemini.com
       min_positions: 10
 
+    - name: Deel
+      url: https://www.deel.com/careers/open-roles
+      min_positions: 10
+
     - name: Delivery Hero
       url: https://careers.deliveryhero.com/jobs?options=745%2C869%2C860&page=1&size=48
       min_positions: 5
@@ -72,6 +76,10 @@ companies:
     - name: Fortum
       url: https://jobs.fortum.com/search
       min_positions: 5
+
+    - name: Futurice
+      url: https://careers.futurice.com/en-GB/jobs
+      min_positions: 1
 
     - name: Gofore
       url: https://gofore.com/en/careers/
@@ -108,6 +116,14 @@ companies:
     - name: Neste
       url: https://jobs.neste.com/search
       min_positions: 5
+
+    - name: Nets/Nexi
+      url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
+      min_positions: 5
+
+    - name: Nordnet
+      url: https://career.nordnetab.com/jobs
+      min_positions: 3
 
     - name: Nokia
       url: https://jobs.nokia.com/en
@@ -184,6 +200,10 @@ companies:
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10
+
+    - name: UpCloud
+      url: https://upcloud.teamtailor.com/jobs
+      min_positions: 1
 
     - name: Vaisala
       url: https://careers.vaisala.com

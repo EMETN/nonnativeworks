@@ -10,6 +10,7 @@
 #   match             Substring matched against the career page URL (required)
 #   name              Display name used in log messages
 #   extract_mode      css_cards (default) | attribute_json | script_json
+#                     | teamtailor
 #   list_url          Override the URL used for listing pages (use when the
 #                     input URL differs from the first page URL)
 #   extra_params          Fixed query params always appended (e.g. sort order)
@@ -98,6 +99,17 @@
 #   fields.country_subfield   Key within each location object for country code
 #                             One job is created per location object (fan-out).
 #   fields.job_function   Dot-path to job function/department string
+
+# ── extract_mode: teamtailor ──────────────────────────────────────────────────
+#
+# TeamTailor career sites render jobs in a fixed HTML template. Jobs are in
+# #jobs_list_container > li. Each card has a link with the title and a metadata
+# div (class "text-md") with department · location · work-type separated by
+# middots. No additional selectors needed — the mode handles parsing internally.
+# Pagination uses ?page=1,2,3… and stops when fewer than page_size jobs return.
+#
+# Only shared fields + pagination are used; card/title/location selectors are
+# ignored.
 
 scrapers:
   
@@ -288,3 +300,33 @@ scrapers:
     title_selector: "h3.vacancy__title"
     location_selector: "em.vacancy__location"
     url_selector: "a.js-vacancy-link"
+
+  # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
+  - match: "career.nordnetab.com"
+    name: Nordnet
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
+
+  # ── UpCloud (TeamTailor) ────────────────────────────────────────────────────
+  - match: "upcloud.teamtailor.com"
+    name: UpCloud
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
+
+  # ── Futurice (TeamTailor) ────────────────────────────────────────────────────
+  - match: "careers.futurice.com/en-GB/jobs"
+    name: Futurice
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
