@@ -102,6 +102,7 @@ for domain in \
     "op-careers.fi" \
     "jobs.nokia.com" \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
     "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
     "nordea.com" \
@@ -214,6 +215,7 @@ done
 # Query from multiple public DNS servers to capture more of the IP pool.
 for cdn_domain in \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
     "jobs.booking.com" ; do
     for dns_server in "8.8.8.8" "1.1.1.1"; do
         echo "Resolving $cdn_domain via $dns_server..."
