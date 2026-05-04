@@ -30,6 +30,7 @@
 - Nets/Nexi
 - Nokia
 - Nordea
+- Novo Nordisk
 - OP Financial Group
 - Orion
 - Orkla
@@ -92,6 +93,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Orkla | `careers.orkla.com` | Custom API (POST) |
 | Capgemini | `capgemini.com/careers` | Custom API |
 | Publicis Groupe | `careers.publicisgroupe.com/jobs` | Custom API |
+| Novo Nordisk | `novonordisk.com/careers` | Custom API |
 
 ---
 
