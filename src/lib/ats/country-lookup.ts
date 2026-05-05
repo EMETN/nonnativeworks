@@ -886,6 +886,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'armagh':                   { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'ballymoney':               { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'basingstoke':              { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
+  'barlaston':                { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'belfast':                  { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'birmingham':               { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
   'bristol':                  { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
