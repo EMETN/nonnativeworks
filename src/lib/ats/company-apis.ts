@@ -795,6 +795,53 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'Novo Nordisk',
     fetchDescription: true,
   },
+
+  'randstad.com': {
+    url: 'https://www.randstad.com/api/search/search-results',
+    method: 'POST',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Referer': 'https://www.randstad.com/jobs/careers-at-randstad/',
+      'Origin': 'https://www.randstad.com',
+    },
+    body: {
+      data: {
+        currentRoute: {
+          path: '/jobs/careers-at-randstad/:searchParams*',
+          url: '/jobs/careers-at-randstad/the-netherlands/',
+          isExact: true,
+          params: { searchParams: 'the-netherlands' },
+          routeName: 'internal-search',
+        },
+        currentLanguage: 'en',
+        searchParams: {
+          country: 'the-netherlands',
+          isInternal: true,
+          locationData: {},
+          specialism: null,
+          subSpecialism: null,
+          jobCategory: null,
+        },
+      },
+    },
+    repeatFor: {
+      body: [
+        { data: { currentRoute: { path: '/jobs/careers-at-randstad/:searchParams*', url: '/jobs/careers-at-randstad/the-netherlands/', isExact: true, params: { searchParams: 'the-netherlands' }, routeName: 'internal-search' }, currentLanguage: 'en', searchParams: { country: 'the-netherlands', isInternal: true, locationData: {}, specialism: null, subSpecialism: null, jobCategory: null } } },
+        { data: { currentRoute: { path: '/jobs/careers-at-randstad/:searchParams*', url: '/jobs/careers-at-randstad/germany/', isExact: true, params: { searchParams: 'germany' }, routeName: 'internal-search' }, currentLanguage: 'en', searchParams: { country: 'germany', isInternal: true, locationData: {}, specialism: null, subSpecialism: null, jobCategory: null } } },
+      ],
+    },
+    pagination: { type: 'page', param: 'data.searchParams.page', startPage: 1, totalCountPath: 'searchResults.hits.total' },
+    itemsPath: 'searchResults.hits.hits',
+    fields: {
+      title: '_source.JobInformation.Title',
+      location: '_source.JobLocation.City',
+      jobFunction: '_source.BlueXJobData.Specialism',
+      id: '_source.BlueXJobData.JobId',
+    },
+    urlTemplate: 'https://www.randstad.com/jobs/careers-at-randstad/{_source.BlueXSanitized.Title}_{_source.BlueXSanitized.City}_{_source.BlueXJobData.JobId}/',
+    companyName: 'Randstad',
+    descriptionFields: ['_source.JobInformation.Description'],
+  },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -832,5 +879,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'swecogroup.com', name: 'Sweco Group' },
   { urlSubstring: 'nordnetab.com', name: 'Nordnet' },
   { urlSubstring: 'upcloud.teamtailor.com', name: 'UpCloud' },
-  { urlSubstring: 'jobs.iemens-healthineers.com', name: 'Siemens Healthineers' },
+  { urlSubstring: 'jobs.siemens-healthineers.com', name: 'Siemens Healthineers' },
+  { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
+  { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
 ];

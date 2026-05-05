@@ -34,10 +34,10 @@ export function detectAts(url: string): AtsDetectionResult {
     }
 
     // Lever
-    // Pattern: jobs.lever.co/{slug} or jobs.lever.co/{slug}/{uuid}
-    if (hostname === 'jobs.lever.co') {
+    // Pattern: jobs.lever.co/{slug} or jobs.eu.lever.co/{slug}
+    if (hostname === 'jobs.lever.co' || hostname === 'jobs.eu.lever.co') {
       const match = pathname.match(/^\/([^/]+)/);
-      if (match) return { ats: 'lever', companySlug: match[1] };
+      if (match) return { ats: 'lever', companySlug: match[1], leverEu: hostname === 'jobs.eu.lever.co' };
     }
 
     // Ashby
