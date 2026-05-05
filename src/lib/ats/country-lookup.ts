@@ -593,35 +593,52 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'barneveld':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'bergen op zoom':           { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'best':                     { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'breda':                    { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'de lier':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'den bosch':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'diemen':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'doetinchem':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'dordrecht':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'dronten':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'ede':                      { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'eindhoven':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'enschede':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'etten-leur':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'groningen':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'den haag':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'the hague':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'haarlem':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'heemskerk':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'heerenveen':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'heerlen':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'hengelo':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'herkenbosch':              { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'hilversum':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'hoofddorp':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'den hoorn':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'huizen':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'ijmuiden':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'kampen':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'leiden':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'leeuwarden':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'lichtenvoorde':            { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'maastricht':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'meppel':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'moerdijk':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'nijmegen':                 { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'oss':                      { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'purmerend':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'rj nijkerk':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'roosendaal':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'rotterdam':                { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'sittard':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'tholen':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'tilburg':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'utrecht':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'veenendaal':               { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'venlo':                    { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'winterswijk':              { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+  'zundert':                  { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
   'zwolle':                   { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     // ── Norway ───────────────────────────────────────────────────────────────
   'bergen':                   { name: 'Norway', code: 'NO', slug: 'norway' },
@@ -716,6 +733,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'graz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
   'innsbruck':                { name: 'Austria', code: 'AT', slug: 'austria' },
   'linz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
+  'parndorf':                 { name: 'Austria', code: 'AT', slug: 'austria' },
   'poggersdorf':              { name: 'Austria', code: 'AT', slug: 'austria' },
   'salzburg':                 { name: 'Austria', code: 'AT', slug: 'austria' },
   'wien':                     { name: 'Austria', code: 'AT', slug: 'austria' },
@@ -740,6 +758,8 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'praha':                    { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
   'usti nad labem':           { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
   // ── France ───────────────────────────────────────────────────────────────
+  'alissas':                  { name: 'France', code: 'FR', slug: 'france' },
+  'amiens':                   { name: 'France', code: 'FR', slug: 'france' },
   'annecy':                   { name: 'France', code: 'FR', slug: 'france' },
   'asnières sur seine':       { name: 'France', code: 'FR', slug: 'france' },
   'auch':                     { name: 'France', code: 'FR', slug: 'france' },
@@ -803,12 +823,18 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'dublin':                   { name: 'Ireland', code: 'IE', slug: 'ireland' },
   // Italy
   'ferrara':                  { name: 'Italy', code: 'IT', slug: 'italy' },
+  'melfi':                    { name: 'Italy', code: 'IT', slug: 'italy' },
+  'milan':                    { name: 'Italy', code: 'IT', slug: 'italy' },
   'milano':                   { name: 'Italy', code: 'IT', slug: 'italy' },
+  'naples':                   { name: 'Italy', code: 'IT', slug: 'italy' },
+  'napoli':                   { name: 'Italy', code: 'IT', slug: 'italy' },
   'nogarole rocca':           { name: 'Italy', code: 'IT', slug: 'italy' },
   'padova':                   { name: 'Italy', code: 'IT', slug: 'italy' },
   'pero':                     { name: 'Italy', code: 'IT', slug: 'italy' },
   'roma':                     { name: 'Italy', code: 'IT', slug: 'italy' },
+  'rome':                     { name: 'Italy', code: 'IT', slug: 'italy' },
   'sassari':                  { name: 'Italy', code: 'IT', slug: 'italy' },
+  'taranto':                  { name: 'Italy', code: 'IT', slug: 'italy' },
   'torino':                   { name: 'Italy', code: 'IT', slug: 'italy' },
   'turin':                    { name: 'Italy', code: 'IT', slug: 'italy' },
   'verona':                   { name: 'Italy', code: 'IT', slug: 'italy' },
@@ -870,6 +896,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'seville':                  { name: 'Spain', code: 'ES', slug: 'spain' },
   'tarragona':                { name: 'Spain', code: 'ES', slug: 'spain' },
   'valencia':                 { name: 'Spain', code: 'ES', slug: 'spain' },
+  'valladolid':               { name: 'Spain', code: 'ES', slug: 'spain' },
   // ── Switzerland ──────────────────────────────────────────────────────────
   'basel':                    { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
   'bern':                     { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
@@ -1117,7 +1144,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'vijayawada':               { name: 'India', code: 'IN', slug: 'india' },
   'visakhapatnam':            { name: 'India', code: 'IN', slug: 'india' },
   'vizag':                    { name: 'India', code: 'IN', slug: 'india' },
-  // China  ───────────────────────────────────────────────────────
+  // China  ─────────────────────────────────────────────────────────────
   'hangzhou':                 { name: 'China', code: 'CN', slug: 'china' },
   'hubei':                    { name: 'China', code: 'CN', slug: 'china' },
   'huzhou':                   { name: 'China', code: 'CN', slug: 'china' },
@@ -1141,7 +1168,10 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'tianjin':                  { name: 'China', code: 'CN', slug: 'china' },
   'wuhan':                    { name: 'China', code: 'CN', slug: 'china' },
   'zhuhai':                   { name: 'China', code: 'CN', slug: 'china' },
-  // Southeast Asia  ───────────────────────────────────────────────────────
+   // Japan  ───────────────────────────────────────────────────────────────
+  'osaka':                    { name: 'Japan', code: 'JP', slug: 'japan' },
+  'tokyo':                    { name: 'Japan', code: 'JP', slug: 'japan' },
+  // Southeast Asia  ─────────────────────────────────────────────────────────────
   'bangkok':                  { name: 'Thailand', code: 'TH', slug: 'thailand' },
   'daerah khusus ibukota jakarta': { name: 'Indonesia', code: 'ID', slug: 'indonesia' },
   'jakarta':                  { name: 'Indonesia', code: 'ID', slug: 'indonesia' },
@@ -1151,17 +1181,17 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'petaling jaya':            { name: 'Malaysia', code: 'MY', slug: 'malaysia' },
   'singapore':                { name: 'Singapore', code: 'SG', slug: 'singapore' },
   'taipei':                   { name: 'Taiwan', code: 'TW' , slug: 'taiwan' },
-  // Saudi Arabia  ───────────────────────────────────────────────────────
+  // Saudi Arabia  ───────────────────────────────────────────────────────────────────
   'jeddah':                   { name: 'Saudi Arabia', code: 'SA', slug: 'saudi-arabia' },
   'makkah':                   { name: 'Saudi Arabia', code: 'SA', slug: 'saudi-arabia' },
   'riyadh':                   { name: 'Saudi Arabia', code: 'SA', slug: 'saudi-arabia' },
-  // United Arab Emirates  ───────────────────────────────────────────────────────
+  // United Arab Emirates  ─────────────────────────────────────────────────────────────
   'abu dhabi':                { name: 'United Arab Emirates', code: 'AE', slug: 'united-arab-emirates' },
   'dubai':                    { name: 'United Arab Emirates', code: 'AE', slug: 'united-arab-emirates' },
   'sharjah':                  { name: 'United Arab Emirates', code: 'AE', slug: 'united-arab-emirates' },
-  // Qatar  ───────────────────────────────────────────────────────
+  // Qatar  ────────────────────────────────────────────────────────────────────
   'doha':                     { name: 'Qatar', code: 'QA', slug: 'qatar' },
-  // Australia  ───────────────────────────────────────────────────────
+  // Australia  ────────────────────────────────────────────────────────────────
   'brisbane':                 { name: 'Australia', code: 'AU', slug: 'australia' },
   'canberra':                 { name: 'Australia', code: 'AU', slug: 'australia' },
   'gold coast':               { name: 'Australia', code: 'AU', slug: 'australia' },
@@ -1171,7 +1201,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'perth':                    { name: 'Australia', code: 'AU', slug: 'australia' },
   'sydney':                   { name: 'Australia', code: 'AU', slug: 'australia' },
 
-  // Capitals  ───────────────────────────────────────────────────────
+  // Capitals  ───────────────────────────────────────────────────────────────────
   'andorra la vella':         { name: 'Andorra', code: 'AD', slug: 'andorra' },
   'belgrade':                 { name: 'Serbia', code: 'RS', slug: 'serbia' },
   'cairo':                    { name: 'Egypt', code: 'EG', slug: 'egypt' },
@@ -1312,10 +1342,25 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
 
   // Split by semicolon first (Greenhouse: "Hybrid - Helsinki, Uusimaa; Hybrid - Oulu, North Ostrobothnia")
   // then by comma within each part. Strip work-mode prefixes before lookup.
+  // Also extract text inside parentheses as extra candidate segments — handles
+  // Workday venue-style locations like "KQB (Amsterdam - Herengracht 578-58)".
+  // Additionally split on " - " (spaced dash) to handle "Germany - Home Based" style strings.
   const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
   const segments = parts.flatMap((part) => {
     const stripped = part.replace(LOCATION_PREFIX_RE, '').replace(LOCATION_SUFFIX_RE, '');
-    return stripped.split(',').map((s) => s.trim()).filter(Boolean);
+    const base = stripped.split(',').map((s) => s.trim()).filter(Boolean);
+    const parenMatch = stripped.match(/\(([^)]+)\)/);
+    if (parenMatch) {
+      const inner = parenMatch[1].split(/\s*[-–]\s*|,/).map((s) => s.trim()).filter(Boolean);
+      base.push(...inner);
+    }
+    // Split on spaced dashes (" - " / " – ") to extract sub-parts like "Germany" from
+    // "Germany - Home Based" — but only add them as extra candidates, not replace the original.
+    if (/\s[-–]\s/.test(stripped)) {
+      const dashParts = stripped.split(/\s[-–]\s/).map((s) => s.trim()).filter(Boolean);
+      base.push(...dashParts);
+    }
+    return base;
   });
 
   // Collect all unique countries found in any segment — check country map first, then city map,

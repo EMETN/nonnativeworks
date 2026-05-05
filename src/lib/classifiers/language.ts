@@ -287,6 +287,15 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'scandinavian language is a plus but not a requirement',
   'nordic languages are not a requirement',
   'scandinavian languages are not a requirement',
+  'any nordics language will be value addition',
+  'any nordic language will be value addition',
+  'any scandinavian language will be value addition',
+  'any nordics language is a value addition',
+  'any nordic language is a value addition',
+  'any scandinavian language is a value addition',
+  'nordics language will be value addition',
+  'nordic language will be value addition',
+  'scandinavian language will be value addition',
 ];
 
 // ---------------------------------------------------------------------------
@@ -474,6 +483,8 @@ function buildAdvantageSignals(lang: string): string[] {
     ' are of added value',
     ' is of great added value',
     ' are of great added value',
+    ' will be value addition',
+    ' will be a value addition',
   ];
 
     const signals: string[] = [];
@@ -483,6 +494,8 @@ function buildAdvantageSignals(lang: string): string[] {
         }
     }
 
+  signals.push(`as a plus in ${lang}`);
+  signals.push(`as a plus: ${lang}`);
   signals.push(`nice to have: ${lang}`);
   signals.push(`nice to have ${lang}`);
   signals.push(`${lang} – nice to have`);
@@ -544,6 +557,7 @@ function buildRequirementSignals(lang: string): string[] {
     // Level descriptors
     `elementary ${lang}`,
     `good ${lang}`,
+    `very good ${lang}`,
     `good in ${lang}`,
     // Native / mother tongue
     `native level of ${lang}`,
@@ -570,6 +584,11 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} skills`,
     `command of ${lang}`,
     `ability in ${lang}`,
+    // Understanding / comprehension
+    `understanding of ${lang}`,
+    `understanding of the ${lang} language`,
+    `good understanding of ${lang}`,
+    `good understanding of the ${lang} language`,
     // Written + spoken
     `written and spoken ${lang}`,
     `spoken and written ${lang}`,
@@ -622,6 +641,13 @@ function buildRequirementSignals(lang: string): string[] {
     `local language ${lang}`,
     // "in addition to {lang}" — presupposes the language alongside English
     `in addition to ${lang}`,
+    // "secondary language" / "second language" phrasing
+    `${lang} as a secondary language`,
+    `${lang} as a second language`,
+    `${lang} as secondary language`,
+    `${lang} as second language`,
+    // "either X or Y as a secondary language" — lang appears before "or" in an either/or
+    `either ${lang}`,
   ];
 }
 
@@ -666,7 +692,7 @@ const REQUIREMENT_ADVANTAGE_PREFIX_RE =
 // Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
 // the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
 const DIRECT_ADVANTAGE_SUFFIX_RE =
-  /^\s+(?:(?:is|are)\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
+  /^\s+(?:preferred\b|(?:is|are)\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
 
 type NegationKind = 'advantage' | 'none' | false;
 
@@ -1124,7 +1150,7 @@ export function detectNativeLanguage(
   // Generic "native local/country language" phrase — doesn't name the language
   // but clearly means native fluency in the local language is required.
   const genericMatch = languages.length > 0
-    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)/)
+    ? combined.match(/native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)|in addition to the local language/)
     : null;
   if (genericMatch) {
     return {
