@@ -189,6 +189,10 @@ companies:
       url: https://jobs.sap.com/search
       min_positions: 5
 
+    - name: Siemens Healthineers
+      url: https://jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs/
+      min_positions: 5
+
     - name: Smartly
       url: https://job-boards.greenhouse.io/smartlyio
       min_positions: 2

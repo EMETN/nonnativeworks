@@ -546,16 +546,18 @@ def _fetch_detail_page(
     job_url: str,
     desc_sel: str | None,
     jf_sel: str | None,
-) -> tuple[str, str | None, bool]:
-    """Fetch a job detail page and return (description_html, job_function, gone).
+    detail_loc_sel: str | None = None,
+) -> tuple[str, str | None, list[str] | None, bool]:
+    """Fetch a job detail page and return (description_html, job_function, locations, gone).
 
     gone is True when the page returns 404/410, meaning the position no longer exists.
+    locations is a list of location strings when detail_loc_sel is set and matches.
     """
     try:
         resp = session.get(job_url, timeout=20, headers=_HEADERS)
         if resp.status_code in _GONE_STATUSES:
             print(f"generic: detail page gone (HTTP {resp.status_code}): {job_url}", file=sys.stderr)
-            return "", None, True
+            return "", None, None, True
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, "html.parser")
 
@@ -573,10 +575,16 @@ def _fetch_detail_page(
             if tag:
                 job_function = tag.get_text(strip=True) or None
 
-        return desc_html, job_function, False
+        locations = None
+        if detail_loc_sel:
+            loc_tags = soup.select(detail_loc_sel)
+            if loc_tags:
+                locations = [t.get_text(strip=True) for t in loc_tags if t.get_text(strip=True)]
+
+        return desc_html, job_function, locations, False
     except Exception as e:
         print(f"generic: detail page fetch error ({job_url}): {e}", file=sys.stderr)
-        return "", None, False
+        return "", None, None, False
 
 
 # ── main entry point ──────────────────────────────────────────────────────────
@@ -590,6 +598,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     max_pages    = pagination.get("max_pages", _DEFAULT_MAX_PAGES)
     desc_sel     = cfg.get("description_selector")
     jf_sel       = cfg.get("job_function_selector")
+    detail_loc_sel = cfg.get("detail_location_selector")
     list_url     = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
     country_filter_param: str | None = cfg.get("country_filter_param")
@@ -657,21 +666,33 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
 
     print(f"generic [{name}]: collected {len(all_jobs)} jobs", file=sys.stderr)
 
-    # ── Phase 2: description enrichment for English-titled jobs ──────────────
+    # ── Phase 2: description enrichment for English-titled jobs ─────────────��
     # In attribute_json mode, skip detail page fetches for jobs that already
     # have jobFunction from the JSON (description still fetched if needed).
-    english_jobs = [j for j in all_jobs if not _title_appears_non_english(j.get("title", "")) and is_tracked_location(j.get("location"))]
-    unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
-    print(f"generic [{name}]: fetching descriptions for {len(unique_urls)} English-titled jobs", file=sys.stderr)
+    # When detail_location_selector is set, also fetch detail pages for
+    # "Multiple Locations" jobs to resolve their actual locations.
+    _MULTI_LOC_MARKERS = {"multiple locations", "multiple cities", "various locations"}
 
-    detail_cache: dict[str, tuple[str, str | None, bool]] = {}
+    def _is_multi_location(job: dict) -> bool:
+        loc = (job.get("location") or "").lower().strip()
+        return loc in _MULTI_LOC_MARKERS
+
+    english_jobs = [j for j in all_jobs if not _title_appears_non_english(j.get("title", "")) and is_tracked_location(j.get("location"))]
+    multi_loc_jobs = [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)] if detail_loc_sel else []
+
+    jobs_needing_detail = {j["url"] for j in english_jobs if j.get("url")}
+    jobs_needing_detail.update(j["url"] for j in multi_loc_jobs if j.get("url"))
+    unique_urls = list(dict.fromkeys(jobs_needing_detail))
+    print(f"generic [{name}]: fetching details for {len(unique_urls)} jobs", file=sys.stderr)
+
+    detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
     for i, job_url in enumerate(unique_urls):
-        result = _fetch_detail_page(session, job_url, desc_sel, jf_sel)
+        result = _fetch_detail_page(session, job_url, desc_sel, jf_sel, detail_loc_sel)
         detail_cache[job_url] = result
         if (i + 1) % 10 == 0:
             print(f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}", file=sys.stderr)
 
-    gone_urls: set[str] = {u for u, (_, _, gone) in detail_cache.items() if gone}
+    gone_urls: set[str] = {u for u, (_, _, _, gone) in detail_cache.items() if gone}
     if gone_urls:
         before = len(all_jobs)
         all_jobs = [j for j in all_jobs if j.get("url") not in gone_urls]
@@ -681,11 +702,33 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         url = job.get("url", "")
         if url in gone_urls:
             continue
-        desc_html, job_function, _ = detail_cache.get(url, ("", None, False))
+        desc_html, job_function, _, _ = detail_cache.get(url, ("", None, None, False))
         if desc_html:
             job["descriptionHtml"] = desc_html
         if job_function and not job.get("jobFunction"):
             job["jobFunction"] = job_function
+
+    # Fan out multi-location jobs into one entry per resolved location
+    if detail_loc_sel:
+        expanded: list[dict] = []
+        for job in all_jobs:
+            if not _is_multi_location(job):
+                expanded.append(job)
+                continue
+            url = job.get("url", "")
+            _, _, locations, gone = detail_cache.get(url, ("", None, None, False))
+            if gone:
+                continue
+            if not locations:
+                expanded.append(job)
+                continue
+            for loc in locations:
+                copy = dict(job)
+                copy["location"] = loc
+                expanded.append(copy)
+        if len(expanded) != len(all_jobs):
+            print(f"generic [{name}]: expanded multi-location jobs: {len(all_jobs)} → {len(expanded)}", file=sys.stderr)
+        all_jobs = expanded
 
     print(f"generic [{name}]: done — {len(all_jobs)} total jobs", file=sys.stderr)
     return all_jobs
