@@ -832,4 +832,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'swecogroup.com', name: 'Sweco Group' },
   { urlSubstring: 'nordnetab.com', name: 'Nordnet' },
   { urlSubstring: 'upcloud.teamtailor.com', name: 'UpCloud' },
+  { urlSubstring: 'jobs.iemens-healthineers.com', name: 'Siemens Healthineers' },
 ];

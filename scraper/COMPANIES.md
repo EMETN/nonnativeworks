@@ -44,6 +44,7 @@
 - Rovio
 - Sanoma
 - SAP
+- Siemens Healthineers
 - Smartly
 - SOK
 - Solita
@@ -132,6 +133,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
+| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards` | Paginated offset; 6 rows page | 
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 
