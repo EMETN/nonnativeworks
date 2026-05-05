@@ -1182,4 +1182,94 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: true,
   },
+
+  // ── Understanding / comprehension phrasing ──────────────────────────────
+  {
+    label: '2a — "good understanding of the Dutch language" → NL required',
+    title: 'Account Manager',
+    desc: 'Good understanding of the Dutch language',
+    country: 'NL',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "as a plus in {lang}" advantage phrasing ────────────────────────────
+  {
+    label: '1b — "as a plus in Dutch" → NL advantage',
+    title: 'Analyst',
+    desc: 'Proficiency in English and as a plus in Dutch, both spoken and written',
+    country: 'NL',
+    requires: false,
+    advantage: true,
+  },
+
+  // ── "either X or Y as a secondary language" ─────────────────────────────
+  {
+    label: '2a — "either Estonian or Lithuanian as a secondary language" → EE required',
+    title: 'Specialist',
+    desc: 'Fluent English (C2 level, both written and spoken) and either Estonian or Lithuanian as a secondary language at intermediate level (B1)',
+    country: 'EE',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── Nordic "value addition" group phrase ─────────────────────────────────
+  {
+    label: '1b — "any Nordics language will be value addition" → FI advantage',
+    title: 'Manager',
+    desc: 'Fluent English and any Nordics language will be value addition.',
+    country: 'FI',
+    requires: false,
+    advantage: true,
+  },
+
+  // ── Bare "preferred" suffix downgrades requirement to advantage ──────────
+  {
+    label: '2a — "proficiency in Dutch preferred" → NL advantage',
+    title: 'Analyst',
+    desc: 'Fluency in business English is required and oral proficiency in Dutch preferred',
+    country: 'NL',
+    requires: false,
+    advantage: true,
+  },
+
+  // ── "in addition to the local language" generic requirement ──────────────
+  {
+    label: '2a — "in addition to the local language" → NL required',
+    title: 'Specialist',
+    desc: 'Fluency in speaking, understanding, and writing English, in addition to the local language.',
+    country: 'NL',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "very good German" requirement ──────────────────────────────────────
+  {
+    label: '2a — "very good German and good English" → DE required',
+    title: 'Engineer',
+    desc: 'Very good German and good English skills round off your profile',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "fluency in both English and Dutch" requirement ─────────────────────
+  {
+    label: '2a — "fluency in both English and Dutch" → NL required',
+    title: 'Engineer',
+    desc: 'Fluency in both English and Dutch',
+    country: 'NL',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "Dutch language fluency is considered as a great advantage" ──────────
+  {
+    label: '1b — "Dutch language fluency considered as a great advantage" → NL advantage',
+    title: 'Manager',
+    desc: 'Dutch language fluency is considered as a great advantage.',
+    country: 'NL',
+    requires: false,
+    advantage: true,
+  },
 ];
