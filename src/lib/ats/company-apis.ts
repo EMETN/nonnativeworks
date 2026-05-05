@@ -842,6 +842,26 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'Randstad',
     descriptionFields: ['_source.JobInformation.Description'],
   },
+
+  'werkenbijabnamro.nl': {
+    url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?filters[Country][]=Netherlands&sort=created&sortDir=DESC',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': 'application/json',
+      'Referer': 'https://www.werkenbijabnamro.nl/en/vacancies/country/netherlands',
+    },
+    pagination: { type: 'page', param: 'pageNumber', startPage: 1, totalCountPath: 'meta.num_total_hits' },
+    itemsPath: 'vacancies',
+    fields: {
+      title: 'title',
+      location: 'city',
+      jobFunction: 'option_values.value',
+      id: 'id',
+    },
+    urlTemplate: 'https://www.werkenbijabnamro.nl/en/vacancy/{id}/{slug}',
+    companyName: 'ABN AMRO',
+    fetchDescription: true,
+  },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -882,4 +902,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'jobs.siemens-healthineers.com', name: 'Siemens Healthineers' },
   { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
   { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
+  { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
 ];
