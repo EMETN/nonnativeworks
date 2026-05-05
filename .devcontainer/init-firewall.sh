@@ -121,6 +121,10 @@ for domain in \
     "maersk.wd3.myworkdayjobs.com" \
     "sanoma.wd3.myworkdayjobs.com" \
     "fiskars.wd3.myworkdayjobs.com" \
+    "thales.wd3.myworkdayjobs.com" \
+    "ing.wd3.myworkdayjobs.com" \
+    "nxp.wd3.myworkdayjobs.com" \
+    "philips.wd3.myworkdayjobs.com" \
     "wd3.myworkdaysite.com" \
     "barona.fi" \
     "nitor.com" \
@@ -185,6 +189,14 @@ for domain in \
     "upcloud.teamtailor.com" \
     "career.nordnetab.com" \
     "search.prod.gcw.ng.telekom.net" \
+    "ejqi.fa.ocs.oraclecloud.eu" \
+    "scout24.com" \
+    "asml.com" \
+    "jobsapi-google.m-cloud.io" \
+    "careers.theheinekencompany.com" \
+    "careers.vestas.com" \
+    "werkenbijabnamro.nl" \
+    "sebgroup.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

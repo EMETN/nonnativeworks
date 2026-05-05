@@ -69,6 +69,10 @@ companies:
       url: https://wd3.myworkdaysite.com/en-US/recruiting/edenpeople/Edenred_Careers
       min_positions: 3
 
+    - name: Elekta
+      url: https://elekta.wd3.myworkdayjobs.com/Elekta_Careers
+      min_positions: 3
+
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
       min_positions: 10
@@ -103,6 +107,10 @@ companies:
 
     - name: If
       url: https://if.wd3.myworkdayjobs.com/Careers
+      min_positions: 5
+
+    - name: ING
+      url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5
 
     - name: Kone
@@ -145,6 +153,10 @@ companies:
       url: https://www.novonordisk.com/careers
       min_positions: 5
 
+    - name: NXP
+      url: https://nxp.wd3.myworkdayjobs.com/careers?locations=98d67abaaa8a100fa6336e2819cc922e&locations=3db468d56aa610d69085a48b83d7492d&locations=98d67abaaa8a100fa63382ef6fcc924c&locations=98d67abaaa8a100fa633b04b600c928d&locations=2a9d66d0145c015c90758d64f5015e85&locations=98d67abaaa8a100fa6336739cb249224&locations=98d67abaaa8a100fa633a5cf721c927e
+      min_positions: 10
+
     - name: OP
       url: https://op-careers.fi
       min_positions: 5
@@ -160,10 +172,18 @@ companies:
     - name: Oura
       url: https://boards.greenhouse.io/oura
       min_positions: 5
+    
+    - name: Philips
+      url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
+      min_positions: 10
 
     - name: Posti
       url: https://posti.wd3.myworkdayjobs.com/en-US/external
       min_positions: 5
+
+    - name: Prosus
+      url: https://jobs.eu.lever.co/prosus
+      min_positions: 3
 
     - name: Proton
       url: https://proton.me/careers
@@ -173,16 +193,20 @@ companies:
       url: https://careers.publicisgroupe.com/jobs
       min_positions: 5
 
+    - name: Randstad
+      url: https://www.randstad.com/jobs/careers-at-randstad
+      min_positions: 0
+
     - name: Reaktor
       url: https://www.reaktor.com/careers
       min_positions: 2
 
-    - name: Sanoma
-      url: https://sanoma.wd3.myworkdayjobs.com/en-GB/Sanoma_Media_Finland
-      min_positions: 1
-
     - name: Rovio
       url: https://www.rovio.com/open-positions
+      min_positions: 1
+
+    - name: Sanoma
+      url: https://sanoma.wd3.myworkdayjobs.com/en-GB/Sanoma_Media_Finland
       min_positions: 1
 
     - name: SAP
@@ -217,6 +241,10 @@ companies:
       url: https://www.teliacompany.com/en/careers/open-positions
       min_positions: 5
 
+    - name: Thales
+      url: https://thales.wd3.myworkdayjobs.com/Careers?locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
+      min_positions: 10
+
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10
@@ -228,6 +256,10 @@ companies:
     - name: Vaisala
       url: https://careers.vaisala.com
       min_positions: 3
+
+    - name: Vestas
+      url: https://careers.vestas.com/search
+      min_positions: 10
 
     - name: Wolt
       url: https://careers.wolt.com/en/jobs

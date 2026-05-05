@@ -15,6 +15,7 @@
 - Delivery Hero
 - Dept
 - Edenred
+- Elekta
 - Ericsson
 - Finnair
 - Fiskars
@@ -24,6 +25,7 @@
 - Happeo
 - Hiab
 - If
+- ING
 - Kone
 - Konecranes
 - Maersk
@@ -32,14 +34,18 @@
 - Nets/Nexi
 - Nokia
 - Nordea
-- Novo Nordisk
+- Novo 
+- NXP
 - OP Financial Group
 - Orion
 - Orkla
 - Oura
+- Philips
 - Posti
+- Prosus
 - Proton
 - Publicis Groupe
+- Randstad
 - Reaktor
 - Rovio
 - Sanoma
@@ -50,9 +56,11 @@
 - Solita
 - Stora Enso
 - Telia
+- Thales
 - Tieto
 - UpCloud
 - Vaisala
+- Vestas
 - Wolt
 - Wärtsilä
 - Zalando
@@ -71,10 +79,10 @@ Detected automatically from the career page URL. No per-company config needed �
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
 | Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita |
-| Lever | `jobs.lever.co/{slug}` | |
+| Lever | `jobs.lever.co/{slug}` | Prosus |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor, Deel |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
-| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars |
+| Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
 | Recruitee | `{slug}.recruitee.com` | Happeo |
 
 ---
@@ -98,6 +106,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Capgemini | `capgemini.com/careers` | Custom API |
 | Publicis Groupe | `careers.publicisgroupe.com/jobs` | Custom API |
 | Novo Nordisk | `novonordisk.com/careers` | Custom API |
+| Randstad | `randstad.com/jobs/careers-at-randstad` | Customer API`     | 
 
 ---
 
@@ -130,6 +139,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Fortum | `jobs.fortum.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Hiab | `careers.hiab.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Wärtsilä | `careers.wartsila.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Vestas | `careers.vestas.com/search` | `css_cards` | Paginated `?startrow=N` table; 10 rows per page; descriptions enriched via static fetch |
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
