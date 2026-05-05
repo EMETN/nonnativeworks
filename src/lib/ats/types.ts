@@ -45,6 +45,8 @@ export interface RawJob {
 export interface AtsDetectionResult {
   ats: Exclude<AtsType, 'python'> | null;
   companySlug: string | null;
+  /** Lever EU-hosted instance (jobs.eu.lever.co → api.eu.lever.co). */
+  leverEu?: boolean;
 }
 
 export interface ClassifiedJob {

@@ -268,6 +268,22 @@ scrapers:
     description_selector: ".jobdescription"
     job_function_selector: "td.colFacility jobFacility"
 
+   # ── Vestas ──────────────────────────────────────────────────────────────────
+  - match: "careers.vestas.com/search"
+    name: Vestas
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 10
+    card_selector: "tr.data-row"
+    title_selector: "td.colTitle a.jobTitle-link"
+    location_selector: "td.colLocation .jobLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "td.colFacility jobFacility"
+
   # ── Sweco Group ──────────────────────────────────────────────────────────────────
   - match: "swecogroup.com/careers/vacancies"
     name: Sweco Group

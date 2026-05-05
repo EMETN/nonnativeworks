@@ -164,7 +164,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         ats = "greenhouse";
       } else if (resolvedAts === "lever") {
         [rawJobs, companyName] = await Promise.all([
-          fetchLeverJobs(detection.companySlug),
+          fetchLeverJobs(detection.companySlug, { eu: detection.leverEu }),
           fetchLeverCompanyName(detection.companySlug),
         ]);
         ats = "lever";

@@ -205,6 +205,21 @@ function expandJobToSecondaryLocations(
   return extras;
 }
 
+/** Deep-clone a body object and set a value at a dot-path (e.g. "data.searchParams.page"). */
+function setNestedParam(body: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+  const clone = structuredClone(body);
+  const parts = path.split('.');
+  let cur: Record<string, unknown> = clone;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!(parts[i] in cur) || typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) {
+      cur[parts[i]] = {};
+    }
+    cur = cur[parts[i]] as Record<string, unknown>;
+  }
+  cur[parts[parts.length - 1]] = value;
+  return clone;
+}
+
 /** Build a FormData from a body object. Array values produce multiple fields with the same name. */
 function buildFormData(body: Record<string, unknown>): FormData {
   const fd = new FormData();
@@ -579,7 +594,9 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
     for (let i = 0; i < MAX_PAGES; i++, page++) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, page) : url;
-      const pageBody = method === 'POST' ? { ...body, [param]: page } : undefined;
+      const pageBody = method === 'POST'
+        ? (param.includes('.') ? setNestedParam(body ?? {}, param, page) : { ...body, [param]: page })
+        : undefined;
       console.log(`[${label}] fetching page=${page}${method === 'POST' ? ` body.${param}=${page}` : ` url=${pageUrl}`}`);
       const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
@@ -625,7 +642,9 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
-      const pageBody = method === 'POST' ? { ...body, [param]: offset } : undefined;
+      const pageBody = method === 'POST'
+        ? (param.includes('.') ? setNestedParam(body ?? {}, param, offset) : { ...body, [param]: offset })
+        : undefined;
       console.log(`[${label}] fetching offset=${offset}${method === 'POST' ? `` : ` url=${pageUrl}`}`);
       const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
