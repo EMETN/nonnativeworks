@@ -73,6 +73,14 @@ companies:
       url: https://jobs.ericsson.com/careers
       min_positions: 10
 
+    - name: Finnair
+      url: https://finnair.wd103.myworkdayjobs.com/en-US/finnair
+      min_positions: 1
+
+    - name: Fiskars
+      url: https://fiskars.wd3.myworkdayjobs.com/en-US/FiskarsGroup
+      min_positions: 1
+
     - name: Fortum
       url: https://jobs.fortum.com/search
       min_positions: 5
@@ -168,6 +176,10 @@ companies:
     - name: Reaktor
       url: https://www.reaktor.com/careers
       min_positions: 2
+
+    - name: Sanoma
+      url: https://sanoma.wd3.myworkdayjobs.com/en-GB/Sanoma_Media_Finland
+      min_positions: 1
 
     - name: Rovio
       url: https://www.rovio.com/open-positions
