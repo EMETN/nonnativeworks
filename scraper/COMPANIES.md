@@ -50,6 +50,8 @@
 - Rovio
 - Sanoma
 - SAP
+- Scout24
+- SEB
 - Siemens Healthineers
 - Smartly
 - SOK
@@ -79,7 +81,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 | ATS | URL pattern | Companies using it |
 |-----|-------------|-------------------|
 | Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita |
-| Lever | `jobs.lever.co/{slug}` | Prosus |
+| Lever | `jobs.lever.co/{slug}` | Prosus, SEB |
 | Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor, Deel |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
 | Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
@@ -144,6 +146,7 @@ Declarative YAML config â€” no code changes needed to add a company. Two extract
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards` | Paginated offset; 6 rows page | 
+| Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination | 
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

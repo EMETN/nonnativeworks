@@ -273,6 +273,35 @@ export const KEYWORDS_RE = new RegExp(
   'i',
 );
 
+// Non-ASCII characters used by tracked-country languages.
+const NON_ASCII_RE = /[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżășț]/i;
+
+/**
+ * Strip bilingual slash suffixes from job titles.
+ * Some companies (e.g. SEB Latvia) post titles like
+ *   "Finance Developer/ Finanšu izstrādātājs/-a in Finance, Risk and Data Tribe"
+ * or  "Information Security Manager / Informācijas drošības vadītājs (-a) (GRC)"
+ * This finds the first "/" whose right-hand side contains non-ASCII characters
+ * and keeps only the left-hand (English) side.
+ */
+export function stripBilingualSuffix(title: string): string {
+  const latvianRe = /[āčēģīķļņōŗšūž]/i;
+  let idx = 0;
+  while (idx < title.length) {
+    const slashPos = title.indexOf('/', idx);
+    if (slashPos === -1) break;
+    const nextSlash = title.indexOf('/', slashPos + 1);
+    const segment = nextSlash === -1
+      ? title.slice(slashPos + 1)
+      : title.slice(slashPos + 1, nextSlash);
+    if (latvianRe.test(segment)) {
+      return title.slice(0, slashPos).trim();
+    }
+    idx = slashPos + 1;
+  }
+  return title;
+}
+
 /**
  * Returns true when the title contains non-ASCII characters typical of
  * non-English languages, or an unambiguous local-language keyword.
@@ -286,6 +315,6 @@ export function titleAppearsNonEnglish(title: string): boolean {
   //   Icelandic: þ ð
   //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
   //   Polish: ł ń ś ź ż
-  if (/[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżășț]/i.test(title)) return true;
+  if (NON_ASCII_RE.test(title)) return true;
   return KEYWORDS_RE.test(title);
 }

@@ -1342,12 +1342,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     if (pattern.test(location.trim())) return [];
   }
 
-  // Split by semicolon first (Greenhouse: "Hybrid - Helsinki, Uusimaa; Hybrid - Oulu, North Ostrobothnia")
-  // then by comma within each part. Strip work-mode prefixes before lookup.
+  // Split by semicolon or pipe first (Greenhouse: "Hybrid - Helsinki, Uusimaa; Hybrid - Oulu, North Ostrobothnia",
+  // Scout24: "Berlin | immediately | Scout24 SE") then by comma within each part. Strip work-mode
+  // prefixes before lookup.
   // Also extract text inside parentheses as extra candidate segments — handles
   // Workday venue-style locations like "KQB (Amsterdam - Herengracht 578-58)".
   // Additionally split on " - " (spaced dash) to handle "Germany - Home Based" style strings.
-  const parts = location.split(';').map((s) => s.trim()).filter(Boolean);
+  const parts = location.split(/[;|]/).map((s) => s.trim()).filter(Boolean);
   const segments = parts.flatMap((part) => {
     const stripped = part.replace(LOCATION_PREFIX_RE, '').replace(LOCATION_SUFFIX_RE, '');
     const base = stripped.split(',').map((s) => s.trim()).filter(Boolean);

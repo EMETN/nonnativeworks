@@ -366,3 +366,16 @@ scrapers:
       type: page
       param: page
       page_size: 25
+
+  # ── Scout24 ─────────────────────────────────────────────────────────────────
+  # Static HTML career page, all jobs on one page. Location in subtitle is
+  # pipe-separated: "Berlin | immediately | Scout24 SE" — country-lookup
+  # handles the pipe split.
+  - match: "scout24.com/en/career/jobs"
+    name: Scout24
+    pagination:
+      type: none
+    card_selector: "div.teaser--job"
+    title_selector: "a.teaser__link"
+    location_selector: "div.teaser__subtitle"
+    description_selector: "div.job__main-column"
