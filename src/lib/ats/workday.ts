@@ -127,27 +127,39 @@ function stripHtml(html: string): string {
 
 /**
  * Convert a Workday public job URL to its detail API URL.
- * e.g. https://abb.wd3.myworkdayjobs.com/en-US/external/job/Foo_R-123
- *   →  https://abb.wd3.myworkdayjobs.com/wday/cxs/abb/external/job/Foo_R-123
+ * myworkdayjobs.com: https://abb.wd3.myworkdayjobs.com/en-US/external/job/Foo_R-123
+ *                  → https://abb.wd3.myworkdayjobs.com/wday/cxs/abb/external/job/Foo_R-123
+ * myworkdaysite.com: https://wd3.myworkdaysite.com/en-US/recruiting/edenpeople/Edenred_Careers/job/Foo_R-123
+ *                  → https://wd3.myworkdaysite.com/wday/cxs/edenpeople/Edenred_Careers/job/Foo_R-123
  */
 function publicUrlToDetailApiUrl(publicUrl: string): string | null {
   try {
     const parsed = new URL(publicUrl);
-    if (!parsed.hostname.endsWith(".myworkdayjobs.com")) return null;
-    const company = parsed.hostname.split(".")[0];
-    // Path: /{locale}/{site}/job/... — drop the locale prefix, keep the rest.
+    const isWorkdayJobs = parsed.hostname.endsWith(".myworkdayjobs.com");
+    const isWorkdaySite = parsed.hostname.endsWith(".myworkdaysite.com");
+    if (!isWorkdayJobs && !isWorkdaySite) return null;
     const segments = parsed.pathname.split("/").filter(Boolean);
-    if (segments.length < 2) return null;
-    const rest = segments.slice(1).join("/");
+    let company: string;
+    let rest: string;
+    if (isWorkdayJobs) {
+      company = parsed.hostname.split(".")[0];
+      if (segments.length < 2) return null;
+      rest = segments.slice(1).join("/");
+    } else {
+      // Path: /{locale}/recruiting/{company}/{site}/job/...
+      company = segments[2] ?? "";
+      if (!company || segments.length < 4) return null;
+      rest = segments.slice(3).join("/");
+    }
     return `https://${parsed.hostname}/wday/cxs/${company}/${rest}`;
   } catch {
     return null;
   }
 }
 
-export async function enrichWorkdayDescriptions(jobs: RawJob[]): Promise<void> {
+export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter(
-    (j) => j.url && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
+    (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
   );
   console.log(
     `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
@@ -206,6 +218,8 @@ export interface WorkdayUrlParts {
   locale: string;
   /** Facet filters to include in every API request, e.g. { locationCountry: ['abc123', ...] }. */
   appliedFacets?: Record<string, string[]>;
+  /** Extra path segments between locale and site for myworkdaysite.com URLs (e.g. "recruiting/edenpeople"). */
+  sitePathPrefix?: string;
 }
 
 /**
@@ -223,16 +237,36 @@ export interface WorkdayUrlParts {
 export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname.endsWith(".myworkdayjobs.com")) return null;
-    const company = parsed.hostname.split(".")[0];
-    const segments = parsed.pathname.split("/").filter(Boolean);
+    const isWorkdayJobs = parsed.hostname.endsWith(".myworkdayjobs.com");
+    const isWorkdaySite = parsed.hostname.endsWith(".myworkdaysite.com");
+    if (!isWorkdayJobs && !isWorkdaySite) return null;
+
     const LOCALE_RE = /^[a-z]{2}-[A-Z]{2}$/;
-    const locale = segments.length >= 2 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
-    const site = segments[segments.length - 1];
+    const segments = parsed.pathname.split("/").filter(Boolean);
+
+    let company: string;
+    let locale: string;
+    let site: string;
+    let sitePathPrefix: string | undefined;
+
+    if (isWorkdayJobs) {
+      company = parsed.hostname.split(".")[0];
+      locale = segments.length >= 2 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
+      site = segments[segments.length - 1];
+    } else {
+      // myworkdaysite.com: wd{N}.myworkdaysite.com/{locale}/recruiting/{company}/{site}
+      locale = segments.length >= 1 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
+      company = segments[2] ?? "";
+      site = segments[3] ?? segments[segments.length - 1];
+      if (company) sitePathPrefix = `recruiting/${company}`;
+    }
+
     if (!company || !site) return null;
 
     const FACET_PARAMS = [
       "locationCountry",
+      "Country",
+      "locationHierarchy1",
       "locationRegionStateProvince",
       "workerSubType",
       "jobFamilyGroup",
@@ -248,11 +282,19 @@ export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
       company,
       site,
       locale,
+      ...(sitePathPrefix && { sitePathPrefix }),
       ...(Object.keys(appliedFacets).length > 0 && { appliedFacets }),
     };
   } catch {
     return null;
   }
+}
+
+function buildJobUrl(parts: WorkdayUrlParts, externalPath: string): string {
+  if (parts.sitePathPrefix) {
+    return `https://${parts.host}/${parts.locale}/${parts.sitePathPrefix}/${parts.site}${externalPath}`;
+  }
+  return `https://${parts.host}/${parts.locale}/${parts.site}${externalPath}`;
 }
 
 interface WorkdayJobPosting {
@@ -412,7 +454,7 @@ export async function fetchWorkdayJobs(
   const needsCountryDetail: WorkdayJobPosting[] = [];
 
   for (const posting of allPostings) {
-    const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
+    const jobUrl = buildJobUrl(parts, posting.externalPath);
     const locText = posting.locationsText ?? "";
     const resolvedCountries = lookupCountryFromLocation(locText);
     if (MULTI_LOC_RE.test(locText.trim())) {
@@ -435,7 +477,7 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
       await Promise.all(
         venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
+          const jobUrl = buildJobUrl(parts, posting.externalPath);
           const { locations, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
@@ -466,7 +508,7 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
       await Promise.all(
         needsCountryDetail.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
+          const jobUrl = buildJobUrl(parts, posting.externalPath);
           const { locations, countryDescriptor, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
@@ -496,7 +538,7 @@ export async function fetchWorkdayJobs(
     for (let i = 0; i < multiLocQueue.length; i += EXPAND_BATCH) {
       await Promise.all(
         multiLocQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = `https://${parts.host}/${parts.locale}/${parts.site}${posting.externalPath}`;
+          const jobUrl = buildJobUrl(parts, posting.externalPath);
           const { locations, description } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
@@ -507,13 +549,21 @@ export async function fetchWorkdayJobs(
             // resolve to "FI" and are merged, rather than being treated as separate
             // groups by the last-comma-segment heuristic.
             const byCountry = new Map<string, string[]>();
+            const anyResolved = locations.some((l) => lookupCountryFromLocation(l).length > 0);
             for (const loc of locations) {
               const resolved = lookupCountryFromLocation(loc);
-              const groupKey = resolved.length > 0
-                ? resolved[0].code
-                : (loc.split(",").map((p) => p.trim()).pop() ?? loc);
-              if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
-              byCountry.get(groupKey)!.push(loc);
+              if (resolved.length === 0) {
+                // Skip region strings like "Nordic" when other locations in the
+                // same posting resolve to a specific country.
+                if (anyResolved) continue;
+                const groupKey = loc.split(",").map((p) => p.trim()).pop() ?? loc;
+                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
+                byCountry.get(groupKey)!.push(loc);
+              } else {
+                const groupKey = resolved[0].code;
+                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
+                byCountry.get(groupKey)!.push(loc);
+              }
             }
             for (const [countryKey, locs] of byCountry) {
               const citySet = new Set<string>();
