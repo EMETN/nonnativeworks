@@ -74,6 +74,7 @@ const SE: string[] = [
   'handläggare',    // administrator / officer
   'informatiker',   // computer scientist
   'konsult',        // consultant
+  'mekaniker',      // mechanic
   'projektledare',  // project manager
   'rådgivare',      // advisor
   'samordnare',     // coordinator

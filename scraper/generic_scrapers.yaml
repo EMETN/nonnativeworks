@@ -111,6 +111,21 @@
 # Only shared fields + pagination are used; card/title/location selectors are
 # ignored.
 
+# ── extract_mode: xml_feed ───────────────────────────────────────────────────
+#
+# Jobs are served as an XML document (e.g. SuccessFactors job feed). Each job
+# is a child element identified by item_tag (default: "job"). Field values are
+# read from child element text. Descriptions come inline so no detail page
+# fetches are needed. No pagination — all jobs arrive in one response.
+#
+#   item_tag              XML element name for each job (default: "job")
+#   fields.title          Child element for title (default: "title")
+#   fields.url            Child element for job URL (default: "url")
+#   fields.location       Child element for city/location (default: "city")
+#   fields.country        Child element for ISO country code (default: "country")
+#   fields.job_function   Child element for department (default: "department")
+#   fields.description    Child element for HTML description (default: "description")
+
 scrapers:
   
   # ── Bolt ────────────────────────────────────────────────────────────────────
@@ -366,6 +381,22 @@ scrapers:
       type: page
       param: page
       page_size: 25
+
+  # ── Volvo Group ──────────────────────────────────────────────────────────────
+  # SuccessFactors XML job feed. Contains all fields inline (title, city,
+  # 2-letter country code, department, HTML description) — no detail page
+  # fetches needed.
+  - match: "jobs.volvogroup.com/feed"
+    name: Volvo Group
+    extract_mode: xml_feed
+    item_tag: job
+    fields:
+      title: title
+      url: url
+      location: city
+      country: country
+      job_function: department
+      description: description
 
   # ── Scout24 ─────────────────────────────────────────────────────────────────
   # Static HTML career page, all jobs on one page. Location in subtitle is

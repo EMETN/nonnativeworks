@@ -903,4 +903,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
   { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
   { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
+  { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
 ];

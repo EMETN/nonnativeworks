@@ -149,6 +149,10 @@ companies:
       url: https://www.nordea.com/en/careers
       min_positions: 10
 
+    - name: Nordnet
+      url: https://career.nordnetab.com/jobs
+      min_positions: 1
+
     - name: Novo Nordisk
       url: https://www.novonordisk.com/careers
       min_positions: 5
@@ -267,6 +271,10 @@ companies:
 
     - name: Vestas
       url: https://careers.vestas.com/search
+      min_positions: 10
+
+    - name: Volvo Group
+      url: https://jobs.volvogroup.com/feed/361555
       min_positions: 10
 
     - name: Wolt
