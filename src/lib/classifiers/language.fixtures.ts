@@ -1272,4 +1272,44 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: true,
   },
+
+  // ── "full professional proficiency" requirement ───────────────────────────
+  {
+    label: '2a — "full professional proficiency in Spanish and English" with "conversational German as asset" → DE advantage',
+    title: 'Analyst',
+    desc: 'You demonstrate full professional proficiency in Spanish and English. Conversational German is considered an asset, but is not a mandatory requirement.',
+    country: 'DE',
+    requires: false,
+    advantage: true,
+  },
+
+  // ── "Swedish is a benefit" advantage ──────────────────────────────────────
+  {
+    label: '1b — "Swedish is a benefit" → SE advantage',
+    title: 'Developer',
+    desc: 'Fluency in English is required. Swedish is a benefit along with a relevant academic degree',
+    country: 'SE',
+    requires: false,
+    advantage: true,
+  },
+
+  // ── Baltic language group requirement ─────────────────────────────────────
+  {
+    label: '2a-nordic — "at least one of local Baltic language" → LV required',
+    title: 'Senior Risk Business Analyst',
+    desc: 'Fluency in English and at least one of local Baltic language (Latvian, Lithuanian or Estonian), with excellent verbal and written communication skills.',
+    country: 'LV',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "Fluent in one Scandinavian language" requirement ─────────────────────
+  {
+    label: '2a-nordic — "fluent in one Scandinavian language and English" → SE required',
+    title: 'Account Manager',
+    desc: 'Fluent in one Scandinavian language and English is a requirement. Strong communication skills in English and a Scandinavian language',
+    country: 'SE',
+    requires: true,
+    advantage: false,
+  },
 ];
