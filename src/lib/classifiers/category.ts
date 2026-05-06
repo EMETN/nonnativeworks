@@ -20,7 +20,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     'database administrator', 'dba', 'it support', 'it engineer', 'architecture',
     'staff engineer', 'principal engineer',
     'release engineer', 'game developer', 'solutions architect', 'testing', 'ict',
-    'development skills', 'guidewire',
+    'development skills', 'guidewire', 'information technology',
     'physicist', 'optics', 'photonics', 'laser engineer', 'optical engineer',
   ],
   'data-analytics': [

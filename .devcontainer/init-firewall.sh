@@ -85,7 +85,6 @@ for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
     "sentry.io" \
-    "statsig.anthropic.com" \
     "statsig.com" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
@@ -97,12 +96,15 @@ for domain in \
     "packages.doppler.com" \
     "boards-api.greenhouse.io" \
     "api.lever.co" \
+    "api.eu.lever.co" \
+    "jobs.volvogroup.com" \
     "api.ashbyhq.com" \
     "apply.workable.com" \
     "gofore.com" \
     "op-careers.fi" \
     "jobs.nokia.com" \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
     "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
     "nordea.com" \
@@ -119,8 +121,13 @@ for domain in \
     "kone.wd3.myworkdayjobs.com" \
     "finnair.wd103.myworkdayjobs.com" \
     "maersk.wd3.myworkdayjobs.com" \
-    "careers.abb" \
-    "baronacareers.com" \
+    "sanoma.wd3.myworkdayjobs.com" \
+    "fiskars.wd3.myworkdayjobs.com" \
+    "thales.wd3.myworkdayjobs.com" \
+    "ing.wd3.myworkdayjobs.com" \
+    "nxp.wd3.myworkdayjobs.com" \
+    "philips.wd3.myworkdayjobs.com" \
+    "wd3.myworkdaysite.com" \
     "barona.fi" \
     "nitor.com" \
     "alpha-sense.com" \
@@ -151,6 +158,47 @@ for domain in \
     "novonordisk.com" \
     "careers.carlsberg.com" \
     "careers.orkla.com" \
+    "metso.com" \
+    "www.metso.com" \
+    "career2.successfactors.eu" \
+    "proton.me" \
+    "jobs.booking.com" \
+    "akqa.com" \
+    "deptagency.com" \
+    "cg-jobstream-api.azurewebsites.net" \
+    "capgemini.com" \
+    "careers.publicisgroupe.com" \
+    "careers.stellantis.com" \
+    "careers.telekom.com" \
+    "jobs.ikea.com" \
+    "www.randstad.com" \
+    "randstad.com" \
+    "revolut.com" \
+    "careers.wartsila.com" \
+    "edenred.com" \
+    "careers.thalesgroup.com" \
+    "careers.publicisgroupe.com" \
+    "careers.telekom.com" \
+    "uber.com" \
+    "jobs.ikea.com" \
+    "careers.deliveryhero.com" \
+    "swecogroup.com" \
+    "lifeatspotify.com" \
+    "futurice.com" \
+    "nexigroup.com" \
+    "jobs.deel.com" \
+    "aiven.io" \
+    "upcloud.teamtailor.com" \
+    "career.nordnetab.com" \
+    "search.prod.gcw.ng.telekom.net" \
+    "ejqi.fa.ocs.oraclecloud.eu" \
+    "scout24.com" \
+    "asml.com" \
+    "jobsapi-google.m-cloud.io" \
+    "careers.theheinekencompany.com" \
+    "careers.vestas.com" \
+    "werkenbijabnamro.nl" \
+    "sebgroup.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
@@ -180,7 +228,9 @@ done
 # CDN-backed domains resolve to different IPs depending on which Akamai/CDN node responds.
 # Query from multiple public DNS servers to capture more of the IP pool.
 for cdn_domain in \
-    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" ; do
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
+    "jobs.booking.com" ; do
     for dns_server in "8.8.8.8" "1.1.1.1"; do
         echo "Resolving $cdn_domain via $dns_server..."
         cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')

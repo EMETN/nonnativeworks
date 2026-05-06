@@ -88,7 +88,8 @@ const EDUCATION_PATTERNS: { level: EducationLevel; patterns: RegExp[] }[] = [
   {
     level: 'vocational',
     patterns: [
-      /\bvocational(?: training| qualification| degree)?\b/i,
+      /\bvocational\s+(?:qualification|degree|education|certificate|diploma)\b/i,
+      /\bvocational\s+training\s+(?:qualification|program(?:me)?|certificate|degree)\b/i,
       /\bapprenticeship\b/i,
       /\btrade (school|qualification|certificate)\b/i,
       /\btechnical degree\b/i,
