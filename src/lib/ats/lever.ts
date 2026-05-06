@@ -1,4 +1,5 @@
 import type { RawJob } from './types';
+import { stripBilingualSuffix } from './title-language';
 
 interface LeverPosting {
   id: string;
@@ -45,7 +46,7 @@ export async function fetchLeverJobs(slug: string, opts?: { eu?: boolean }): Pro
       plain = plain + '\n' + listsPlain;
     }
     return {
-      title: posting.text,
+      title: stripBilingualSuffix(posting.text),
       descriptionHtml: html,
       descriptionText: plain,
       location: posting.categories?.location,

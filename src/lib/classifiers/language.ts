@@ -318,7 +318,7 @@ const COUNTRY_NATIVE_CHARS: Partial<
     DE: { pattern: /[äöüßÄÖÜ]/g, threshold: 10 },
     AT: { pattern: /[äöüßÄÖÜ]/g, threshold: 10 },
     EE: { pattern: /[äöõÄÖÕ]/g, threshold: 10 },
-    LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 10 },
+    LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 15 },
     LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g, threshold: 15 },
     PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g, threshold: 10 },
 };

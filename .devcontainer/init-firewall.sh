@@ -96,6 +96,7 @@ for domain in \
     "packages.doppler.com" \
     "boards-api.greenhouse.io" \
     "api.lever.co" \
+    "api.eu.lever.co" \
     "api.ashbyhq.com" \
     "apply.workable.com" \
     "gofore.com" \
