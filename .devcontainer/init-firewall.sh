@@ -97,6 +97,7 @@ for domain in \
     "boards-api.greenhouse.io" \
     "api.lever.co" \
     "api.eu.lever.co" \
+    "jobs.volvogroup.com" \
     "api.ashbyhq.com" \
     "apply.workable.com" \
     "gofore.com" \

@@ -436,6 +436,62 @@ def _fetch_teamtailor_page(
     return jobs
 
 
+# ── xml_feed helpers ──────────────────────────────────────────────────────────
+
+def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
+    """Extract jobs from an XML job feed (e.g. Volvo's SuccessFactors feed)."""
+    from xml.etree import ElementTree as ET
+
+    fields = cfg.get("fields", {})
+    title_field = fields.get("title", "title")
+    url_field = fields.get("url", "url")
+    location_field = fields.get("location", "city")
+    country_field = fields.get("country", "country")
+    jf_field = fields.get("job_function", "department")
+    desc_field = fields.get("description", "description")
+    item_tag = cfg.get("item_tag", "job")
+
+    root = ET.fromstring(content)
+    items = root.iter(item_tag)
+
+    jobs = []
+    for item in items:
+        title_el = item.find(title_field)
+        if title_el is None or not (title_el.text or "").strip():
+            continue
+
+        title = title_el.text.strip()
+        job_url = (item.findtext(url_field) or "").strip() or None
+        if job_url:
+            job_url = urljoin(base_url, job_url)
+        location = (item.findtext(location_field) or "").strip() or None
+        country = (item.findtext(country_field) or "").strip() or None
+        jf = (item.findtext(jf_field) or "").strip() or None
+        desc = (item.findtext(desc_field) or "").strip() or None
+
+        job = build_job(title, job_url, location)
+        if country:
+            job["country_code"] = country.upper()
+        if jf:
+            job["jobFunction"] = jf
+        if desc:
+            job["descriptionHtml"] = desc
+
+        jobs.append(job)
+
+    return jobs
+
+
+def _fetch_xml_feed(session: requests.Session, url: str, cfg: dict) -> list[dict]:
+    try:
+        resp = session.get(url, timeout=30, headers=_HEADERS)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: xml feed fetch error ({url}): {e}", file=sys.stderr)
+        return []
+    return _extract_xml_feed(resp.content, cfg, url)
+
+
 def _find_jobs_payload(html: str):
     """
     Search raw HTML for:
@@ -605,6 +661,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     countries: list[str] = cfg.get("countries", [])
     country_values: dict[str, str] = cfg.get("country_values", {})
 
+    session = requests.Session()
+
+    if extract_mode == "xml_feed":
+        jobs = _fetch_xml_feed(session, list_url, cfg)
+        print(f"generic [{name}]: xml feed → {len(jobs)} jobs", file=sys.stderr)
+        return jobs
+
     if extract_mode == "attribute_json":
         fetch_page = _fetch_attribute_json_page
     elif extract_mode == "script_json":
@@ -615,8 +678,6 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         fetch_page = _fetch_teamtailor_page
     else:
         fetch_page = _fetch_css_cards_page
-
-    session = requests.Session()
 
     # ── Phase 1: listing ──────────────────────────────────────────────────────
     # When country_filter_param + countries are set, iterate one paginated fetch

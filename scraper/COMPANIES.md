@@ -34,6 +34,7 @@
 - Nets/Nexi
 - Nokia
 - Nordea
+- Nordnet
 - Novo 
 - NXP
 - OP Financial Group
@@ -63,6 +64,7 @@
 - UpCloud
 - Vaisala
 - Vestas
+- Volvo Group
 - Wolt
 - Wärtsilä
 - Zalando
@@ -145,8 +147,10 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Bolt | `bolt.eu/en/careers/positions` | `script_json` | Paginated; 20 rows per page |
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
+| Nordnet | `career.nordnetab.com/jobs` | teamtailor |
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards` | Paginated offset; 6 rows page | 
-| Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination | 
+| Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |
+| Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

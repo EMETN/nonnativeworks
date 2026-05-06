@@ -728,8 +728,12 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'pärnu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'tallinn':                  { name: 'Estonia', code: 'EE', slug: 'estonia' },
   'tartu':                    { name: 'Estonia', code: 'EE', slug: 'estonia' },
-  'vilnius':                  { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
   'kaunas':                   { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'klaipėda':                 { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'klaipeda':                 { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'panevėžys':                { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'šiauliai':                 { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
+  'vilnius':                  { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
    
   // ── Austria ──────────────────────────────────────────────────────────────
   'graz':                     { name: 'Austria', code: 'AT', slug: 'austria' },
