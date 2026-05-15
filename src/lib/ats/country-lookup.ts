@@ -515,6 +515,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
   'erfurt':                   { name: 'Germany', code: 'DE', slug: 'germany' },
   'erlangen':                 { name: 'Germany', code: 'DE', slug: 'germany' },
   'eschborn':                 { name: 'Germany', code: 'DE', slug: 'germany' },
+  'essen':                    { name: 'Germany', code: 'DE', slug: 'germany' },
   'ettlingen':                { name: 'Germany', code: 'DE', slug: 'germany' },
   'faßberg':                  { name: 'Germany', code: 'DE', slug: 'germany' },
   'flöha':                    { name: 'Germany', code: 'DE', slug: 'germany' },

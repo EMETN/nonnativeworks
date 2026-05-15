@@ -16,6 +16,7 @@
 - Dept
 - Edenred
 - Elekta
+- E.ON
 - Ericsson
 - Finnair
 - Fiskars
@@ -151,6 +152,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards` | Paginated offset; 6 rows page | 
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
+| E.ON | `careers.eon.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

@@ -862,6 +862,31 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'ABN AMRO',
     fetchDescription: true,
   },
+
+  'careers.uniper.energy': {
+    url: 'https://careers.uniper.energy/api/filter/query',
+    method: 'POST',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': 'application/json',
+      'Referer': 'https://careers.uniper.energy/en',
+    },
+    pagination: { type: 'page', param: 'pageNumber', startPage: 0, totalCountPath: 'totalHits' },
+    itemsPath: 'jobs',
+    fields: {
+      title: 'title',
+      location: 'locations.0.city',
+      jobFunction: 'jobField',
+      id: 'jobNumber',
+    },
+    expandSecondaryLocations: {
+      path: 'locations',
+      cityField: 'city',
+    },
+    urlTemplate: 'https://careers.uniper.energy/en/job/{title|keepslug}-{locations.0.city|keepslug}/{jobNumber}',
+    companyName: 'Uniper',
+    fetchDescription: true,
+  },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -904,4 +929,6 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
   { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
   { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
+  { urlSubstring: 'careers.eon.com', name: 'E.ON' },
+
 ];

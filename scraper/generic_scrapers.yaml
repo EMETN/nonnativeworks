@@ -410,3 +410,22 @@ scrapers:
     title_selector: "a.teaser__link"
     location_selector: "div.teaser__subtitle"
     description_selector: "div.job__main-column"
+
+  # ── E.ON ─────────────────────────────────────────────────────────────────
+  # Taleo-style tile layout. Only DE is a tracked country for E.ON.
+  - match: "careers.eon.com/search"
+    name: E.ON
+    country_filter_param: "optionsFacetsDD_country"
+    countries:
+      - DE
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "li.job-tile"
+    title_selector: "a.jobTitle-link"
+    location_selector: ".section-field.city > div"
+    description_selector: ".jobdescription"
