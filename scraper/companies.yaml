@@ -13,6 +13,8 @@
 #                   The batch job fails this company if fewer are found.
 #                   Set conservatively — companies do occasionally have slow
 #                   hiring periods. Default: 1
+#                   Set to 0 to allow zero positions without failing — the job
+#                   will still warn and leave existing database entries untouched.
 #   is_english_company  Flag the company as English-only in the UI. Default: false
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -95,7 +97,7 @@ companies:
 
     - name: Gofore
       url: https://gofore.com/en/careers/
-      min_positions: 1
+      min_positions: 0
 
     - name: Happeo
       url: https://happeo.recruitee.com
@@ -264,10 +266,6 @@ companies:
     - name: UpCloud
       url: https://upcloud.teamtailor.com/jobs
       min_positions: 1
-
-    - name: Vaisala
-      url: https://careers.vaisala.com
-      min_positions: 3
 
     - name: Vestas
       url: https://careers.vestas.com/search
