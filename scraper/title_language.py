@@ -157,6 +157,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "masterstudium",  # master's degree/programme
         "mechaniker",     # mechanic
         "medienbranche",  # media sector
+        "mitarbeiter",    # staff
         "praktikant",     # intern
         "praktikum",      # internship
         "projekt",        # project
