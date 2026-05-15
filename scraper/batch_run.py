@@ -214,6 +214,11 @@ def _process_company(
     })
 
     # ── Validate ──────────────────────────────────────────────────────────
+    if total_positions == 0:
+        out.append("WARN — 0 positions found; existing database entries left untouched")
+        summary_entry["status"] = "warn"
+        return summary_entry, "\n".join(out)
+
     if total_positions < min_positions:
         msg = f"Only {total_positions} positions found, expected >= {min_positions}"
         out.append(f"FAIL — validation: {msg}")
@@ -263,14 +268,21 @@ def _write_github_summary(entries: list[dict]) -> None:
         skipped = e.get("skipped_unknown_location", 0) + e.get("skipped_untracked_country", 0)
         if e["status"] == "success":
             status = "✅ ok"
+        elif e["status"] == "warn":
+            status = "⚠️ 0 positions — review manually"
         else:
             error = e.get("error", "unknown error")
             status = f"❌ {error[:80]}"
         lines.append(f"| {company} | {countries} | {positions} | {skipped} | {status} |")
 
     successes = sum(1 for e in entries if e["status"] == "success")
-    failures = sum(1 for e in entries if e["status"] != "success")
-    lines.append(f"\n**{successes} succeeded, {failures} failed**")
+    warnings = sum(1 for e in entries if e["status"] == "warn")
+    failures = sum(1 for e in entries if e["status"] == "fail")
+    parts = [f"**{successes} succeeded"]
+    if warnings:
+        parts.append(f"{warnings} warned")
+    parts.append(f"{failures} failed**")
+    lines.append("\n" + ", ".join(parts))
 
     with open(summary_path, "a") as f:
         f.write("\n".join(lines) + "\n")
@@ -324,6 +336,7 @@ def main() -> int:
 
     summary_entries: list[dict] = []
     failures: list[dict] = []
+    warnings: list[dict] = []
     successes: list[dict] = []
 
     valid_companies = [c for c in companies if c.get("url", "").strip()]
@@ -344,12 +357,18 @@ def main() -> int:
             summary_entries.append(entry)
             if entry["status"] == "success":
                 successes.append({"url": entry["url"], "positions": entry["total_positions"]})
+            elif entry["status"] == "warn":
+                warnings.append({"url": entry["url"]})
             else:
                 failures.append({"url": entry["url"], "error": entry["error"]})
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'═' * 60}")
-    print(f"Results: {len(successes)} succeeded, {len(failures)} failed")
+    print(f"Results: {len(successes)} succeeded, {len(warnings)} warned, {len(failures)} failed")
+    if warnings:
+        print("\nZero-position companies (review manually):")
+        for w in warnings:
+            print(f"  {w['url']}")
     if failures:
         print("\nFailed companies:", file=sys.stderr)
         for f in failures:

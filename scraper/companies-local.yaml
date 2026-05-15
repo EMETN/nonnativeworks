@@ -11,6 +11,8 @@
 #   min_positions   Minimum expected positions across all tracked countries.
 #                   The batch job fails this company if fewer are found.
 #                   Set conservatively. Default: 1
+#                   Set to 0 to allow zero positions without failing — the job
+#                   will still warn and leave existing database entries untouched.
 #   is_english_company  Flag the company as English-only in the UI. Default: false
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -22,3 +24,7 @@ companies:
     - name: CGI
       url: https://cgi.njoyn.com
       min_positions: 10
+
+    - name: Vaisala
+      url: https://careers.vaisala.com
+      min_positions: 1
