@@ -162,6 +162,7 @@ const DE: string[] = [
   'masterstudium',  // master's degree/programme
   'mechaniker',     // mechanic
   'medienbranche',  // media sector
+  'mitarbeiter',    // staff
   'praktikant',     // intern
   'praktikum',      // internship
   'projekt',        // project
