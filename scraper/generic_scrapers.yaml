@@ -14,6 +14,10 @@
 #   list_url          Override the URL used for listing pages (use when the
 #                     input URL differs from the first page URL)
 #   extra_params          Fixed query params always appended (e.g. sort order)
+#   json_html_key         When set, the response is parsed as JSON and this key's
+#                         string value is used as the HTML to extract cards from.
+#                         Use when the endpoint wraps HTML inside a JSON envelope
+#                         (e.g. { "results": "<ul>...</ul>" }).
 #   description_selector  CSS selector for the job description on the detail page
 #                         Used for language classification (English-titled jobs only).
 #                         Default: tries .jobdescription, .job-description,
@@ -410,6 +414,30 @@ scrapers:
     title_selector: "a.teaser__link"
     location_selector: "div.teaser__subtitle"
     description_selector: "div.job__main-column"
+
+  # ── Munich Re ────────────────────────────────────────────────────────────
+  # Results come from /results endpoint as a partial HTML fragment.
+  # Filtered to Germany only (ActiveFacetID 2921044) — the only tracked country.
+  # All params from the working browser request are preserved; stripping any of
+  # them causes the server to return a JSON stub instead of HTML.
+  - match: "careers.munichre.com/en/search-jobs"
+    name: Munich Re
+    list_url: https://careers.munichre.com/en/search-jobs/results
+    extra_params:
+      ActiveFacetID: 2921044
+      RecordsPerPage: 15
+      "FacetFilters[0].Display": Germany
+      SearchResultsModuleName: "Section 19 - Search Results"
+      SearchFiltersModuleName: "Section 19 - Search Filters"
+    json_html_key: results
+    pagination:
+      type: page
+      param: CurrentPage
+      page_size: 15
+    card_selector: "div.search-results-list__details"
+    title_selector: "a.search-results-list__job-link"
+    location_selector: "li.job-list-01-list__job-info--location span"
+    job_function_selector: "li.job-list-01-list__job-info--category span"
 
   # ── E.ON ─────────────────────────────────────────────────────────────────
   # Taleo-style tile layout. Only DE is a tracked country for E.ON.

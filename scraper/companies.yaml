@@ -135,6 +135,10 @@ companies:
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
 
+    - name: Munich Re
+      url: https://careers.munichre.com/en/search-jobs
+      min_positions: 10
+
     - name: Neste
       url: https://jobs.neste.com/search
       min_positions: 5
@@ -266,6 +270,10 @@ companies:
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10
+
+    - name: Uniper
+      url: https://careers.uniper.energy
+      min_positions: 5
 
     - name: UpCloud
       url: https://upcloud.teamtailor.com/jobs

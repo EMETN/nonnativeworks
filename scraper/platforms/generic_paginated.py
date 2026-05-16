@@ -156,7 +156,15 @@ def _fetch_css_cards_page(
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
         return []
 
-    soup = BeautifulSoup(resp.content, "html.parser")
+    content = resp.content
+    if json_key := cfg.get("json_html_key"):
+        try:
+            html_str = resp.json().get(json_key, "")
+        except Exception:
+            html_str = ""
+        content = html_str.encode()
+
+    soup = BeautifulSoup(content, "html.parser")
     jobs = []
     for card in soup.select(cfg["card_selector"]):
         job = _extract_card(card, list_url, cfg)

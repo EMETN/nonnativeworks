@@ -31,6 +31,7 @@
 - Konecranes
 - Maersk
 - Metso
+- Munich Re
 - Neste
 - Nets/Nexi
 - Nokia
@@ -62,6 +63,7 @@
 - Telia
 - Thales
 - Tieto
+- Uniper
 - UpCloud
 - Vaisala
 - Vestas
@@ -111,7 +113,8 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Capgemini | `capgemini.com/careers` | Custom API |
 | Publicis Groupe | `careers.publicisgroupe.com/jobs` | Custom API |
 | Novo Nordisk | `novonordisk.com/careers` | Custom API |
-| Randstad | `randstad.com/jobs/careers-at-randstad` | Customer API`     | 
+| Randstad | `randstad.com/jobs/careers-at-randstad` | Custom API |
+| Uniper | `careers.uniper.energy` | Custom API |
 
 ---
 
@@ -153,6 +156,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
 | E.ON | `careers.eon.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows |
+| Munich Re | `careers.munichre.com/en/search-jobs` | `css_cards - json_html_key` | Paginated; CurrentPage |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 
