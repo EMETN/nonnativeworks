@@ -136,6 +136,7 @@ function mapItem(
     title,
     location: getString(item, fields.location),
     cities: cities.length > 0 ? cities : undefined,
+    country_code: fields.country ? getString(item, fields.country) ?? undefined : undefined,
     url: url || undefined,
     department: getString(item, fields.department),
     jobFunction: getString(item, fields.jobFunction),
