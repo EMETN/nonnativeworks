@@ -126,6 +126,14 @@ export interface CompanyApiConfig {
     department?: string;
     jobFunction?: string;
     /**
+     * Dot-path to an ISO alpha-2 country code (or country name) in each item.
+     * When set, the value is stored as job.country_code and used as the primary
+     * country signal — bypassing city→country lookup for that job.
+     * Useful when the API returns a reliable country field alongside a city that
+     * may not be in the city map.
+     */
+    country?: string;
+    /**
      * Stable ID field used to deduplicate jobs when merging a primary and secondary fetch.
      * Required when secondaryUrl is set.
      */
@@ -868,22 +876,24 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     method: 'POST',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
-      'Accept': 'application/json',
+      'Accept': '*/*',
       'Referer': 'https://careers.uniper.energy/en',
     },
-    pagination: { type: 'page', param: 'pageNumber', startPage: 0, totalCountPath: 'totalHits' },
+    body: { searchQuery: '', filter: {}, subclient: 'uniper', locale: 'en' },
+    pagination: { type: 'page', param: 'page', startPage: 0, totalCountPath: 'totalHits' },
     itemsPath: 'jobs',
     fields: {
-      title: 'title',
-      location: 'locations.0.city',
-      jobFunction: 'jobField',
-      id: 'jobNumber',
+      title: 'data.title',
+      location: 'data.locations.0.city',
+      country: 'data.locations.0.country',
+      jobFunction: 'data.jobField',
+      id: 'data.jobNumber',
     },
     expandSecondaryLocations: {
-      path: 'locations',
-      cityField: 'city',
+      path: 'data.locations',
+      cityField: 'data.city',
     },
-    urlTemplate: 'https://careers.uniper.energy/en/job/{title|keepslug}-{locations.0.city|keepslug}/{jobNumber}',
+    urlTemplate: 'https://careers.uniper.energy/en/job/{title|keepslug}-{data.locations.0.city|keepslug}/{data.jobNumber}',
     companyName: 'Uniper',
     fetchDescription: true,
   },
