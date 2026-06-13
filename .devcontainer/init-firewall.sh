@@ -89,7 +89,7 @@ for domain in \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com" \
-    "lubcqmviewdnjgpkfzin.supabase.co" \
+    "movbttbpcfrwrgshffef.supabase.co" \
     "aws-0-eu-central-1.pooler.supabase.com" \
     "api.doppler.com" \
     "cli.doppler.com" \
