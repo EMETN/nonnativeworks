@@ -155,6 +155,17 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
     return resp.json()
 
 
+def _cleanup_stale_countries(api_url: str, secret: str, company_name: str, keep_countries: list[str]) -> None:
+    """Remove DB entries for countries where the company no longer has any jobs."""
+    resp = requests.post(
+        f"{api_url}/api/admin/cleanup-stale-countries",
+        json={"company_name": company_name, "keep_countries": keep_countries},
+        headers={"x-scraper-secret": secret},
+        timeout=30,
+    )
+    resp.raise_for_status()
+
+
 def _process_company(
     company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
 ) -> tuple[dict, str]:
@@ -242,10 +253,25 @@ def _process_company(
         msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
         out.append(f"FAIL — upload error: {msg}")
         summary_entry.update({"status": "fail", "error": msg})
+        return summary_entry, "\n".join(out)
     except Exception as e:
         msg = str(e)
         out.append(f"FAIL — upload error: {msg}")
         summary_entry.update({"status": "fail", "error": msg})
+        return summary_entry, "\n".join(out)
+
+    # ── Cleanup stale country entries ─────────────────────────────────────
+    # If the company previously had jobs in e.g. Germany but this scrape found
+    # none, the old Germany company row (and its positions) would linger.
+    # Delete any country entries not present in this upload.
+    company_name_for_cleanup = result.get("company_name")
+    if company_name_for_cleanup and payload:
+        scraped_country_slugs = [entry["country"] for entry in payload]
+        try:
+            _cleanup_stale_countries(api_url, secret, company_name_for_cleanup, scraped_country_slugs)
+            out.append(f"  stale-country cleanup ok (kept: {scraped_country_slugs})")
+        except Exception as e:
+            out.append(f"  WARN — stale-country cleanup failed (non-fatal): {e}")
 
     return summary_entry, "\n".join(out)
 
