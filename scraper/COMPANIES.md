@@ -11,7 +11,6 @@
 - Booking.com
 - Capgemini
 - CGI (local script)
-- Deel
 - Delivery Hero
 - Dept
 - Edenred
@@ -87,7 +86,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 |-----|-------------|-------------------|
 | Greenhouse | `boards.greenhouse.io/{slug}` | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita |
 | Lever | `jobs.lever.co/{slug}` | Prosus, SEB |
-| Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor, Deel |
+| Ashby | `jobs.ashbyhq.com/{slug}` | Reaktor |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{slug}` |Iceye |
 | Workday | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
 | Recruitee | `{slug}.recruitee.com` | Happeo |
