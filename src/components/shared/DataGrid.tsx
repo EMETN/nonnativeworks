@@ -1,5 +1,4 @@
-import { useSignal, useComputed } from '@preact/signals';
-import { useRef } from 'preact/hooks';
+import { useState, useRef, useMemo } from 'preact/hooks';
 
 export interface DataGridItem {
     id: string;
@@ -274,35 +273,35 @@ function GridRow({
 }
 
 export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
-    const sortField = useSignal<SortField>('positions');
-    const sortDir = useSignal<SortDir>('desc');
-    const inputValue = useSignal('');
-    const search = useSignal('');
+    const [sortField, setSortField] = useState<SortField>('positions');
+    const [sortDir, setSortDir] = useState<SortDir>('desc');
+    const [inputValue, setInputValue] = useState('');
+    const [search, setSearch] = useState('');
     const debounceRef = useRef(0);
 
     function toggleSort(field: SortField) {
-        if (sortField.value === field) {
-            sortDir.value = sortDir.value === 'desc' ? 'asc' : 'desc';
+        if (sortField === field) {
+            setSortDir(sortDir === 'desc' ? 'asc' : 'desc');
         } else {
-            sortField.value = field;
-            sortDir.value = 'desc';
+            setSortField(field);
+            setSortDir('desc');
         }
     }
 
-    const filtered = useComputed(() => {
-        const q = search.value.toLowerCase().trim();
+    const filtered = useMemo(() => {
+        const q = search.toLowerCase().trim();
         const list = q
             ? items.filter((it) => it.name.toLowerCase().includes(q))
             : items;
-        const dir = sortDir.value === 'desc' ? 1 : -1;
+        const dir = sortDir === 'desc' ? 1 : -1;
         return [...list].sort((a, b) => {
-            if (sortField.value === 'companies')
+            if (sortField === 'companies')
                 return ((b.company_count ?? 0) - (a.company_count ?? 0)) * dir;
-            if (sortField.value === 'total')
+            if (sortField === 'total')
                 return (b.total_positions - a.total_positions) * dir;
             return (b.english_positions - a.english_positions) * dir;
         });
-    });
+    }, [items, search, sortField, sortDir]);
 
     const labelBase =
         'text-[0.6rem] sm:text-[0.7rem] md:text-xs font-semibold tracking-wider uppercase whitespace-nowrap cursor-pointer transition-colors select-none inline-flex items-center';
@@ -310,7 +309,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
     const labelInactive = `${labelBase} text-gray-500 hover:text-gray-700`;
 
     const entityLabel = entityName ?? (compact ? 'country' : 'company');
-    const hasResults = filtered.value.length > 0;
+    const hasResults = filtered.length > 0;
     const gridCols = compact ? compactGridCols : fullGridCols;
 
     return (
@@ -351,22 +350,22 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 type="text"
                                 aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
                                 placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
-                                value={inputValue.value}
+                                value={inputValue}
                                 onInput={(e) => {
                                     const val = (e.target as HTMLInputElement).value;
-                                    inputValue.value = val;
+                                    setInputValue(val);
                                     clearTimeout(debounceRef.current);
-                                    debounceRef.current = window.setTimeout(() => { search.value = val; }, 200);
+                                    debounceRef.current = window.setTimeout(() => { setSearch(val); }, 200);
                                 }}
-                                class={`w-full pl-5 sm:pl-6 ${inputValue.value ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
+                                class={`w-full pl-5 sm:pl-6 ${inputValue ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
                                 style={numFont}
                             />
-                            {inputValue.value && (
+                            {inputValue && (
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        inputValue.value = '';
-                                        search.value = '';
+                                        setInputValue('');
+                                        setSearch('');
                                         clearTimeout(debounceRef.current);
                                     }}
                                     class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
@@ -398,7 +397,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 <button
                                     onClick={() => toggleSort('companies')}
                                     class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                        sortField.value === 'companies'
+                                        sortField ==='companies'
                                             ? labelActive
                                             : labelInactive
                                     }`}
@@ -407,11 +406,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                     {compactLabel}
                                     <SortArrow
                                         dir={
-                                            sortField.value === 'companies'
-                                                ? sortDir.value
+                                            sortField ==='companies'
+                                                ? sortDir
                                                 : 'desc'
                                         }
-                                        active={sortField.value === 'companies'}
+                                        active={sortField ==='companies'}
                                     />
                                 </button>
                             </div>
@@ -419,7 +418,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 <button
                                     onClick={() => toggleSort('positions')}
                                     class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                        sortField.value === 'positions'
+                                        sortField ==='positions'
                                             ? labelActive
                                             : labelInactive
                                     }`}
@@ -428,11 +427,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                     Positions
                                     <SortArrow
                                         dir={
-                                            sortField.value === 'positions'
-                                                ? sortDir.value
+                                            sortField ==='positions'
+                                                ? sortDir
                                                 : 'desc'
                                         }
-                                        active={sortField.value === 'positions'}
+                                        active={sortField ==='positions'}
                                     />
                                 </button>
                             </div>
@@ -442,7 +441,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                             <button
                                 onClick={() => toggleSort('positions')}
                                 class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                    sortField.value === 'positions'
+                                    sortField ==='positions'
                                         ? labelActive
                                         : labelInactive
                                 }`}
@@ -451,11 +450,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 Positions
                                 <SortArrow
                                     dir={
-                                        sortField.value === 'positions'
-                                            ? sortDir.value
+                                        sortField ==='positions'
+                                            ? sortDir
                                             : 'desc'
                                     }
-                                    active={sortField.value === 'positions'}
+                                    active={sortField ==='positions'}
                                 />
                             </button>
                         </div>
@@ -465,7 +464,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 </li>
 
                 {hasResults &&
-                    filtered.value.map((c) => (
+                    filtered.map((c) => (
                         <GridRow
                             key={c.id}
                             item={c}
@@ -478,7 +477,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
             {!hasResults && (
                 <div class="py-20 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
-                        No {entityLabel} found matching "{inputValue.value}"
+                        No {entityLabel} found matching "{inputValue}"
                     </p>
                     <p class="text-sm text-gray-500">
                         {compact
