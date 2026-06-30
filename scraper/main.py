@@ -15,19 +15,43 @@ Two-stage strategy:
 """
 
 import json
+import os
 import sys
 from urllib.parse import urljoin
+
+import yaml
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import extract_jobs
 from platforms.academicwork import scrape_academicwork_static
 from platforms.arla import scrape_arla_static
-from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright
+from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright, enrich_attrax_descriptions
 from platforms.barona import scrape_barona
-from platforms.neste import scrape_neste_static
+from platforms.generic_paginated import scrape_generic
 from platforms.njoyn import scrape_njoyn_playwright
 from platforms.rovio import scrape_rovio_static
 from platforms.zalando import scrape_zalando_static
+
+
+def _load_generic_configs() -> list[dict]:
+    path = os.path.join(os.path.dirname(__file__), "generic_scrapers.yaml")
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        return data.get("scrapers", []) if data else []
+    except Exception as e:
+        print(f"Warning: could not load generic_scrapers.yaml: {e}", file=sys.stderr)
+        return []
+
+
+_GENERIC_CONFIGS = _load_generic_configs()
+
+
+def _match_generic_config(url: str) -> dict | None:
+    for cfg in _GENERIC_CONFIGS:
+        if cfg.get("match", "") in url:
+            return cfg
+    return None
 
 MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 
@@ -146,6 +170,17 @@ def main():
 
     print(f"Scraping: {url}", file=sys.stderr)
 
+    generic_cfg = _match_generic_config(url)
+    if generic_cfg:
+        print(f"generic scraper matched: {generic_cfg.get('name', url)}", file=sys.stderr)
+        try:
+            jobs = scrape_generic(url, generic_cfg)
+        except Exception as e:
+            print(f"generic scraper failed: {e}", file=sys.stderr)
+            jobs = []
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
     # Detect platform from URL alone before attempting a static fetch —
     # some platforms (e.g. njoyn) redirect plain HTTP requests to bot-detection
     # services, so a static scrape is both useless and counterproductive.
@@ -233,8 +268,7 @@ def main():
         try:
             jobs_static = scrape_attrax_static(url)
             print(f"Attrax static scrape found {len(jobs_static)} jobs", file=sys.stderr)
-            if len(jobs_static) > len(jobs):
-                jobs = jobs_static
+            jobs = jobs_static
         except Exception as e:
             print(f"Attrax static scrape failed: {e}", file=sys.stderr)
         if len(jobs) < MIN_JOBS_STATIC:
@@ -246,6 +280,10 @@ def main():
                     jobs = jobs_pw
             except Exception as e:
                 print(f"Attrax Playwright failed: {e}", file=sys.stderr)
+        import requests as _req
+        _session = _req.Session()
+        _session.headers["User-Agent"] = "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+        enrich_attrax_descriptions(jobs, _session)
     elif len(jobs) < MIN_JOBS_STATIC:
         print("Falling back to generic Playwright...", file=sys.stderr)
         try:

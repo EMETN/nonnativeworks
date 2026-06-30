@@ -11,6 +11,10 @@ on:
                 description: 'Dry run (scrape but do not upload)'
                 type: boolean
                 default: false
+            use_dev_db:
+                description: 'Use dev database (DOPPLER_TOKEN_DEV) instead of production'
+                type: boolean
+                default: false
     #push:
     #   branches:
     #  - fix/workflow-scraper-issue
@@ -64,12 +68,12 @@ jobs:
 
         env:
             # Secrets are injected via Doppler (see "Inject Doppler secrets" step below).
-            # Only one GitHub secret is required:
-            #   Settings → Secrets and variables → Actions → DOPPLER_TOKEN
-            #
-            # The Doppler service token must be scoped to the config that contains:
-            #   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SCRAPER_SECRET
-            DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+            # For production runs: DOPPLER_TOKEN (scoped to prod config)
+            # For dev runs (use_dev_db input): DOPPLER_TOKEN_DEV (scoped to dev config)
+            # The token must cover: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SCRAPER_SECRET
+            DOPPLER_TOKEN: ${{ inputs.use_dev_db == true && secrets.DOPPLER_TOKEN_DEV || secrets.DOPPLER_TOKEN }}
+            # Opt into Node.js 24 for all JavaScript actions ahead of the June 2026 forced migration.
+            FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
         steps:
             - name: Checkout
@@ -142,6 +146,14 @@ jobs:
               if: steps.playwright-cache.outputs.cache-hit == 'true'
               run: playwright install-deps chromium
 
+            - name: Restore outcome cache
+              uses: actions/cache@v4
+              with:
+                  path: cache/outcomes.json
+                  key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
+                  restore-keys: |
+                      outcome-cache-${{ runner.os }}-
+
             - name: Start Astro server
               run: |
                 doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
@@ -170,7 +182,7 @@ jobs:
 
             - name: Run batch scrape
               env:
-                  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+                  DOPPLER_TOKEN: ${{ inputs.use_dev_db == true && secrets.DOPPLER_TOKEN_DEV || secrets.DOPPLER_TOKEN }}
               run: |
                   doppler run -- python scraper/batch_run.py \
                     --api-url http://localhost:4321 \

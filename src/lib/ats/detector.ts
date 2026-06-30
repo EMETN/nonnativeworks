@@ -7,6 +7,8 @@ import type { AtsDetectionResult } from './types';
  */
 const HOSTNAME_SLUG_OVERRIDES: Record<string, { ats: AtsDetectionResult['ats']; slug: string }> = {
   'ouraring.com': { ats: 'greenhouse', slug: 'oura' },
+  'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
+  'deptagency.com': { ats: 'greenhouse', slug: 'dept' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
@@ -32,10 +34,10 @@ export function detectAts(url: string): AtsDetectionResult {
     }
 
     // Lever
-    // Pattern: jobs.lever.co/{slug} or jobs.lever.co/{slug}/{uuid}
-    if (hostname === 'jobs.lever.co') {
+    // Pattern: jobs.lever.co/{slug} or jobs.eu.lever.co/{slug}
+    if (hostname === 'jobs.lever.co' || hostname === 'jobs.eu.lever.co') {
       const match = pathname.match(/^\/([^/]+)/);
-      if (match) return { ats: 'lever', companySlug: match[1] };
+      if (match) return { ats: 'lever', companySlug: match[1], leverEu: hostname === 'jobs.eu.lever.co' };
     }
 
     // Ashby
@@ -78,11 +80,24 @@ export function detectAts(url: string): AtsDetectionResult {
       if (slug) return { ats: 'recruitee', companySlug: slug };
     }
 
-    // Workday
+    // Workday (myworkdayjobs.com)
     // Pattern: {company}.wd{N}.myworkdayjobs.com/{locale}/{site}
     if (hostname.endsWith('.myworkdayjobs.com')) {
       const company = hostname.split('.')[0];
       if (company) return { ats: 'workday', companySlug: company };
+    }
+
+    // Workday (myworkdaysite.com)
+    // Pattern: wd{N}.myworkdaysite.com/{locale}/recruiting/{company}/{site}
+    if (hostname.endsWith('.myworkdaysite.com')) {
+      try {
+        const pathMatch = new URL(url).pathname.match(/\/(?:[a-z]{2}-[A-Z]{2}\/)?recruiting\/([^/]+)/);
+        const slug = pathMatch?.[1] ?? hostname.split('.')[0];
+        if (slug) return { ats: 'workday', companySlug: slug };
+      } catch {
+        const slug = hostname.split('.')[0];
+        if (slug) return { ats: 'workday', companySlug: slug };
+      }
     }
 
     return { ats: null, companySlug: extractCompanySlug(hostname) };

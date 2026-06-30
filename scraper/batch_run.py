@@ -57,6 +57,7 @@ import argparse
 import os
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 import requests
@@ -94,12 +95,12 @@ def _wait_for_server(api_url: str, max_wait: int = 30) -> None:
     raise RuntimeError(f"Server at {api_url} did not become ready within {max_wait}s")
 
 
-def _scrape(api_url: str, secret: str, url: str) -> dict:
+def _scrape(api_url: str, secret: str, url: str, timeout: int = SCRAPE_TIMEOUT_S) -> dict:
     resp = requests.post(
         f"{api_url}/api/admin/scrape",
         json={"url": url},
         headers={"x-scraper-secret": secret},
-        timeout=SCRAPE_TIMEOUT_S,
+        timeout=timeout,
     )
     resp.raise_for_status()
     return resp.json()
@@ -152,6 +153,96 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
     )
     resp.raise_for_status()
     return resp.json()
+
+
+def _process_company(
+    company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
+) -> tuple[dict, str]:
+    """Scrape, validate, and upload one company. Returns (summary_entry, log_output)."""
+    out: list[str] = []
+
+    url = company.get("url", "").strip()
+    min_positions = company.get("min_positions", 1)
+    is_english_company = company.get("is_english_company", False)
+    display_name = company.get("name") or url
+
+    out.append(f"\n{'─' * 60}")
+    out.append(f"Scraping: {display_name}  ({url})")
+
+    summary_entry: dict = {
+        "url": url,
+        "status": "unknown",
+        "company_name": None,
+        "total_positions": 0,
+        "countries": [],
+        "skipped_unknown_location": 0,
+        "skipped_untracked_country": 0,
+        "error": None,
+    }
+
+    # ── Scrape ────────────────────────────────────────────────────────────
+    try:
+        result = _scrape(api_url, secret, url, scrape_timeout)
+    except requests.HTTPError as e:
+        msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
+        out.append(f"FAIL — scrape error: {msg}")
+        summary_entry.update({"status": "fail", "error": msg})
+        return summary_entry, "\n".join(out)
+    except Exception as e:
+        msg = str(e)
+        out.append(f"FAIL — scrape error: {msg}")
+        summary_entry.update({"status": "fail", "error": msg})
+        return summary_entry, "\n".join(out)
+
+    total_positions = sum(len(cg.get("jobs", [])) for cg in result.get("countries", []))
+    country_names = [cg["country_name"] for cg in result.get("countries", [])]
+    out.append(
+        f"  company={result.get('company_name')!r}  ats={result.get('ats')}  "
+        f"positions={total_positions}  countries={country_names}"
+    )
+    out.append(
+        f"  skipped_unknown_location={result.get('skipped_unknown_location', 0)}  "
+        f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}"
+    )
+
+    summary_entry.update({
+        "company_name": result.get("company_name"),
+        "total_positions": total_positions,
+        "countries": country_names,
+        "skipped_unknown_location": result.get("skipped_unknown_location", 0),
+        "skipped_untracked_country": result.get("skipped_untracked_country", 0),
+    })
+
+    # ── Validate ──────────────────────────────────────────────────────────
+    if total_positions < min_positions:
+        msg = f"Only {total_positions} positions found, expected >= {min_positions}"
+        out.append(f"FAIL — validation: {msg}")
+        summary_entry.update({"status": "fail", "error": msg})
+        return summary_entry, "\n".join(out)
+
+    if dry_run:
+        out.append(f"  [dry-run] would upload {total_positions} positions — skipping")
+        summary_entry["status"] = "success"
+        return summary_entry, "\n".join(out)
+
+    # ── Upload ────────────────────────────────────────────────────────────
+    payload = _build_upload_payload(result, is_english_company)
+    try:
+        upload_result = _upload(api_url, secret, payload)
+        out.append(f"  uploaded ok: {upload_result.get('results', upload_result)}")
+        if upload_result.get("errors"):
+            out.append(f"  partial errors: {upload_result['errors']}")
+        summary_entry["status"] = "success"
+    except requests.HTTPError as e:
+        msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
+        out.append(f"FAIL — upload error: {msg}")
+        summary_entry.update({"status": "fail", "error": msg})
+    except Exception as e:
+        msg = str(e)
+        out.append(f"FAIL — upload error: {msg}")
+        summary_entry.update({"status": "fail", "error": msg})
+
+    return summary_entry, "\n".join(out)
 
 
 def _write_github_summary(entries: list[dict]) -> None:
@@ -235,105 +326,26 @@ def main() -> int:
     failures: list[dict] = []
     successes: list[dict] = []
 
-    for company in companies:
-        url = company.get("url", "").strip()
-        if not url:
-            print("WARNING: company entry missing 'url', skipping", file=sys.stderr)
-            continue
+    valid_companies = [c for c in companies if c.get("url", "").strip()]
+    skipped = len(companies) - len(valid_companies)
+    if skipped:
+        print(f"WARNING: {skipped} company entries missing 'url', skipping", file=sys.stderr)
 
-        min_positions = company.get("min_positions", 1)
-        is_english_company = company.get("is_english_company", False)
-        display_name = company.get("name") or url
-
-        print(f"\n{'─' * 60}")
-        print(f"Scraping: {display_name}  ({url})")
-
-        summary_entry: dict = {
-            "url": url,
-            "status": "unknown",
-            "company_name": None,
-            "total_positions": 0,
-            "countries": [],
-            "skipped_unknown_location": 0,
-            "skipped_untracked_country": 0,
-            "error": None,
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {
+            executor.submit(
+                _process_company, company, args.api_url, secret, args.dry_run, SCRAPE_TIMEOUT_S
+            ): company
+            for company in valid_companies
         }
-
-        # ── Scrape ────────────────────────────────────────────────────────────
-        try:
-            result = _scrape(args.api_url, secret, url)
-        except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
-            print(f"FAIL — scrape error: {msg}", file=sys.stderr)
-            summary_entry.update({"status": "fail", "error": msg})
-            summary_entries.append(summary_entry)
-            failures.append({"url": url, "error": msg})
-            continue
-        except Exception as e:
-            msg = str(e)
-            print(f"FAIL — scrape error: {msg}", file=sys.stderr)
-            summary_entry.update({"status": "fail", "error": msg})
-            summary_entries.append(summary_entry)
-            failures.append({"url": url, "error": msg})
-            continue
-
-        total_positions = sum(len(cg.get("jobs", [])) for cg in result.get("countries", []))
-        country_names = [cg["country_name"] for cg in result.get("countries", [])]
-        print(
-            f"  company={result.get('company_name')!r}  ats={result.get('ats')}  "
-            f"positions={total_positions}  countries={country_names}"
-        )
-        print(
-            f"  skipped_unknown_location={result.get('skipped_unknown_location', 0)}  "
-            f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}"
-        )
-
-        summary_entry.update({
-            "company_name": result.get("company_name"),
-            "total_positions": total_positions,
-            "countries": country_names,
-            "skipped_unknown_location": result.get("skipped_unknown_location", 0),
-            "skipped_untracked_country": result.get("skipped_untracked_country", 0),
-        })
-
-        # ── Validate ──────────────────────────────────────────────────────────
-        if total_positions < min_positions:
-            msg = f"Only {total_positions} positions found, expected >= {min_positions}"
-            print(f"FAIL — validation: {msg}", file=sys.stderr)
-            summary_entry.update({"status": "fail", "error": msg})
-            summary_entries.append(summary_entry)
-            failures.append({"url": url, "error": msg})
-            continue
-
-        if args.dry_run:
-            print(f"  [dry-run] would upload {total_positions} positions — skipping")
-            summary_entry["status"] = "success"
-            summary_entries.append(summary_entry)
-            successes.append({"url": url, "positions": total_positions})
-            continue
-
-        # ── Upload ────────────────────────────────────────────────────────────
-        payload = _build_upload_payload(result, is_english_company)
-        try:
-            upload_result = _upload(args.api_url, secret, payload)
-            print(f"  uploaded ok: {upload_result.get('results', upload_result)}")
-            if upload_result.get("errors"):
-                print(f"  partial errors: {upload_result['errors']}", file=sys.stderr)
-            summary_entry["status"] = "success"
-            summary_entries.append(summary_entry)
-            successes.append({"url": url, "positions": total_positions})
-        except requests.HTTPError as e:
-            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
-            print(f"FAIL — upload error: {msg}", file=sys.stderr)
-            summary_entry.update({"status": "fail", "error": msg})
-            summary_entries.append(summary_entry)
-            failures.append({"url": url, "error": msg})
-        except Exception as e:
-            msg = str(e)
-            print(f"FAIL — upload error: {msg}", file=sys.stderr)
-            summary_entry.update({"status": "fail", "error": msg})
-            summary_entries.append(summary_entry)
-            failures.append({"url": url, "error": msg})
+        for future in as_completed(futures):
+            entry, output = future.result()
+            print(output, flush=True)
+            summary_entries.append(entry)
+            if entry["status"] == "success":
+                successes.append({"url": entry["url"], "positions": entry["total_positions"]})
+            else:
+                failures.append({"url": entry["url"], "error": entry["error"]})
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'═' * 60}")

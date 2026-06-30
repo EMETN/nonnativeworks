@@ -82,6 +82,7 @@ for (const [cc, jobs] of byCountry) {
     const { classified, signals } = classifyJobVerbose(
       { title: job.title, url: job.url, descriptionHtml: job.descriptionHtml, descriptionText: job.descriptionText },
       cc,
+      companyName,
     );
 
     positionLogs.push({

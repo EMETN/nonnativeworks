@@ -55,7 +55,9 @@ const FI: string[] = [
   'timpuri',        // carpenter
   'toimiala',       // industry
   'tuotanto',       // production
-  'tuotannon',
+  'tuotannon',      // production (genitive)
+  'tutkija',        // researcher
+  'valvoja',        // supervisor
   'varasto',        // warehouse
   'vastaanotto',    // reception / front desk
   'vuoromestari',   // shift supervisor
@@ -66,10 +68,13 @@ const SE: string[] = [
   'ansvarig',       // responsible / manager
   'arkitekt',       // architect
   'ekonom',         // economist
+  'erfaren',        // experienced
   'förvaltare',     // administrator / manager
+  'gruppchef',      // group leader
   'handläggare',    // administrator / officer
   'informatiker',   // computer scientist
   'konsult',        // consultant
+  'mekaniker',      // mechanic
   'projektledare',  // project manager
   'rådgivare',      // advisor
   'samordnare',     // coordinator
@@ -77,7 +82,10 @@ const SE: string[] = [
   'tekniker',       // technician
   'teknisk',        // technical
   'testare',        // tester
+  'uppdragsledare', // project manager
+  'utredare',       // investigator
   'utvecklare',     // developer
+  'validering',     // validation
   'verksamhet',     // operations / business
 ];
 
@@ -97,13 +105,22 @@ const NO: string[] = [
 // ── Danish ───────────────────────────────────────────────────────────────────
 const DK: string[] = [
   'afdelingsleder', // department manager
+  'afvanding',      // drainage
   'arkitekt',       // architect
+  'boreformand',    // drilling foreman
+  'fagchef',        // head of department
+  'fagspecialist',  // subject specialist
+  'hjælper',        // assistant
   'karriere',       // career
   'konsulent',      // consultant
   'offentlige',     // public
+  'projectchef',    // project manager
+  'projectleder',   // project manager
   'rådgiver',       // advisor
   'sagsbehandler',  // case officer
   'sælger',         // salesperson
+  'statiker',       // structural engineer
+  'tilbudspartner', // offer partner
   'udvikler',       // developer
 ];
 
@@ -125,15 +142,22 @@ const DE: string[] = [
   'entwicklung',    // development
   'erfahrung',      // experience
   'fachexperte',    // subject matter expert
+  'fachgutachter',  // expert / technical consultant
   'fachkraft',      // skilled worker
+  'fachplaner',     // specialist planner
+  'genehmigung',    // approval
+  'geomatiker',     // geomatics engineer
   'glasfaser',      // fibre optic
   'informatiker',   // computer scientist
   'infrastruktur',  // infrastructure
+  'ingenieur',      // engineer
   'kauffrau',       // merchant / business person (female form)
   'kaufmann',       // merchant / business person
+  'konstrukteur',   // designer / design engineer
   'koordinator',    // coordinator
   'kraftfahrer',    // driver
   'laborant',       // laboratory technician
+  'landschaft',     // landscape
   'logistik',       // logistics
   'masterstudium',  // master's degree/programme
   'mechaniker',     // mechanic
@@ -146,34 +170,41 @@ const DE: string[] = [
   'spezialist',     // specialist
   'studium',        // degree programme
   'teamleiter',     // team lead
+  'teamleitung',    // team leader
   'technischer',    // technical
-  'technologie',    // technology
   'verantwortung',  // responsibility
   'verkehr',        // traffic
   'verkäufer',      // salesperson
+  'vertrag',        // contract
   'vertrieb',       // sales
   'werkstudent',    // working student / student employee
   'wirtschaft',     // economy
+  'zeichner',       // illustrator / draftsman
 ];
 
 // ── Dutch ─────────────────────────────────────────────────────────────────────
 const NL: string[] = [
   'adviseur',       // advisor
+  'afstudeer',      // graduate
   'afstuderen',     // graduate
   'automatiseerder', // automater
   'automatisering', // automation
   'beheerder',      // administrator
+  'bouwkundig',     // architectural
+  'constructeur',   // constructor / manufacturer
   'coördinator',    // coordinator
   'defensie',       // defence
   'gezocht',        // wanted
   'informatie',     // information
   'innovatie',      // innovation
   'medewerker',     // employee / associate
-  'medior',         // mid-level
   'netwerk',        // network
+  'omgeving',       // environment
+  'ontwerp',        // design
   'ontwikkelaar',   // developer
   'openbaar',       // public
   'overheid',       // government
+  'projectleider',  // project manager
   'publieke',       // public
   'spoordomein',    // railway network
   'stagiair',       // intern
@@ -185,14 +216,20 @@ const NL: string[] = [
   'verkoper',       // salesperson
   'verzekeringen',  // insurance
   'virtualisatie',  // virtualization
+  'voorbereider',   // planner
+  'voorziening',    // facility
 ];
 
 // ── Estonian ─────────────────────────────────────────────────────────────────
 const EE: string[] = [
   'arendaja',       // developer
+  'insener',       // engineer
   'juht',           // manager / head
+  'konstruktorit',  // design engineer
+  'modelleerija',   // modeler
   'müügijuht',      // sales manager
   'nõustaja',       // advisor
+  'projekteerija',  // designer
   'spetsialist',    // specialist
 ];
 
@@ -237,6 +274,35 @@ export const KEYWORDS_RE = new RegExp(
   'i',
 );
 
+// Non-ASCII characters used by tracked-country languages.
+const NON_ASCII_RE = /[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżășț]/i;
+
+/**
+ * Strip bilingual slash suffixes from job titles.
+ * Some companies (e.g. SEB Latvia) post titles like
+ *   "Finance Developer/ Finanšu izstrādātājs/-a in Finance, Risk and Data Tribe"
+ * or  "Information Security Manager / Informācijas drošības vadītājs (-a) (GRC)"
+ * This finds the first "/" whose right-hand side contains non-ASCII characters
+ * and keeps only the left-hand (English) side.
+ */
+export function stripBilingualSuffix(title: string): string {
+  const latvianRe = /[āčēģīķļņōŗšūž]/i;
+  let idx = 0;
+  while (idx < title.length) {
+    const slashPos = title.indexOf('/', idx);
+    if (slashPos === -1) break;
+    const nextSlash = title.indexOf('/', slashPos + 1);
+    const segment = nextSlash === -1
+      ? title.slice(slashPos + 1)
+      : title.slice(slashPos + 1, nextSlash);
+    if (latvianRe.test(segment)) {
+      return title.slice(0, slashPos).trim();
+    }
+    idx = slashPos + 1;
+  }
+  return title;
+}
+
 /**
  * Returns true when the title contains non-ASCII characters typical of
  * non-English languages, or an unambiguous local-language keyword.
@@ -250,6 +316,6 @@ export function titleAppearsNonEnglish(title: string): boolean {
   //   Icelandic: þ ð
   //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
   //   Polish: ł ń ś ź ż
-  if (/[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżășț]/i.test(title)) return true;
+  if (NON_ASCII_RE.test(title)) return true;
   return KEYWORDS_RE.test(title);
 }
