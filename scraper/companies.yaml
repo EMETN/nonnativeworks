@@ -177,7 +177,7 @@ companies:
 
     - name: Orion
       url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
-      min_positions: 5
+      min_positions: 1
 
     - name: Orkla
       url: https://careers.orkla.com

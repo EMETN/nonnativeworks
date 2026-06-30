@@ -219,6 +219,21 @@ export default function Scraper() {
       if (!res.ok && res.status !== 207) {
         setPhase({ kind: 'error', message: result.error ?? 'Upload failed' });
       } else {
+        // Remove country entries that no longer have jobs for this company
+        const countrySlugs = data.countries.map((g) => g.country);
+        try {
+          const cleanupRes = await fetch('/api/admin/cleanup-stale-countries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company_name: data.company_name.trim(), keep_countries: countrySlugs }),
+          });
+          if (!cleanupRes.ok) {
+            const cleanupErr = await cleanupRes.json().catch(() => ({}));
+            console.error('cleanup-stale-countries failed:', cleanupRes.status, cleanupErr);
+          }
+        } catch (e) {
+          console.error('cleanup-stale-countries network error:', e);
+        }
         setPhase({ kind: 'done', uploadResult: result });
         setUrl('');
       }
