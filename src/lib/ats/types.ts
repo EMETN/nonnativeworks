@@ -38,11 +38,15 @@ export interface RawJob {
    * Use only when the source provides a definitive answer — do not set based on inferred signals.
    */
   requires_native_language?: boolean;
+  /** Set by enrichDescriptions when the detail page returns 404/410 — the position no longer exists. */
+  _gone?: boolean;
 }
 
 export interface AtsDetectionResult {
   ats: Exclude<AtsType, 'python'> | null;
   companySlug: string | null;
+  /** Lever EU-hosted instance (jobs.eu.lever.co → api.eu.lever.co). */
+  leverEu?: boolean;
 }
 
 export interface ClassifiedJob {

@@ -23,6 +23,7 @@ interface AshbyJobPosting {
   address?: AshbyAddress;
   secondaryLocations?: AshbySecondaryLocation[];
   employmentType?: string;
+  workPlaceType?: string;
   jobUrl: string;
   descriptionHtml?: string;
   isRemote?: boolean | null;
@@ -53,18 +54,33 @@ export async function fetchAshbyJobsAndCompanyName(
   };
 }
 
+const REGION_LABELS = new Set([
+  'emea', 'apac', 'americas', 'latam', 'mena', 'global', 'worldwide', 'eu', 'nordics', 'latin america',
+]);
+
+function isRegionLabel(s: string): boolean {
+  return REGION_LABELS.has(s.toLowerCase().trim());
+}
+
 function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
+  const workPlace = posting.workPlaceType?.toLowerCase();
+  const workModel: RawJob['work_model'] =
+    workPlace === 'remote' || posting.isRemote ? 'remote'
+    : workPlace === 'hybrid' ? 'hybrid'
+    : workPlace === 'on-site' || workPlace === 'onsite' ? 'on-site'
+    : undefined;
+
   const base = {
     title: posting.title,
     descriptionHtml: posting.descriptionHtml,
     url: posting.jobUrl,
-    department: posting.department ?? posting.team,
+    jobFunction: posting.team ?? posting.department,
+    work_model: workModel,
   };
 
   const secondaries = posting.secondaryLocations ?? [];
 
   if (secondaries.length === 0) {
-    // Single location: use addressCountry for country resolution, location string as city.
     return [{
       ...base,
       location: posting.address?.postalAddress?.addressCountry ?? posting.location,
@@ -76,28 +92,38 @@ function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
   // the same country into one RawJob entry. The top-level location/address is
   // a summary and may duplicate a secondary entry — use secondaries only.
   const byCountry = new Map<string, string[]>();
+  const unstructured: string[] = [];
+
   for (const sec of secondaries) {
     const country = sec.address?.postalAddress?.addressCountry;
-    const city = sec.location ?? sec.address?.postalAddress?.addressLocality;
-    if (!country) continue;
-    if (!byCountry.has(country)) byCountry.set(country, []);
-    if (city) byCountry.get(country)!.push(city);
+    const locString = sec.location ?? sec.address?.postalAddress?.addressLocality;
+
+    if (country) {
+      if (!byCountry.has(country)) byCountry.set(country, []);
+      if (locString) byCountry.get(country)!.push(locString);
+    } else if (locString && !isRegionLabel(locString)) {
+      unstructured.push(locString);
+    }
   }
 
-  if (byCountry.size === 0) {
-    // Secondary locations had no resolvable country — fall back to primary.
-    return [{
-      ...base,
-      location: posting.address?.postalAddress?.addressCountry ?? posting.location,
-      city: posting.location ?? posting.address?.postalAddress?.addressLocality,
-    }];
-  }
-
-  return Array.from(byCountry.entries()).map(([country, cities]) => ({
+  const jobs: RawJob[] = Array.from(byCountry.entries()).map(([country, cities]) => ({
     ...base,
     location: country,
     ...(cities.length === 1 ? { city: cities[0] } : cities.length > 1 ? { cities } : {}),
   }));
+
+  for (const loc of unstructured) {
+    jobs.push({ ...base, location: loc });
+  }
+
+  if (jobs.length > 0) return jobs;
+
+  // All secondaries were region labels — fall back to primary.
+  return [{
+    ...base,
+    location: posting.address?.postalAddress?.addressCountry ?? posting.location,
+    city: posting.location ?? posting.address?.postalAddress?.addressLocality,
+  }];
 }
 
 function formatSlug(slug: string): string {

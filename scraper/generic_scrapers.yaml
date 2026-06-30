@@ -1,0 +1,412 @@
+# Generic static-HTML scraper configs
+#
+# Each entry matches a URL substring and drives generic_paginated.py.
+# Use this for career sites that render jobs as plain HTML (no JavaScript
+# required). Two extraction modes are supported; choose based on how the
+# site structures its job data.
+#
+# ── Shared fields (all modes) ─────────────────────────────────────────────────
+#
+#   match             Substring matched against the career page URL (required)
+#   name              Display name used in log messages
+#   extract_mode      css_cards (default) | attribute_json | script_json
+#                     | teamtailor
+#   list_url          Override the URL used for listing pages (use when the
+#                     input URL differs from the first page URL)
+#   extra_params          Fixed query params always appended (e.g. sort order)
+#   description_selector  CSS selector for the job description on the detail page
+#                         Used for language classification (English-titled jobs only).
+#                         Default: tries .jobdescription, .job-description,
+#                                  [class*="description"], article, main
+#
+# ── Pagination (shared, required unless the whole list fits on one page) ──────
+#
+#   pagination.type       offset | page | index | none
+#                           offset — param = page_number * page_size  (e.g. startrow=0,25,50)
+#                           page   — param = page_number + 1          (e.g. page=1,2,3)
+#                           index  — param = page_number              (e.g. i=0,1,2)
+#                           none   — single fetch, no pagination
+#   pagination.param      Query-parameter name (e.g. "startrow", "page", "i")
+#   pagination.page_size  Expected results per page; stop when fewer are returned
+#   pagination.max_pages  Safety ceiling (default: 200)
+#
+# ── extract_mode: css_cards (default) ────────────────────────────────────────
+#
+# Jobs are repeating HTML elements. Inspect the page source and find the
+# element that wraps one job row or card.
+#
+#   card_selector         CSS selector for the repeating element that wraps one job
+#                         (required) e.g. "tr.data-row", "li.job-card"
+#   title_selector        CSS selector for the job title within a card
+#                         Default: first <a> or first heading (h2–h4)
+#   location_selector     CSS selector for the location within a card
+#                         Default: first element whose class matches a location pattern
+#   country_filter_param  Query-parameter name used by the site to filter by country
+#                         (e.g. "optionsFacetsDD_country"). When combined with
+#                         countries, the scraper runs one paginated fetch per country
+#                         and merges results before description enrichment. Use this
+#                         when the site does not support multi-value country params.
+#   countries             List of ISO alpha-2 country codes to fetch when
+#                         country_filter_param is set (e.g. [FI, SE, NO]).
+#                         Ignored if country_filter_param is absent.
+#   country_values        Map of ISO alpha-2 → site-specific filter value.
+#                         When set, the filter param uses the mapped value
+#                         instead of the ISO code, and each job is tagged with
+#                         the ISO country_code. Ignored without country_filter_param.
+#   url_selector          CSS selector for the job link when it is NOT on the
+#                         title element itself (href extracted from this element)
+#   job_function_selector CSS selector for the job function/area on the detail page
+#                         Extracted during the same fetch as description_selector.
+#                         Used as the primary category classification signal (higher
+#                         weight than title or description).
+#                         Example: "[data-careersite-propertyid='department']"
+#
+# ── extract_mode: attribute_json ─────────────────────────────────────────────
+#
+# All jobs are encoded as a JSON array in an HTML attribute on a single
+# container element (common with web components). Open the page source and
+# find the element — e.g. <career-list-page open-positions='[{...}]'>.
+# Pagination is usually not needed (all jobs load in one request).
+#
+#   container_selector    CSS selector for the element that holds the attribute
+#                         (required) e.g. "career-list-page"
+#   attribute_name        Name of the HTML attribute containing the JSON array
+#                         (required) e.g. "open-positions"
+#   fields.title          Key name for the job title in each JSON object
+#                         Default: "title"
+#   fields.url            Key name for the job URL
+#                         Default: "url"
+#   fields.location       Key name for the location (string or array — first used)
+#   fields.country        Key name for the country (string or array). When an array,
+#                         one job entry is created per country (fan-out).
+#                         countries[i] and locations[i] are treated as parallel arrays.
+#   fields.job_function   Key name for the job function/department. Set directly on
+#                         the job — no detail page fetch needed.
+#
+# ── extract_mode: script_json ────────────────────────────────────────────────
+#
+# Jobs are embedded as a JSON array under a named key inside a Next.js RSC
+# script tag (self.__next_f.push([id, "...escaped payload..."])). All fields
+# support dot notation for nested access (e.g. "header.roleTitle").
+# Location fan-out works via an array of location objects.
+#
+#   script_key            Key name for the jobs array in the RSC payload
+#                         (required) e.g. "parsedJobs"
+#   fields.title          Dot-path to job title (default: "title")
+#   fields.url            Dot-path to job URL (relative URLs are resolved)
+#   fields.locations      Dot-path to array of location objects
+#   fields.location_subfield  Key within each location object for city/location string
+#   fields.country_subfield   Key within each location object for country code
+#                             One job is created per location object (fan-out).
+#   fields.job_function   Dot-path to job function/department string
+
+# ── extract_mode: teamtailor ──────────────────────────────────────────────────
+#
+# TeamTailor career sites render jobs in a fixed HTML template. Jobs are in
+# #jobs_list_container > li. Each card has a link with the title and a metadata
+# div (class "text-md") with department · location · work-type separated by
+# middots. No additional selectors needed — the mode handles parsing internally.
+# Pagination uses ?page=1,2,3… and stops when fewer than page_size jobs return.
+#
+# Only shared fields + pagination are used; card/title/location selectors are
+# ignored.
+
+# ── extract_mode: xml_feed ───────────────────────────────────────────────────
+#
+# Jobs are served as an XML document (e.g. SuccessFactors job feed). Each job
+# is a child element identified by item_tag (default: "job"). Field values are
+# read from child element text. Descriptions come inline so no detail page
+# fetches are needed. No pagination — all jobs arrive in one response.
+#
+#   item_tag              XML element name for each job (default: "job")
+#   fields.title          Child element for title (default: "title")
+#   fields.url            Child element for job URL (default: "url")
+#   fields.location       Child element for city/location (default: "city")
+#   fields.country        Child element for ISO country code (default: "country")
+#   fields.job_function   Child element for department (default: "department")
+#   fields.description    Child element for HTML description (default: "description")
+
+scrapers:
+  
+  # ── Bolt ────────────────────────────────────────────────────────────────────
+  - match: "bolt.eu/en/careers/positions"
+    name: Bolt
+    extract_mode: script_json
+    script_key: parsedJobs
+    pagination:
+      type: page
+      param: page
+      page_size: 20
+    description_selector: "main"
+    fields:
+      title: header.roleTitle
+      url: body.applyLinkProps.href
+      locations: header.locations
+      location_subfield: city
+      country_subfield: countryCode
+      job_function: header.teamTitle
+
+  # ── Allianz ────────────────────────────────────────────────────────────────────
+  - match: "careers.allianz.com/global/en/search-results"
+    name: Allianz
+    extract_mode: script_var_json
+    var_name: phApp
+    data_path: data.jobs
+    pagination:
+      type: offset
+      param: from
+      page_size: 10
+    extra_params:
+      s: 1
+    fields:
+      title: title
+      url: applyUrl
+      location: city
+  
+    # ── Metso ────────────────────────────────────────────────────────────────────
+  - match: "metso.com/corporate/careers/open-jobs"
+    name: Metso
+    extract_mode: attribute_json
+    pagination:
+      type: none
+    container_selector: "careers-list-page"
+    attribute_name: "open-positions"
+    description_selector: ".jobdescription"
+    fields:
+      title: title
+      url: url
+      location: locations
+      country: countries
+      job_function: jobFamily
+  
+  # ── Neste ────────────────────────────────────────────────────────────────────
+  - match: "jobs.neste.com"
+    name: Neste
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+
+  # ── SAP ──────────────────────────────────────────────────────────────────────
+  # Taleo instance that only accepts one country per request. country_filter_param
+  # + countries makes the scraper iterate one paginated fetch per country and
+  # merge results before description enrichment.
+  - match: "jobs.sap.com"
+    name: SAP
+    country_filter_param: "optionsFacetsDD_country"
+    countries:
+      - DE
+      - SE
+      - DK
+      - NL
+      - FI
+      - "NO"
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+
+  # ── Vaisala ──────────────────────────────────────────────────────────────────
+  - match: "careers.vaisala.com"
+    name: Vaisala
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+
+  # ── Fortum ──────────────────────────────────────────────────────────────────
+  - match: "jobs.fortum.com"
+    name: Fortum
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "a.jobTitle-link"
+    location_selector: "td.colLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "[data-careersite-propertyid='department']"
+  
+  # ── Hiab ──────────────────────────────────────────────────────────────────
+  - match: "careers.hiab.com/search"
+    name: Hiab
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "td.colTitle a.jobTitle-link"
+    location_selector: "td.colLocation .jobLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "td.colFacility jobFacility"
+
+  # ── Wärtsilä ──────────────────────────────────────────────────────────────────
+  - match: "careers.wartsila.com/search"
+    name: Wärtsilä
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 25
+    card_selector: "tr.data-row"
+    title_selector: "td.colTitle a.jobTitle-link"
+    location_selector: "td.colLocation .jobLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "td.colFacility jobFacility"
+
+   # ── Vestas ──────────────────────────────────────────────────────────────────
+  - match: "careers.vestas.com/search"
+    name: Vestas
+    extra_params:
+      sortColumn: referencedate
+      sortDirection: desc
+    pagination:
+      type: offset
+      param: startrow
+      page_size: 10
+    card_selector: "tr.data-row"
+    title_selector: "td.colTitle a.jobTitle-link"
+    location_selector: "td.colLocation .jobLocation"
+    description_selector: ".jobdescription"
+    job_function_selector: "td.colFacility jobFacility"
+
+  # ── Sweco Group ──────────────────────────────────────────────────────────────────
+  - match: "swecogroup.com/careers/vacancies"
+    name: Sweco Group
+    country_filter_param: country
+    countries:
+      - SE
+      - DK
+      - NL
+      - FI
+      - DE
+      - "NO"
+      - LT
+      - EE
+    country_values:
+      SE: "3"
+      DK: "4"
+      NL: "5"
+      FI: "7"
+      DE: "8"
+      "NO": "13"
+      LT: "16"
+      EE: "21"
+    pagination:
+      type: page
+      param: vacancy-page
+      page_size: 10
+    extra_params:
+      scroll-to: vacancies-top
+    card_selector: "tr.vacancy--list"
+    title_selector: "h3.vacancy__title"
+    location_selector: "em.vacancy__location"
+    url_selector: "a.js-vacancy-link"
+
+  # ── Siemens Healthineers ─────────────────────────────────────────────────────
+  # Oracle/Taleo-style career site. The 42420 param is a country/region facet
+  # filter (numeric IDs), folderRecordsPerPage controls page size.
+  - match: "jobs.siemens-healthineers.com"
+    name: Siemens Healthineers
+    extra_params:
+      "42420": "[812124,812008,812020,812132,812010,812011,812130,812027,812013]"
+      "42420_format": "17573"
+      listFilterMode: "1"
+      folderRecordsPerPage: "6"
+    pagination:
+      type: offset
+      param: folderOffset
+      page_size: 6
+    card_selector: "article.article--result"
+    title_selector: "h3.article__header__text__title a.link"
+    location_selector: "span.list-item-location"
+    description_selector: "#section1__content .article__content__view__field__value"
+    detail_location_selector: "ul.list--locations li"
+
+  # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
+  - match: "career.nordnetab.com"
+    name: Nordnet
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
+
+  # ── UpCloud (TeamTailor) ────────────────────────────────────────────────────
+  - match: "upcloud.teamtailor.com"
+    name: UpCloud
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
+
+  # ── Futurice (TeamTailor) ────────────────────────────────────────────────────
+  - match: "careers.futurice.com/en-GB/jobs"
+    name: Futurice
+    extract_mode: teamtailor
+    description_selector: "div.prose"
+    pagination:
+      type: page
+      param: page
+      page_size: 25
+
+  # ── Volvo Group ──────────────────────────────────────────────────────────────
+  # SuccessFactors XML job feed. Contains all fields inline (title, city,
+  # 2-letter country code, department, HTML description) — no detail page
+  # fetches needed.
+  - match: "jobs.volvogroup.com/feed"
+    name: Volvo Group
+    extract_mode: xml_feed
+    item_tag: job
+    fields:
+      title: title
+      url: url
+      location: city
+      country: country
+      job_function: department
+      description: description
+
+  # ── Scout24 ─────────────────────────────────────────────────────────────────
+  # Static HTML career page, all jobs on one page. Location in subtitle is
+  # pipe-separated: "Berlin | immediately | Scout24 SE" — country-lookup
+  # handles the pipe split.
+  - match: "scout24.com/en/career/jobs"
+    name: Scout24
+    pagination:
+      type: none
+    card_selector: "div.teaser--job"
+    title_selector: "a.teaser__link"
+    location_selector: "div.teaser__subtitle"
+    description_selector: "div.job__main-column"

@@ -1,6 +1,7 @@
 import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglish } from './title-language';
+import { lookupCountryFromLocation } from './country-lookup';
 
 const MAX_PAGES = 50;        // safety cap to avoid infinite loops
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
@@ -65,10 +66,19 @@ function extractItems(data: unknown, itemsPath: string | undefined): unknown[] {
   return Array.isArray(raw) ? raw : [];
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function buildUrlFromTemplate(item: unknown, template: string): string {
-  return template.replace(/\{([^}]+)\}/g, (_, path: string) => {
+  return template.replace(/\{([^}]+)\}/g, (_, expr: string) => {
+    const [path, modifier] = expr.split('|');
     const val = getString(item, path);
-    return val ?? '';
+    if (!val) return '';
+    return modifier === 'slug' ? slugify(val) : val;
   });
 }
 
@@ -195,6 +205,21 @@ function expandJobToSecondaryLocations(
   return extras;
 }
 
+/** Deep-clone a body object and set a value at a dot-path (e.g. "data.searchParams.page"). */
+function setNestedParam(body: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+  const clone = structuredClone(body);
+  const parts = path.split('.');
+  let cur: Record<string, unknown> = clone;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!(parts[i] in cur) || typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) {
+      cur[parts[i]] = {};
+    }
+    cur = cur[parts[i]] as Record<string, unknown>;
+  }
+  cur[parts[parts.length - 1]] = value;
+  return clone;
+}
+
 /** Build a FormData from a body object. Array values produce multiple fields with the same name. */
 function buildFormData(body: Record<string, unknown>): FormData {
   const fd = new FormData();
@@ -237,11 +262,17 @@ async function fetchPage(
 }
 
 
+const GONE_SENTINEL = '\x00GONE';
+
 async function fetchPageHtml(url: string): Promise<string | undefined> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
     });
+    if (res.status === 404 || res.status === 410) {
+      console.warn(`[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`);
+      return GONE_SENTINEL;
+    }
     if (!res.ok) {
       console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
       return undefined;
@@ -260,9 +291,10 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
  * When descriptionRegex is provided, only the matched HTML fragment is stored as
  * descriptionHtml instead of the full page (avoids native-language nav/chrome false positives).
  */
-export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp, descriptionRegex?: RegExp): Promise<void> {
+export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp, descriptionRegex?: RegExp, skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter((j) => {
     if (!j.url) return false;
+    if (skipUrls?.has(j.url)) return false;
     const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml && !j.descriptionText;
     const wantsLocation = !!locationRegex && !j.location;
     return wantsDescription || wantsLocation;
@@ -273,12 +305,18 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
 
   let locationsSet = 0;
   let htmlFailed = 0;
+  let goneCount = 0;
   let regexMissed = 0;
 
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
         const html = await fetchPageHtml(job.url!);
+        if (html === GONE_SENTINEL) {
+          job._gone = true;
+          goneCount++;
+          return;
+        }
         if (!html) {
           htmlFailed++;
           return;
@@ -305,6 +343,9 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
     );
   }
 
+  if (goneCount) {
+    console.log(`[enrichDescriptions] ${goneCount} jobs marked gone (404/410)`);
+  }
   if (locationRegex) {
     console.log(`[enrichDescriptions] location extraction: ${locationsSet} set, ${regexMissed} regex misses, ${htmlFailed} fetch failures`);
   }
@@ -553,7 +594,9 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
     for (let i = 0; i < MAX_PAGES; i++, page++) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, page) : url;
-      const pageBody = method === 'POST' ? { ...body, [param]: page } : undefined;
+      const pageBody = method === 'POST'
+        ? (param.includes('.') ? setNestedParam(body ?? {}, param, page) : { ...body, [param]: page })
+        : undefined;
       console.log(`[${label}] fetching page=${page}${method === 'POST' ? ` body.${param}=${page}` : ` url=${pageUrl}`}`);
       const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
@@ -599,7 +642,9 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
     for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
       const pageUrl = method === 'GET' ? buildGetUrl(url, param, offset) : url;
-      const pageBody = method === 'POST' ? { ...body, [param]: offset } : undefined;
+      const pageBody = method === 'POST'
+        ? (param.includes('.') ? setNestedParam(body ?? {}, param, offset) : { ...body, [param]: offset })
+        : undefined;
       console.log(`[${label}] fetching offset=${offset}${method === 'POST' ? `` : ` url=${pageUrl}`}`);
       const data = await fetchPage(pageUrl, method, pageBody, headers, bodyType);
 
@@ -666,6 +711,50 @@ async function fetchAllJobsRaw(spec: FetchSpec, label = 'primary'): Promise<RawJ
 
       await sleep(randomDelay());
     }
+  } else if (pagination.type === 'cursor') {
+    let nextUrl: string | undefined;
+
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const pageUrl = i === 0 ? url : nextUrl!;
+
+      console.log(`[${label}] fetching cursor page=${i + 1}: ${pageUrl}`);
+      const data = await fetchPage(pageUrl, method, body, headers, bodyType);
+      if (!data) break;
+
+      const items = extractItems(data, itemsPath);
+      const before = jobs.length;
+      jobs.push(...mapItems(items, fields, urlTemplate, expandSecondaryLocations, descriptionFields, urlPlaceholders, keepQueryParams));
+      console.log(`[${label}] cursor page=${i + 1} → ${items.length} items, mapped ${jobs.length - before}, cumulative=${jobs.length}`, paginationMeta(data));
+
+      if (items.length === 0) {
+        console.log(`[${label}] stopping: empty page at cursor page=${i + 1}`);
+        break;
+      }
+
+      const rawNext = getPath(data, pagination.nextPagePath);
+      if (typeof rawNext === 'string' && rawNext) {
+        if (pagination.rebaseToOrigin) {
+          try {
+            const nextParams = new URL(rawNext).searchParams;
+            const baseUrl = new URL(url);
+            nextParams.forEach((val, key) => baseUrl.searchParams.set(key, val));
+            nextUrl = baseUrl.toString();
+          } catch {
+            nextUrl = rawNext;
+          }
+        } else {
+          nextUrl = rawNext;
+        }
+      } else {
+        nextUrl = undefined;
+      }
+      if (!nextUrl) {
+        console.log(`[${label}] stopping: no next_page at cursor page=${i + 1}`);
+        break;
+      }
+
+      await sleep(randomDelay());
+    }
   }
 
   console.log(`[${label}] done — total mapped: ${jobs.length}`);
@@ -695,6 +784,8 @@ export async function fetchCompanyApiJobs(
   config: CompanyApiConfig,
   /** When provided, description enrichment is skipped for jobs not in a tracked country. */
   isTrackedLocation?: (location: string) => boolean,
+  /** URLs with cached classification outcomes — skip description fetching for these. */
+  skipUrls?: Set<string>,
 ): Promise<RawJob[]> {
   const method = config.method ?? 'GET';
   const headers = {
@@ -761,6 +852,24 @@ export async function fetchCompanyApiJobs(
             job.cities = matched.length > 0 ? matched : undefined;
           }
         }
+      } else if (config.repeatForCountryField) {
+        // POST repeatFor: filter cities to only those belonging to the queried country.
+        // Uses CITY_MAP lookup — cities not recognised by CITY_MAP are kept (unknown city
+        // in the current country) while cities that resolve to a different country are removed.
+        const countryName = override[config.repeatForCountryField];
+        if (typeof countryName === 'string') {
+          const targetCode = lookupCountryFromLocation(countryName)[0]?.code;
+          for (const job of jobs) {
+            job.country_code = countryName;
+            if (job.cities && targetCode) {
+              const filtered = job.cities.filter((city) => {
+                const resolved = lookupCountryFromLocation(city);
+                return resolved.length === 0 || resolved.some((i) => i.code === targetCode);
+              });
+              job.cities = filtered.length > 0 ? filtered : undefined;
+            }
+          }
+        }
       }
       allRaw.push(...jobs);
     }
@@ -803,7 +912,7 @@ export async function fetchCompanyApiJobs(
 
     if (config.fetchDescription) {
       console.log(`[fetchCompanyApiJobs] enriching descriptions for ${englishJobs.length} English jobs`);
-      await enrichDescriptions(englishJobs);
+      await enrichDescriptions(englishJobs, undefined, undefined, skipUrls);
     }
 
     // Index primary jobs by sourceId for O(1) lookup
@@ -852,7 +961,7 @@ export async function fetchCompanyApiJobs(
   if (config.fetchDescription || config.locationFromHtml) {
     const locationRegex = config.locationFromHtml ? new RegExp(config.locationFromHtml) : undefined;
     const descriptionRegex = config.descriptionFromHtml ? new RegExp(config.descriptionFromHtml, 's') : undefined;
-    await enrichDescriptions(enrichmentTargets, locationRegex, descriptionRegex);
+    await enrichDescriptions(enrichmentTargets, locationRegex, descriptionRegex, skipUrls);
   }
 
   if (config.descriptionApiUrl && config.descriptionApiFields?.length) {
