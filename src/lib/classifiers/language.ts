@@ -587,6 +587,9 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} communicative`,
     // CEFR level suffixes (parens are stripped: "German (C1 level)" → "german c1 level")
     `${lang} a1`, `${lang} a2`, `${lang} b1`, `${lang} b2`, `${lang} c1`, `${lang} c2`,
+    // CEFR level-of-language: "at least a B2 level of German"
+    `a1 level of ${lang}`, `a2 level of ${lang}`, `b1 level of ${lang}`,
+    `b2 level of ${lang}`, `c1 level of ${lang}`, `c2 level of ${lang}`,
     // Level descriptors
     `elementary ${lang}`,
     `good ${lang}`,
