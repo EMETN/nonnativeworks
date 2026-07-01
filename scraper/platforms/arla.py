@@ -35,6 +35,7 @@ from bs4 import BeautifulSoup
 
 from extract import build_job
 from title_language import _title_appears_non_english
+from tracked_countries import is_tracked_location
 
 BASE_URL = "https://jobs.arla.com"
 LIST_URL = f"{BASE_URL}/gb/en"
@@ -214,11 +215,17 @@ def scrape_arla_static(url: str) -> list[dict]:
     # Non-English titles are already caught by Phase 1a of the classifier.
     # For English-titled jobs the teaser alone may be English with no language
     # signals — fetch the detail page to find requirement/advantage phrases.
-    english_jobs = [j for j in result if not _title_appears_non_english(j.get("title", ""))]
+    # Only enrich jobs in tracked countries — fetching descriptions for jobs in
+    # Canada, UK, Poland, etc. wastes time and can cause timeouts on GitHub Actions.
+    english_jobs = [
+        j for j in result
+        if not _title_appears_non_english(j.get("title", ""))
+        and is_tracked_location(j.get("location"))
+    ]
     unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
 
     print(
-        f"arla: fetching descriptions for {len(unique_urls)} unique English-titled jobs",
+        f"arla: fetching descriptions for {len(unique_urls)} unique English-titled tracked-country jobs",
         file=sys.stderr,
     )
 
