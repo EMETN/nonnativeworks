@@ -692,6 +692,14 @@ export const CASES: FixtureCase[] = [
     advantage: false,
   },
   {
+    label: '2a — CEFR level before language: "at least a B2 level of German"',
+    title: 'Stakeholder Manager',
+    desc: 'You are fluent in English (C1/C2) and possess at least a B2 level of German to navigate local stakeholder and city relationships.',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
     label: '2a — "Native in German" with English co-requirement',
     title: 'Consultant',
     desc: 'Excellent communication and presentation skills in English. Native in German.',
