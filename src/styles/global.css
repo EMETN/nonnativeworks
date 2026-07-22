@@ -12,10 +12,6 @@
 }
 
 @layer base {
-  :root {
-    --color-brand: #1a56db;
-  }
-
   html {
     font-family: Inter, 'Inter Fallback', system-ui, sans-serif;
   }
