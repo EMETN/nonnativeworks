@@ -357,6 +357,7 @@ export interface GlobalCompanyData {
     country_name: string;
     country_slug: string;
     country_code: string;
+    career_page_url: string | null;
     total_positions: number;
     english_positions: number;
     positions: PositionDetail[];
@@ -431,6 +432,7 @@ export async function getGlobalCompanyBySlug(
         country_name: country?.name ?? '',
         country_slug: country?.slug ?? '',
         country_code: country?.code ?? '',
+        career_page_url: m.career_page_url,
         total_positions: m.total_positions,
         english_positions: m.english_positions,
         positions: positionsByCompany.get(m.company_id) ?? [],
