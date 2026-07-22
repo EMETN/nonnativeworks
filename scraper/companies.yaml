@@ -61,7 +61,7 @@ companies:
       min_positions: 10
 
     - name: Deel
-      url: https://www.deel.com/careers/open-roles
+      url: https://www.deel.com/careers
       min_positions: 10
 
     - name: Delivery Hero
