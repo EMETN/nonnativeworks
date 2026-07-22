@@ -10,7 +10,14 @@
 #   name            Display name — for readability only, not used by the scraper
 #   url             Career page URL passed to the scraper (required)
 #   min_positions   Minimum expected positions across all tracked countries.
-#                   The batch job fails this company if fewer are found.
+#                   If fewer are found, the company FAILS the run (a red run +
+#                   email) — usually a sign the scraper regressed.
+#                   Special case — min_positions: 0 : the company is allowed to be
+#                   empty. When it returns 0 positions it's reported as a WARNING
+#                   (run stays green, flagged for manual verification) instead of a
+#                   failure. Use it for companies that legitimately sit empty for
+#                   stretches. Any company with min_positions >= 1 that returns 0
+#                   still fails, as before.
 #                   Set conservatively — companies do occasionally have slow
 #                   hiring periods. Default: 1
 #   is_english_company  Flag the company as English-only in the UI. Default: false
@@ -176,7 +183,7 @@ companies:
     - name: Oura
       url: https://boards.greenhouse.io/oura
       min_positions: 5
-    
+
     - name: Philips
       url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
       min_positions: 10
@@ -199,6 +206,7 @@ companies:
 
     - name: Randstad
       url: https://www.randstad.com/jobs/careers-at-randstad
+      min_positions: 10
 
     - name: Reaktor
       url: https://www.reaktor.com/careers
@@ -239,7 +247,7 @@ companies:
     - name: Solita
       url: https://www.solita.fi/join-us
       min_positions: 1
-    
+
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
@@ -291,7 +299,6 @@ companies:
     - name: Zalando
       url: https://jobs.zalando.com/en/jobs
       min_positions: 10
-
 
 # Examples — uncomment and fill in real values:
 #
