@@ -17,6 +17,7 @@ export default function CompanyGrid({ companies, countrySlug }: Props) {
     total_positions: c.total_positions,
     english_percentage: c.english_percentage,
     updated_at: c.updated_at,
+    career_page_url: c.career_page_url,
   }));
 
   return <DataGrid items={items} />;

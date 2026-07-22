@@ -86,6 +86,7 @@ export interface TopCompany {
   country_count: number;
   primary_country_slug: string;
   primary_company_slug: string;
+  career_page_url: string | null;
 }
 
 export async function getTopCompanies(request: Request, cookies: AstroCookies, limit = 5): Promise<TopCompany[]> {
@@ -103,6 +104,7 @@ export async function getTopCompanies(request: Request, cookies: AstroCookies, l
     country_count: Number(r.country_count),
     primary_country_slug: r.primary_country_slug,
     primary_company_slug: nameToSlug(r.name),
+    career_page_url: r.career_page_url ?? null,
   }));
 }
 
