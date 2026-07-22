@@ -199,7 +199,6 @@ companies:
 
     - name: Randstad
       url: https://www.randstad.com/jobs/careers-at-randstad
-      min_positions: 0
 
     - name: Reaktor
       url: https://www.reaktor.com/careers
@@ -287,7 +286,7 @@ companies:
 
     - name: Yousician
       url: https://yousician.com/careers
-      min_positions: 1
+      min_positions: 0
 
     - name: Zalando
       url: https://jobs.zalando.com/en/jobs
