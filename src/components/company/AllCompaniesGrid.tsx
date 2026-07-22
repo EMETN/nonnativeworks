@@ -16,6 +16,7 @@ export default function AllCompaniesGrid({ companies }: Props) {
     english_percentage: c.english_percentage,
     updated_at: null,
     company_count: c.country_count,
+    career_page_url: c.career_page_url,
   }));
 
   return <DataGrid items={items} compact compactLabel="Countries" />;

@@ -10,6 +10,7 @@ export interface DataGridItem {
     english_percentage: number;
     updated_at: string | null;
     company_count?: number;
+    career_page_url?: string | null;
 }
 
 interface Props {
@@ -149,13 +150,19 @@ function GridRow({
     const arrowSize = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
     const rowPy = 'py-3.5 sm:py-4';
 
+    // A company with no English-friendly positions has no meaningful detail page —
+    // link straight out to its careers page (all positions) instead.
+    const noEnglish = item.english_positions === 0 && !!item.career_page_url;
+
     return (
         <li
             class="border-b border-gray-100 dg-subgrid hover-fade-item"
         >
             <a
-                href={item.href}
-                data-astro-prefetch
+                href={noEnglish ? item.career_page_url! : item.href}
+                {...(noEnglish
+                    ? { target: '_blank', rel: 'noopener noreferrer' }
+                    : { 'data-astro-prefetch': true })}
                 class="no-underline rounded-lg dg-subgrid"
             >
                 <div
@@ -260,11 +267,19 @@ function GridRow({
                         stroke="currentColor"
                         stroke-width={1.5}
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M9 5l7 7-7 7"
-                        />
+                        {noEnglish ? (
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M10.0002 5H8.2002C7.08009 5 6.51962 5 6.0918 5.21799C5.71547 5.40973 5.40973 5.71547 5.21799 6.0918C5 6.51962 5 7.08009 5 8.2002V15.8002C5 16.9203 5 17.4801 5.21799 17.9079C5.40973 18.2842 5.71547 18.5905 6.0918 18.7822C6.5192 19 7.07899 19 8.19691 19H15.8031C16.921 19 17.48 19 17.9074 18.7822C18.2837 18.5905 18.5905 18.2839 18.7822 17.9076C19 17.4802 19 16.921 19 15.8031V14M20 9V4M20 4H15M20 4L13 11"
+                            />
+                        ) : (
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M9 5l7 7-7 7"
+                            />
+                        )}
                     </svg>
                 </div>
             </a>
