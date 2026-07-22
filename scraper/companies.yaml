@@ -273,7 +273,7 @@ companies:
       min_positions: 1
 
     - name: Vaisala
-      url: https://careers.vaisala.com
+      url: https://careers.vaisala.com/search
       min_positions: 3
 
     - name: Vestas
