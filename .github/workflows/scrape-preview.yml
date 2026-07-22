@@ -176,10 +176,24 @@ jobs:
             const fs = require('fs');
             const names = `${{ steps.diff.outputs.names }}`;
             const output = fs.readFileSync('/tmp/scrape_output.txt', 'utf8').trim();
+
+            // Surface a status header from batch_run.py's summary line so warnings/
+            // failures are visible without reading the raw log below.
+            const m = output.match(/Results:\s*(\d+)\s+succeeded,\s*(\d+)\s+warnings?,\s*(\d+)\s+failed/i);
+            let header = '';
+            if (m) {
+              const ok = Number(m[1]), w = Number(m[2]), f = Number(m[3]);
+              const emoji = f > 0 ? '❌' : (w > 0 ? '⚠️' : '✅');
+              const parts = [`${ok} succeeded`];
+              if (w > 0) parts.push(`**${w} warning${w === 1 ? '' : 's'}** (0 positions — verify manually)`);
+              if (f > 0) parts.push(`**${f} failed**`);
+              header = `${emoji} ${parts.join(', ')}\n\n`;
+            }
+
             const body = [
               `## Scrape preview — ${names}`,
               '',
-              '```',
+              header + '```',
               output,
               '```',
               '',
