@@ -83,10 +83,7 @@ function SizingRow({
         : 0;
 
     return (
-        <li
-            aria-hidden="true"
-            class="h-0 overflow-hidden invisible dg-subgrid"
-        >
+        <li aria-hidden="true" class="h-0 overflow-hidden invisible dg-subgrid">
             <div class="pr-2 sm:pr-4 md:pr-8 xl:pr-12">
                 <span class={ts} style={numFont}>
                     W
@@ -137,13 +134,7 @@ function SizingRow({
     );
 }
 
-function GridRow({
-    item,
-    compact,
-}: {
-    item: DataGridItem;
-    compact?: boolean;
-}) {
+function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
     const textSize = 'text-xl md:text-lg lg:text-2xl';
     const slashSize = 'text-sm md:text-xs lg:text-base';
     const totalSize = 'text-sm md:text-xs lg:text-base';
@@ -156,7 +147,7 @@ function GridRow({
 
     return (
         <li
-            class="border-b border-gray-100 dg-subgrid hover-fade-item"
+            class={`border-b border-gray-100 dg-subgrid hover-fade-item${noEnglish ? ' opacity-25 hover:opacity-100' : ''}`}
         >
             <a
                 href={noEnglish ? item.career_page_url! : item.href}
@@ -287,7 +278,12 @@ function GridRow({
     );
 }
 
-export default function DataGrid({ items, compact, compactLabel = 'Companies', entityName }: Props) {
+export default function DataGrid({
+    items,
+    compact,
+    compactLabel = 'Companies',
+    entityName,
+}: Props) {
     const [sortField, setSortField] = useState<SortField>('positions');
     const [sortDir, setSortDir] = useState<SortDir>('desc');
     const [inputValue, setInputValue] = useState('');
@@ -343,7 +339,10 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 <SizingRow items={items} compact={compact} />
 
                 {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
-                <li class="border-b border-gray-200 dg-subgrid hover-fade-header" style={{ alignItems: 'center' }}>
+                <li
+                    class="border-b border-gray-200 dg-subgrid hover-fade-header"
+                    style={{ alignItems: 'center' }}
+                >
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
@@ -367,10 +366,16 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}
                                 value={inputValue}
                                 onInput={(e) => {
-                                    const val = (e.target as HTMLInputElement).value;
+                                    const val = (e.target as HTMLInputElement)
+                                        .value;
                                     setInputValue(val);
                                     clearTimeout(debounceRef.current);
-                                    debounceRef.current = window.setTimeout(() => { setSearch(val); }, 200);
+                                    debounceRef.current = window.setTimeout(
+                                        () => {
+                                            setSearch(val);
+                                        },
+                                        200,
+                                    );
                                 }}
                                 class={`w-full pl-5 sm:pl-6 ${inputValue ? 'pr-5 sm:pr-6' : 'pr-1'} py-1 text-xs sm:text-sm outline-none bg-transparent`}
                                 style={numFont}
@@ -412,7 +417,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 <button
                                     onClick={() => toggleSort('companies')}
                                     class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                        sortField ==='companies'
+                                        sortField === 'companies'
                                             ? labelActive
                                             : labelInactive
                                     }`}
@@ -421,11 +426,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                     {compactLabel}
                                     <SortArrow
                                         dir={
-                                            sortField ==='companies'
+                                            sortField === 'companies'
                                                 ? sortDir
                                                 : 'desc'
                                         }
-                                        active={sortField ==='companies'}
+                                        active={sortField === 'companies'}
                                     />
                                 </button>
                             </div>
@@ -433,7 +438,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 <button
                                     onClick={() => toggleSort('positions')}
                                     class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                        sortField ==='positions'
+                                        sortField === 'positions'
                                             ? labelActive
                                             : labelInactive
                                     }`}
@@ -442,11 +447,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                     Positions
                                     <SortArrow
                                         dir={
-                                            sortField ==='positions'
+                                            sortField === 'positions'
                                                 ? sortDir
                                                 : 'desc'
                                         }
-                                        active={sortField ==='positions'}
+                                        active={sortField === 'positions'}
                                     />
                                 </button>
                             </div>
@@ -456,7 +461,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                             <button
                                 onClick={() => toggleSort('positions')}
                                 class={`absolute right-0 top-1/2 -translate-y-1/2 ${
-                                    sortField ==='positions'
+                                    sortField === 'positions'
                                         ? labelActive
                                         : labelInactive
                                 }`}
@@ -465,11 +470,11 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                                 Positions
                                 <SortArrow
                                     dir={
-                                        sortField ==='positions'
+                                        sortField === 'positions'
                                             ? sortDir
                                             : 'desc'
                                     }
-                                    active={sortField ==='positions'}
+                                    active={sortField === 'positions'}
                                 />
                             </button>
                         </div>
@@ -480,11 +485,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
 
                 {hasResults &&
                     filtered.map((c) => (
-                        <GridRow
-                            key={c.id}
-                            item={c}
-                            compact={compact}
-                        />
+                        <GridRow key={c.id} item={c} compact={compact} />
                     ))}
             </ul>
 
