@@ -200,7 +200,7 @@ function GridRow({
                             aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                         >
                             <span
-                                class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
+                                class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.english_positions)}
@@ -227,7 +227,7 @@ function GridRow({
                         aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                     >
                         <span
-                            class={`${textSize} font-bold text-[#0F7A4F] leading-none tabular-nums`}
+                            class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.english_positions)}
