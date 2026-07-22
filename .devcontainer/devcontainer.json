@@ -55,6 +55,13 @@
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
     "workspaceFolder": "/workspace",
+    "forwardPorts": [4321],
+    "portsAttributes": {
+        "4321": {
+            "label": "Astro dev server",
+            "onAutoForward": "notify"
+        }
+    },
     "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
     "waitFor": "postStartCommand",
     "postCreateCommand": "pnpm install"

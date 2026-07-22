@@ -312,6 +312,30 @@ export interface CompanyApiConfig {
 // Key: lowercase hostname of the career page URL (e.g. "op-careers.fi")
 
 export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
+  // Self-hosted "deel-ats" API (Ashby-backed); full listing in one GET. Each
+  // posting lists every country it's open in under locations_list, so expand
+  // fans it out to one entry per country to match Deel's per-country counts.
+  'deel.com': {
+    url: 'https://www.deel.com/api/deel-ats/jobs/',
+    method: 'GET',
+    pagination: { type: 'none' },
+    companyName: 'Deel',
+    fields: {
+      title: 'attributes.title',
+      location: 'attributes.location_name',
+      url: 'attributes.external_link',
+      jobFunction: 'attributes.tier_2_category',
+      // ashby_id is unique per posting; job_id is shared across sibling postings
+      // (same role in multiple locations) and would collapse them during dedup.
+      id: 'attributes.ashby_id',
+    },
+    descriptionFields: ['attributes.full_job_description'],
+    expandSecondaryLocations: {
+      path: 'attributes.locations_list',
+      countryName: 'location',
+    },
+  },
+
     'op-careers.fi': {
     url: 'https://op-careers.fi/services/recruiting/v1/jobs',
     method: 'POST',
