@@ -1,68 +1,66 @@
-@import "tailwindcss";
-@import "@fontsource-variable/inter/wght.css";
+@import 'tailwindcss';
+@import '@fontsource-variable/inter/wght.css';
 
 /* Fallback font with metrics matching Inter to prevent layout shift */
 @font-face {
-  font-family: 'Inter Fallback';
-  src: local('Arial');
-  size-adjust: 107%;
-  ascent-override: 90%;
-  descent-override: 22%;
-  line-gap-override: 0%;
+    font-family: 'Inter Fallback';
+    src: local('Arial');
+    size-adjust: 107%;
+    ascent-override: 90%;
+    descent-override: 22%;
+    line-gap-override: 0%;
 }
 
 @layer base {
-  html {
-    font-family: Inter, 'Inter Fallback', system-ui, sans-serif;
-  }
+    html {
+        font-family: Inter, 'Inter Fallback', system-ui, sans-serif;
+    }
 
-  body {
-    @apply bg-white text-gray-900 antialiased;
-  }
+    body {
+        @apply bg-white text-gray-900 antialiased;
+    }
 
-  :focus:not(:focus-visible) {
-    outline: none;
-  }
+    :focus:not(:focus-visible) {
+        outline: none;
+    }
 }
 
 .mobile-menu-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  pointer-events: none;
-  transition: grid-template-rows 0.2s ease, opacity 0.15s ease;
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        grid-template-rows 0.2s ease,
+        opacity 0.15s ease;
 }
 
 .mobile-menu-panel.is-open {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  pointer-events: auto;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .mobile-menu-inner {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 .breadcrumb-list li + li::before {
-  content: '›';
-  margin: 0 0.375rem;
+    content: '›';
+    margin: 0 0.375rem;
 }
 
 .hover-fade-item {
-  transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .hover-fade-list:hover .hover-fade-item {
-    opacity: 0.12;
-  }
-  .hover-fade-soft:hover .hover-fade-item {
-    opacity: 0.5;
-  }
-  .hover-fade-list .hover-fade-item:hover,
-  .hover-fade-list .hover-fade-item:has(:focus-visible),
-  .hover-fade-list:has(.hover-fade-header:hover) .hover-fade-item {
-    opacity: 1;
-  }
+    .hover-fade-list:hover .hover-fade-item {
+        opacity: 0.25;
+    }
+    .hover-fade-list .hover-fade-item:hover,
+    .hover-fade-list .hover-fade-item:has(:focus-visible),
+    .hover-fade-list:has(.hover-fade-header:hover) .hover-fade-item {
+        opacity: 1;
+    }
 }
-

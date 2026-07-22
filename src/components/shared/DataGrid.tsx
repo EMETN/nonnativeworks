@@ -337,7 +337,7 @@ export default function DataGrid({ items, compact, compactLabel = 'Companies', e
                 }
             `}</style>
             <ul
-                class="w-full hover-fade-list hover-fade-soft"
+                class="w-full hover-fade-list"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
                 <SizingRow items={items} compact={compact} />
