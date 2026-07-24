@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { CATEGORIES } from '../../lib/prompt-template';
+import { CATEGORIES } from '../../lib/categories';
 
 interface CompanyOption {
   company_id: string;

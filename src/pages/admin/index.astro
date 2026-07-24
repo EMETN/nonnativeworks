@@ -1,8 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import Scraper from '../../components/admin/Scraper.tsx';
-import PromptGenerator from '../../components/admin/PromptGenerator.tsx';
-import JsonUploader from '../../components/admin/JsonUploader.tsx';
 import DataManager from '../../components/admin/DataManager.tsx';
 import PositionEditor from '../../components/admin/PositionEditor.tsx';
 import SkillsManager from '../../components/admin/SkillsManager.tsx';
@@ -10,7 +8,7 @@ import SkillsManager from '../../components/admin/SkillsManager.tsx';
 // The scraper requires a local Python subprocess and only works in dev.
 // Hide the tab entirely in production (Netlify) to avoid confusion.
 const scraperEnabled = import.meta.env.NETLIFY !== 'true';
-const defaultTab = scraperEnabled ? 'scraper' : 'upload';
+const defaultTab = scraperEnabled ? 'scraper' : 'companies';
 ---
 
 <AdminLayout title="Dashboard">
@@ -28,20 +26,11 @@ const defaultTab = scraperEnabled ? 'scraper' : 'upload';
       </button>
     )}
     <button
-      id="tab-btn-upload"
-      role="tab"
-      aria-selected={!scraperEnabled}
-      aria-controls="tab-panel-upload"
-      class={`tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border ${!scraperEnabled ? 'border-gray-200 bg-white text-blue-600 border-b-0 -mb-px' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-    >
-      Upload
-    </button>
-    <button
       id="tab-btn-companies"
       role="tab"
-      aria-selected="false"
+      aria-selected={!scraperEnabled}
       aria-controls="tab-panel-companies"
-      class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-transparent text-gray-500 hover:text-gray-700"
+      class={`tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border ${!scraperEnabled ? 'border-gray-200 bg-white text-blue-600 border-b-0 -mb-px' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
     >
       Companies
     </button>
@@ -85,44 +74,8 @@ const defaultTab = scraperEnabled ? 'scraper' : 'upload';
     </div>
   )}
 
-  <!-- Upload tab -->
-  <div id="tab-panel-upload" role="tabpanel" class={scraperEnabled ? 'hidden' : ''}>
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Upload</h2>
-      <p class="text-sm text-gray-500 mt-1">
-        Generate a prompt to run through an LLM, then upload the resulting JSON.
-      </p>
-    </div>
-    <div class="space-y-8">
-      <div>
-        <div class="mb-3">
-          <h3 class="text-sm font-semibold text-gray-800">Generate extraction prompt</h3>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Enter a career page URL to generate a prompt. Paste it into your LLM of choice
-            and it will return structured JSON ready to upload below.
-          </p>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5">
-          <PromptGenerator client:load />
-        </div>
-      </div>
-      <div>
-        <div class="mb-3">
-          <h3 class="text-sm font-semibold text-gray-800">Upload JSON output</h3>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Paste the LLM's JSON response or load a <code class="text-xs bg-gray-100 px-1 rounded">.json</code> file.
-            Validate first, then upload — existing positions for that company will be replaced.
-          </p>
-        </div>
-        <div class="bg-white border border-gray-200 rounded-xl p-5">
-          <JsonUploader client:load />
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Companies tab -->
-  <div id="tab-panel-companies" role="tabpanel" class="hidden">
+  <div id="tab-panel-companies" role="tabpanel" class={scraperEnabled ? 'hidden' : ''}>
     <div class="mb-4">
       <h2 class="text-lg font-semibold text-gray-900">Companies</h2>
       <p class="text-sm text-gray-500 mt-1">
@@ -162,7 +115,7 @@ const defaultTab = scraperEnabled ? 'scraper' : 'upload';
 </AdminLayout>
 
 <script is:inline define:vars={{ defaultTab }}>
-  const ALL_TABS = ['scraper', 'upload', 'companies', 'positions', 'skills'];
+  const ALL_TABS = ['scraper', 'companies', 'positions', 'skills'];
 
   function activateTab(target) {
     ALL_TABS.forEach((name) => {

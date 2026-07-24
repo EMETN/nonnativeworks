@@ -9,7 +9,7 @@ A website that tracks open job positions at companies where English is enough �
 - Phase 1: Project setup, Supabase schema, base layouts ✓
 - Phase 2: Homepage infographic (flag-colored bars + spheres) ✓
 - Phase 3: Country detail pages (sortable company table, category breakdown) ✓
-- Phase 4: Admin UI (prompt generator, JSON uploader, data manager, auth) ✓
+- Phase 4: Admin UI (scraper, data manager, position editor, skills, auth) ✓
 - Phase 5: SEO, Open Graph, sitemap, robots.txt, accessibility, favicon ✓
 
 ## Stack
@@ -56,15 +56,11 @@ Run the migration in the Supabase SQL editor:
 
 Automated extraction of job listings from company career pages via `src/pages/api/admin/scrape.ts` (POST). Runs three layers: ATS API detection (Greenhouse, Lever, Ashby, Workable, Workday) → per-company custom APIs → Python/Playwright browser scraper. For details see `scraper/CLAUDE.md`.
 
-## LLM prompt system
+## Category taxonomy
 
-`src/lib/prompt-template.ts` — `generatePrompt(careerPageUrl)`:
-- Instructs LLM to extract ALL positions from a career page, grouped by country
-- Output: JSON object `{ total_positions, companies: [...] }` (wrapped format also accepted)
-- Each position has: `country_code`, `title`, `url`, `requires_native_language`, `category`
-- The `country_code` on each position is a self-anchoring field to prevent wrong-country assignment
-- Detailed rules for `requires_native_language` — default to `true` when in doubt
-- Explicit instruction: city lists within one country must NOT be split across countries
+`src/lib/categories.ts` — exports `CATEGORIES`, the canonical list of position
+categories (name + slug). Used by the scraper, position editor, and upload validation
+to classify each position.
 
 ## Upload JSON format
 
@@ -84,7 +80,7 @@ All `career_page_url` and position `url` fields auto-strip markdown link format 
 | `src/lib/queries.ts` | All DB query functions |
 | `src/lib/types.ts` | TypeScript interfaces matching DB schema |
 | `src/lib/validation.ts` | Zod schemas for upload JSON |
-| `src/lib/prompt-template.ts` | LLM prompt generation |
+| `src/lib/categories.ts` | Position category taxonomy (`CATEGORIES`) |
 | `src/lib/country-flags.ts` | Flag colors by ISO alpha-2 + `nameToSlug()` |
 | `src/middleware.ts` | Auth guard for `/admin/*` routes |
 | `src/pages/api/admin/upload.ts` | POST — validate & upsert company data |
@@ -113,9 +109,10 @@ Company slugs are derived at runtime via `nameToSlug()` — no slug column in th
 - `CategoryBreakdown.astro` — horizontal bar chart per category
 
 **Admin (all Preact `client:load`):**
-- `PromptGenerator.tsx` — URL input → generates LLM prompt → copy button
-- `JsonUploader.tsx` — paste/upload JSON → validate → upload to Supabase
+- `Scraper.tsx` — career page URL → scrape → review → upload to Supabase
 - `DataManager.tsx` — list + delete companies
+- `PositionEditor.tsx` — correct category / language flags on uploaded positions
+- `SkillsManager.tsx` — manage the skills taxonomy
 
 ## Potential next improvements
 

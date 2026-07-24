@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { CATEGORIES } from '../../lib/prompt-template';
+import { CATEGORIES } from '../../lib/categories';
 import { atsLabel } from '../../lib/ats/detector';
 
 // ---------------------------------------------------------------------------
