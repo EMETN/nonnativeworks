@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
 import { atsLabel } from '../../lib/ats/detector';
+import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
 
 // ---------------------------------------------------------------------------
 // Types mirroring ScrapeResult from the API
@@ -74,25 +75,13 @@ export default function Scraper() {
   const [urlError, setUrlError] = useState('');
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
 
-  // Listen for prefill requests from DataManager's "Update" button
+  // Prefill the URL when DataManager's "Update" button navigated here
   useEffect(() => {
-    // Check sessionStorage first (handles the case where the event fired before mount)
     const stored = sessionStorage.getItem('scraper-prefill-url');
     if (stored) {
       setUrl(stored);
       sessionStorage.removeItem('scraper-prefill-url');
     }
-
-    const handler = (e: Event) => {
-      const prefillUrl = (e as CustomEvent<{ url: string }>).detail?.url;
-      if (prefillUrl) {
-        setUrl(prefillUrl);
-        setPhase({ kind: 'idle' });
-        setUrlError('');
-      }
-    };
-    window.addEventListener('scraper-prefill', handler);
-    return () => window.removeEventListener('scraper-prefill', handler);
   }, []);
 
   // ---- Scrape ----
@@ -221,6 +210,8 @@ export default function Scraper() {
       } else {
         setPhase({ kind: 'done', uploadResult: result });
         setUrl('');
+        invalidateCache('companies');
+        invalidateCachePrefix('positions:');
       }
     } catch {
       setPhase({ kind: 'error', message: 'Network error during upload.' });
