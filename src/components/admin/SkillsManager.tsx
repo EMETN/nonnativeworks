@@ -218,7 +218,7 @@ export default function SkillsManager() {
               <select
                 value={addDraft.category}
                 onChange={(e) => setAddDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
+                class="admin-select w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
               >
                 {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
@@ -325,7 +325,7 @@ export default function SkillsManager() {
                               <select
                                 value={editDraft.category}
                                 onChange={(e) => setEditDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
+                                class="admin-select w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
                               >
                                 {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                               </select>

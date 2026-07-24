@@ -237,7 +237,7 @@ export default function PositionEditor() {
   const knownCategories = CATEGORIES;
 
   if (loadingCompanies) {
-    return <div class="text-sm text-gray-400 py-4">Loading…</div>;
+    return <div class="text-sm text-gray-400 py-1.5 border border-transparent">Loading…</div>;
   }
 
   if (error && companies.length === 0) {
@@ -257,7 +257,7 @@ export default function PositionEditor() {
         </label>
         <select
           id="company-select"
-          class="flex-1 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
+          class="admin-select flex-1 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
           value={selectedId}
           onChange={(e) => setSelectedId((e.target as HTMLSelectElement).value)}
         >
@@ -277,7 +277,10 @@ export default function PositionEditor() {
             </option>
           ))}
         </select>
-        <button onClick={refresh} class="text-sm text-[#0F7A4F] hover:underline whitespace-nowrap">
+        <button
+          onClick={refresh}
+          class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
+        >
           Refresh
         </button>
       </div>
@@ -367,7 +370,7 @@ export default function PositionEditor() {
                         {/* Category */}
                         <td class="px-4 py-2.5">
                           <select
-                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
+                            class="admin-select text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                             value={pos.category?.slug ?? ''}
                             onChange={(e) =>
                               handleCategoryChange(pos, (e.target as HTMLSelectElement).value)
@@ -406,7 +409,7 @@ export default function PositionEditor() {
                         {/* Education */}
                         <td class="px-4 py-2.5">
                           <select
-                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
+                            class="admin-select text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                             value={pos.required_education ?? ''}
                             onChange={(e) =>
                               handleEducationChange(pos, (e.target as HTMLSelectElement).value)

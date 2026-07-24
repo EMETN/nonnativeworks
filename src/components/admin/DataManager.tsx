@@ -138,7 +138,7 @@ export default function DataManager() {
         <span class="text-sm text-gray-500">{groups.length} companies</span>
         <button
           onClick={() => load(true)}
-          class="text-sm text-[#0F7A4F] hover:underline"
+          class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
         >
           Refresh
         </button>
