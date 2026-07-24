@@ -546,7 +546,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
         <select
           value={job.category}
           onChange={(e) => onCategory((e.target as HTMLSelectElement).value)}
-          class="border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#12956B]"
+          class="admin-select border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#12956B]"
         >
           {CATEGORIES.map((c) => (
             <option key={c.slug} value={c.slug}>
