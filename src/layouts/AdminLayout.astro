@@ -17,7 +17,7 @@ const { title } = Astro.props;
     <meta name="robots" content="noindex, nofollow" />
   </head>
   <body class="bg-gray-50 min-h-screen">
-    <header id="top" class="bg-white border-b border-gray-200">
+    <header class="bg-white border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-14">
           <div class="flex items-center gap-4">
@@ -42,15 +42,16 @@ const { title } = Astro.props;
       <slot />
     </main>
 
-    <a
-      href="#top"
+    <button
+      type="button"
+      onclick="window.scrollTo({ top: 0 })"
       aria-label="Back to top"
-      class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow"
+      class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow cursor-pointer"
     >
       <svg width="16" height="16" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M1 5l4-4 4 4" />
       </svg>
-    </a>
+    </button>
   </body>
 </html>
 

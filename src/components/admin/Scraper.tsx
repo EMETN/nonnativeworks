@@ -253,12 +253,12 @@ export default function Scraper() {
                 if (urlError) setUrlError('');
               }}
               disabled={phase.kind === 'scraping'}
-              class={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 ${urlError ? 'border-red-400' : 'border-gray-300'}`}
+              class={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] disabled:bg-gray-50 ${urlError ? 'border-red-400' : 'border-gray-300'}`}
             />
             <button
               onClick={handleScrape}
               disabled={!url.trim() || phase.kind === 'scraping'}
-              class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
             >
               {phase.kind === 'scraping' ? 'Scraping…' : 'Scrape jobs'}
             </button>
@@ -270,7 +270,7 @@ export default function Scraper() {
       {/* Scraping spinner */}
       {phase.kind === 'scraping' && (
         <div class="text-sm text-gray-500 flex items-center gap-2">
-          <span class="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span class="inline-block w-4 h-4 border-2 border-[#12956B] border-t-transparent rounded-full animate-spin" />
           Fetching jobs…
         </div>
       )}
@@ -305,7 +305,7 @@ export default function Scraper() {
       {/* Uploading */}
       {phase.kind === 'uploading' && (
         <div class="text-sm text-gray-500 flex items-center gap-2">
-          <span class="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span class="inline-block w-4 h-4 border-2 border-[#12956B] border-t-transparent rounded-full animate-spin" />
           Uploading to Supabase…
         </div>
       )}
@@ -339,7 +339,7 @@ export default function Scraper() {
           )}
           <button
             onClick={handleReset}
-            class="text-sm text-blue-600 hover:text-blue-800 underline"
+            class="text-sm text-[#0F7A4F] hover:text-[#084A2F] underline"
           >
             Scrape another company
           </button>
@@ -384,7 +384,7 @@ function ReviewPanel({
       {/* Summary bar */}
       <div class="flex flex-wrap items-center gap-2 text-sm">
         {data.ats && (
-          <span class="bg-blue-100 text-blue-700 rounded-full px-2.5 py-0.5 text-xs font-medium">
+          <span class="bg-green-100 text-[#0B5E3C] rounded-full px-2.5 py-0.5 text-xs font-medium">
             {atsLabel(data.ats)}
           </span>
         )}
@@ -413,7 +413,7 @@ function ReviewPanel({
             value={data.company_name}
             onInput={(e) => onCompanyName((e.target as HTMLInputElement).value)}
             placeholder="Enter company name"
-            class={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${!data.company_name.trim() ? 'border-red-300' : 'border-gray-300'}`}
+            class={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] ${!data.company_name.trim() ? 'border-red-300' : 'border-gray-300'}`}
           />
           {!data.company_name.trim() && (
             <p class="text-xs text-red-500 mt-1">Required before uploading</p>
@@ -425,7 +425,6 @@ function ReviewPanel({
               type="checkbox"
               checked={data.is_english_company}
               onChange={(e) => onIsEnglishCompany((e.target as HTMLInputElement).checked)}
-              class="rounded"
             />
             English company (US/UK-headquartered)
           </label>
@@ -448,7 +447,7 @@ function ReviewPanel({
         <button
           onClick={onUpload}
           disabled={!data.company_name.trim() || total === 0}
-          class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Upload {total} {total === 1 ? 'position' : 'positions'} to Supabase
         </button>
@@ -485,7 +484,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
         <span class="text-xs text-gray-500 ml-auto">{group.jobs.length} positions</span>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-xs">
+        <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-100 bg-white">
               <th class="text-left px-4 py-2 font-medium text-gray-500 w-1/2">Title</th>
@@ -541,7 +540,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            class="hover:underline text-blue-700"
+            class="hover:underline text-[#0B5E3C]"
           >
             {job.title}
           </a>
@@ -553,7 +552,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
         <select
           value={job.category}
           onChange={(e) => onCategory((e.target as HTMLSelectElement).value)}
-          class="border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+          class="border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#12956B]"
         >
           {CATEGORIES.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -570,7 +569,6 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
                 type="radio"
                 checked={langStatus === status}
                 onChange={() => onLanguage(status)}
-                class="accent-blue-600"
               />
               <span class="text-gray-600 capitalize">
                 {status === 'required' ? 'Required' : status === 'advantage' ? 'Advantage' : 'None'}

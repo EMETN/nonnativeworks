@@ -179,7 +179,7 @@ export default function DataManager() {
                   {group.career_page_url ? (
                     <button
                       onClick={() => handleUpdate(group.career_page_url!)}
-                      class="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                      class="text-xs text-[#0F7A4F] hover:text-[#084A2F] font-medium px-2 py-1 rounded hover:bg-green-50 transition-colors"
                     >
                       Update
                     </button>

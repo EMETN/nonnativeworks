@@ -216,7 +216,7 @@ export default function PositionEditor() {
         </label>
         <select
           id="company-select"
-          class="flex-1 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="flex-1 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
           value={selectedId}
           onChange={(e) => setSelectedId((e.target as HTMLSelectElement).value)}
         >
@@ -311,7 +311,7 @@ export default function PositionEditor() {
                               href={pos.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              class="text-blue-600 hover:underline font-medium line-clamp-2"
+                              class="text-[#0F7A4F] hover:underline font-medium line-clamp-2"
                             >
                               {pos.title}
                             </a>
@@ -323,7 +323,7 @@ export default function PositionEditor() {
                         {/* Category */}
                         <td class="px-4 py-2.5">
                           <select
-                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                             value={pos.category?.slug ?? ''}
                             onChange={(e) =>
                               handleCategoryChange(pos, (e.target as HTMLSelectElement).value)
@@ -341,7 +341,6 @@ export default function PositionEditor() {
                         <td class="px-4 py-2.5 text-center">
                           <input
                             type="checkbox"
-                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                             checked={pos.requires_native_language}
                             onChange={(e) =>
                               handleLanguageChange(pos, (e.target as HTMLInputElement).checked)
@@ -353,7 +352,6 @@ export default function PositionEditor() {
                         <td class="px-4 py-2.5 text-center">
                           <input
                             type="checkbox"
-                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                             checked={pos.local_language_advantage}
                             onChange={(e) =>
                               handleAdvantageChange(pos, (e.target as HTMLInputElement).checked)
@@ -364,7 +362,7 @@ export default function PositionEditor() {
                         {/* Education */}
                         <td class="px-4 py-2.5">
                           <select
-                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                            class="text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                             value={pos.required_education ?? ''}
                             onChange={(e) =>
                               handleEducationChange(pos, (e.target as HTMLSelectElement).value)
