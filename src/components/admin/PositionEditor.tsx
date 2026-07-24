@@ -22,7 +22,12 @@ interface PositionRow {
   local_language_advantage: boolean;
   required_education: string | null;
   category: CategoryInfo | null;
+  // Present only when viewing all companies
+  company?: { name: string; country_name: string } | null;
 }
+
+// Sentinel select value for the "all companies" view
+const ALL = '__all__';
 
 const EDUCATION_OPTIONS = [
   { value: '',           label: '— not specified —' },
@@ -63,12 +68,17 @@ export default function PositionEditor() {
     }
     setLoadingPositions(true);
     setError('');
-    fetch(`/api/admin/positions?company_id=${encodeURIComponent(selectedId)}`)
+    const query =
+      selectedId === ALL ? '' : `?company_id=${encodeURIComponent(selectedId)}`;
+    fetch(`/api/admin/positions${query}`)
       .then((r) => r.json())
       .then((rows: PositionRow[]) => setPositions(rows))
       .catch(() => setError('Could not load positions.'))
       .finally(() => setLoadingPositions(false));
   }, [selectedId]);
+
+  const showCompanyColumn = selectedId === ALL;
+  const totalPositions = companies.reduce((sum, c) => sum + c.total_positions, 0);
 
   function setSave(id: string, state: SaveState) {
     setSaveStates((prev) => ({ ...prev, [id]: state }));
@@ -154,6 +164,9 @@ export default function PositionEditor() {
           onChange={(e) => setSelectedId((e.target as HTMLSelectElement).value)}
         >
           <option value="">— select a company —</option>
+          {companies.length > 0 && (
+            <option value={ALL}>All companies · {totalPositions} positions</option>
+          )}
           {companies.map((c) => (
             <option key={c.company_id} value={c.company_id}>
               {c.name} ({c.country_name}) · {c.total_positions} positions
@@ -170,12 +183,17 @@ export default function PositionEditor() {
           {loadingPositions ? (
             <div class="text-sm text-gray-400 py-4">Loading positions…</div>
           ) : positions.length === 0 ? (
-            <div class="text-sm text-gray-400 py-4">No positions found for this company.</div>
+            <div class="text-sm text-gray-400 py-4">
+              {showCompanyColumn ? 'No positions found.' : 'No positions found for this company.'}
+            </div>
           ) : (
             <div class="overflow-x-auto rounded-xl border border-gray-200">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="bg-gray-50 border-b border-gray-200 text-left">
+                    {showCompanyColumn && (
+                      <th class="px-4 py-2.5 font-medium text-gray-600">Company</th>
+                    )}
                     <th class="px-4 py-2.5 font-medium text-gray-600 w-1/2">Position</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600">Category</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600 text-center">Requires local lang.</th>
@@ -189,6 +207,16 @@ export default function PositionEditor() {
                     const state = saveStates[pos.id] ?? 'idle';
                     return (
                       <tr key={pos.id} class="bg-white hover:bg-gray-50/50">
+                        {/* Company (all-companies view only) */}
+                        {showCompanyColumn && (
+                          <td class="px-4 py-2.5 whitespace-nowrap">
+                            <span class="font-medium text-gray-800">{pos.company?.name ?? '—'}</span>
+                            {pos.company?.country_name && (
+                              <span class="text-gray-400"> · {pos.company.country_name}</span>
+                            )}
+                          </td>
+                        )}
+
                         {/* Title */}
                         <td class="px-4 py-2.5">
                           {pos.url ? (
