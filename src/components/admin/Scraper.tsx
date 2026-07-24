@@ -252,6 +252,9 @@ export default function Scraper() {
                 setUrl((e.target as HTMLInputElement).value);
                 if (urlError) setUrlError('');
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && url.trim() && phase.kind !== 'scraping') handleScrape();
+              }}
               disabled={phase.kind === 'scraping'}
               class={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] disabled:bg-gray-50 ${urlError ? 'border-red-400' : 'border-gray-300'}`}
             />
