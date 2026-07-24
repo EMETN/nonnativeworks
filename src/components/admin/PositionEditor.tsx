@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
+import { readCache, writeCache, invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
 
 interface CompanyOption {
   company_id: string;
@@ -70,18 +71,30 @@ export default function PositionEditor() {
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [sort, setSort] = useState<{ key: 'company' | 'title'; dir: 'asc' | 'desc' } | null>(null);
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
+  const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState('');
 
-  // Load company list once on mount
-  useEffect(() => {
+  function loadCompanies(force = false) {
+    if (!force) {
+      const cached = readCache<CompanyOption[]>('companies');
+      if (cached) {
+        setCompanies(cached);
+        setLoadingCompanies(false);
+        return;
+      }
+    }
+    setLoadingCompanies(true);
     fetch('/api/admin/companies')
       .then((r) => r.json())
       .then((rows: CompanyOption[]) => {
         setCompanies(rows);
+        writeCache('companies', rows);
       })
       .catch(() => setError('Could not load companies.'))
       .finally(() => setLoadingCompanies(false));
-  }, []);
+  }
+
+  useEffect(() => { loadCompanies(); }, []);
 
   // Load positions when a company is selected
   useEffect(() => {
@@ -89,11 +102,20 @@ export default function PositionEditor() {
       setPositions([]);
       return;
     }
-    setLoadingPositions(true);
     setError('');
     // Match the order the API returns rows in, so the sorted column loads active.
     const multi = selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
     setSort({ key: multi ? 'company' : 'title', dir: 'asc' });
+
+    const cacheKey = `positions:${selectedId}`;
+    const cached = readCache<PositionRow[]>(cacheKey);
+    if (cached) {
+      setPositions(cached);
+      setLoadingPositions(false);
+      return;
+    }
+
+    setLoadingPositions(true);
     let query = '';
     if (selectedId.startsWith(COUNTRY_PREFIX)) {
       query = `?country_id=${encodeURIComponent(selectedId.slice(COUNTRY_PREFIX.length))}`;
@@ -102,10 +124,20 @@ export default function PositionEditor() {
     }
     fetch(`/api/admin/positions${query}`)
       .then((r) => r.json())
-      .then((rows: PositionRow[]) => setPositions(rows))
+      .then((rows: PositionRow[]) => {
+        setPositions(rows);
+        writeCache(cacheKey, rows);
+      })
       .catch(() => setError('Could not load positions.'))
       .finally(() => setLoadingPositions(false));
-  }, [selectedId]);
+  }, [selectedId, reloadKey]);
+
+  function refresh() {
+    invalidateCache('companies');
+    invalidateCachePrefix('positions:');
+    loadCompanies(true);
+    setReloadKey((k) => k + 1);
+  }
 
   const showCompanyColumn = selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
   const totalPositions = companies.reduce((sum, c) => sum + c.total_positions, 0);
@@ -141,6 +173,15 @@ export default function PositionEditor() {
     setSaveStates((prev) => ({ ...prev, [id]: state }));
   }
 
+  // Optimistic edits also update the cached copy for the current selection.
+  function setPositionsAndCache(updater: (prev: PositionRow[]) => PositionRow[]) {
+    setPositions((prev) => {
+      const next = updater(prev);
+      if (selectedId) writeCache(`positions:${selectedId}`, next);
+      return next;
+    });
+  }
+
   async function patchPosition(id: string, patch: Record<string, unknown>) {
     setSave(id, 'saving');
     try {
@@ -159,7 +200,7 @@ export default function PositionEditor() {
 
   function handleCategoryChange(pos: PositionRow, newSlug: string) {
     // Optimistic local update
-    setPositions((prev) =>
+    setPositionsAndCache((prev) =>
       prev.map((p) =>
         p.id === pos.id
           ? { ...p, category: p.category ? { ...p.category, slug: newSlug } : null }
@@ -170,14 +211,14 @@ export default function PositionEditor() {
   }
 
   function handleLanguageChange(pos: PositionRow, value: boolean) {
-    setPositions((prev) =>
+    setPositionsAndCache((prev) =>
       prev.map((p) => (p.id === pos.id ? { ...p, requires_native_language: value } : p))
     );
     patchPosition(pos.id, { requires_native_language: value });
   }
 
   function handleAdvantageChange(pos: PositionRow, value: boolean) {
-    setPositions((prev) =>
+    setPositionsAndCache((prev) =>
       prev.map((p) => (p.id === pos.id ? { ...p, local_language_advantage: value } : p))
     );
     patchPosition(pos.id, { local_language_advantage: value });
@@ -185,7 +226,7 @@ export default function PositionEditor() {
 
   function handleEducationChange(pos: PositionRow, value: string) {
     const education = value === '' ? null : value;
-    setPositions((prev) =>
+    setPositionsAndCache((prev) =>
       prev.map((p) => (p.id === pos.id ? { ...p, required_education: education } : p))
     );
     patchPosition(pos.id, { required_education: education });
@@ -236,6 +277,9 @@ export default function PositionEditor() {
             </option>
           ))}
         </select>
+        <button onClick={refresh} class="text-sm text-[#0F7A4F] hover:underline whitespace-nowrap">
+          Refresh
+        </button>
       </div>
 
       {error && <p class="text-sm text-red-600">{error}</p>}

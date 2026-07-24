@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { readCache, writeCache, invalidateCachePrefix } from '../../lib/admin-cache';
 
 interface CompanyRow {
   company_id: string;
@@ -56,13 +57,23 @@ export default function DataManager() {
   const [confirmName, setConfirmName] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  async function load() {
+  async function load(force = false) {
+    if (!force) {
+      const cached = readCache<CompanyRow[]>('companies');
+      if (cached) {
+        setCompanies(cached);
+        setLoading(false);
+        return;
+      }
+    }
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/admin/companies');
       if (!res.ok) throw new Error('Failed to load');
-      setCompanies(await res.json());
+      const data: CompanyRow[] = await res.json();
+      setCompanies(data);
+      writeCache('companies', data);
     } catch {
       setError('Could not load companies.');
     } finally {
@@ -86,7 +97,12 @@ export default function DataManager() {
     try {
       const res = await fetch(`/api/admin/companies?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
-      setCompanies((prev) => prev.filter((c) => c.name !== name));
+      setCompanies((prev) => {
+        const next = prev.filter((c) => c.name !== name);
+        writeCache('companies', next);
+        return next;
+      });
+      invalidateCachePrefix('positions:');
     } catch {
       setError('Delete failed — please try again.');
     } finally {
@@ -96,9 +112,7 @@ export default function DataManager() {
 
   function handleUpdate(careerUrl: string) {
     sessionStorage.setItem('scraper-prefill-url', careerUrl);
-    sessionStorage.setItem('admin-active-tab', 'scraper');
-    window.dispatchEvent(new CustomEvent('scraper-prefill', { detail: { url: careerUrl } }));
-    document.getElementById('tab-btn-scraper')?.click();
+    window.location.href = '/admin/scrape';
   }
 
   if (loading) return <div class="text-sm text-gray-400 py-4">Loading…</div>;
@@ -107,7 +121,7 @@ export default function DataManager() {
     return (
       <div class="text-sm text-red-600 py-4">
         {error}{' '}
-        <button onClick={load} class="underline">Retry</button>
+        <button onClick={() => load(true)} class="underline">Retry</button>
       </div>
     );
   }
@@ -123,7 +137,7 @@ export default function DataManager() {
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm text-gray-500">{groups.length} companies</span>
         <button
-          onClick={load}
+          onClick={() => load(true)}
           class="text-sm text-[#0F7A4F] hover:underline"
         >
           Refresh
