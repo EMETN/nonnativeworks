@@ -4,6 +4,7 @@ import { CATEGORIES } from '../../lib/categories';
 interface CompanyOption {
   company_id: string;
   name: string;
+  country_id: string;
   country_name: string;
   total_positions: number;
 }
@@ -26,8 +27,9 @@ interface PositionRow {
   company?: { name: string; country_name: string } | null;
 }
 
-// Sentinel select value for the "all companies" view
+// Sentinel select values. Country selection is `__country__:<country_id>`.
 const ALL = '__all__';
+const COUNTRY_PREFIX = '__country__:';
 
 const EDUCATION_OPTIONS = [
   { value: '',           label: '— not specified —' },
@@ -68,8 +70,12 @@ export default function PositionEditor() {
     }
     setLoadingPositions(true);
     setError('');
-    const query =
-      selectedId === ALL ? '' : `?company_id=${encodeURIComponent(selectedId)}`;
+    let query = '';
+    if (selectedId.startsWith(COUNTRY_PREFIX)) {
+      query = `?country_id=${encodeURIComponent(selectedId.slice(COUNTRY_PREFIX.length))}`;
+    } else if (selectedId !== ALL) {
+      query = `?company_id=${encodeURIComponent(selectedId)}`;
+    }
     fetch(`/api/admin/positions${query}`)
       .then((r) => r.json())
       .then((rows: PositionRow[]) => setPositions(rows))
@@ -77,8 +83,21 @@ export default function PositionEditor() {
       .finally(() => setLoadingPositions(false));
   }, [selectedId]);
 
-  const showCompanyColumn = selectedId === ALL;
+  // Multiple companies are in view (and thus the Company column is useful) for
+  // both the all-companies and per-country selections.
+  const showCompanyColumn = selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
   const totalPositions = companies.reduce((sum, c) => sum + c.total_positions, 0);
+
+  // Per-country groups for the "All [Country] companies" options, sorted by name.
+  const countryGroups = Array.from(
+    companies
+      .reduce((map, c) => {
+        const g = map.get(c.country_id) ?? { country_id: c.country_id, country_name: c.country_name, total: 0 };
+        g.total += c.total_positions;
+        return map.set(c.country_id, g);
+      }, new Map<string, { country_id: string; country_name: string; total: number }>())
+      .values()
+  ).sort((a, b) => a.country_name.localeCompare(b.country_name));
 
   function setSave(id: string, state: SaveState) {
     setSaveStates((prev) => ({ ...prev, [id]: state }));
@@ -167,6 +186,12 @@ export default function PositionEditor() {
           {companies.length > 0 && (
             <option value={ALL}>All companies · {totalPositions} positions</option>
           )}
+          {countryGroups.map((g) => (
+            <option key={g.country_id} value={`${COUNTRY_PREFIX}${g.country_id}`}>
+              All {g.country_name} companies · {g.total} positions
+            </option>
+          ))}
+          {companies.length > 0 && <option disabled>────────────────</option>}
           {companies.map((c) => (
             <option key={c.company_id} value={c.company_id}>
               {c.name} ({c.country_name}) · {c.total_positions} positions
