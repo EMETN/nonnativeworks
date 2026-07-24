@@ -171,7 +171,7 @@ export default function SkillsManager() {
               onClick={() => loadCategory(cat.value)}
               class={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
                 selectedCategory === cat.value
-                  ? 'bg-blue-600 border-blue-600 text-white'
+                  ? 'bg-[#0F7A4F] border-[#0F7A4F] text-white'
                   : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900'
               }`}
             >
@@ -181,7 +181,7 @@ export default function SkillsManager() {
         </div>
         <button
           onClick={() => { setShowAddForm((v) => !v); setEditingId(null); setAddError(''); }}
-          class="px-3 py-1.5 text-sm font-medium rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors whitespace-nowrap"
+          class="px-3 py-1.5 text-sm font-medium rounded-lg border border-green-200 text-[#0F7A4F] hover:bg-green-50 transition-colors whitespace-nowrap"
         >
           {showAddForm ? 'Cancel' : '+ Add skill'}
         </button>
@@ -200,7 +200,7 @@ export default function SkillsManager() {
                 placeholder="e.g. Node.js"
                 value={addDraft.canonical_name}
                 onInput={(e) => setAddDraft((d) => ({ ...d, canonical_name: (e.target as HTMLInputElement).value }))}
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
               />
             </div>
             <div>
@@ -208,7 +208,7 @@ export default function SkillsManager() {
               <select
                 value={addDraft.category}
                 onChange={(e) => setAddDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
               >
                 {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
@@ -220,7 +220,7 @@ export default function SkillsManager() {
                 placeholder="e.g. node, nodejs, node.js"
                 value={addDraft.aliases}
                 onInput={(e) => setAddDraft((d) => ({ ...d, aliases: (e.target as HTMLInputElement).value }))}
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
               />
             </div>
           </div>
@@ -229,7 +229,6 @@ export default function SkillsManager() {
               type="checkbox"
               checked={addDraft.is_legacy}
               onChange={(e) => setAddDraft((d) => ({ ...d, is_legacy: (e.target as HTMLInputElement).checked }))}
-              class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
             />
             Legacy technology
           </label>
@@ -238,7 +237,7 @@ export default function SkillsManager() {
             <button
               type="submit"
               disabled={addSaving}
-              class="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              class="px-3 py-1.5 text-sm font-medium bg-[#0F7A4F] text-white rounded-lg hover:bg-[#0B5E3C] disabled:opacity-50 transition-colors"
             >
               {addSaving ? 'Saving…' : 'Save skill'}
             </button>
@@ -274,7 +273,7 @@ export default function SkillsManager() {
       {selectedCategory && !loading && skills.length === 0 && !error && (
         <p class="text-sm text-gray-400 py-4">
           No skills in this category yet.{' '}
-          <button onClick={() => setShowAddForm(true)} class="text-blue-600 hover:underline">Add one.</button>
+          <button onClick={() => setShowAddForm(true)} class="text-[#0F7A4F] hover:underline">Add one.</button>
         </p>
       )}
 
@@ -306,12 +305,12 @@ export default function SkillsManager() {
                               required
                               value={editDraft.canonical_name}
                               onInput={(e) => setEditDraft((d) => ({ ...d, canonical_name: (e.target as HTMLInputElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
                             />
                             <select
                               value={editDraft.category}
                               onChange={(e) => setEditDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
                             >
                               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                             </select>
@@ -320,7 +319,7 @@ export default function SkillsManager() {
                               placeholder="Aliases, comma-separated"
                               value={editDraft.aliases}
                               onInput={(e) => setEditDraft((d) => ({ ...d, aliases: (e.target as HTMLInputElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
                             />
                           </div>
                           <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
@@ -328,7 +327,6 @@ export default function SkillsManager() {
                               type="checkbox"
                               checked={editDraft.is_legacy}
                               onChange={(e) => setEditDraft((d) => ({ ...d, is_legacy: (e.target as HTMLInputElement).checked }))}
-                              class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                             />
                             Legacy technology
                           </label>
@@ -337,7 +335,7 @@ export default function SkillsManager() {
                             <button
                               type="submit"
                               disabled={editSaving}
-                              class="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                              class="px-3 py-1 text-xs font-medium bg-[#0F7A4F] text-white rounded-lg hover:bg-[#0B5E3C] disabled:opacity-50"
                             >
                               {editSaving ? 'Saving…' : 'Save'}
                             </button>
@@ -369,7 +367,7 @@ export default function SkillsManager() {
                           <div class="flex items-center gap-1.5 justify-end">
                             <button
                               onClick={() => startEdit(skill)}
-                              class="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                              class="text-xs text-[#0F7A4F] hover:text-[#084A2F] px-2 py-1 rounded hover:bg-green-50 transition-colors"
                             >
                               Edit
                             </button>

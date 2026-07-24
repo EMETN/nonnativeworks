@@ -20,7 +20,7 @@ const defaultTab = scraperEnabled ? 'scraper' : 'companies';
         role="tab"
         aria-selected="true"
         aria-controls="tab-panel-scraper"
-        class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 border-gray-200 bg-white text-blue-600 -mb-px"
+        class="tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 border-gray-200 bg-white text-gray-900 -mb-px"
       >
         Scrape
       </button>
@@ -30,7 +30,7 @@ const defaultTab = scraperEnabled ? 'scraper' : 'companies';
       role="tab"
       aria-selected={!scraperEnabled}
       aria-controls="tab-panel-companies"
-      class={`tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border ${!scraperEnabled ? 'border-gray-200 bg-white text-blue-600 border-b-0 -mb-px' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+      class={`tab-btn px-4 py-2 text-sm font-medium rounded-t-lg border ${!scraperEnabled ? 'border-gray-200 bg-white text-gray-900 border-b-0 -mb-px' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
     >
       Companies
     </button>
@@ -126,10 +126,10 @@ const defaultTab = scraperEnabled ? 'scraper' : 'companies';
       if (btn) {
         btn.setAttribute('aria-selected', String(isActive));
         if (isActive) {
-          btn.classList.add('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
+          btn.classList.add('border-gray-200', 'bg-white', 'text-gray-900', '-mb-px');
           btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700');
         } else {
-          btn.classList.remove('border-gray-200', 'bg-white', 'text-blue-600', '-mb-px');
+          btn.classList.remove('border-gray-200', 'bg-white', 'text-gray-900', '-mb-px');
           btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700');
         }
       }
