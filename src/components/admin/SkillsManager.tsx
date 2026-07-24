@@ -191,7 +191,7 @@ export default function SkillsManager() {
       {showAddForm && (
         <form onSubmit={handleAddSubmit} class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
           <h3 class="text-sm font-semibold text-gray-800">Add new skill</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-[1fr_2fr_1fr] gap-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Canonical name</label>
               <input
@@ -204,16 +204,6 @@ export default function SkillsManager() {
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
-              <select
-                value={addDraft.category}
-                onChange={(e) => setAddDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
-              >
-                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-            <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Aliases <span class="font-normal text-gray-400">(comma-separated, lowercase)</span></label>
               <input
                 type="text"
@@ -222,6 +212,16 @@ export default function SkillsManager() {
                 onInput={(e) => setAddDraft((d) => ({ ...d, aliases: (e.target as HTMLInputElement).value }))}
                 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
               />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+              <select
+                value={addDraft.category}
+                onChange={(e) => setAddDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
+              >
+                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
             </div>
           </div>
           <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
@@ -299,28 +299,37 @@ export default function SkillsManager() {
                       /* ── Edit row ── */
                       <td colSpan={3} class="px-4 py-3">
                         <form onSubmit={(e) => handleEditSubmit(e, skill.id)} class="space-y-2">
-                          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input
-                              type="text"
-                              required
-                              value={editDraft.canonical_name}
-                              onInput={(e) => setEditDraft((d) => ({ ...d, canonical_name: (e.target as HTMLInputElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
-                            />
-                            <select
-                              value={editDraft.category}
-                              onChange={(e) => setEditDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
-                            >
-                              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="Aliases, comma-separated"
-                              value={editDraft.aliases}
-                              onInput={(e) => setEditDraft((d) => ({ ...d, aliases: (e.target as HTMLInputElement).value }))}
-                              class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
-                            />
+                          <div class="grid grid-cols-1 sm:grid-cols-[1fr_2fr_1fr] gap-2">
+                            <div>
+                              <label class="block text-xs font-medium text-gray-600 mb-1">Canonical name</label>
+                              <input
+                                type="text"
+                                required
+                                value={editDraft.canonical_name}
+                                onInput={(e) => setEditDraft((d) => ({ ...d, canonical_name: (e.target as HTMLInputElement).value }))}
+                                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-xs font-medium text-gray-600 mb-1">Aliases <span class="font-normal text-gray-400">(comma-separated, lowercase)</span></label>
+                              <input
+                                type="text"
+                                placeholder="e.g. node, nodejs, node.js"
+                                value={editDraft.aliases}
+                                onInput={(e) => setEditDraft((d) => ({ ...d, aliases: (e.target as HTMLInputElement).value }))}
+                                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                              <select
+                                value={editDraft.category}
+                                onChange={(e) => setEditDraft((d) => ({ ...d, category: (e.target as HTMLSelectElement).value }))}
+                                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] bg-white"
+                              >
+                                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                              </select>
+                            </div>
                           </div>
                           <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
                             <input
