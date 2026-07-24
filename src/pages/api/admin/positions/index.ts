@@ -30,7 +30,6 @@ export const GET: APIRoute = async ({ url }) => {
   let query = supabase.from('positions').select(ENRICHED_SELECT);
 
   if (countryId) {
-    // Scope to companies in this country.
     const { data: cos, error: coErr } = await supabase
       .from('companies')
       .select('id')
