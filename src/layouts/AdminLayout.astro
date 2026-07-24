@@ -17,7 +17,7 @@ const { title } = Astro.props;
     <meta name="robots" content="noindex, nofollow" />
   </head>
   <body class="bg-gray-50 min-h-screen">
-    <header class="bg-white border-b border-gray-200">
+    <header id="top" class="bg-white border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-14">
           <div class="flex items-center gap-4">
@@ -41,5 +41,34 @@ const { title } = Astro.props;
       <h1 class="text-2xl font-bold text-gray-900 mb-8">{title}</h1>
       <slot />
     </main>
+
+    <a
+      href="#top"
+      aria-label="Back to top"
+      class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow"
+    >
+      <svg width="16" height="16" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M1 5l4-4 4 4" />
+      </svg>
+    </a>
   </body>
 </html>
+
+<style is:global>
+  html { scroll-behavior: smooth; }
+
+  .back-to-top {
+    opacity: 0;
+    visibility: hidden;
+    animation: back-to-top-reveal both;
+    animation-timeline: scroll(root block);
+    animation-range: 300px 500px;
+  }
+  @keyframes back-to-top-reveal {
+    to { opacity: 1; visibility: visible; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>

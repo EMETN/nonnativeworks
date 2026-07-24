@@ -23,11 +23,9 @@ interface PositionRow {
   local_language_advantage: boolean;
   required_education: string | null;
   category: CategoryInfo | null;
-  // Present only when viewing all companies
   company?: { name: string; country_name: string } | null;
 }
 
-// Sentinel select values. Country selection is `__country__:<country_id>`.
 const ALL = '__all__';
 const COUNTRY_PREFIX = '__country__:';
 
@@ -42,12 +40,35 @@ const EDUCATION_OPTIONS = [
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+function SortArrow({ dir, active }: { dir: 'asc' | 'desc'; active: boolean }) {
+  const cls = 'w-2.5 h-2.5 inline-block ml-1 sm:ml-1.5';
+  if (!active) {
+    return (
+      <svg class={cls} width="10" height="12" style={{ opacity: 0.35 }} fill="none" viewBox="0 0 10 12" stroke="currentColor" stroke-width={2}>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M1 4l4-4 4 4" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M1 8l4 4 4-4" />
+      </svg>
+    );
+  }
+  // asc = A→Z, rendered as a down chevron
+  return (
+    <svg class={cls} width="10" height="12" fill="none" viewBox="0 0 10 12" stroke="currentColor" stroke-width={2}>
+      {dir === 'asc' ? (
+        <path stroke-linecap="round" stroke-linejoin="round" d="M1 5l4 4 4-4" />
+      ) : (
+        <path stroke-linecap="round" stroke-linejoin="round" d="M1 7l4-4 4 4" />
+      )}
+    </svg>
+  );
+}
+
 export default function PositionEditor() {
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [positions, setPositions] = useState<PositionRow[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [loadingPositions, setLoadingPositions] = useState(false);
+  const [sort, setSort] = useState<{ key: 'company' | 'title'; dir: 'asc' | 'desc' } | null>(null);
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
   const [error, setError] = useState('');
 
@@ -70,6 +91,9 @@ export default function PositionEditor() {
     }
     setLoadingPositions(true);
     setError('');
+    // Match the order the API returns rows in, so the sorted column loads active.
+    const multi = selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
+    setSort({ key: multi ? 'company' : 'title', dir: 'asc' });
     let query = '';
     if (selectedId.startsWith(COUNTRY_PREFIX)) {
       query = `?country_id=${encodeURIComponent(selectedId.slice(COUNTRY_PREFIX.length))}`;
@@ -83,12 +107,9 @@ export default function PositionEditor() {
       .finally(() => setLoadingPositions(false));
   }, [selectedId]);
 
-  // Multiple companies are in view (and thus the Company column is useful) for
-  // both the all-companies and per-country selections.
   const showCompanyColumn = selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
   const totalPositions = companies.reduce((sum, c) => sum + c.total_positions, 0);
 
-  // Per-country groups for the "All [Country] companies" options, sorted by name.
   const countryGroups = Array.from(
     companies
       .reduce((map, c) => {
@@ -98,6 +119,23 @@ export default function PositionEditor() {
       }, new Map<string, { country_id: string; country_name: string; total: number }>())
       .values()
   ).sort((a, b) => a.country_name.localeCompare(b.country_name));
+
+  function toggleSort(key: 'company' | 'title') {
+    setSort((prev) =>
+      prev?.key === key
+        ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: 'asc' }
+    );
+  }
+
+  const sortedPositions = sort
+    ? [...positions].sort((a, b) => {
+        const av = sort.key === 'company' ? a.company?.name ?? '' : a.title ?? '';
+        const bv = sort.key === 'company' ? b.company?.name ?? '' : b.title ?? '';
+        const cmp = av.localeCompare(bv);
+        return sort.dir === 'asc' ? cmp : -cmp;
+      })
+    : positions;
 
   function setSave(id: string, state: SaveState) {
     setSaveStates((prev) => ({ ...prev, [id]: state }));
@@ -217,9 +255,33 @@ export default function PositionEditor() {
                 <thead>
                   <tr class="bg-gray-50 border-b border-gray-200 text-left">
                     {showCompanyColumn && (
-                      <th class="px-4 py-2.5 font-medium text-gray-600">Company</th>
+                      <th class="px-4 py-2.5 font-medium text-gray-600">
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-1 hover:text-gray-900 cursor-pointer"
+                          onClick={() => toggleSort('company')}
+                        >
+                          Company
+                          <SortArrow
+                            dir={sort?.key === 'company' ? sort.dir : 'desc'}
+                            active={sort?.key === 'company'}
+                          />
+                        </button>
+                      </th>
                     )}
-                    <th class="px-4 py-2.5 font-medium text-gray-600 w-1/2">Position</th>
+                    <th class="px-4 py-2.5 font-medium text-gray-600 w-1/2">
+                      <button
+                        type="button"
+                        class="inline-flex items-center gap-1 hover:text-gray-900 cursor-pointer"
+                        onClick={() => toggleSort('title')}
+                      >
+                        Position
+                        <SortArrow
+                          dir={sort?.key === 'title' ? sort.dir : 'desc'}
+                          active={sort?.key === 'title'}
+                        />
+                      </button>
+                    </th>
                     <th class="px-4 py-2.5 font-medium text-gray-600">Category</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600 text-center">Requires local lang.</th>
                     <th class="px-4 py-2.5 font-medium text-gray-600 text-center">Local advantage</th>
@@ -228,11 +290,11 @@ export default function PositionEditor() {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                  {positions.map((pos) => {
+                  {sortedPositions.map((pos) => {
                     const state = saveStates[pos.id] ?? 'idle';
                     return (
                       <tr key={pos.id} class="bg-white hover:bg-gray-50/50">
-                        {/* Company (all-companies view only) */}
+                        {/* Company */}
                         {showCompanyColumn && (
                           <td class="px-4 py-2.5 whitespace-nowrap">
                             <span class="font-medium text-gray-800">{pos.company?.name ?? '—'}</span>
