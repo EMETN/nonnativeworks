@@ -278,8 +278,8 @@ export default function SkillsManager() {
       )}
 
       {selectedCategory && !loading && skills.length > 0 && (
-        <div class="overflow-x-auto rounded-xl border border-gray-200">
-          <table class="w-full text-sm">
+        <div class="overflow-x-auto md:overflow-visible rounded-xl border border-gray-200">
+          <table class="sticky-head w-full text-sm">
             <thead>
               <tr class="bg-gray-50 border-b border-gray-200 text-left">
                 <th class="px-4 py-2.5 font-medium text-gray-600 w-1/4">Canonical name</th>

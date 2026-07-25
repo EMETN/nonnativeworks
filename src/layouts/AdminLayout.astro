@@ -29,6 +29,7 @@ const path = Astro.url.pathname;
         <ClientRouter />
     </head>
     <body class="bg-gray-50 min-h-screen">
+        <div class="sticky top-0 z-30">
         <header class="bg-white border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
@@ -84,6 +85,7 @@ const path = Astro.url.pathname;
                 }
             </div>
         </nav>
+        </div>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="mb-8">
@@ -137,6 +139,18 @@ const path = Astro.url.pathname;
     html {
         scroll-behavior: smooth;
         overflow-y: scroll;
+    }
+
+    /* Height of the sticky header + nav; table headers stick just below it */
+    body {
+        --admin-sticky-top: 6.25rem;
+    }
+    .sticky-head thead th {
+        position: sticky;
+        top: var(--admin-sticky-top);
+        z-index: 10;
+        background-color: #f9fafb;
+        box-shadow: inset 0 -1px 0 #e5e7eb;
     }
 
     .back-to-top {
