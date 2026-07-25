@@ -297,8 +297,8 @@ export default function PositionEditor() {
               {showCompanyColumn ? 'No positions found.' : 'No positions found for this company.'}
             </div>
           ) : (
-            <div class="overflow-x-auto rounded-xl border border-gray-200">
-              <table class="w-full text-sm">
+            <div class="overflow-x-auto md:overflow-visible rounded-xl border border-gray-200">
+              <table class="sticky-head w-full text-sm">
                 <thead>
                   <tr class="bg-gray-50 border-b border-gray-200 text-left">
                     {showCompanyColumn && (
