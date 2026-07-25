@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CATEGORIES } from './prompt-template';
+import { CATEGORIES } from './categories';
 
 const VALID_CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
 

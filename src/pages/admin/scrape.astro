@@ -1,0 +1,19 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Scraper from '../../components/admin/Scraper.tsx';
+
+const scraperEnabled = import.meta.env.NETLIFY !== 'true';
+if (!scraperEnabled) return Astro.redirect('/admin/companies');
+---
+
+<AdminLayout
+  title="Scrape"
+  description="Enter a career page URL. Supported ATS platforms (Greenhouse, Lever, Ashby, Workable) are fetched directly via their API. Other pages are scraped via the Python scraper. Review and adjust the results before uploading."
+>
+  <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 inline-block">
+    Dev only — production scraping runs automatically via the GitHub Actions scheduled job.
+  </p>
+  <div class="bg-white border border-gray-200 rounded-xl p-5">
+    <Scraper client:load />
+  </div>
+</AdminLayout>
