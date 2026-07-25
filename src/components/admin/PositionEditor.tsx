@@ -279,7 +279,7 @@ export default function PositionEditor() {
         </select>
         <button
           onClick={refresh}
-          class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
+          class="ml-auto bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
         >
           Refresh
         </button>
