@@ -199,6 +199,7 @@ const NL: string[] = [
   'informatie',     // information
   'innovatie',      // innovation
   'medewerker',     // employee / associate
+  'monteur',        // installer
   'netwerk',        // network
   'omgeving',       // environment
   'ontwerp',        // design
@@ -209,6 +210,7 @@ const NL: string[] = [
   'publieke',       // public
   'spoordomein',    // railway network
   'stagiair',       // intern
+  'technieker',     // technician
   'technisch',      // technical
   'telecommunicatie', // telecommunications
   'transitie',      // transition
@@ -252,6 +254,12 @@ const LT: string[] = [
   'vadovas',        // manager / head
 ];
 
+// ── French ───────────────────────────────────────────────────────────────────
+const FR: string[] = [
+  'superviseur',     // supervisor
+  'technicien',      // technician
+];
+
 // ── Icelandic ────────────────────────────────────────────────────────────────
 const IS: string[] = [
   'sérfræðingur',   // specialist / expert
@@ -262,7 +270,7 @@ const IS: string[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALL_KEYWORDS: string[] = [
-  ...FI, ...SE, ...NO, ...DK, ...DE, ...NL, ...EE, ...LV, ...LT, ...IS,
+  ...FI, ...SE, ...NO, ...DK, ...DE, ...NL, ...EE, ...LV, ...LT, ...IS, ...FR,
 ];
 
 // Pre-compiled regex for performance — rebuilt once at module load.

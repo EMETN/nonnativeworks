@@ -192,6 +192,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "informatie",     # information
         "innovatie",      # innovation
         "medewerker",     # employee / associate
+        "monteur",        # installer
         "netwerk",        # network
         "omgeving",       # environment
         "ontwerp",        # design
@@ -202,6 +203,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "publieke",       # public
         "spoordomein",    # railway network
         "stagiair",       # intern
+        "technieker",     # technician
         "technisch",      # technical
         "telecommunicatie", # telecommunications
         "transitie",      # transition
@@ -242,6 +244,10 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "sérfræðingur",    # specialist / expert
         "stjórnandi",      # manager
         "þróunarfulltrúi", # development representative
+    ],
+    "FR": [
+        "superviseur",     # supervisor
+        "technicien",      # technician
     ],
 }
 
