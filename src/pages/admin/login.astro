@@ -59,6 +59,16 @@ import '../../styles/global.css';
       </div>
     </div>
 
+    <script is:inline>
+      // Logged-out boundary: drop any cached admin data left in this browser.
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith('admin:')) sessionStorage.removeItem(k);
+        }
+      } catch {}
+    </script>
+
     <script>
       const form = document.getElementById('login-form') as HTMLFormElement;
       const errorMsg = document.getElementById('error-msg') as HTMLDivElement;

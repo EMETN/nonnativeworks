@@ -1,0 +1,13 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import SkillsManager from '../../components/admin/SkillsManager.tsx';
+---
+
+<AdminLayout
+  title="Skills"
+  description="Manage the skills taxonomy used for extraction and keyword search. Aliases are matched against job descriptions during scraping — changes take effect on the next scrape run."
+>
+  <div class="bg-white border border-gray-200 rounded-xl p-5">
+    <SkillsManager client:load />
+  </div>
+</AdminLayout>

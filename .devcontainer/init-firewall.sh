@@ -188,6 +188,7 @@ for domain in \
     "futurice.com" \
     "nexigroup.com" \
     "jobs.deel.com" \
+    "deel.com" \
     "aiven.io" \
     "upcloud.teamtailor.com" \
     "career.nordnetab.com" \
