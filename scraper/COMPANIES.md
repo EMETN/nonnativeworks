@@ -112,8 +112,8 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Capgemini | `capgemini.com/careers` | Custom API |
 | Publicis Groupe | `careers.publicisgroupe.com/jobs` | Custom API |
 | Novo Nordisk | `novonordisk.com/careers` | Custom API |
-| Randstad | `randstad.com/jobs/careers-at-randstad` | Custom API |
-| Uniper | `careers.uniper.energy` | Custom API |
+| Randstad | `randstad.com/jobs/careers-at-randstad` | Customer API`     | 
+| Deel | `deel.com` | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings) |
 
 ---
 
