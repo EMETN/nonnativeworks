@@ -126,6 +126,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "assistenz",      # assistant
         "ausbilder",      # instructor, trainer
         "ausbildung",     # apprenticeship / training
+        "aushilfe",       # temporary worker
         "ausschreiberung", # tender
         "auszubildender",  # trainee
         "berater",        # consultant / advisor
