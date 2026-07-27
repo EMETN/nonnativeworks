@@ -131,6 +131,7 @@ const DE: string[] = [
   'assistenz',      // assistant
   'ausbilder',      // instructor, trainer
   'ausbildung',     // apprenticeship / training
+  'aushilfe',       // temporary worker
   'ausschreiberung', // tender
   'auszubildender',  // trainee
   'berater',        // consultant / advisor
