@@ -4,11 +4,11 @@ allowBuilds:
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:
-  - '@posthog/browser-common@0.2.0'
-  - '@supabase/auth-js@2.110.8'
-  - '@supabase/functions-js@2.110.8'
-  - '@supabase/postgrest-js@2.110.8'
-  - '@supabase/realtime-js@2.110.8'
-  - '@supabase/storage-js@2.110.8'
-  - '@supabase/supabase-js@2.110.8'
-  - posthog-js@1.406.2
+  - '@astrojs/check@0.9.10'
+  - '@supabase/auth-js@2.110.9'
+  - '@supabase/functions-js@2.110.9'
+  - '@supabase/postgrest-js@2.110.9'
+  - '@supabase/realtime-js@2.110.9'
+  - '@supabase/storage-js@2.110.9'
+  - '@supabase/supabase-js@2.110.9'
+  - astro@7.1.4
