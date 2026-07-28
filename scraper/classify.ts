@@ -19,11 +19,17 @@ const COUNTRY_NAMES: Record<string, string> = {
   SE: 'Sweden',
   NO: 'Norway',
   DK: 'Denmark',
+  IS: 'Iceland',
   NL: 'Netherlands',
   DE: 'Germany',
   EE: 'Estonia',
   LV: 'Latvia',
   LT: 'Lithuania',
+  PL: 'Poland',
+  FR: 'France',
+  BE: 'Belgium',
+  LU: 'Luxembourg',
+  CH: 'Switzerland',
 };
 
 interface RawJob {

@@ -11,11 +11,11 @@
 - Booking.com
 - Capgemini
 - CGI (local script)
-- Deel
 - Delivery Hero
 - Dept
 - Edenred
 - Elekta
+- E.ON
 - Ericsson
 - Finnair
 - Fiskars
@@ -30,6 +30,7 @@
 - Konecranes
 - Maersk
 - Metso
+- Munich Re
 - Neste
 - Nets/Nexi
 - Nokia
@@ -61,6 +62,7 @@
 - Telia
 - Thales
 - Tieto
+- Uniper
 - UpCloud
 - Vaisala
 - Vestas
@@ -152,6 +154,8 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards` | Paginated offset; 6 rows page | 
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
+| E.ON | `careers.eon.com/search` | `css_cards` | Paginated `?startrow=N` table; 25 rows |
+| Munich Re | `careers.munichre.com/en/search-jobs` | `css_cards - json_html_key` | Paginated; CurrentPage |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

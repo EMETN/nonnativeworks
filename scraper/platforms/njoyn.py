@@ -17,7 +17,7 @@ from title_language import _title_appears_non_english
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
-NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DK", "NL", "DE", "EE", "LV", "LT"]
+NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DK", "NL", "DE", "EE", "LV", "LT", "PL", "FR", "BE", "LU", "CH"]
 
 # Country names (lowercase) expected for each tracked country code.
 # Used to validate tombstone Country values against the active filter — some companies
@@ -33,6 +33,11 @@ NJOYN_COUNTRY_NAMES: dict[str, list[str]] = {
     "EE": ["estonia", "eesti"],
     "LV": ["latvia", "latvija"],
     "LT": ["lithuania", "lietuva"],
+    "PL": ["poland", "polska"],
+    "FR": ["france"],
+    "BE": ["belgium", "belgique", "belgië"],
+    "LU": ["luxembourg"],
+    "CH": ["switzerland", "schweiz", "suisse"],
 }
 
 # njoyn listing + description enrichment can take 30+ min for large companies.

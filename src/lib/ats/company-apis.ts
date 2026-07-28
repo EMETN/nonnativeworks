@@ -126,6 +126,14 @@ export interface CompanyApiConfig {
     department?: string;
     jobFunction?: string;
     /**
+     * Dot-path to an ISO alpha-2 country code (or country name) in each item.
+     * When set, the value is stored as job.country_code and used as the primary
+     * country signal — bypassing city→country lookup for that job.
+     * Useful when the API returns a reliable country field alongside a city that
+     * may not be in the city map.
+     */
+    country?: string;
+    /**
      * Stable ID field used to deduplicate jobs when merging a primary and secondary fetch.
      * Required when secondaryUrl is set.
      */
@@ -576,8 +584,13 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         { jobCountry: 'Norway',      countrySite: 'no-en' },
         { jobCountry: 'Denmark',     countrySite: 'dk-en' },
         { jobCountry: 'Netherlands', countrySite: 'nl-en' },
-        { jobCountry: 'Germany',     countrySite: 'de-de' },
+        { jobCountry: 'Deutschland', countrySite: 'de-de', jobLanguage: '' },
         { jobCountry: 'Latvia',      countrySite: 'lv-en' },
+        { jobCountry: 'Poland',      countrySite: 'pl-en' },
+        { jobCountry: 'France',      countrySite: 'fr-fr', jobLanguage: '' },
+        { jobCountry: 'Belgium',     countrySite: 'be-en' },
+        { jobCountry: 'Luxembourg',  countrySite: 'lu-en' },
+        { jobCountry: 'Switzerland', countrySite: 'ch-en' },
       ],
     },
     pagination: { type: 'offset', param: 'startIndex', pageSize: 50 },
@@ -623,6 +636,9 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         { location: 'Latvia' },
         { location: 'Lithuania' },
         { location: 'Iceland' },
+        { location: 'Belgium' },
+        { location: 'Poland' },
+        { location: 'France' },
       ],
     },
     pagination: { type: 'offset', param: 'start', pageSize: 10, totalCountPath: 'data.count' },
@@ -886,6 +902,33 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     companyName: 'ABN AMRO',
     fetchDescription: true,
   },
+
+  'careers.uniper.energy': {
+    url: 'https://careers.uniper.energy/api/filter/query',
+    method: 'POST',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+      'Accept': '*/*',
+      'Referer': 'https://careers.uniper.energy/en',
+    },
+    body: { searchQuery: '', filter: {}, subclient: 'uniper', locale: 'en' },
+    pagination: { type: 'page', param: 'page', startPage: 0, totalCountPath: 'totalHits' },
+    itemsPath: 'jobs',
+    fields: {
+      title: 'data.title',
+      location: 'data.locations.0.city',
+      country: 'data.locations.0.country',
+      jobFunction: 'data.jobField',
+      id: 'data.jobNumber',
+    },
+    expandSecondaryLocations: {
+      path: 'data.locations',
+      cityField: 'data.city',
+    },
+    urlTemplate: 'https://careers.uniper.energy/en/job/{title|keepslug}-{data.locations.0.city|keepslug}/{data.jobNumber}',
+    companyName: 'Uniper',
+    fetchDescription: true,
+  },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -928,4 +971,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{ urlSubstring: string; name: string 
   { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
   { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
   { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
+  { urlSubstring: 'careers.eon.com', name: 'E.ON' },
+  { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },
+
 ];

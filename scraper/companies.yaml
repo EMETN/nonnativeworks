@@ -20,6 +20,8 @@
 #                   still fails, as before.
 #                   Set conservatively — companies do occasionally have slow
 #                   hiring periods. Default: 1
+#                   Set to 0 to allow zero positions without failing — the job
+#                   will still warn and leave existing database entries untouched.
 #   is_english_company  Flag the company as English-only in the UI. Default: false
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -80,6 +82,10 @@ companies:
       url: https://elekta.wd3.myworkdayjobs.com/Elekta_Careers
       min_positions: 3
 
+    - name: E.ON
+      url: https://careers.eon.com/search
+      min_positions: 10
+
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
       min_positions: 10
@@ -102,7 +108,7 @@ companies:
 
     - name: Gofore
       url: https://gofore.com/en/careers/
-      min_positions: 1
+      min_positions: 0
 
     - name: Happeo
       url: https://happeo.recruitee.com
@@ -135,6 +141,10 @@ companies:
     - name: Metso
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
+
+    - name: Munich Re
+      url: https://careers.munichre.com/en/search-jobs
+      min_positions: 10
 
     - name: Neste
       url: https://jobs.neste.com/search
@@ -174,7 +184,7 @@ companies:
 
     - name: Orion
       url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
-      min_positions: 5
+      min_positions: 1
 
     - name: Orkla
       url: https://careers.orkla.com
@@ -267,6 +277,10 @@ companies:
     - name: Tieto
       url: https://careers.tieto.com
       min_positions: 10
+
+    - name: Uniper
+      url: https://careers.uniper.energy
+      min_positions: 5
 
     - name: UpCloud
       url: https://upcloud.teamtailor.com/jobs

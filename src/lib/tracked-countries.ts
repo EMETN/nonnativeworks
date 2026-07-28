@@ -14,4 +14,9 @@ export const TRACKED_COUNTRY_CODES = new Set([
   'EE', // Estonia
   'LV', // Latvia
   'LT', // Lithuania
+  'PL', // Poland
+  'FR', // France
+  'BE', // Belgium
+  'LU', // Luxembourg
+  'CH', // Switzerland
 ]);

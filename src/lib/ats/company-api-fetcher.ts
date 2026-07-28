@@ -73,12 +73,27 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+// Preserves original case; transliterates German umlauts (ä→ae, ö→oe, ü→ue, ß→ss),
+// maps () → removed, / → _, other non-alphanumeric → -.
+// Used for sites like Uniper whose URL slugs keep the display title's casing.
+function keepSlugify(text: string): string {
+  return text
+    .replace(/ß/g, 'ss').replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
+    .replace(/[()]/g, '')
+    .replace(/\//g, '_')
+    .replace(/[^a-zA-Z0-9_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function buildUrlFromTemplate(item: unknown, template: string): string {
   return template.replace(/\{([^}]+)\}/g, (_, expr: string) => {
     const [path, modifier] = expr.split('|');
     const val = getString(item, path);
     if (!val) return '';
-    return modifier === 'slug' ? slugify(val) : val;
+    if (modifier === 'slug') return slugify(val);
+    if (modifier === 'keepslug') return keepSlugify(val);
+    return val;
   });
 }
 
@@ -121,6 +136,7 @@ function mapItem(
     title,
     location: getString(item, fields.location),
     cities: cities.length > 0 ? cities : undefined,
+    country_code: fields.country ? getString(item, fields.country) ?? undefined : undefined,
     url: url || undefined,
     department: getString(item, fields.department),
     jobFunction: getString(item, fields.jobFunction),
