@@ -350,6 +350,30 @@ export const CASES: FixtureCase[] = [
     requires: false,
     advantage: true,
   },
+  {
+    label: '1b — "(Fluency in another Nordic language is a plus.)" → advantage',
+    title: 'Support Specialist',
+    desc: 'Fluency in English. (Fluency in another Nordic language is a plus.)',
+    country: 'NO',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '1b — "Nordic language skills are a plus" (plural "are") → advantage',
+    title: 'Support Specialist',
+    desc: 'Fluent English required; Nordic language skills are a plus.',
+    country: 'SE',
+    requires: false,
+    advantage: true,
+  },
+  {
+    label: '2a — requirement in one clause not negated by advantage phrase in a later clause',
+    title: 'Account Manager',
+    desc: 'Fluent in English and Norwegian; Danish or Finnish considered as an advantage',
+    country: 'NO',
+    requires: true,
+    advantage: false,
+  },
 
   // ── Phase 1b: Requirement wins when both signals are present ─────────────
 
@@ -692,6 +716,14 @@ export const CASES: FixtureCase[] = [
     advantage: false,
   },
   {
+    label: '2a — CEFR level before language: "at least a B2 level of German"',
+    title: 'Stakeholder Manager',
+    desc: 'You are fluent in English (C1/C2) and possess at least a B2 level of German to navigate local stakeholder and city relationships.',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
     label: '2a — "Native in German" with English co-requirement',
     title: 'Consultant',
     desc: 'Excellent communication and presentation skills in English. Native in German.',
@@ -989,6 +1021,14 @@ export const CASES: FixtureCase[] = [
     requires: true,
     advantage: false,
   },
+  {
+    label: '2a-nordic — "Nordic language skills are required" wins over cross-language advantage',
+    title: 'Account Manager',
+    desc: 'Strong English and Nordic language skills are required. German language skills are considered a plus.',
+    country: 'SE',
+    requires: true,
+    advantage: false,
+  },
 
   // ── Phase 2a-cross: Cross-language (non-country language in description) ──
 
@@ -1161,6 +1201,22 @@ export const CASES: FixtureCase[] = [
     title: 'Software Engineer',
     desc: 'In addition to Norwegian, you have excellent English skills, both written and verbal',
     country: 'NO',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "in addition to Norwegian or Swedish", lang first in list → NO required',
+    title: 'Account Manager',
+    desc: 'Good written and verbal English, in addition to Norwegian or Swedish',
+    country: 'NO',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "in addition to Norwegian or Swedish", lang second in list → SE required',
+    title: 'Account Manager',
+    desc: 'Good written and verbal English, in addition to Norwegian or Swedish',
+    country: 'SE',
     requires: true,
     advantage: false,
   },

@@ -89,7 +89,7 @@ for domain in \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com" \
-    "lubcqmviewdnjgpkfzin.supabase.co" \
+    "movbttbpcfrwrgshffef.supabase.co" \
     "aws-0-eu-central-1.pooler.supabase.com" \
     "api.doppler.com" \
     "cli.doppler.com" \
@@ -141,6 +141,7 @@ for domain in \
     "bolt.eu" \
     "jobs.sap.com" \
     "jobs.siemens-healthineers.com" \
+    "jobs.siemens.com" \
     "solita.fi" \
     "careers.hiab.com" \
     "jobs.neste.com" \
@@ -200,6 +201,13 @@ for domain in \
     "careers.vestas.com" \
     "werkenbijabnamro.nl" \
     "sebgroup.com" \
+    "careers.uniper.energy" \
+    "careers.eon.com" \
+    "careers.dhl.com" \
+    "careers.munichre.com" \
+    "bayer.eightfold.ai" \
+    "api-apply.lufthansagroup.careers" \
+    "apply.lufthansagroup.careers" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \

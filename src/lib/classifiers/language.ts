@@ -18,6 +18,7 @@ const COUNTRY_LANGUAGE_MAP: Record<string, string[]> = {
     NL: ['dutch', 'nederlands'],
     BE: ['dutch', 'nederlands', 'french', 'français', 'flemish'],
     FR: ['french', 'français', 'francais'],
+    LU: ['luxembourgish', 'luxembourgeois', 'lëtzebuergesch', 'french', 'français', 'francais', 'german', 'deutsch'],
     IT: ['italian', 'italiano'],
     ES: ['spanish', 'español', 'espanol', 'castellano'],
     PT: ['portuguese', 'português', 'portugues'],
@@ -64,6 +65,7 @@ const COUNTRY_LANG_CODES: Record<string, string[]> = {
     CH: ['de', 'fr', 'it'],
     BE: ['nl', 'fr'],
     FR: ['fr'],
+    LU: ['fr', 'de'],
     IT: ['it'],
     ES: ['es'],
     PT: ['pt'],
@@ -98,6 +100,7 @@ const COUNTRY_LANGUAGE_NAMES: Record<string, string[]> = {
     NL: ['Dutch'],
     BE: ['Dutch', 'French'],
     FR: ['French'],
+    LU: ['Luxembourgish', 'French', 'German'],
     IT: ['Italian'],
     ES: ['Spanish'],
     PT: ['Portuguese'],
@@ -149,6 +152,9 @@ const KEYWORD_TO_CANONICAL_NAME: Record<string, string> = {
     íslenska: 'Icelandic',
     german: 'German',
     deutsch: 'German',
+    luxembourgish: 'Luxembourgish',
+    luxembourgeois: 'Luxembourgish',
+    lëtzebuergesch: 'Luxembourgish',
     dutch: 'Dutch',
     nederlands: 'Dutch',
     flemish: 'Dutch',
@@ -254,6 +260,14 @@ const NORDIC_LANGUAGE_REQUIREMENT_PHRASES = [
   'fluent in one nordic language',
   'fluent in one scandinavian language and english',
   'fluent in one nordic language and english',
+  'nordic language skills are required',
+  'nordic language skills are mandatory',
+  'nordic language skills is required',
+  'nordic language skills is mandatory',
+  'scandinavian language skills are required',
+  'scandinavian language skills are mandatory',
+  'scandinavian language skills is required',
+  'scandinavian language skills is mandatory',
 ];
 
 const BALTIC_LANGUAGE_REQUIREMENT_PHRASES = [
@@ -266,6 +280,10 @@ const BALTIC_LANGUAGE_REQUIREMENT_PHRASES = [
   'english and at least one baltic language',
   'a baltic language is mandatory',
   'a baltic language is required',
+  'baltic language skills are required',
+  'baltic language skills are mandatory',
+  'baltic language skills is required',
+  'baltic language skills is mandatory',
 ];
 
 const BALTIC_LANGUAGE_ADVANTAGE_PHRASES = [
@@ -278,6 +296,13 @@ const BALTIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'knowledge of a baltic language',
   'baltic language skills is an advantage',
   'baltic language skills is a plus',
+  'baltic language skills are an advantage',
+  'baltic language skills are a plus',
+  'baltic language skills are preferred',
+  'another baltic language is an advantage',
+  'another baltic language is a plus',
+  'another baltic language is a bonus',
+  'another baltic language is preferred',
 ];
 
 const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
@@ -303,8 +328,23 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
   'nordic language skills is an advantage',
   'nordic language skills is a plus',
   'nordic language skills is preferred',
+  'nordic language skills are an advantage',
+  'nordic language skills are a plus',
+  'nordic language skills are preferred',
   'scandinavian language skills is an advantage',
   'scandinavian language skills is a plus',
+  'scandinavian language skills are an advantage',
+  'scandinavian language skills are a plus',
+  'another nordic language is an advantage',
+  'another nordic language is a plus',
+  'another nordic language is a bonus',
+  'another nordic language is preferred',
+  'another nordic language is beneficial',
+  'another scandinavian language is an advantage',
+  'another scandinavian language is a plus',
+  'another scandinavian language is a bonus',
+  'another scandinavian language is preferred',
+  'another scandinavian language is beneficial',
   'a nordic language is a strong advantage',
   'a scandinavian language is a strong advantage',
   'proficiency in one of the nordic languages is beneficial',
@@ -587,6 +627,9 @@ function buildRequirementSignals(lang: string): string[] {
     `${lang} communicative`,
     // CEFR level suffixes (parens are stripped: "German (C1 level)" → "german c1 level")
     `${lang} a1`, `${lang} a2`, `${lang} b1`, `${lang} b2`, `${lang} c1`, `${lang} c2`,
+    // CEFR level-of-language: "at least a B2 level of German"
+    `a1 level of ${lang}`, `a2 level of ${lang}`, `b1 level of ${lang}`,
+    `b2 level of ${lang}`, `c1 level of ${lang}`, `c2 level of ${lang}`,
     // Level descriptors
     `elementary ${lang}`,
     `good ${lang}`,
@@ -750,7 +793,11 @@ function requirementNegatedByContext(combined: string, signal: string): Negation
   // earlier "understand X and English" requirement.
   const sameClause = after.split(/[.;]\s|,?\s+and\s+can\s/)[0];
   if (REQUIREMENT_NEGATION_NONE_RE.test(sameClause)) return 'none';
-  if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(after)) return 'advantage';
+  // Scoped to sameClause, not the full 80-char "after" window — otherwise an
+  // unrelated advantage phrase in a later clause (e.g. "Fluent English and
+  // Norwegian; Danish or Finnish considered as an advantage") would wrongly
+  // negate the requirement in the earlier clause.
+  if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(sameClause)) return 'advantage';
   // Check for an advantage modifier that DIRECTLY follows the signal (anchored, no gap
   // words). Uses a tighter window than the 80-char checks above to avoid false negatives
   // where the modifier belongs to a later clause about a different language.
@@ -1297,6 +1344,24 @@ export function detectNativeLanguage(
           signals: [{ phase: '2a', description: `"${lang}" requirement phrase`, matched: signal }],
         };
       }
+    }
+  }
+
+  // "in addition to {other language} or {lang}" — the country's own language appears
+  // as a later item in an "in addition to X or Y" list, so the direct
+  // `in addition to ${lang}` signal above (which only matches when {lang} immediately
+  // follows the phrase) misses it and it would otherwise fall through to Phase 2a-cross,
+  // misattributing the requirement to whichever language came first in the list.
+  for (const lang of languages) {
+    const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const orListMatch = combined.match(
+      new RegExp(`in addition to (?:[a-z]+(?:,\\s*[a-z]+)*\\s+or\\s+)+${escaped}\\b`)
+    );
+    if (orListMatch) {
+      return {
+        value: true, local_language_advantage: false, requiredLanguages: langNames, preferredLanguages: [],
+        signals: [{ phase: '2a', description: `"${lang}" in "in addition to X or Y" list`, matched: orListMatch[0] }],
+      };
     }
   }
 

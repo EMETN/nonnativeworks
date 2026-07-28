@@ -156,7 +156,15 @@ def _fetch_css_cards_page(
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
         return []
 
-    soup = BeautifulSoup(resp.content, "html.parser")
+    content = resp.content
+    if json_key := cfg.get("json_html_key"):
+        try:
+            html_str = resp.json().get(json_key, "")
+        except Exception:
+            html_str = ""
+        content = html_str.encode()
+
+    soup = BeautifulSoup(content, "html.parser")
     jobs = []
     for card in soup.select(cfg["card_selector"]):
         job = _extract_card(card, list_url, cfg)
@@ -597,6 +605,46 @@ def _fetch_script_var_json_page(
 
 _GONE_STATUSES = {404, 410}
 
+# Minimum text length (chars) for a CSS-selector result to be considered usable.
+# Pages that use Next.js RSC streaming deliver content via __next_f.push script
+# chunks rather than real DOM elements, so the selector matches an empty skeleton.
+_MIN_DESCRIPTION_TEXT_LEN = 200
+
+
+def _extract_rsc_description(raw_html: str) -> str:
+    """Fallback for Next.js RSC-streamed pages.
+
+    Job content is JSON-encoded inside self.__next_f.push([1, "..."]) script tags
+    rather than in the DOM, so CSS selectors on the initial HTML return an empty
+    skeleton.  This function decodes those chunks, concatenates them, then extracts
+    all paragraph/heading/list elements — enough for the language classifier to find
+    requirement phrases.
+    """
+    # Parse script tags with BeautifulSoup rather than using regex on the raw HTML.
+    # The RSC streaming format embeds content as JSON strings inside
+    # self.__next_f.push([1, "..."]) calls. We find those script tags, extract
+    # the JS text, then eval the string argument with json.loads.
+    rsc_page_soup = BeautifulSoup(raw_html, "html.parser")
+    payload = ""
+    for script in rsc_page_soup.find_all("script"):
+        text = script.string or ""
+        if "__next_f.push" not in text:
+            continue
+        m = re.search(r'\[1,"((?:[^"\\]|\\.)*)"\]', text, re.DOTALL)
+        if m:
+            try:
+                payload += json_mod.loads('"' + m.group(1) + '"')
+            except Exception:
+                pass
+    if not payload:
+        return ""
+    rsc_soup = BeautifulSoup(payload, "html.parser")
+    parts = rsc_soup.find_all(["p", "li", "h1", "h2", "h3", "h4", "h5", "h6"])
+    if not parts:
+        return ""
+    return "<div>" + "".join(str(p) for p in parts) + "</div>"
+
+
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
@@ -615,6 +663,7 @@ def _fetch_detail_page(
             print(f"generic: detail page gone (HTTP {resp.status_code}): {job_url}", file=sys.stderr)
             return "", None, None, True
         resp.raise_for_status()
+        raw_html = resp.text
         soup = BeautifulSoup(resp.content, "html.parser")
 
         selectors = [desc_sel] if desc_sel else _DESCRIPTION_SELECTOR_FALLBACKS
@@ -624,6 +673,13 @@ def _fetch_detail_page(
             if tag:
                 desc_html = str(tag)
                 break
+
+        # If the selector result is too short the page likely uses Next.js RSC
+        # streaming — real content lives in __next_f.push script chunks, not the DOM.
+        if len(BeautifulSoup(desc_html, "html.parser").get_text()) < _MIN_DESCRIPTION_TEXT_LEN:
+            rsc_html = _extract_rsc_description(raw_html)
+            if rsc_html:
+                desc_html = rsc_html
 
         job_function = None
         if jf_sel:
