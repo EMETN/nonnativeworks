@@ -5,7 +5,7 @@
     "engines": {
         "node": ">=24.0.0"
     },
-    "packageManager": "pnpm@11.15.1",
+    "packageManager": "pnpm@11.17.0",
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
@@ -19,20 +19,20 @@
         "clean": "rm -rf node_modules dist .pnpm-store .netlify"
     },
     "dependencies": {
-        "@astrojs/check": "^0.9.9",
+        "@astrojs/check": "^0.9.10",
         "@astrojs/netlify": "^8.1.2",
         "@astrojs/node": "^11.0.2",
         "@astrojs/preact": "^6.0.1",
         "@fontsource-variable/inter": "^5.3.0",
         "@preact/preset-vite": "^2.10.6",
-        "@sentry/astro": "^10.67.0",
-        "@sentry/browser": "^10.67.0",
-        "@sentry/node": "^10.67.0",
+        "@sentry/astro": "^10.68.0",
+        "@sentry/browser": "^10.68.0",
+        "@sentry/node": "^10.68.0",
         "@supabase/ssr": "^0.12.3",
-        "@supabase/supabase-js": "^2.110.8",
+        "@supabase/supabase-js": "^2.110.9",
         "@tailwindcss/vite": "^4.3.3",
-        "astro": "^7.1.3",
-        "posthog-js": "^1.406.2",
+        "astro": "^7.1.4",
+        "posthog-js": "^1.407.3",
         "preact": "^10.29.7",
         "tailwindcss": "^4.3.3",
         "tinyld": "^1.3.4",
