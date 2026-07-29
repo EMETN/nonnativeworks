@@ -2,6 +2,7 @@
     "name": "nonnativeworks",
     "type": "module",
     "version": "0.0.1",
+    "license": "CC-BY-NC-SA-4.0",
     "engines": {
         "node": ">=24.0.0"
     },
