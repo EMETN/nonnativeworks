@@ -64,18 +64,18 @@ pnpm dev
 
 ## Commands
 
-| Command            | Action                               |
-| ------------------ | ------------------------------------ |
-| `pnpm dev`         | Start dev server at `localhost:4321` |
-| `pnpm build`       | Build production site to `./dist/`   |
-| `pnpm preview`     | Preview production build locally     |
+| Command        | Action                               |
+| -------------- | ------------------------------------ |
+| `pnpm dev`     | Start dev server at `localhost:4321` |
+| `pnpm build`   | Build production site to `./dist/`   |
+| `pnpm preview` | Preview production build locally     |
 
 ## URL structure
 
-| URL | Description |
-|-----|-------------|
-| `/` | Homepage — country list |
-| `/{country}` | Country page — company grid |
+| URL                    | Description                  |
+| ---------------------- | ---------------------------- |
+| `/`                    | Homepage — country list      |
+| `/{country}`           | Country page — company grid  |
 | `/{country}/{company}` | Company page — position list |
 
 ## Project structure
@@ -104,20 +104,28 @@ src/
 
 ## CI / workflows
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `scrape-preview.yml` | PR that touches `scraper/companies.yaml` | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
-| `scheduled-scrape.yml` | Mon–Fri at 06:00 EET (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database |
+| Workflow               | Trigger                                          | What it does                                                                                                                                                                                                |
+| ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`         | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
+| `scheduled-scrape.yml` | Mon–Fri at 06:00 EET (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                                                       |
 
 ### scrape-preview.yml — manual trigger options
 
-| `all_companies` | `write_to_dev` | Result |
-|---|---|---|
-| false | false | Dry-run newly added companies only |
-| false | true | Write newly added companies to dev DB |
-| true | false | Dry-run all companies |
-| true | true | Write all companies to dev DB |
+| `all_companies` | `write_to_dev` | Result                                |
+| --------------- | -------------- | ------------------------------------- |
+| false           | false          | Dry-run newly added companies only    |
+| false           | true           | Write newly added companies to dev DB |
+| true            | false          | Dry-run all companies                 |
+| true            | true           | Write all companies to dev DB         |
 
 ## Devcontainer firewall
 
 The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supabase and Doppler domains are allowlisted. If you see `EHOSTUNREACH` for a new external domain, add it to `.devcontainer/init-firewall.sh` and rebuild the container.
+
+## Credits
+
+- Flag icons — [Flagpedia](https://flagpedia.net)
+
+## License
+
+Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). See [LICENSE.md](LICENSE.md).

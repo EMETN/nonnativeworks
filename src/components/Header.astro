@@ -86,18 +86,18 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
         inert
     >
         <nav aria-label="Mobile navigation" class="mobile-menu-inner">
-        <div class="px-4 py-3 space-y-1">
-            <a
-                href="/countries"
-                class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                aria-current={isCountries ? 'true' : undefined}>Countries</a
-            >
-            <a
-                href="/companies"
-                class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                aria-current={isCompanies ? 'true' : undefined}>Companies</a
-            >
-        </div>
+            <div class="px-4 py-3 space-y-1">
+                <a
+                    href="/countries"
+                    class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                    aria-current={isCountries ? 'true' : undefined}>Countries</a
+                >
+                <a
+                    href="/companies"
+                    class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
+                    aria-current={isCompanies ? 'true' : undefined}>Companies</a
+                >
+            </div>
         </nav>
     </div>
 </header>
@@ -132,7 +132,9 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
 
     window.addEventListener(
         'scroll',
-        () => { if (menu.classList.contains('is-open')) toggle(false); },
+        () => {
+            if (menu.classList.contains('is-open')) toggle(false);
+        },
         { passive: true },
     );
 

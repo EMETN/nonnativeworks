@@ -2,7 +2,7 @@
 import type { CategoryBreakdown } from '../../lib/types';
 
 interface Props {
-  categories: CategoryBreakdown[];
+    categories: CategoryBreakdown[];
 }
 
 const { categories } = Astro.props;
@@ -13,15 +13,30 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
 ---
 
 <div class="mt-12">
-  <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-6">Breakdown by category</h2>
-  <div class="flex flex-wrap gap-x-1 gap-y-2">
-    {categories.map((cat, i) => (
-      <span class="text-sm whitespace-nowrap">
-        <span class="text-gray-600">{cat.category_name}</span>
-        <span class="font-bold tabular-nums" style={numFont}>
-          <span class="text-[#0F7A4F] ml-0.5">{cat.english_positions}</span><span class="text-gray-500">/</span><span class="text-gray-900">{cat.total_positions}</span>
-        </span>{i < categories.length - 1 && <span class="text-gray-400 mx-1">|</span>}
-      </span>
-    ))}
-  </div>
+    <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-6">
+        Breakdown by category
+    </h2>
+    <div class="flex flex-wrap gap-x-1 gap-y-2">
+        {
+            categories.map((cat, i) => (
+                <span class="text-sm whitespace-nowrap">
+                    <span class="text-gray-600">{cat.category_name}</span>
+                    <span class="font-bold tabular-nums" style={numFont}>
+                        <>
+                            <span class="text-[#0F7A4F] ml-0.5">
+                                {cat.english_positions}
+                            </span>
+                            <span class="text-gray-500">/</span>
+                            <span class="text-gray-900">
+                                {cat.total_positions}
+                            </span>
+                        </>
+                    </span>
+                    {i < categories.length - 1 && (
+                        <span class="text-gray-400 mx-1">|</span>
+                    )}
+                </span>
+            ))
+        }
+    </div>
 </div>

@@ -18,12 +18,12 @@ After jobs are collected, each job's location is resolved via `lookupCountryFrom
 
 - Operator pastes a career URL into the admin scraper tab
 - The browser calls `POST /api/admin/scrape` on the running Astro dev server
-- Results are reviewed in the UI, then uploaded via the JSON uploader (or the scrape result is uploaded directly)
+- Results are reviewed in the UI, then posted to `POST /api/admin/upload` from the same component (`src/components/admin/Scraper.tsx`)
 - Python binary lookup order: `/opt/scraper-venv/bin/python3` (Docker/devcontainer), then `scraper/.venv/bin/python3`, then system `python3`
 
 ## Production: GitHub Actions scheduled workflow
 
-- **Workflow**: `.github/workflows/scheduled-scrape.yml` — runs at 01:00 UTC every 2 days; also triggerable manually
+- **Workflow**: `.github/workflows/scheduled-scrape.yml` — runs at 01:00 UTC Mon–Fri (`cron: '0 1 * * 1-5'`); also triggerable manually
 - **Company list**: `scraper/companies.yaml` — add a company only after manually testing it via the admin scraper tab
 - **Execution**: Builds the Astro app (Node standalone adapter) and starts it locally (`node dist/server/entry.mjs`), then calls its own `/api/admin/scrape` and `/api/admin/upload` endpoints
 - **Parallelism**: Companies split into up to 3 parallel slices (GitHub Actions matrix) via `scraper/batch_run.py`
