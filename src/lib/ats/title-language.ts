@@ -16,262 +16,272 @@
 
 // ── Finnish ──────────────────────────────────────────────────────────────────
 const FI: string[] = [
-  'ammattitaitoinen', // skilled
-  'ammattitaitoisia', // skilled (plural)
-  'arkkitehti',     // architect
-  'asiakas',        // customer
-  'asennus',        // installation
-  'asentaja',       // installer
-  'asentajia',      // installers
-  'asiantuntija',   // specialist / expert
-  'finanssiala',    // finance sector
-  'hakemus',        // application (open application postings)
-  'hankinta',       // procurement
-  'hitsaaja',       // welder
-  'hoitaja',        // caregiver / nurse
-  'hovimestari',    // headwaiter
-  'huolto',         // maintenance
-  'johtaja',        // manager
-  'kehitys',        // development
-  'kokki',          // chef
-  'kokoonpanija',    // assembler
-  'koneistaja',     // machinist
-  'konsultti',      // consultant
-  'koordinaattori', // coordinator
-  'kuljettaja',     // driver
-  'liiketoiminta',  // business
-  'mekaanikko',     // mechanic
-  'myynti',         // sales
-  'osaaja',         // specialist / expert
-  'palvelu',        // service
-  'rakennus',       // building
-  'rakentaja',      // builder
-  'ravintola',      // restaurant
-  'rekrytointi',    // recruitment
-  'suunnittelija',  // designer / planner
-  'tarjoilija',     // waiter
-  'testaaja',       // tester
-  'tiimi',          // team
-  'timpuri',        // carpenter
-  'toimiala',       // industry
-  'tuotanto',       // production
-  'tuotannon',      // production (genitive)
-  'tutkija',        // researcher
-  'valvoja',        // supervisor
-  'varasto',        // warehouse
-  'vastaanotto',    // reception / front desk
-  'vuoromestari',   // shift supervisor
+    'ammattitaitoinen', // skilled
+    'ammattitaitoisia', // skilled (plural)
+    'arkkitehti', // architect
+    'asiakas', // customer
+    'asennus', // installation
+    'asentaja', // installer
+    'asentajia', // installers
+    'asiantuntija', // specialist / expert
+    'finanssiala', // finance sector
+    'hakemus', // application (open application postings)
+    'hankinta', // procurement
+    'hitsaaja', // welder
+    'hoitaja', // caregiver / nurse
+    'hovimestari', // headwaiter
+    'huolto', // maintenance
+    'johtaja', // manager
+    'kehitys', // development
+    'kokki', // chef
+    'kokoonpanija', // assembler
+    'koneistaja', // machinist
+    'konsultti', // consultant
+    'koordinaattori', // coordinator
+    'kuljettaja', // driver
+    'liiketoiminta', // business
+    'mekaanikko', // mechanic
+    'myynti', // sales
+    'osaaja', // specialist / expert
+    'palvelu', // service
+    'rakennus', // building
+    'rakentaja', // builder
+    'ravintola', // restaurant
+    'rekrytointi', // recruitment
+    'suunnittelija', // designer / planner
+    'tarjoilija', // waiter
+    'testaaja', // tester
+    'tiimi', // team
+    'timpuri', // carpenter
+    'toimiala', // industry
+    'tuotanto', // production
+    'tuotannon', // production (genitive)
+    'tutkija', // researcher
+    'valvoja', // supervisor
+    'varasto', // warehouse
+    'vastaanotto', // reception / front desk
+    'vuoromestari', // shift supervisor
 ];
 
 // ── Swedish ───────────────────────────────────────────────────────────────────
 const SE: string[] = [
-  'ansvarig',       // responsible / manager
-  'arkitekt',       // architect
-  'ekonom',         // economist
-  'erfaren',        // experienced
-  'förvaltare',     // administrator / manager
-  'gruppchef',      // group leader
-  'handläggare',    // administrator / officer
-  'informatiker',   // computer scientist
-  'konsult',        // consultant
-  'mekaniker',      // mechanic
-  'projektledare',  // project manager
-  'rådgivare',      // advisor
-  'samordnare',     // coordinator
-  'säljare',        // salesperson
-  'tekniker',       // technician
-  'teknisk',        // technical
-  'testare',        // tester
-  'uppdragsledare', // project manager
-  'utredare',       // investigator
-  'utvecklare',     // developer
-  'validering',     // validation
-  'verksamhet',     // operations / business
+    'ansvarig', // responsible / manager
+    'arkitekt', // architect
+    'ekonom', // economist
+    'erfaren', // experienced
+    'förvaltare', // administrator / manager
+    'gruppchef', // group leader
+    'handläggare', // administrator / officer
+    'informatiker', // computer scientist
+    'konsult', // consultant
+    'mekaniker', // mechanic
+    'projektledare', // project manager
+    'rådgivare', // advisor
+    'samordnare', // coordinator
+    'säljare', // salesperson
+    'tekniker', // technician
+    'teknisk', // technical
+    'testare', // tester
+    'uppdragsledare', // project manager
+    'utredare', // investigator
+    'utvecklare', // developer
+    'validering', // validation
+    'verksamhet', // operations / business
 ];
 
 // ── Norwegian ─────────────────────────────────────────────────────────────────
 const NO: string[] = [
-  'avdelingsleder', // department manager
-  'fagansvarlig',   // subject-matter responsible
-  'karriere',       // career
-  'konsulent',      // consultant
-  'koordinator',    // coordinator (unambiguous in NO context when combined with NO chars)
-  'rådgiver',       // advisor
-  'saksbehandler',  // case officer
-  'selger',         // salesperson
-  'utvikler',       // developer
+    'avdelingsleder', // department manager
+    'fagansvarlig', // subject-matter responsible
+    'karriere', // career
+    'konsulent', // consultant
+    'koordinator', // coordinator (unambiguous in NO context when combined with NO chars)
+    'rådgiver', // advisor
+    'saksbehandler', // case officer
+    'selger', // salesperson
+    'utvikler', // developer
 ];
 
 // ── Danish ───────────────────────────────────────────────────────────────────
 const DK: string[] = [
-  'afdelingsleder', // department manager
-  'afvanding',      // drainage
-  'arkitekt',       // architect
-  'boreformand',    // drilling foreman
-  'fagchef',        // head of department
-  'fagspecialist',  // subject specialist
-  'hjælper',        // assistant
-  'karriere',       // career
-  'konsulent',      // consultant
-  'offentlige',     // public
-  'projectchef',    // project manager
-  'projectleder',   // project manager
-  'rådgiver',       // advisor
-  'sagsbehandler',  // case officer
-  'sælger',         // salesperson
-  'statiker',       // structural engineer
-  'tilbudspartner', // offer partner
-  'udvikler',       // developer
+    'afdelingsleder', // department manager
+    'afvanding', // drainage
+    'arkitekt', // architect
+    'boreformand', // drilling foreman
+    'fagchef', // head of department
+    'fagspecialist', // subject specialist
+    'hjælper', // assistant
+    'karriere', // career
+    'konsulent', // consultant
+    'offentlige', // public
+    'projectchef', // project manager
+    'projectleder', // project manager
+    'rådgiver', // advisor
+    'sagsbehandler', // case officer
+    'sælger', // salesperson
+    'statiker', // structural engineer
+    'tilbudspartner', // offer partner
+    'udvikler', // developer
 ];
 
 // ── German ───────────────────────────────────────────────────────────────────
 const DE: string[] = [
-  'anforderung',    // requirement
-  'architekt',      // architect
-  'assistenz',      // assistant
-  'ausbilder',      // instructor, trainer
-  'ausbildung',     // apprenticeship / training
-  'aushilfe',       // temporary worker
-  'ausschreiberung', // tender
-  'auszubildender',  // trainee
-  'berater',        // consultant / advisor
-  'datenbank',      // database
-  'digitalisierung', // digitalization
-  'elektroniker',   // electrician
-  'energiebranche', // energy sector
-  'entwickler',     // developer
-  'entwicklung',    // development
-  'erfahrung',      // experience
-  'fachexperte',    // subject matter expert
-  'fachgutachter',  // expert / technical consultant
-  'fachkraft',      // skilled worker
-  'fachplaner',     // specialist planner
-  'genehmigung',    // approval
-  'geomatiker',     // geomatics engineer
-  'glasfaser',      // fibre optic
-  'informatiker',   // computer scientist
-  'infrastruktur',  // infrastructure
-  'ingenieur',      // engineer
-  'kauffrau',       // merchant / business person (female form)
-  'kaufmann',       // merchant / business person
-  'konstrukteur',   // designer / design engineer
-  'koordinator',    // coordinator
-  'kraftfahrer',    // driver
-  'laborant',       // laboratory technician
-  'landschaft',     // landscape
-  'logistik',       // logistics
-  'masterstudium',  // master's degree/programme
-  'mechaniker',     // mechanic
-  'medienbranche',  // media sector
-  'mitarbeiter',    // staff
-  'praktikant',     // intern
-  'praktikum',      // internship
-  'projekt',        // project
-  'sachbearbeiter', // clerk / officer
-  'schwerpunkt',    // focus
-  'spezialist',     // specialist
-  'studium',        // degree programme
-  'teamleiter',     // team lead
-  'teamleitung',    // team leader
-  'technischer',    // technical
-  'verantwortung',  // responsibility
-  'verkehr',        // traffic
-  'verkäufer',      // salesperson
-  'vertrag',        // contract
-  'vertrieb',       // sales
-  'werkstudent',    // working student / student employee
-  'wirtschaft',     // economy
-  'zeichner',       // illustrator / draftsman
+    'anforderung', // requirement
+    'architekt', // architect
+    'assistenz', // assistant
+    'ausbilder', // instructor, trainer
+    'ausbildung', // apprenticeship / training
+    'aushilfe', // temporary worker
+    'ausschreiberung', // tender
+    'auszubildender', // trainee
+    'berater', // consultant / advisor
+    'datenbank', // database
+    'digitalisierung', // digitalization
+    'elektroniker', // electrician
+    'energiebranche', // energy sector
+    'entwickler', // developer
+    'entwicklung', // development
+    'erfahrung', // experience
+    'fachexperte', // subject matter expert
+    'fachgutachter', // expert / technical consultant
+    'fachkraft', // skilled worker
+    'fachplaner', // specialist planner
+    'genehmigung', // approval
+    'geomatiker', // geomatics engineer
+    'glasfaser', // fibre optic
+    'informatiker', // computer scientist
+    'infrastruktur', // infrastructure
+    'ingenieur', // engineer
+    'kauffrau', // merchant / business person (female form)
+    'kaufmann', // merchant / business person
+    'konstrukteur', // designer / design engineer
+    'koordinator', // coordinator
+    'kraftfahrer', // driver
+    'laborant', // laboratory technician
+    'landschaft', // landscape
+    'logistik', // logistics
+    'masterstudium', // master's degree/programme
+    'mechaniker', // mechanic
+    'medienbranche', // media sector
+    'mitarbeiter', // staff
+    'praktikant', // intern
+    'praktikum', // internship
+    'projekt', // project
+    'sachbearbeiter', // clerk / officer
+    'schwerpunkt', // focus
+    'spezialist', // specialist
+    'studium', // degree programme
+    'teamleiter', // team lead
+    'teamleitung', // team leader
+    'technischer', // technical
+    'verantwortung', // responsibility
+    'verkehr', // traffic
+    'verkäufer', // salesperson
+    'vertrag', // contract
+    'vertrieb', // sales
+    'werkstudent', // working student / student employee
+    'wirtschaft', // economy
+    'zeichner', // illustrator / draftsman
 ];
 
 // ── Dutch ─────────────────────────────────────────────────────────────────────
 const NL: string[] = [
-  'adviseur',       // advisor
-  'afstudeer',      // graduate
-  'afstuderen',     // graduate
-  'automatiseerder', // automater
-  'automatisering', // automation
-  'beheerder',      // administrator
-  'bouwkundig',     // architectural
-  'constructeur',   // constructor / manufacturer
-  'coördinator',    // coordinator
-  'defensie',       // defence
-  'gezocht',        // wanted
-  'informatie',     // information
-  'innovatie',      // innovation
-  'medewerker',     // employee / associate
-  'monteur',        // installer
-  'netwerk',        // network
-  'omgeving',       // environment
-  'ontwerp',        // design
-  'ontwikkelaar',   // developer
-  'openbaar',       // public
-  'overheid',       // government
-  'projectleider',  // project manager
-  'publieke',       // public
-  'spoordomein',    // railway network
-  'stagiair',       // intern
-  'technieker',     // technician
-  'technisch',      // technical
-  'telecommunicatie', // telecommunications
-  'transitie',      // transition
-  'uitvoerder',     // executor / operative
-  'veiligheid',     // safety
-  'verkoper',       // salesperson
-  'verzekeringen',  // insurance
-  'virtualisatie',  // virtualization
-  'voorbereider',   // planner
-  'voorziening',    // facility
+    'adviseur', // advisor
+    'afstudeer', // graduate
+    'afstuderen', // graduate
+    'automatiseerder', // automater
+    'automatisering', // automation
+    'beheerder', // administrator
+    'bouwkundig', // architectural
+    'constructeur', // constructor / manufacturer
+    'coördinator', // coordinator
+    'defensie', // defence
+    'gezocht', // wanted
+    'informatie', // information
+    'innovatie', // innovation
+    'medewerker', // employee / associate
+    'monteur', // installer
+    'netwerk', // network
+    'omgeving', // environment
+    'ontwerp', // design
+    'ontwikkelaar', // developer
+    'openbaar', // public
+    'overheid', // government
+    'projectleider', // project manager
+    'publieke', // public
+    'spoordomein', // railway network
+    'stagiair', // intern
+    'technieker', // technician
+    'technisch', // technical
+    'telecommunicatie', // telecommunications
+    'transitie', // transition
+    'uitvoerder', // executor / operative
+    'veiligheid', // safety
+    'verkoper', // salesperson
+    'verzekeringen', // insurance
+    'virtualisatie', // virtualization
+    'voorbereider', // planner
+    'voorziening', // facility
 ];
 
 // ── Estonian ─────────────────────────────────────────────────────────────────
 const EE: string[] = [
-  'arendaja',       // developer
-  'insener',       // engineer
-  'juht',           // manager / head
-  'konstruktorit',  // design engineer
-  'modelleerija',   // modeler
-  'müügijuht',      // sales manager
-  'nõustaja',       // advisor
-  'projekteerija',  // designer
-  'spetsialist',    // specialist
+    'arendaja', // developer
+    'insener', // engineer
+    'juht', // manager / head
+    'konstruktorit', // design engineer
+    'modelleerija', // modeler
+    'müügijuht', // sales manager
+    'nõustaja', // advisor
+    'projekteerija', // designer
+    'spetsialist', // specialist
 ];
 
 // ── Latvian ───────────────────────────────────────────────────────────────────
 const LV: string[] = [
-  'izstrādātājs',   // developer
-  'konsultants',    // consultant
-  'pārdevējs',      // salesperson
-  'speciālists',    // specialist
-  'vadītājs',       // manager
+    'izstrādātājs', // developer
+    'konsultants', // consultant
+    'pārdevējs', // salesperson
+    'speciālists', // specialist
+    'vadītājs', // manager
 ];
 
 // ── Lithuanian ───────────────────────────────────────────────────────────────
 const LT: string[] = [
-  'kūrėjas',        // developer / creator
-  'konsultantas',   // consultant
-  'pardavėjas',     // salesperson
-  'specialistas',   // specialist
-  'vadovas',        // manager / head
+    'kūrėjas', // developer / creator
+    'konsultantas', // consultant
+    'pardavėjas', // salesperson
+    'specialistas', // specialist
+    'vadovas', // manager / head
 ];
 
 // ── French ───────────────────────────────────────────────────────────────────
 const FR: string[] = [
-  'superviseur',     // supervisor
-  'technicien',      // technician
+    'superviseur', // supervisor
+    'technicien', // technician
 ];
 
 // ── Icelandic ────────────────────────────────────────────────────────────────
 const IS: string[] = [
-  'sérfræðingur',   // specialist / expert
-  'stjórnandi',     // manager
-  'þróunarfulltrúi', // development representative
+    'sérfræðingur', // specialist / expert
+    'stjórnandi', // manager
+    'þróunarfulltrúi', // development representative
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALL_KEYWORDS: string[] = [
-  ...FI, ...SE, ...NO, ...DK, ...DE, ...NL, ...EE, ...LV, ...LT, ...IS, ...FR,
+    ...FI,
+    ...SE,
+    ...NO,
+    ...DK,
+    ...DE,
+    ...NL,
+    ...EE,
+    ...LV,
+    ...LT,
+    ...IS,
+    ...FR,
 ];
 
 // Pre-compiled regex for performance — rebuilt once at module load.
@@ -280,8 +290,8 @@ const ALL_KEYWORDS: string[] = [
 // "kehitysjohtaja"; "myynti" matches "myyntiassistentti").
 // False positives are negligible: these roots never appear inside English words.
 export const KEYWORDS_RE = new RegExp(
-  `(${ALL_KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
-  'i',
+    `(${ALL_KEYWORDS.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
+    'i',
 );
 
 // Non-ASCII characters used by tracked-country languages.
@@ -296,21 +306,22 @@ const NON_ASCII_RE = /[äöüåéèêëàâîïôùûçñßãõøæœþðāčē�
  * and keeps only the left-hand (English) side.
  */
 export function stripBilingualSuffix(title: string): string {
-  const latvianRe = /[āčēģīķļņōŗšūž]/i;
-  let idx = 0;
-  while (idx < title.length) {
-    const slashPos = title.indexOf('/', idx);
-    if (slashPos === -1) break;
-    const nextSlash = title.indexOf('/', slashPos + 1);
-    const segment = nextSlash === -1
-      ? title.slice(slashPos + 1)
-      : title.slice(slashPos + 1, nextSlash);
-    if (latvianRe.test(segment)) {
-      return title.slice(0, slashPos).trim();
+    const latvianRe = /[āčēģīķļņōŗšūž]/i;
+    let idx = 0;
+    while (idx < title.length) {
+        const slashPos = title.indexOf('/', idx);
+        if (slashPos === -1) break;
+        const nextSlash = title.indexOf('/', slashPos + 1);
+        const segment =
+            nextSlash === -1
+                ? title.slice(slashPos + 1)
+                : title.slice(slashPos + 1, nextSlash);
+        if (latvianRe.test(segment)) {
+            return title.slice(0, slashPos).trim();
+        }
+        idx = slashPos + 1;
     }
-    idx = slashPos + 1;
-  }
-  return title;
+    return title;
 }
 
 /**
@@ -320,12 +331,12 @@ export function stripBilingualSuffix(title: string): string {
  * signal a native-language requirement.
  */
 export function titleAppearsNonEnglish(title: string): boolean {
-  // Covers all tracked-country native character sets:
-  //   Nordic/Germanic: ä ö ü å ø æ ß
-  //   French/Romance: é è ê ë à â î ï ô ù û ç ñ ã õ œ ă ș ț
-  //   Icelandic: þ ð
-  //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
-  //   Polish: ł ń ś ź ż
-  if (NON_ASCII_RE.test(title)) return true;
-  return KEYWORDS_RE.test(title);
+    // Covers all tracked-country native character sets:
+    //   Nordic/Germanic: ä ö ü å ø æ ß
+    //   French/Romance: é è ê ë à â î ï ô ù û ç ñ ã õ œ ă ș ț
+    //   Icelandic: þ ð
+    //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
+    //   Polish: ł ń ś ź ż
+    if (NON_ASCII_RE.test(title)) return true;
+    return KEYWORDS_RE.test(title);
 }
