@@ -3,46 +3,70 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Page not found" noindex>
-  <div class="flex flex-col items-center justify-center flex-1 px-4 sm:px-6 lg:px-8">
-    <!-- 404 number in the style of the country stats -->
-    <div class="flex items-end gap-2 sm:gap-4 mb-6 opacity-20">
-      <div class="flex flex-col items-end">
-        <span class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-[#0F7A4F] mb-0.5">
-          Page
-        </span>
-        <span class="text-4xl sm:text-7xl font-bold text-[#0F7A4F] leading-none" style="font-family: 'Inter', 'Inter Fallback', sans-serif;">
-          0
-        </span>
-      </div>
-      <span class="text-4xl sm:text-7xl font-light text-gray-400 leading-none">/</span>
-      <div class="flex flex-col">
-        <span class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5">
-          Found
-        </span>
-        <span class="text-4xl sm:text-7xl font-bold text-gray-900 leading-none" style="font-family: 'Inter', 'Inter Fallback', sans-serif;">
-          0
-        </span>
-      </div>
-      <div class="flex flex-col items-end ml-4 sm:ml-8">
-        <span class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5">
-          Error
-        </span>
-        <span class="text-4xl sm:text-7xl font-black text-gray-800 leading-none" style="font-family: 'Inter', 'Inter Fallback', sans-serif;">
-          404
-        </span>
-      </div>
-    </div>
-
-    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Lost in translation</h1>
-    <p class="text-sm sm:text-lg text-gray-500 mb-8 max-w-[14rem] sm:max-w-md text-center">
-      This page doesn't exist — but plenty of jobs do.<br />
-      Head back and find your next opportunity.
-    </p>
-    <a
-      href="/"
-      class="inline-block bg-[#0F7A4F] text-white border border-[#0F7A4F] rounded-lg px-6 py-2.5 text-sm font-medium hover:bg-white hover:text-[#0F7A4F] transition-colors"
+    <div
+        class="flex flex-col items-center justify-center flex-1 px-4 sm:px-6 lg:px-8"
     >
-      Browse countries
-    </a>
-  </div>
+        <!-- 404 number in the style of the country stats -->
+        <div class="flex items-end gap-2 sm:gap-4 mb-6 opacity-20">
+            <div class="flex flex-col items-end">
+                <span
+                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-[#0F7A4F] mb-0.5"
+                >
+                    Page
+                </span>
+                <span
+                    class="text-4xl sm:text-7xl font-bold text-[#0F7A4F] leading-none"
+                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+                >
+                    0
+                </span>
+            </div>
+            <span
+                class="text-4xl sm:text-7xl font-light text-gray-400 leading-none"
+                >/</span
+            >
+            <div class="flex flex-col">
+                <span
+                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5"
+                >
+                    Found
+                </span>
+                <span
+                    class="text-4xl sm:text-7xl font-bold text-gray-900 leading-none"
+                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+                >
+                    0
+                </span>
+            </div>
+            <div class="flex flex-col items-end ml-4 sm:ml-8">
+                <span
+                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5"
+                >
+                    Error
+                </span>
+                <span
+                    class="text-4xl sm:text-7xl font-black text-gray-800 leading-none"
+                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+                >
+                    404
+                </span>
+            </div>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+            Lost in translation
+        </h1>
+        <p
+            class="text-sm sm:text-lg text-gray-500 mb-8 max-w-[14rem] sm:max-w-md text-center"
+        >
+            This page doesn't exist — but plenty of jobs do.<br />
+            Head back and find your next opportunity.
+        </p>
+        <a
+            href="/"
+            class="inline-block bg-[#0F7A4F] text-white border border-[#0F7A4F] rounded-lg px-6 py-2.5 text-sm font-medium hover:bg-white hover:text-[#0F7A4F] transition-colors"
+        >
+            Browse countries
+        </a>
+    </div>
 </BaseLayout>

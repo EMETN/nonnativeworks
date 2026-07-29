@@ -1,7 +1,9 @@
 ---
 import { createSupabaseClient } from '../../lib/supabase';
 const supabase = createSupabaseClient(Astro.request, Astro.cookies);
-const { data: { user } } = await supabase.auth.getUser();
+const {
+    data: { user },
+} = await supabase.auth.getUser();
 if (user) return Astro.redirect('/admin');
 
 import '../../styles/global.css';
@@ -9,91 +11,111 @@ import '../../styles/global.css';
 
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign in — Admin — NonNativeWorks</title>
-    <meta name="robots" content="noindex, nofollow" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-sm">
-      <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">Admin sign in</h1>
-      <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <form id="login-form" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autocomplete="email"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B]"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autocomplete="current-password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B]"
-            />
-          </div>
-          <div id="error-msg" class="text-red-600 text-sm hidden"></div>
-          <button
-            type="submit"
-            class="w-full bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors"
-          >
-            Sign in
-          </button>
-        </form>
-      </div>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sign in — Admin — NonNativeWorks</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body class="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-sm">
+            <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+                Admin sign in
+            </h1>
+            <div
+                class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
+            >
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            for="email">Email</label
+                        >
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                            autocomplete="email"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B]"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            for="password">Password</label
+                        >
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            autocomplete="current-password"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B]"
+                        />
+                    </div>
+                    <div id="error-msg" class="text-red-600 text-sm hidden">
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors"
+                    >
+                        Sign in
+                    </button>
+                </form>
+            </div>
+        </div>
 
-    <script is:inline>
-      // Logged-out boundary: drop any cached admin data left in this browser.
-      try {
-        for (let i = sessionStorage.length - 1; i >= 0; i--) {
-          const k = sessionStorage.key(i);
-          if (k && k.startsWith('admin:')) sessionStorage.removeItem(k);
-        }
-      } catch {}
-    </script>
+        <script is:inline>
+            // Logged-out boundary: drop any cached admin data left in this browser.
+            try {
+                for (let i = sessionStorage.length - 1; i >= 0; i--) {
+                    const k = sessionStorage.key(i);
+                    if (k && k.startsWith('admin:'))
+                        sessionStorage.removeItem(k);
+                }
+            } catch {}
+        </script>
 
-    <script>
-      const form = document.getElementById('login-form') as HTMLFormElement;
-      const errorMsg = document.getElementById('error-msg') as HTMLDivElement;
+        <script>
+            const form = document.getElementById(
+                'login-form',
+            ) as HTMLFormElement;
+            const errorMsg = document.getElementById(
+                'error-msg',
+            ) as HTMLDivElement;
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorMsg.classList.add('hidden');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMsg.classList.add('hidden');
 
-        const email = (document.getElementById('email') as HTMLInputElement).value;
-        const password = (document.getElementById('password') as HTMLInputElement).value;
+                const email = (
+                    document.getElementById('email') as HTMLInputElement
+                ).value;
+                const password = (
+                    document.getElementById('password') as HTMLInputElement
+                ).value;
 
-        const res = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
+                const res = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
 
-        if (res.ok) {
-          window.location.href = '/admin';
-        } else {
-          const data = await res.json();
-          errorMsg.textContent = data.error ?? 'Sign in failed';
-          errorMsg.classList.remove('hidden');
-        }
-      });
-    </script>
-  </body>
+                if (res.ok) {
+                    window.location.href = '/admin';
+                } else {
+                    const data = await res.json();
+                    errorMsg.textContent = data.error ?? 'Sign in failed';
+                    errorMsg.classList.remove('hidden');
+                }
+            });
+        </script>
+    </body>
 </html>
