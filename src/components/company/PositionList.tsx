@@ -106,10 +106,8 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             (p) =>
                 p.title.toLowerCase().includes(q) ||
                 p.category_name.toLowerCase().includes(q) ||
-                (p.work_model &&
-                    p.work_model.toLowerCase().includes(q)) ||
-                (p.city &&
-                    p.city.some((c) => c.toLowerCase().includes(q))),
+                (p.work_model && p.work_model.toLowerCase().includes(q)) ||
+                (p.city && p.city.some((c) => c.toLowerCase().includes(q))),
         );
     }, [nonNativePositions, search]);
 
@@ -142,7 +140,9 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                             const val = (e.target as HTMLInputElement).value;
                             setInputValue(val);
                             clearTimeout(debounceRef.current);
-                            debounceRef.current = window.setTimeout(() => { setSearch(val); }, 200);
+                            debounceRef.current = window.setTimeout(() => {
+                                setSearch(val);
+                            }, 200);
                         }}
                         class={`w-full text-xs sm:text-sm bg-transparent pl-5 sm:pl-6 ${inputValue ? 'pr-6' : 'pr-1'} py-1 outline-none`}
                         style={numFont}

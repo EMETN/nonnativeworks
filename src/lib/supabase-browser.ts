@@ -8,5 +8,5 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
  * Uses PUBLIC_ prefixed env vars so Astro exposes them to the client.
  */
 export function createBrowserSupabaseClient() {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+    return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
