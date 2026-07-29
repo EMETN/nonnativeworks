@@ -30,61 +30,65 @@ const path = Astro.url.pathname;
     </head>
     <body class="bg-gray-50 min-h-screen">
         <div class="sticky top-0 z-30">
-        <header class="bg-white border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-14">
-                    <div class="flex items-center gap-4">
-                        <a
-                            href="/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-gray-500 hover:text-gray-900 text-sm"
-                            >← Public site</a
-                        >
-                        <span class="text-gray-300">|</span>
-                        <span class="font-semibold text-gray-900"
-                            >Dashboard</span
-                        >
-                    </div>
-                    <form method="POST" action="/api/auth/signout" data-astro-reload>
-                        <button
-                            type="submit"
-                            class="text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
-                        >
-                            Sign out
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </header>
-
-        <nav
-            class="bg-white border-b border-gray-200"
-            aria-label="Admin sections"
-        >
-            <div
-                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden"
-            >
-                {
-                    navItems.map((item) => {
-                        const active = path === item.href;
-                        return (
+            <header class="bg-white border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-14">
+                        <div class="flex items-center gap-4">
                             <a
-                                href={item.href}
-                                aria-current={active ? 'page' : undefined}
-                                class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                                    active
-                                        ? 'border-gray-900 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
+                                href="/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-gray-500 hover:text-gray-900 text-sm"
+                                >← Public site</a
                             >
-                                {item.label}
-                            </a>
-                        );
-                    })
-                }
-            </div>
-        </nav>
+                            <span class="text-gray-300">|</span>
+                            <span class="font-semibold text-gray-900"
+                                >Dashboard</span
+                            >
+                        </div>
+                        <form
+                            method="POST"
+                            action="/api/auth/signout"
+                            data-astro-reload
+                        >
+                            <button
+                                type="submit"
+                                class="text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+                            >
+                                Sign out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <nav
+                class="bg-white border-b border-gray-200"
+                aria-label="Admin sections"
+            >
+                <div
+                    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden"
+                >
+                    {
+                        navItems.map((item) => {
+                            const active = path === item.href;
+                            return (
+                                <a
+                                    href={item.href}
+                                    aria-current={active ? 'page' : undefined}
+                                    class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                                        active
+                                            ? 'border-gray-900 text-gray-900'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    {item.label}
+                                </a>
+                            );
+                        })
+                    }
+                </div>
+            </nav>
         </div>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -129,7 +133,9 @@ const path = Astro.url.pathname;
                     .querySelector('.back-to-top')
                     ?.classList.toggle('is-visible', window.scrollY > 300);
             };
-            window.addEventListener('scroll', toggleBackToTop, { passive: true });
+            window.addEventListener('scroll', toggleBackToTop, {
+                passive: true,
+            });
             document.addEventListener('astro:page-load', toggleBackToTop);
         </script>
     </body>
@@ -156,7 +162,9 @@ const path = Astro.url.pathname;
     .back-to-top {
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
+        transition:
+            opacity 0.2s ease,
+            visibility 0.2s ease;
     }
     .back-to-top.is-visible {
         opacity: 1;

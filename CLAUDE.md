@@ -2,19 +2,11 @@
 
 ## What this is
 
-A website that tracks open job positions at companies where English is enough — no local language required. Visitors browse by country, see job ratios and category breakdowns. An admin operator curates data by generating LLM prompts from career page URLs and uploading the structured JSON output.
-
-## Status: All 5 phases complete
-
-- Phase 1: Project setup, Supabase schema, base layouts ✓
-- Phase 2: Homepage infographic (flag-colored bars + spheres) ✓
-- Phase 3: Country detail pages (sortable company table, category breakdown) ✓
-- Phase 4: Admin UI (scraper, data manager, position editor, skills, auth) ✓
-- Phase 5: SEO, Open Graph, sitemap, robots.txt, accessibility, favicon ✓
+A website that tracks open job positions at companies where English is enough — no local language required. Visitors browse by country, see job ratios and category breakdowns. An admin operator curates data through the admin scraper: paste a career page URL, review the scraped positions, then upload them.
 
 ## Stack
 
-- **Astro 5** — `output: 'server'` (full SSR; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
+- **Astro 7** — `output: 'server'` (full SSR; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin (no `tailwind.config.js`)
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)
@@ -50,7 +42,7 @@ Run the migration in the Supabase SQL editor:
 - `companies` has a `UNIQUE(name, country_id)` constraint — upserts on this
 - `positions` are always fully replaced on upload (delete + re-insert per company)
 - `country_stats` and `company_stats` are SQL views used by public pages
-- Auto-country creation: upload API creates unknown countries using `country_name` + `country_code` from LLM output
+- Auto-country creation: upload API creates unknown countries using `country_name` + `country_code` from the uploaded payload
 
 ## Scraping system
 
@@ -75,6 +67,7 @@ All `career_page_url` and position `url` fields auto-strip markdown link format 
 
 | File | Purpose |
 |------|---------|
+| `src/layouts/BaseLayout.astro` | Public page shell — SEO meta, Open Graph tags, favicon |
 | `src/lib/supabase.ts` | Server Supabase client (cookie auth) |
 | `src/lib/supabase-browser.ts` | Browser Supabase client (admin islands) |
 | `src/lib/queries.ts` | All DB query functions |

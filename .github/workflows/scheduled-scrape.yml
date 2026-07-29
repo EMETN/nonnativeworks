@@ -1,6 +1,6 @@
 name: Scheduled scrape
 
-# Runs every 2 days at 01:00 UTC.
+# Runs at 01:00 UTC, Mon–Fri.
 # Also available as a manual trigger (Actions tab → "Run workflow") for testing.
 on:
     schedule:
