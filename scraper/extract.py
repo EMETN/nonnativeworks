@@ -46,9 +46,12 @@ def extract_from_job_containers(soup, base_url: str) -> list[dict]:
     seen_titles: set[str] = set()
 
     # Narrow to elements with matching class or id — avoids full-tree scan
-    candidates = list(dict.fromkeys(
-        soup.find_all(class_=JOB_CLASS_PATTERNS) + soup.find_all(id=JOB_CLASS_PATTERNS)
-    ))
+    candidates = list(
+        dict.fromkeys(
+            soup.find_all(class_=JOB_CLASS_PATTERNS)
+            + soup.find_all(id=JOB_CLASS_PATTERNS)
+        )
+    )
     for tag in candidates:
         # Avoid deeply nested matches (only pick leaf-ish containers)
         if len(list(tag.find_all(class_=JOB_CLASS_PATTERNS))) > 2:

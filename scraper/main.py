@@ -14,18 +14,22 @@ Two-stage strategy:
      otherwise generic fallback (if static yields too few results)
 """
 
+import contextlib
 import json
 import os
 import sys
-from urllib.parse import urljoin
 
 import yaml
 
-from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
+from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import extract_jobs
 from platforms.academicwork import scrape_academicwork_static
 from platforms.arla import scrape_arla_static
-from platforms.attrax import scrape_attrax_static, scrape_attrax_playwright, enrich_attrax_descriptions
+from platforms.attrax import (
+    enrich_attrax_descriptions,
+    scrape_attrax_playwright,
+    scrape_attrax_static,
+)
 from platforms.barona import scrape_barona
 from platforms.generic_paginated import scrape_generic
 from platforms.njoyn import scrape_njoyn_playwright
@@ -52,6 +56,7 @@ def _match_generic_config(url: str) -> dict | None:
         if cfg.get("match", "") in url:
             return cfg
     return None
+
 
 MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 
@@ -130,27 +135,31 @@ def _scrape_playwright_inner(url: str) -> list[dict]:
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        print("playwright not installed — run: pip install playwright && playwright install chromium", file=sys.stderr)
+        print(
+            "playwright not installed — run: pip install playwright && playwright install chromium",
+            file=sys.stderr,
+        )
         return []
 
     with sync_playwright() as p:
-        page, cleanup = _open_browser(
-            p, user_agent="Mozilla/5.0"
-        )
+        page, cleanup = _open_browser(p, user_agent="Mozilla/5.0")
         _block_unnecessary_resources(page)
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=30_000)
             page.wait_for_timeout(2_000)
-            for selector in ["[id*='cookie'] button", "[class*='cookie'] button", "[aria-label='Accept']"]:
-                try:
+            for selector in [
+                "[id*='cookie'] button",
+                "[class*='cookie'] button",
+                "[aria-label='Accept']",
+            ]:
+                with contextlib.suppress(Exception):
                     page.click(selector, timeout=2_000)
-                except Exception:
-                    pass
             html = page.content()
         finally:
             cleanup()
 
     from bs4 import BeautifulSoup
+
     soup = BeautifulSoup(html, "html.parser")
     return extract_jobs(soup, url)
 
@@ -172,7 +181,9 @@ def main():
 
     generic_cfg = _match_generic_config(url)
     if generic_cfg:
-        print(f"generic scraper matched: {generic_cfg.get('name', url)}", file=sys.stderr)
+        print(
+            f"generic scraper matched: {generic_cfg.get('name', url)}", file=sys.stderr
+        )
         try:
             jobs = scrape_generic(url, generic_cfg)
         except Exception as e:
@@ -188,7 +199,9 @@ def main():
     jobs: list[dict] = []
 
     if platform == PLATFORM_ACADEMICWORK:
-        print("academicwork.fi detected — using dedicated static scraper", file=sys.stderr)
+        print(
+            "academicwork.fi detected — using dedicated static scraper", file=sys.stderr
+        )
         try:
             jobs = scrape_academicwork_static(url)
             print(f"Academic Work static found {len(jobs)} jobs", file=sys.stderr)
@@ -198,7 +211,9 @@ def main():
         return
 
     if platform == PLATFORM_ARLA:
-        print("jobs.arla.com detected — using dedicated static scraper", file=sys.stderr)
+        print(
+            "jobs.arla.com detected — using dedicated static scraper", file=sys.stderr
+        )
         try:
             jobs = scrape_arla_static(url)
             print(f"Arla static found {len(jobs)} jobs", file=sys.stderr)
@@ -208,7 +223,10 @@ def main():
         return
 
     if platform == PLATFORM_NJOYN:
-        print("njoyn detected — skipping static scrape, going straight to Playwright", file=sys.stderr)
+        print(
+            "njoyn detected — skipping static scrape, going straight to Playwright",
+            file=sys.stderr,
+        )
         try:
             jobs = scrape_njoyn_playwright(url)
             print(f"njoyn Playwright found {len(jobs)} jobs", file=sys.stderr)
@@ -218,7 +236,10 @@ def main():
         return
 
     if platform == PLATFORM_BARONA:
-        print("Barona detected — using hybrid scraper (WP API listing + selective Playwright enrichment)", file=sys.stderr)
+        print(
+            "Barona detected — using hybrid scraper (WP API listing + selective Playwright enrichment)",
+            file=sys.stderr,
+        )
         try:
             jobs = scrape_barona(url)
             print(f"Barona hybrid found {len(jobs)} jobs", file=sys.stderr)
@@ -228,7 +249,9 @@ def main():
         return
 
     if platform == PLATFORM_NESTE:
-        print("jobs.neste.com detected — using dedicated static scraper", file=sys.stderr)
+        print(
+            "jobs.neste.com detected — using dedicated static scraper", file=sys.stderr
+        )
         try:
             jobs = scrape_neste_static(url)
             print(f"Neste static found {len(jobs)} jobs", file=sys.stderr)
@@ -248,7 +271,10 @@ def main():
         return
 
     if platform == PLATFORM_ZALANDO:
-        print("jobs.zalando.com detected — using dedicated static scraper", file=sys.stderr)
+        print(
+            "jobs.zalando.com detected — using dedicated static scraper",
+            file=sys.stderr,
+        )
         try:
             jobs = scrape_zalando_static(url)
             print(f"Zalando static found {len(jobs)} jobs", file=sys.stderr)
@@ -262,17 +288,24 @@ def main():
 
     platform = detect_platform(html, url)
     if platform:
-        print(f"Detected platform: {platform} — using dedicated Playwright scraper", file=sys.stderr)
+        print(
+            f"Detected platform: {platform} — using dedicated Playwright scraper",
+            file=sys.stderr,
+        )
 
     if platform == PLATFORM_ATTRAX:
         try:
             jobs_static = scrape_attrax_static(url)
-            print(f"Attrax static scrape found {len(jobs_static)} jobs", file=sys.stderr)
+            print(
+                f"Attrax static scrape found {len(jobs_static)} jobs", file=sys.stderr
+            )
             jobs = jobs_static
         except Exception as e:
             print(f"Attrax static scrape failed: {e}", file=sys.stderr)
         if len(jobs) < MIN_JOBS_STATIC:
-            print("Attrax static yielded too few — trying Playwright...", file=sys.stderr)
+            print(
+                "Attrax static yielded too few — trying Playwright...", file=sys.stderr
+            )
             try:
                 jobs_pw = scrape_attrax_playwright(url)
                 print(f"Attrax Playwright found {len(jobs_pw)} jobs", file=sys.stderr)
@@ -281,8 +314,11 @@ def main():
             except Exception as e:
                 print(f"Attrax Playwright failed: {e}", file=sys.stderr)
         import requests as _req
+
         _session = _req.Session()
-        _session.headers["User-Agent"] = "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+        _session.headers["User-Agent"] = (
+            "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+        )
         enrich_attrax_descriptions(jobs, _session)
     elif len(jobs) < MIN_JOBS_STATIC:
         print("Falling back to generic Playwright...", file=sys.stderr)

@@ -22,7 +22,7 @@ import re
 import sys
 from urllib.parse import urljoin
 
-from extract import build_job, SKIP_LOCATION_PATTERNS
+from extract import SKIP_LOCATION_PATTERNS, build_job
 from title_language import _title_appears_non_english
 
 _ROVIO_HEADERS = {
@@ -120,7 +120,9 @@ def extract_rovio_jobs(soup, base_url: str) -> list[dict]:
         if raw_location:
             # Split multi-city strings (e.g. "Helsinki or Barcelona or Stockholm")
             # and fan out one job per tracked country found.
-            parts = [p.strip() for p in _LOCATION_SPLIT_RE.split(raw_location) if p.strip()]
+            parts = [
+                p.strip() for p in _LOCATION_SPLIT_RE.split(raw_location) if p.strip()
+            ]
             seen_cc: set[str] = set()
             cc_city_pairs: list[tuple[str, str]] = []
             for part in parts:
@@ -155,7 +157,11 @@ def _enrich_rovio_descriptions(jobs: list[dict]) -> None:
     except ImportError:
         return
 
-    targets = [j for j in jobs if j.get("url") and not _title_appears_non_english(j.get("title", ""))]
+    targets = [
+        j
+        for j in jobs
+        if j.get("url") and not _title_appears_non_english(j.get("title", ""))
+    ]
     if not targets:
         return
 
@@ -165,7 +171,10 @@ def _enrich_rovio_descriptions(jobs: list[dict]) -> None:
         by_url.setdefault(job["url"], []).append(job)
 
     unique_urls = list(by_url.keys())
-    print(f"Rovio: fetching descriptions for {len(unique_urls)} unique job pages ({len(targets)} entries)", file=sys.stderr)
+    print(
+        f"Rovio: fetching descriptions for {len(unique_urls)} unique job pages ({len(targets)} entries)",
+        file=sys.stderr,
+    )
     session = requests.Session()
     session.headers.update(_ROVIO_HEADERS)
 
