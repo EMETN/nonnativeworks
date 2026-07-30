@@ -54,7 +54,9 @@ _HEADERS = {
 # The jobs block appears in the page as {"status":200,"hits":N,"totalHits":N,...}
 # embedded inside phApp.ddo. We match it directly — no reliance on the
 # /*<!--*/ comment marker which is HTML-entity-encoded in the actual response.
-_JSON_START_RE = re.compile(r'(\{"status"\s*:\s*200\s*,\s*"hits"\s*:\s*\d+\s*,\s*"totalHits")')
+_JSON_START_RE = re.compile(
+    r'(\{"status"\s*:\s*200\s*,\s*"hits"\s*:\s*\d+\s*,\s*"totalHits")'
+)
 
 # Field names (in priority order) where the full description might live in
 # the detail-page JSON. Some ATS platforms use 'description', others 'body', etc.
@@ -114,7 +116,10 @@ def _extract_description(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for el in soup.find_all(["div", "section", "article"]):
         cls = " ".join(el.get("class") or []).lower()
-        if any(kw in cls for kw in ("description", "job-detail", "job-content", "jobdetail")):
+        if any(
+            kw in cls
+            for kw in ("description", "job-detail", "job-content", "jobdetail")
+        ):
             text = el.get_text(strip=True)
             if len(text) > 100:
                 return str(el)
@@ -185,8 +190,7 @@ def scrape_arla_static(url: str) -> list[dict]:
                 break
 
         location = (
-            raw.get("location")
-            or f"{raw.get('city', '')}, {raw.get('country', '')}"
+            raw.get("location") or f"{raw.get('city', '')}, {raw.get('country', '')}"
         ).strip(", ")
 
         seq_no = raw.get("jobSeqNo", "")
@@ -218,7 +222,8 @@ def scrape_arla_static(url: str) -> list[dict]:
     # Only enrich jobs in tracked countries — fetching descriptions for jobs in
     # Canada, UK, Poland, etc. wastes time and can cause timeouts on GitHub Actions.
     english_jobs = [
-        j for j in result
+        j
+        for j in result
         if not _title_appears_non_english(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]
