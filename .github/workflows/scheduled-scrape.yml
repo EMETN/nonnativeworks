@@ -156,27 +156,27 @@ jobs:
 
             - name: Start Astro server
               run: |
-                doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
-                echo "SERVER_PID=$!" >> $GITHUB_ENV
+                  doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
+                  echo "SERVER_PID=$!" >> $GITHUB_ENV
               env:
-                HOST: 127.0.0.1
-                PORT: 4321
+                  HOST: 127.0.0.1
+                  PORT: 4321
 
             - name: Wait for server to be ready
               run: |
-                echo "Waiting for http://localhost:4321..."
-                for i in $(seq 1 60); do
-                    if curl -s -o /dev/null http://localhost:4321; then
-                        echo "Server ready after ${i}s"
-                        exit 0
-                    fi
-                    echo "  attempt $i/60..."
-                    sleep 1
-                done
-                echo "--- Astro server log ---"
-                cat /tmp/astro-server.log
-                echo "Server did not become ready within 60s"
-                exit 1
+                  echo "Waiting for http://localhost:4321..."
+                  for i in $(seq 1 60); do
+                      if curl -s -o /dev/null http://localhost:4321; then
+                          echo "Server ready after ${i}s"
+                          exit 0
+                      fi
+                      echo "  attempt $i/60..."
+                      sleep 1
+                  done
+                  echo "--- Astro server log ---"
+                  cat /tmp/astro-server.log
+                  echo "Server did not become ready within 60s"
+                  exit 1
 
             # ── Run ───────────────────────────────────────────────────────────────
 

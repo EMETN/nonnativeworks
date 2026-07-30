@@ -22,7 +22,7 @@ import json
 import re
 import sys
 
-from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
+from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from title_language import _title_appears_non_english
 
 # barona.fi WP AJAX listing endpoint
@@ -72,13 +72,15 @@ def _fetch_barona_listing() -> list[dict]:
             if job_id in seen_ids:
                 continue
             seen_ids.add(job_id)
-            jobs.append({
-                "title": item.get("title", ""),
-                "url": item.get("applyUrl", ""),
-                "location": item.get("country", ""),   # ISO2 code e.g. "FI"
-                "city": item.get("city", ""),
-                "descriptionHtml": item.get("description", ""),
-            })
+            jobs.append(
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("applyUrl", ""),
+                    "location": item.get("country", ""),  # ISO2 code e.g. "FI"
+                    "city": item.get("city", ""),
+                    "descriptionHtml": item.get("description", ""),
+                }
+            )
             new_count += 1
 
         print(
@@ -136,7 +138,8 @@ def _scrape_barona_inner(url: str) -> list[dict]:
     # Only English-titled jobs need enrichment — non-English titles already
     # signal a native-language requirement via Phase 1a of the TS classifier.
     enrich_targets = [
-        j for j in jobs
+        j
+        for j in jobs
         if j.get("url") and not _title_appears_non_english(j.get("title", ""))
     ]
     skipped = len(jobs) - len(enrich_targets)
@@ -169,7 +172,10 @@ def _scrape_barona_inner(url: str) -> list[dict]:
 
         try:
             # One page load to establish Cloudflare clearance.
-            print("barona: opening baronacareers.com for Cloudflare clearance…", file=sys.stderr)
+            print(
+                "barona: opening baronacareers.com for Cloudflare clearance…",
+                file=sys.stderr,
+            )
             pw_page.goto(
                 "https://www.baronacareers.com/fi/en/jobs",
                 wait_until="domcontentloaded",
@@ -188,7 +194,10 @@ def _scrape_barona_inner(url: str) -> list[dict]:
                 result = _browser_fetch(pw_page, api_url)
                 if not result:
                     failed += 1
-                    print(f"barona: page_info fetch returned null for {job['url']}", file=sys.stderr)
+                    print(
+                        f"barona: page_info fetch returned null for {job['url']}",
+                        file=sys.stderr,
+                    )
                     continue
 
                 requirements = (

@@ -17,6 +17,8 @@
         "test:watch": "vitest",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
+        "format:py": "ruff format scraper",
+        "lint:py": "ruff check scraper",
         "clean": "rm -rf node_modules dist .pnpm-store .netlify"
     },
     "dependencies": {
