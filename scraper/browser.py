@@ -7,7 +7,9 @@ import os
 import queue
 import sys
 
-PLAYWRIGHT_TIMEOUT_SECONDS = 600  # default hard wall-clock limit for any Playwright scrape
+PLAYWRIGHT_TIMEOUT_SECONDS = (
+    600  # default hard wall-clock limit for any Playwright scrape
+)
 
 # Set PLAYWRIGHT_CDP_URL to connect to a browser running outside the container
 # instead of launching Chromium locally (recommended on WSL2 devcontainers).
@@ -92,15 +94,19 @@ def _open_browser(p, *, user_agent: str | None = None, viewport: dict | None = N
 
 def _block_unnecessary_resources(page) -> None:
     """Abort requests for resource types that aren't needed to scrape job listings."""
+
     def _handle(route):
         if route.request.resource_type in _BLOCK_RESOURCE_TYPES:
             route.abort()
         else:
             route.continue_()
+
     page.route("**/*", _handle)
 
 
-def _run_in_subprocess(fn, *args, timeout: int = PLAYWRIGHT_TIMEOUT_SECONDS) -> list[dict]:
+def _run_in_subprocess(
+    fn, *args, timeout: int = PLAYWRIGHT_TIMEOUT_SECONDS
+) -> list[dict]:
     """
     Run fn(*args) in a child process with a hard timeout.
     If the child crashes or times out it cannot kill the parent,
@@ -117,7 +123,9 @@ def _run_in_subprocess(fn, *args, timeout: int = PLAYWRIGHT_TIMEOUT_SECONDS) -> 
             result_q.put(("err", str(e)))
 
     proc = multiprocessing.Process(target=worker, daemon=True)
-    _log(f"[subprocess] starting {fn.__name__} (available RAM: {_mem_mb()} MB, timeout: {timeout}s)")
+    _log(
+        f"[subprocess] starting {fn.__name__} (available RAM: {_mem_mb()} MB, timeout: {timeout}s)"
+    )
     proc.start()
 
     # Read from the queue BEFORE joining — if the result is large it fills the

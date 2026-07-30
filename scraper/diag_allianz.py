@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import json, re, requests
+import json
+import re
+
+import requests
 
 BASE = "https://careers.allianz.com/global/en/search-results"
 
@@ -10,11 +13,11 @@ HEADERS = {
 
 decoder = json.JSONDecoder()
 
+
 def extract_jobs(html):
     # find all JSON objects in page
-    results = []
 
-    for match in re.finditer(r'\{', html):
+    for match in re.finditer(r"\{", html):
         pos = match.start()
         try:
             obj, _ = decoder.raw_decode(html, pos)

@@ -68,9 +68,9 @@ from pathlib import Path
 # They are NOT in scraper/requirements.txt to avoid pulling them into
 # the devcontainer. Add them to scraper/render-requirements.txt instead.
 try:
+    import uvicorn
     from fastapi import FastAPI, Header, HTTPException, Request
     from fastapi.responses import JSONResponse
-    import uvicorn
 except ImportError:
     print(
         "fastapi and uvicorn are not installed.\n"
@@ -123,10 +123,13 @@ async def scrape(
         )
 
     import json
+
     try:
         jobs = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        raise HTTPException(500, f"Scraper returned invalid JSON. {result.stderr.strip()}")
+    except json.JSONDecodeError as err:
+        raise HTTPException(
+            500, f"Scraper returned invalid JSON. {result.stderr.strip()}"
+        ) from err
 
     return JSONResponse(content=jobs)
 

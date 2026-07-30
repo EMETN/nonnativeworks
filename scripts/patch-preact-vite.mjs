@@ -10,18 +10,27 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const require = createRequire(import.meta.url);
 
 // Patch 1: @preact/preset-vite — guard against undefined `this`
-const preactFile = resolve(__dirname, '../node_modules/@preact/preset-vite/dist/esm/index.mjs');
+const preactFile = resolve(
+    __dirname,
+    '../node_modules/@preact/preset-vite/dist/esm/index.mjs',
+);
 let preactContent = readFileSync(preactFile, 'utf8');
 const preactBefore = `"meta" in this && this.meta && typeof this.meta === "object"`;
-const preactAfter  = `this != null && "meta" in this && this.meta && typeof this.meta === "object"`;
+const preactAfter = `this != null && "meta" in this && this.meta && typeof this.meta === "object"`;
 
 if (preactContent.includes(preactBefore)) {
-  writeFileSync(preactFile, preactContent.replace(preactBefore, preactAfter), 'utf8');
-  console.log('✔ Patched @preact/preset-vite');
+    writeFileSync(
+        preactFile,
+        preactContent.replace(preactBefore, preactAfter),
+        'utf8',
+    );
+    console.log('✔ Patched @preact/preset-vite');
 } else if (preactContent.includes(preactAfter)) {
-  console.log('✔ @preact/preset-vite already patched');
+    console.log('✔ @preact/preset-vite already patched');
 } else {
-  console.warn('⚠ Could not find patch target in @preact/preset-vite — manual check needed');
+    console.warn(
+        '⚠ Could not find patch target in @preact/preset-vite — manual check needed',
+    );
 }
 
 // Patch 2: @astrojs/preact client — convert dynamic import("@preact/signals") to static import
@@ -31,20 +40,26 @@ if (preactContent.includes(preactBefore)) {
 // producing `import('path.js'?dpl=...)` which is a SyntaxError.
 // Fix: convert the conditional dynamic import to a top-level static import that Netlify
 // handles correctly. The signal module is tiny and always installed, so eager loading is fine.
-const preactClientFile = resolve(__dirname, '../node_modules/@astrojs/preact/dist/client.js');
+const preactClientFile = resolve(
+    __dirname,
+    '../node_modules/@astrojs/preact/dist/client.js',
+);
 let preactClientContent = readFileSync(preactClientFile, 'utf8');
 const dynamicImportLine = `const { signal } = await import("@preact/signals");`;
 const staticImportFix = `const { signal } = await Promise.resolve({ signal: __preact_signal });`;
 
 if (preactClientContent.includes(dynamicImportLine)) {
-  preactClientContent = `import { signal as __preact_signal } from "@preact/signals";\n` +
-    preactClientContent.replace(dynamicImportLine, staticImportFix);
-  writeFileSync(preactClientFile, preactClientContent, 'utf8');
-  console.log('✔ Patched @astrojs/preact client (static signals import)');
+    preactClientContent =
+        `import { signal as __preact_signal } from "@preact/signals";\n` +
+        preactClientContent.replace(dynamicImportLine, staticImportFix);
+    writeFileSync(preactClientFile, preactClientContent, 'utf8');
+    console.log('✔ Patched @astrojs/preact client (static signals import)');
 } else if (preactClientContent.includes('__preact_signal')) {
-  console.log('✔ @astrojs/preact client already patched');
+    console.log('✔ @astrojs/preact client already patched');
 } else {
-  console.warn('⚠ Could not find dynamic import target in @astrojs/preact client — manual check needed');
+    console.warn(
+        '⚠ Could not find dynamic import target in @astrojs/preact client — manual check needed',
+    );
 }
 
 // Patch 3: Astro client build — disable esbuild minify to prevent hash-placeholder crash
@@ -56,13 +71,20 @@ const astroDir = dirname(dirname(astroEntry)); // go up from dist/something to p
 const astroBuildFile = resolve(astroDir, 'dist/core/build/static-build.js');
 let astroContent = readFileSync(astroBuildFile, 'utf8');
 
-const astroTarget = /(\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\]:\s*\{[\s\S]*?)minify:\s*true/;
+const astroTarget =
+    /(\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\]:\s*\{[\s\S]*?)minify:\s*true/;
 if (astroTarget.test(astroContent)) {
-  astroContent = astroContent.replace(astroTarget, '$1minify: false');
-  writeFileSync(astroBuildFile, astroContent, 'utf8');
-  console.log('✔ Patched Astro client build (disabled esbuild minify)');
-} else if (/\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\][\s\S]*?minify:\s*false/.test(astroContent)) {
-  console.log('✔ Astro client build already patched');
+    astroContent = astroContent.replace(astroTarget, '$1minify: false');
+    writeFileSync(astroBuildFile, astroContent, 'utf8');
+    console.log('✔ Patched Astro client build (disabled esbuild minify)');
+} else if (
+    /\[ASTRO_VITE_ENVIRONMENT_NAMES\.client\][\s\S]*?minify:\s*false/.test(
+        astroContent,
+    )
+) {
+    console.log('✔ Astro client build already patched');
 } else {
-  console.warn('⚠ Could not find patch target in Astro static-build.js — manual check needed');
+    console.warn(
+        '⚠ Could not find patch target in Astro static-build.js — manual check needed',
+    );
 }
