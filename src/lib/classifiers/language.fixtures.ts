@@ -1368,4 +1368,94 @@ export const CASES: FixtureCase[] = [
     requires: true,
     advantage: false,
   },
+
+  // ── Multi-language country requirement/advantage ordering (2026-07-31) ────
+  // CH/BE/LU track multiple languages per country. A requirement signal for
+  // one language must win even when an advantage signal for a DIFFERENT
+  // country language appears earlier in the text — see
+  // languageHasGenuineRequirement / anyGenuineRequirement in language.ts.
+  {
+    label: '2a — hyphenated "German-native" → CH required',
+    title: 'Engineer',
+    desc: 'Swiss German-native, English fluent speaker',
+    country: 'CH',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Very good French skills; German skills is an advantage" → CH required (French wins over German advantage)',
+    title: 'Engineer',
+    desc: 'Very good French and English skills; German skills is an advantage',
+    country: 'CH',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Fluent in English and French. Dutch is considered an asset." → BE required (French wins over Dutch advantage)',
+    title: 'Engineer',
+    desc: 'Fluent in English and French. Dutch is considered an asset.',
+    country: 'BE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Fluency both in French (C1) and English (B2)...Dutch is an asset." → BE required',
+    title: 'Engineer',
+    desc: 'Fluency both in French (C1) and English (B2) (Written, read & spoken). Dutch is an asset.',
+    country: 'BE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "You speak both French and English (German is an asset)" → BE required',
+    title: 'Engineer',
+    desc: 'You speak both French and English (German is an asset)',
+    country: 'BE',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── "{lang} proficient" requirement (2026-07-31) ───────────────────────────
+  {
+    label: '2a — "Language: French proficient, English good level" → FR required',
+    title: 'Engineer',
+    desc: 'Language: French proficient, English good level',
+    country: 'FR',
+    requires: true,
+    advantage: false,
+  },
+
+  // ── Baseline requirement phrasing sanity checks (2026-07-31) ───────────────
+  {
+    label: '2a — "Fluent in written and spoken French and English" → FR required',
+    title: 'Engineer',
+    desc: 'Fluent in written and spoken French and English',
+    country: 'FR',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Fluent in written and spoken German and English" → DE required',
+    title: 'Engineer',
+    desc: 'Fluent in written and spoken German and English',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Strong knowledge of French and English." → FR required',
+    title: 'Engineer',
+    desc: 'Strong knowledge of French and English.',
+    country: 'FR',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Fluent German and English skills, and Finnish language skills are an advantage" → DE required',
+    title: 'Engineer',
+    desc: 'Fluent German and English skills, and Finnish language skills are an advantage',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
 ];
