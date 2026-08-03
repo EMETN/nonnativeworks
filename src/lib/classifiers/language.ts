@@ -1345,6 +1345,43 @@ export function detectNativeLanguage(
     }
   }
 
+  // "{Lang1}, {Lang2}, and {Lang3}: [preamble] proficiency is required for all
+  // N languages" — an explicit enumeration where every listed language is
+  // mandated, not just one. This doesn't fit the single-language requirement
+  // templates above (there's no "advantage"/"required" attached to any one
+  // language name directly), so it's handled as its own signal: extract the
+  // listed languages via KEYWORD_TO_CANONICAL_NAME and flag as required
+  // whenever any of them is not English — regardless of whether it happens to
+  // be this country's own language. A posting can legitimately require a
+  // language that has nothing to do with where the job is based (e.g. this
+  // exact phrase turning up on a job in a country other than NL/BE/FR), and
+  // the actual required language(s) still need to be recorded, not just the
+  // country's default. e.g. "Dutch, French, and English: Professional working
+  // proficiency is required for all three languages."
+  {
+    const ALL_LANGUAGES_REQUIRED_RE =
+      /\b((?:[a-zà-öø-ÿ]+(?:,\s*[a-zà-öø-ÿ]+)*,?\s+and\s+[a-zà-öø-ÿ]+)):\s*[a-zà-öø-ÿ ]*?(?:proficiency|fluency)\s+is\s+required\s+for\s+all\s+(?:two|three|four|five|the)\s+languages\b/;
+    const allLangsMatch = combined.match(ALL_LANGUAGES_REQUIRED_RE);
+    if (allLangsMatch) {
+      const listedWords = allLangsMatch[1]
+        .split(/,|\band\b/)
+        .map((w) => w.trim())
+        .filter(Boolean);
+      const requiredNames = [...new Set(
+        listedWords
+          .filter((w) => w !== 'english')
+          .map((w) => KEYWORD_TO_CANONICAL_NAME[w])
+          .filter((n): n is string => Boolean(n)),
+      )];
+      if (requiredNames.length > 0) {
+        return {
+          value: true, local_language_advantage: false, requiredLanguages: requiredNames, preferredLanguages: [],
+          signals: [{ phase: '2a', description: 'enumerated "required for all N languages" phrase', matched: allLangsMatch[0] }],
+        };
+      }
+    }
+  }
+
   for (const lang of languages) {
     const langAdvRegex = buildAdvantageRegex(lang);
     for (const signal of buildRequirementSignals(lang)) {

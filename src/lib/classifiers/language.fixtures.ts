@@ -1458,4 +1458,46 @@ export const CASES: FixtureCase[] = [
     requires: true,
     advantage: false,
   },
+
+  // ── "{lang1}, {lang2}, and English: proficiency required for all N languages" (2026-08-03) ─
+  {
+    label: '2a — "Dutch, French, and English: ...required for all three languages" → NL required',
+    title: 'Engineer',
+    desc: 'Dutch, French, and English: Professional working proficiency is required for all three languages.',
+    country: 'NL',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Dutch, French, and English: ...required for all three languages" → BE required',
+    title: 'Engineer',
+    desc: 'Dutch, French, and English: Professional working proficiency is required for all three languages.',
+    country: 'BE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "Dutch, French, and English: ...required for all three languages" → DE required even though neither listed language is German (matched language, not country language, drives the verdict)',
+    title: 'Engineer',
+    desc: 'Dutch, French, and English: Professional working proficiency is required for all three languages.',
+    country: 'DE',
+    requires: true,
+    advantage: false,
+  },
+  {
+    label: '2a — "English, English, and English: ...required for all three languages" → no other language named, FR NOT required',
+    title: 'Engineer',
+    desc: 'English, English, and English: Professional working proficiency is required for all three languages.',
+    country: 'FR',
+    requires: false,
+    advantage: false,
+  },
+  {
+    label: '2a — "Very good French skills; German skills is an advantage" → BE required (French wins over German advantage, non-CH multi-language country)',
+    title: 'Engineer',
+    desc: 'Very good French and English skills; German skills is an advantage',
+    country: 'BE',
+    requires: true,
+    advantage: false,
+  },
 ];
