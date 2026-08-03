@@ -1,5 +1,5 @@
 import type { RawJob } from './types';
-import { titleAppearsNonEnglish } from './title-language';
+import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 
 const DESCRIPTION_BATCH = 1;
 
@@ -76,7 +76,7 @@ export async function fetchWorkableJobs(
 }
 
 export async function enrichWorkableDescriptions(jobs: RawJob[], account: string, skipUrls?: Set<string>): Promise<void> {
-  const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglish(j.title) && !(j.url && skipUrls?.has(j.url)));
+  const targets = jobs.filter((j) => j.sourceId && !titleAppearsNonEnglishExcludingCityNames(j.title) && !(j.url && skipUrls?.has(j.url)));
   console.log(`[workable] fetching descriptions for ${targets.length} of ${jobs.length} jobs`);
 
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {

@@ -13,7 +13,7 @@ from urllib.parse import urljoin
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
@@ -314,7 +314,7 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
     Jobs whose description text is shorter than _MIN_DESCRIPTION_TEXT_LENGTH after stripping
     HTML are marked with _placeholder=True so the caller can filter them out.
     """
-    targets = [j for j in jobs if j.get("url") and not _title_appears_non_english(j.get("title", ""))]
+    targets = [j for j in jobs if j.get("url") and not _title_appears_non_english_excluding_cities(j.get("title", ""))]
     if not targets:
         return
 

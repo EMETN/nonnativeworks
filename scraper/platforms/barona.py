@@ -23,7 +23,7 @@ import re
 import sys
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 # barona.fi WP AJAX listing endpoint
 _LISTING_BASE = (
@@ -137,7 +137,7 @@ def _scrape_barona_inner(url: str) -> list[dict]:
     # signal a native-language requirement via Phase 1a of the TS classifier.
     enrich_targets = [
         j for j in jobs
-        if j.get("url") and not _title_appears_non_english(j.get("title", ""))
+        if j.get("url") and not _title_appears_non_english_excluding_cities(j.get("title", ""))
     ]
     skipped = len(jobs) - len(enrich_targets)
     print(

@@ -1,6 +1,6 @@
 import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
-import { titleAppearsNonEnglish } from './title-language';
+import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
 
 const MAX_PAGES = 50;        // safety cap to avoid infinite loops
@@ -311,7 +311,7 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
   const targets = jobs.filter((j) => {
     if (!j.url) return false;
     if (skipUrls?.has(j.url)) return false;
-    const wantsDescription = !titleAppearsNonEnglish(j.title) && !j.descriptionHtml && !j.descriptionText;
+    const wantsDescription = !titleAppearsNonEnglishExcludingCityNames(j.title) && !j.descriptionHtml && !j.descriptionText;
     const wantsLocation = !!locationRegex && !j.location;
     return wantsDescription || wantsLocation;
   });
@@ -337,7 +337,7 @@ export async function enrichDescriptions(jobs: RawJob[], locationRegex?: RegExp,
           htmlFailed++;
           return;
         }
-        if (!titleAppearsNonEnglish(job.title) && !job.descriptionText) {
+        if (!titleAppearsNonEnglishExcludingCityNames(job.title) && !job.descriptionText) {
           if (descriptionRegex) {
             const m = html.match(descriptionRegex);
             job.descriptionHtml = m?.[1] ?? html;
@@ -390,7 +390,7 @@ async function enrichDescriptionsFromApi(
   jobFunctionField?: string,
   workModelField?: string,
 ): Promise<void> {
-  const targets = jobs.filter((j) => (j.descriptionApiId ?? j.sourceId) && !titleAppearsNonEnglish(j.title) && !j.descriptionText && !j.descriptionHtml);
+  const targets = jobs.filter((j) => (j.descriptionApiId ?? j.sourceId) && !titleAppearsNonEnglishExcludingCityNames(j.title) && !j.descriptionText && !j.descriptionHtml);
   console.log(`[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`);
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
@@ -452,7 +452,7 @@ async function enrichLanguageRequirementFromApi(
   headers: Record<string, string>,
 ): Promise<void> {
   const targets = jobs.filter(
-    (j) => j.url && !titleAppearsNonEnglish(j.title) && j.requires_native_language === undefined,
+    (j) => j.url && !titleAppearsNonEnglishExcludingCityNames(j.title) && j.requires_native_language === undefined,
   );
   console.log(`[enrichLanguageRequirementFromApi] ${targets.length} targets (${jobs.length - targets.length} skipped)`);
   const transformRe = new RegExp(jobUrlTransform.match);

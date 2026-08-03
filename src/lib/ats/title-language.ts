@@ -1,3 +1,5 @@
+import { getCityNames } from './country-lookup';
+
 /**
  * Shared utility for detecting non-English job titles.
  * Used by fetchers to skip description enrichment for titles that already
@@ -418,4 +420,41 @@ export function titleAppearsNonEnglish(title: string): boolean {
   //   Polish: ł ń ś ź ż ć ó ą ę
   if (NON_ASCII_RE.test(title)) return true;
   return KEYWORDS_RE.test(title);
+}
+
+let _cityNamePattern: RegExp | null | undefined;
+
+function stripNonAsciiCityNames(title: string): string {
+  if (_cityNamePattern === undefined) {
+    const cityNames = getCityNames().filter((n) => /[^\x00-\x7F]/.test(n));
+    if (cityNames.length === 0) {
+      _cityNamePattern = null;
+    } else {
+      const escaped = cityNames
+        .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .sort((a, b) => b.length - a.length);
+      _cityNamePattern = new RegExp(escaped.join('|'), 'gi');
+    }
+  }
+  if (!_cityNamePattern) return title;
+  _cityNamePattern.lastIndex = 0;
+  return title.replace(_cityNamePattern, ' ');
+}
+
+/**
+ * Like titleAppearsNonEnglish, but first strips known non-ASCII city names.
+ *
+ * A city name is not a reliable enough signal on its own to skip fetching a
+ * job's description entirely — e.g. "Besiktningsman VVS till Linköping" has
+ * "Linköping" as its only non-ASCII content, but so would an English title
+ * that merely happens to be based in an accented-named city. Rather than
+ * guess, when the ONLY non-English signal in a title is a city name, this
+ * returns false — meaning "go ahead and fetch the description" — so the real
+ * classifier (which also strips city names, but has the description text and
+ * full signal-phrase/tinyld machinery available) gets a chance to decide
+ * properly instead of the job silently defaulting to English for lack of any
+ * fetched content.
+ */
+export function titleAppearsNonEnglishExcludingCityNames(title: string): boolean {
+  return titleAppearsNonEnglish(stripNonAsciiCityNames(title));
 }
