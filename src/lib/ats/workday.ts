@@ -90,7 +90,10 @@ import type { RawJob } from "./types";
 import { titleAppearsNonEnglish } from "./title-language";
 import { lookupCountryFromLocation, extractCitiesForCountry, isCountryKey } from "./country-lookup";
 
-const DESCRIPTION_BATCH = 10;
+const DESCRIPTION_BATCH = 5;
+// Pause between concurrent batches so a throttled batch gets breathing room
+// before the next one fires, on top of the per-request 429 backoff.
+const INTER_BATCH_DELAY_MS = 400;
 
 function extractOgDescription(html: string): string | undefined {
   const m =
@@ -164,6 +167,38 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const MAX_BACKOFF_RETRIES = 3;
+const BASE_BACKOFF_MS = 1000;
+
+function parseRetryAfterMs(header: string | null): number | null {
+  if (!header) return null;
+  const asSeconds = Number(header);
+  if (!Number.isNaN(asSeconds)) return asSeconds * 1000;
+  const asDate = Date.parse(header);
+  return Number.isNaN(asDate) ? null : Math.max(0, asDate - Date.now());
+}
+
+/**
+ * fetch() wrapper that retries on 429 with exponential backoff + jitter,
+ * honoring a Retry-After header when the server sends one. Workday throttles
+ * bursts of concurrent detail-page requests (common for large companies like
+ * Thales with hundreds of postings), and without this the batch loops below
+ * would silently lose data for every job that got rate-limited.
+ */
+async function fetchWithBackoff(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status === 429 && attempt < MAX_BACKOFF_RETRIES) {
+      const wait =
+        parseRetryAfterMs(res.headers.get("retry-after")) ??
+        BASE_BACKOFF_MS * 2 ** attempt + Math.random() * 250;
+      await delay(wait);
+      continue;
+    }
+    return res;
+  }
+}
+
 /**
  * Fetches a single job's description and sets it on `job` if found.
  * Returns whether a description was set. Throws on network errors or a
@@ -178,7 +213,7 @@ async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
   const apiUrl = publicUrlToDetailApiUrl(job.url!);
   if (apiUrl) {
     const origin = new URL(job.url!).origin;
-    const apiRes = await fetch(apiUrl, {
+    const apiRes = await fetchWithBackoff(apiUrl, {
       headers: {
         accept: "application/json",
         origin,
@@ -198,7 +233,7 @@ async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
     }
   }
   // Fall back to scraping og:description from the HTML page.
-  const res = await fetch(job.url!, {
+  const res = await fetchWithBackoff(job.url!, {
     headers: { "User-Agent": "Mozilla/5.0" },
   });
   if (!res.ok) {
@@ -242,6 +277,7 @@ export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<s
         }
       }),
     );
+    if (i + DESCRIPTION_BATCH < targets.length) await delay(INTER_BATCH_DELAY_MS);
   }
   if (failures > 0) {
     console.log(
@@ -350,7 +386,7 @@ interface WorkdayResponse {
 
 
 const PAGE_SIZE = 20; // Workday rejects limit > 20
-const EXPAND_BATCH = 10;
+const EXPAND_BATCH = 5;
 const MULTI_LOC_RE = /^\d+ locations?$|^multiple locations?$/i;
 
 /**
@@ -400,7 +436,7 @@ async function fetchJobLocations(
   const origin = `https://${host}`;
   const url = `${origin}/wday/cxs/${company}/${site}${externalPath}`;
   try {
-    const res = await fetch(url, {
+    const res = await fetchWithBackoff(url, {
       headers: {
         accept: "application/json",
         origin,
@@ -536,6 +572,7 @@ export async function fetchWorkdayJobs(
           });
         }),
       );
+      if (i + EXPAND_BATCH < venueQueue.length) await delay(INTER_BATCH_DELAY_MS);
     }
   }
 
@@ -569,6 +606,7 @@ export async function fetchWorkdayJobs(
           });
         }),
       );
+      if (i + EXPAND_BATCH < needsCountryDetail.length) await delay(INTER_BATCH_DELAY_MS);
     }
   }
 
@@ -640,6 +678,7 @@ export async function fetchWorkdayJobs(
           }
         }),
       );
+      if (i + EXPAND_BATCH < multiLocQueue.length) await delay(INTER_BATCH_DELAY_MS);
     }
   }
 
