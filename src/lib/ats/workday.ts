@@ -157,6 +157,62 @@ function publicUrlToDetailApiUrl(publicUrl: string): string | null {
   }
 }
 
+const DESCRIPTION_FETCH_ATTEMPTS = 2;
+const DESCRIPTION_RETRY_DELAY_MS = 750;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetches a single job's description and sets it on `job` if found.
+ * Returns whether a description was set. Throws on network errors or a
+ * failed HTML fallback so the caller can retry — a non-ok JSON API response
+ * is not thrown here since falling back to the HTML page is the intended
+ * behaviour, not a failure.
+ */
+async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
+  // Prefer the JSON detail API — jobPostingInfo.jobDescription is the
+  // full rich description, far more useful for language classification
+  // than the short og:description meta tag.
+  const apiUrl = publicUrlToDetailApiUrl(job.url!);
+  if (apiUrl) {
+    const origin = new URL(job.url!).origin;
+    const apiRes = await fetch(apiUrl, {
+      headers: {
+        accept: "application/json",
+        origin,
+        referer: `${origin}/`,
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      },
+    });
+    if (apiRes.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await apiRes.json();
+      const info = data.jobPostingInfo ?? data.jobPosting ?? data;
+      if (typeof info.jobDescription === "string" && info.jobDescription) {
+        job.descriptionText = stripHtml(info.jobDescription);
+        return true;
+      }
+    }
+  }
+  // Fall back to scraping og:description from the HTML page.
+  const res = await fetch(job.url!, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+  });
+  if (!res.ok) {
+    throw new Error(`HTML fallback returned ${res.status}`);
+  }
+  const html = await res.text();
+  const desc = extractOgDescription(html);
+  if (desc) {
+    job.descriptionText = desc;
+    return true;
+  }
+  return false;
+}
+
 export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter(
     (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
@@ -165,47 +221,31 @@ export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<s
     `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
   );
 
+  let failures = 0;
   for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
     await Promise.all(
       targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        try {
-          // Prefer the JSON detail API — jobPostingInfo.jobDescription is the
-          // full rich description, far more useful for language classification
-          // than the short og:description meta tag.
-          const apiUrl = publicUrlToDetailApiUrl(job.url!);
-          if (apiUrl) {
-            const origin = new URL(job.url!).origin;
-            const apiRes = await fetch(apiUrl, {
-              headers: {
-                accept: "application/json",
-                origin,
-                referer: `${origin}/`,
-                "user-agent":
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              },
-            });
-            if (apiRes.ok) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const data: any = await apiRes.json();
-              const info = data.jobPostingInfo ?? data.jobPosting ?? data;
-              if (typeof info.jobDescription === "string" && info.jobDescription) {
-                job.descriptionText = stripHtml(info.jobDescription);
-                return;
-              }
+        for (let attempt = 1; attempt <= DESCRIPTION_FETCH_ATTEMPTS; attempt++) {
+          try {
+            await fetchWorkdayDescriptionOnce(job);
+            return;
+          } catch (e) {
+            if (attempt < DESCRIPTION_FETCH_ATTEMPTS) {
+              await delay(DESCRIPTION_RETRY_DELAY_MS);
+              continue;
             }
+            failures++;
+            console.log(
+              `[workday] description fetch failed for ${job.url}: ${e instanceof Error ? e.message : e}`,
+            );
           }
-          // Fall back to scraping og:description from the HTML page.
-          const res = await fetch(job.url!, {
-            headers: { "User-Agent": "Mozilla/5.0" },
-          });
-          if (!res.ok) return;
-          const html = await res.text();
-          const desc = extractOgDescription(html);
-          if (desc) job.descriptionText = desc;
-        } catch {
-          // skip — classification falls back to title only
         }
       }),
+    );
+  }
+  if (failures > 0) {
+    console.log(
+      `[workday] description fetch failed for ${failures}/${targets.length} jobs after ${DESCRIPTION_FETCH_ATTEMPTS} attempts`,
     );
   }
 }
@@ -539,7 +579,7 @@ export async function fetchWorkdayJobs(
       await Promise.all(
         multiLocQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
           const jobUrl = buildJobUrl(parts, posting.externalPath);
-          const { locations, description } = await fetchJobLocations(
+          const { locations, description, countryDescriptor } = await fetchJobLocations(
             parts.host, parts.company, parts.site, posting.externalPath,
           );
           if (locations.length > 0) {
@@ -550,13 +590,23 @@ export async function fetchWorkdayJobs(
             // groups by the last-comma-segment heuristic.
             const byCountry = new Map<string, string[]>();
             const anyResolved = locations.some((l) => lookupCountryFromLocation(l).length > 0);
+            // None of the location strings matched CITY_MAP/COUNTRY_MAP (e.g. small
+            // towns not yet catalogued). Fall back to the detail API's
+            // country.descriptor (e.g. "France") — already fetched in this same
+            // call — instead of grouping under a bogus non-country key derived from
+            // the raw city string, which would just get dropped again downstream.
+            const descriptorCountry = !anyResolved && countryDescriptor
+              ? lookupCountryFromLocation(countryDescriptor)
+              : [];
             for (const loc of locations) {
               const resolved = lookupCountryFromLocation(loc);
               if (resolved.length === 0) {
                 // Skip region strings like "Nordic" when other locations in the
                 // same posting resolve to a specific country.
                 if (anyResolved) continue;
-                const groupKey = loc.split(",").map((p) => p.trim()).pop() ?? loc;
+                const groupKey = descriptorCountry.length > 0
+                  ? descriptorCountry[0].code
+                  : (loc.split(",").map((p) => p.trim()).pop() ?? loc);
                 if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
                 byCountry.get(groupKey)!.push(loc);
               } else {
@@ -571,10 +621,15 @@ export async function fetchWorkdayJobs(
                 const city = parseCityFromWorkdayLoc(loc, countryKey);
                 if (city) citySet.add(city);
               }
+              // country_code is set whenever resolution came from the descriptor
+              // fallback rather than a real country/city match on locs[0], since
+              // locs[0] itself (an uncatalogued city name) won't re-resolve
+              // downstream in buildScrapeResult otherwise.
               allJobs.push({
                 title: posting.title,
                 url: jobUrl,
                 location: locs[0], // first full string drives country resolution
+                ...(descriptorCountry.length > 0 && { country_code: countryKey }),
                 ...(citySet.size > 0 && { cities: [...citySet] }),
                 ...(description && { descriptionText: description }),
               });
