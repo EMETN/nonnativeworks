@@ -34,7 +34,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 BASE_URL = "https://www.academicwork.fi"
 LIST_PATH = "/avoimet-tyopaikat"
@@ -181,7 +181,7 @@ def scrape_academicwork_static(url: str) -> list[dict]:
     # Descriptions are fetched from the English URL (/en/jobs/j/…?lang=en) so
     # the classifier sees English page content without Finnish site boilerplate.
     # The job slug and ID are identical between the Finnish and English URL paths.
-    english_jobs = [j for j in all_jobs if not _title_appears_non_english(j.get("classifierTitle") or j.get("title", ""))]
+    english_jobs = [j for j in all_jobs if not _title_appears_non_english_excluding_cities(j.get("classifierTitle") or j.get("title", ""))]
     unique_urls = list(dict.fromkeys(
         _to_english_url(j["url"]) for j in english_jobs if j.get("url")
     ))

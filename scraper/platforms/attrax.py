@@ -10,7 +10,7 @@ from urllib.parse import urljoin, urlparse, urlencode, urlunparse, parse_qs
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import build_job, SKIP_LOCATION_PATTERNS
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
 _DESCRIPTION_SELECTORS = [
@@ -222,7 +222,7 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
     targets = [
         j for j in jobs
         if j.get("url")
-        and not _title_appears_non_english(j.get("title", ""))
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]
     skipped = len(jobs) - len(targets)

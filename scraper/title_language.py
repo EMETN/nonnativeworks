@@ -364,3 +364,51 @@ _TITLE_KEYWORDS_RE = re.compile(
 
 def _title_appears_non_english(title: str) -> bool:
     return bool(_NON_ASCII_RE.search(title) or _TITLE_KEYWORDS_RE.search(title))
+
+
+# Non-ASCII city names from CITY_MAP in src/lib/ats/country-lookup.ts (the
+# global gazetteer, not scoped to any particular country). Mirrors
+# titleAppearsNonEnglishExcludingCityNames() in src/lib/ats/title-language.ts —
+# keep both lists in sync.
+_NON_ASCII_CITY_NAMES = [
+    "asnières sur seine", "asunción", "bogotá", "bollnäs", "borlänge",
+    "borås", "brasília", "brüttisellen", "bucurești", "bäumenheim",
+    "bückeburg", "cesson-sevigné", "châtellerault", "ciudad de panamá",
+    "donauwörth", "düren", "düsseldorf", "enköping", "faßberg", "flöha",
+    "gdańsk", "gemünden am main", "genève", "großkrotzenburg",
+    "großmehring", "gävle", "gémenos", "göteborg", "götene", "hyvinkää",
+    "hämeenlinna", "ishøj", "jyväskylä", "jämsä", "järvenpää", "jönköping",
+    "kankaanpää", "klaipėda", "kraków", "kruså", "köln", "københavn",
+    "la ferté-saint-aubin", "lempäälä", "les sorinières", "linköping",
+    "luleå", "lübeck", "malmö", "montréal", "málaga", "mäntyharju",
+    "mölndal", "münchen", "norrköping", "nurmijärvi", "nyköping",
+    "nürnberg", "orléans", "osnabrück", "ostrołęka", "panevėžys",
+    "pieksämäki", "poznań", "pärnu", "québec", "riihimäki", "ringkøbing",
+    "rīga", "saarbrücken", "saint lô", "saint-étienne", "san josé",
+    "seinäjoki", "skellefteå", "sotteville-lès-rouen", "strømmen",
+    "são paulo", "tromsø", "umeå", "vallensbæk", "videbæk", "västerås",
+    "växjö", "vélizy-villacoublay", "województwo", "wrocław", "würzburg",
+    "ylöjärvi", "zürich", "älmhult", "örebro", "örnsköldsvik", "östersund",
+    "łódź", "šiauliai",
+]
+_CITY_NAME_RE = re.compile(
+    "(" + "|".join(re.escape(c) for c in _NON_ASCII_CITY_NAMES) + ")",
+    re.IGNORECASE,
+)
+
+
+def _title_appears_non_english_excluding_cities(title: str) -> bool:
+    """Like _title_appears_non_english, but a city name alone doesn't count.
+
+    A city name isn't a reliable enough signal to skip fetching a job's
+    description entirely — e.g. "Besiktningsman VVS till Linköping" has
+    "Linköping" as its only non-ASCII content, but an English title could
+    just as easily be based in an accented-named city. When the ONLY
+    non-English signal in a title is a city name, this returns False so the
+    caller goes ahead and fetches the description — giving the real
+    classifier (which strips city names too, but has full description text
+    and signal-matching/tinyld available) a chance to decide properly instead
+    of silently defaulting to English for lack of any fetched content.
+    """
+    stripped = _CITY_NAME_RE.sub(" ", title)
+    return _title_appears_non_english(stripped)

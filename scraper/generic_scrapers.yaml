@@ -304,8 +304,27 @@ scrapers:
     job_function_selector: "td.colFacility jobFacility"
 
   # ── Sweco Group ──────────────────────────────────────────────────────────────────
+  # description_selector is required here: without it, the fallback selector chain
+  # (_DESCRIPTION_SELECTOR_FALLBACKS) hits "[class*='description']" on the localized
+  # detail pages (e.g. sweco.fi) before reaching "main" — but the FIRST element in
+  # document order with a class containing "description" is a Gravity Forms
+  # application-form field list (class="... description_below ..."), entirely in the
+  # site's local language (e.g. Finnish), not the actual job description. That
+  # Finnish form-field text was tripping the native-character-count language signal
+  # even on English-language postings (e.g. "Finance Systems Specialist to Sweco IT
+  # Helsinki").
+  #
+  # Different Sweco country sites use different page templates for the actual
+  # description content: sweco.fi puts the whole body in a single "section.cb";
+  # sweco.nl splits it across "section.recruitee-vacancy-desc" (the main
+  # role/company intro paragraph — this is where the Dutch-language signal lives)
+  # PLUS separate "section.cb" blocks for "what you bring"/"what we offer". Both
+  # classes are listed so all matches get concatenated (see _fetch_detail_page) —
+  # using only "section.cb" on sweco.nl silently dropped the intro paragraph and
+  # caused genuinely Dutch-language postings to be misclassified as English.
   - match: "swecogroup.com/careers/vacancies"
     name: Sweco Group
+    description_selector: "section.recruitee-vacancy-desc, section.cb"
     country_filter_param: country
     countries:
       - SE

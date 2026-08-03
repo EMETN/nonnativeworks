@@ -87,7 +87,7 @@
  */
 
 import type { RawJob } from "./types";
-import { titleAppearsNonEnglish } from "./title-language";
+import { titleAppearsNonEnglishExcludingCityNames } from "./title-language";
 import { lookupCountryFromLocation, extractCitiesForCountry, isCountryKey } from "./country-lookup";
 
 const DESCRIPTION_BATCH = 5;
@@ -250,7 +250,7 @@ async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
 
 export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<string>): Promise<void> {
   const targets = jobs.filter(
-    (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglish(j.title) && !j.descriptionText,
+    (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglishExcludingCityNames(j.title) && !j.descriptionText,
   );
   console.log(
     `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
