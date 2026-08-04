@@ -313,15 +313,16 @@ export interface CompanyApiConfig {
      * Use when the API requires separate requests per filter value (e.g. one country per request).
      */
     repeatFor?: {
-        body: Record<string, string>[];
+        body: Record<string, unknown>[];
     };
     /**
-     * For POST repeatFor requests: the key within each body override entry that holds the
-     * country name (e.g. 'jobCountry'). When set, jobs returned for each iteration have
-     * their cities array filtered to only cities that belong to that country (via CITY_MAP
-     * lookup), removing cities from untracked or other countries. Unknown cities (not in
-     * CITY_MAP) are kept. Analogous to the country-based city filtering that GET repeatFor
-     * does automatically via string inclusion.
+     * For POST repeatFor requests: a dot-path into each body override entry that holds the
+     * country name (e.g. 'jobCountry', or 'facetFilters.mfield2.0' for a nested facet).
+     * When set, each job returned for that iteration is tagged with the country (and its
+     * sourceId suffixed with it, so a posting open in several countries survives dedup as a
+     * separate per-country entry), and its cities array is filtered to only cities that
+     * belong to that country (via CITY_MAP lookup; unknown cities are kept). Analogous to
+     * the country-based tagging that GET repeatFor does automatically.
      */
     repeatForCountryField?: string;
 }
@@ -417,22 +418,35 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             sortBy: '',
             keywords: '',
             location: '',
-            facetFilters: {
-                mfield2: [
-                    'Sweden',
-                    'Denmark',
-                    'Norway',
-                    'Finland',
-                    'Latvia',
-                    'Netherlands',
-                ],
-            },
+            facetFilters: {}, // overridden per-country by repeatFor below
             brand: '',
             skills: [],
-            categoryId: 9516901,
+            categoryId: 0,
             alertId: '',
             rcmCandidateId: '',
         },
+        // One request per country: a posting's own data doesn't reliably list every country
+        // it's open in, so tagging by the queried mfield2 facet is the only way to match the site.
+        repeatFor: {
+            body: [
+                'Finland',
+                'Sweden',
+                'Norway',
+                'Denmark',
+                'Iceland',
+                'Netherlands',
+                'Germany',
+                'Estonia',
+                'Latvia',
+                'Lithuania',
+                'Poland',
+                'France',
+                'Belgium',
+                'Luxembourg',
+                'Switzerland',
+            ].map((country) => ({ facetFilters: { mfield2: [country] } })),
+        },
+        repeatForCountryField: 'facetFilters.mfield2.0',
         pagination: {
             type: 'page',
             param: 'pageNumber',

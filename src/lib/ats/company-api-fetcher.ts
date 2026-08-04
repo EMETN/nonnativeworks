@@ -1109,7 +1109,9 @@ export async function fetchCompanyApiJobs(
             const label = Object.values(override).join('/');
             let spec: FetchSpec;
             if (method === 'GET') {
-                const params = new URLSearchParams(override).toString();
+                const params = new URLSearchParams(
+                    override as Record<string, string>,
+                ).toString();
                 const sep = primarySpec.url.includes('?') ? '&' : '?';
                 spec = {
                     ...primarySpec,
@@ -1148,14 +1150,21 @@ export async function fetchCompanyApiJobs(
                     }
                 }
             } else if (config.repeatForCountryField) {
-                // POST repeatFor: filter cities to only those belonging to the queried country.
-                // Uses CITY_MAP lookup — cities not recognised by CITY_MAP are kept (unknown city
-                // in the current country) while cities that resolve to a different country are removed.
-                const countryName = override[config.repeatForCountryField];
+                // Suffix sourceId with the country so a posting open in several countries
+                // survives dedup as a separate entry per country.
+                const countryName = getPath(
+                    override,
+                    config.repeatForCountryField,
+                );
                 if (typeof countryName === 'string') {
                     const targetCode =
                         lookupCountryFromLocation(countryName)[0]?.code;
                     for (const job of jobs) {
+                        if (job.sourceId) {
+                            job.descriptionApiId =
+                                job.descriptionApiId ?? job.sourceId;
+                            job.sourceId = `${job.sourceId}-${countryName}`;
+                        }
                         job.country_code = countryName;
                         if (job.cities && targetCode) {
                             const filtered = job.cities.filter((city) => {
