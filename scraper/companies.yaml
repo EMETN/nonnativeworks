@@ -67,10 +67,10 @@ companies:
       min_positions: 10
 
     - name: Delivery Hero
-      url: https://careers.deliveryhero.com/jobs?options=745%2C869%2C860&page=1&size=48
+      url: https://careers.deliveryhero.com/jobs
       min_positions: 5
 
-    - name: Dept
+    - name: DEPT
       url: https://www.deptagency.com/careers/roles
       min_positions: 5
 
@@ -154,10 +154,6 @@ companies:
       url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
       min_positions: 5
 
-    - name: Nordnet
-      url: https://career.nordnetab.com/jobs
-      min_positions: 3
-
     - name: Nokia
       url: https://jobs.nokia.com/en
       min_positions: 10
@@ -178,7 +174,7 @@ companies:
       url: https://nxp.wd3.myworkdayjobs.com/careers?locations=98d67abaaa8a100fa6336e2819cc922e&locations=3db468d56aa610d69085a48b83d7492d&locations=98d67abaaa8a100fa63382ef6fcc924c&locations=98d67abaaa8a100fa633b04b600c928d&locations=2a9d66d0145c015c90758d64f5015e85&locations=98d67abaaa8a100fa6336739cb249224&locations=98d67abaaa8a100fa633a5cf721c927e
       min_positions: 10
 
-    - name: OP
+    - name: OP Financial Group
       url: https://op-careers.fi
       min_positions: 5
 

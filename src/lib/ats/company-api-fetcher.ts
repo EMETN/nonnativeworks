@@ -349,12 +349,14 @@ export async function enrichDescriptions(
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
-        if (skipUrls?.has(j.url)) return false;
+        // skipUrls only caches classification, not location — so a cached URL still
+        // missing its location must be fetched, or location-from-HTML companies hit 0.
+        const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
+            !skipUrls?.has(j.url) &&
             !titleAppearsNonEnglish(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
-        const wantsLocation = !!locationRegex && !j.location;
         return wantsDescription || wantsLocation;
     });
 
@@ -382,6 +384,7 @@ export async function enrichDescriptions(
                     return;
                 }
                 if (
+                    !skipUrls?.has(job.url!) &&
                     !titleAppearsNonEnglish(job.title) &&
                     !job.descriptionText
                 ) {
@@ -1106,7 +1109,9 @@ export async function fetchCompanyApiJobs(
             const label = Object.values(override).join('/');
             let spec: FetchSpec;
             if (method === 'GET') {
-                const params = new URLSearchParams(override).toString();
+                const params = new URLSearchParams(
+                    override as Record<string, string>,
+                ).toString();
                 const sep = primarySpec.url.includes('?') ? '&' : '?';
                 spec = {
                     ...primarySpec,
@@ -1145,15 +1150,29 @@ export async function fetchCompanyApiJobs(
                     }
                 }
             } else if (config.repeatForCountryField) {
-                // POST repeatFor: filter cities to only those belonging to the queried country.
-                // Uses CITY_MAP lookup — cities not recognised by CITY_MAP are kept (unknown city
-                // in the current country) while cities that resolve to a different country are removed.
-                const countryName = override[config.repeatForCountryField];
+                // Suffix sourceId with the country so a posting open in several countries
+                // survives dedup as a separate entry per country.
+                const countryName = getPath(
+                    override,
+                    config.repeatForCountryField,
+                );
                 if (typeof countryName === 'string') {
-                    const targetCode =
-                        lookupCountryFromLocation(countryName)[0]?.code;
                     for (const job of jobs) {
-                        job.country_code = countryName;
+                        let country = countryName;
+                        if (config.repeatForPrefersItemCountry) {
+                            const own = lookupCountryFromLocation(
+                                job.location ?? '',
+                            );
+                            if (own.length === 1) country = own[0].name;
+                        }
+                        const targetCode =
+                            lookupCountryFromLocation(country)[0]?.code;
+                        if (job.sourceId) {
+                            job.descriptionApiId =
+                                job.descriptionApiId ?? job.sourceId;
+                            job.sourceId = `${job.sourceId}-${country}`;
+                        }
+                        job.country_code = country;
                         if (job.cities && targetCode) {
                             const filtered = job.cities.filter((city) => {
                                 const resolved =

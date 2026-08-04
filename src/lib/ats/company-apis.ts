@@ -313,17 +313,28 @@ export interface CompanyApiConfig {
      * Use when the API requires separate requests per filter value (e.g. one country per request).
      */
     repeatFor?: {
-        body: Record<string, string>[];
+        body: Record<string, unknown>[];
     };
     /**
-     * For POST repeatFor requests: the key within each body override entry that holds the
-     * country name (e.g. 'jobCountry'). When set, jobs returned for each iteration have
-     * their cities array filtered to only cities that belong to that country (via CITY_MAP
-     * lookup), removing cities from untracked or other countries. Unknown cities (not in
-     * CITY_MAP) are kept. Analogous to the country-based city filtering that GET repeatFor
-     * does automatically via string inclusion.
+     * For POST repeatFor requests: a dot-path into each body override entry that holds the
+     * country name (e.g. 'jobCountry', or 'facetFilters.mfield2.0' for a nested facet).
+     * When set, each job returned for that iteration is tagged with the country (and its
+     * sourceId suffixed with it, so a posting open in several countries survives dedup as a
+     * separate per-country entry), and its cities array is filtered to only cities that
+     * belong to that country (via CITY_MAP lookup; unknown cities are kept). Analogous to
+     * the country-based tagging that GET repeatFor does automatically.
      */
     repeatForCountryField?: string;
+    /**
+     * Only meaningful alongside repeatForCountryField. Some APIs leak jobs from a
+     * neighbouring country into a per-country query — e.g. Accenture returns Vilnius
+     * (Lithuania) postings under jobCountry=Latvia, and those countries have no working
+     * query of their own. When set, a job whose own mapped location resolves to a single
+     * country is tagged with that country instead of the queried one, so the leaked jobs
+     * land in the right place. Jobs whose location doesn't resolve still fall back to the
+     * queried country (preserving the default "trust the query" behaviour).
+     */
+    repeatForPrefersItemCountry?: boolean;
 }
 
 // ─── Company registry ────────────────────────────────────────────────────────
@@ -417,22 +428,35 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             sortBy: '',
             keywords: '',
             location: '',
-            facetFilters: {
-                mfield2: [
-                    'Sweden',
-                    'Denmark',
-                    'Norway',
-                    'Finland',
-                    'Latvia',
-                    'Netherlands',
-                ],
-            },
+            facetFilters: {}, // overridden per-country by repeatFor below
             brand: '',
             skills: [],
-            categoryId: 9516901,
+            categoryId: 0,
             alertId: '',
             rcmCandidateId: '',
         },
+        // One request per country: a posting's own data doesn't reliably list every country
+        // it's open in, so tagging by the queried mfield2 facet is the only way to match the site.
+        repeatFor: {
+            body: [
+                'Finland',
+                'Sweden',
+                'Norway',
+                'Denmark',
+                'Iceland',
+                'Netherlands',
+                'Germany',
+                'Estonia',
+                'Latvia',
+                'Lithuania',
+                'Poland',
+                'France',
+                'Belgium',
+                'Luxembourg',
+                'Switzerland',
+            ].map((country) => ({ facetFilters: { mfield2: [country] } })),
+        },
+        repeatForCountryField: 'facetFilters.mfield2.0',
         pagination: {
             type: 'page',
             param: 'pageNumber',
@@ -499,9 +523,10 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com': {
-        // Oracle HCM Recruiting Cloud endpoint for Nets/Nexi (Nordic payments).
-        // Site number CX_1. Location filters restrict to Nordic countries and Germany.
-        url: 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC,selectedLocationsFacet=300000000459853%3B300000000459886%3B300000000462267%3B300000000459847%3B300000000462177',
+        // Oracle HCM Recruiting Cloud endpoint for Nets/Nexi (Nordic payments), site CX_1.
+        // No country facet — the listing is one ~83-job page, so we fetch all and let the
+        // downstream tracked filter select, which picks up new countries on its own.
+        url: 'https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
         method: 'GET',
         headers: {
             accept: '*/*',
@@ -662,6 +687,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // 'jobCountry' in the body override contains the country name (e.g. "Finland")
         // used to filter the cities array to only cities in the queried country.
         repeatForCountryField: 'jobCountry',
+        repeatForPrefersItemCountry: true,
     },
 
     'jobs.ericsson.com': {
@@ -687,6 +713,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 { location: 'Belgium' },
                 { location: 'Poland' },
                 { location: 'France' },
+                { location: 'Luxembourg' },
+                { location: 'Switzerland' },
             ],
         },
         pagination: {
@@ -775,7 +803,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // city string (e.g. "Stockholm, Malmö, Göteborg") — lookupCountryFromLocation splits
         // it and resolves via CITY_MAP. description_stripped contains the full job description
         // as plain text (no HTML, actual Unicode characters) — sufficient for language classification.
-        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL&size=200',
+        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL%2Cfr-fr%2Cpl-pl%2Cen-be%2Cen-ch%2Cen-lu&size=200',
         method: 'GET',
         headers: {
             'User-Agent':
@@ -938,50 +966,38 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 },
             },
         },
+        // Randstad's internal careers site takes one country slug per request.
+        // Only countries with confirmed openings are listed (Nordics/Baltics return 0).
         repeatFor: {
             body: [
-                {
-                    data: {
-                        currentRoute: {
-                            path: '/jobs/careers-at-randstad/:searchParams*',
-                            url: '/jobs/careers-at-randstad/the-netherlands/',
-                            isExact: true,
-                            params: { searchParams: 'the-netherlands' },
-                            routeName: 'internal-search',
-                        },
-                        currentLanguage: 'en',
-                        searchParams: {
-                            country: 'the-netherlands',
-                            isInternal: true,
-                            locationData: {},
-                            specialism: null,
-                            subSpecialism: null,
-                            jobCategory: null,
-                        },
+                'the-netherlands',
+                'germany',
+                'belgium',
+                'france',
+                'poland',
+                'switzerland',
+            ].map((country) => ({
+                data: {
+                    currentRoute: {
+                        path: '/jobs/careers-at-randstad/:searchParams*',
+                        url: `/jobs/careers-at-randstad/${country}/`,
+                        isExact: true,
+                        params: { searchParams: country },
+                        routeName: 'internal-search',
+                    },
+                    currentLanguage: 'en',
+                    searchParams: {
+                        country,
+                        isInternal: true,
+                        locationData: {},
+                        specialism: null,
+                        subSpecialism: null,
+                        jobCategory: null,
                     },
                 },
-                {
-                    data: {
-                        currentRoute: {
-                            path: '/jobs/careers-at-randstad/:searchParams*',
-                            url: '/jobs/careers-at-randstad/germany/',
-                            isExact: true,
-                            params: { searchParams: 'germany' },
-                            routeName: 'internal-search',
-                        },
-                        currentLanguage: 'en',
-                        searchParams: {
-                            country: 'germany',
-                            isInternal: true,
-                            locationData: {},
-                            specialism: null,
-                            subSpecialism: null,
-                            jobCategory: null,
-                        },
-                    },
-                },
-            ],
+            })),
         },
+        repeatForCountryField: 'data.searchParams.country',
         pagination: {
             type: 'page',
             param: 'data.searchParams.page',
@@ -1079,13 +1095,12 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     // careers.abb is ABB's branded career site; the actual jobs live on Workday.
     // The locationCountry params pre-filter to tracked countries only.
     'careers.abb':
-        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa',
+        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374',
     // maersk.com is Maersk's branded career site; jobs live on Workday.
     'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
-    'careers.deliveryhero.com':
-        'https://careers.deliveryhero.com/jobs?options=745%2C869%2C860',
+    'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────

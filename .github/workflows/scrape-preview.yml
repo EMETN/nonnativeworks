@@ -34,12 +34,12 @@ jobs:
             DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_DEV }}
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   fetch-depth: 0 # needed to read the base-branch version of companies.yaml
 
             - name: Install Doppler CLI
-              uses: dopplerhq/cli-action@v3
+              uses: dopplerhq/cli-action@v4
 
             - name: Install PyYAML
               run: pip install pyyaml
@@ -87,11 +87,11 @@ jobs:
 
             - name: Setup pnpm
               if: steps.diff.outputs.count != '0'
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@v5
 
             - name: Setup Node
               if: steps.diff.outputs.count != '0'
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
                   node-version-file: '.node-version'
                   cache: 'pnpm'
@@ -108,7 +108,7 @@ jobs:
 
             - name: Setup Python
               if: steps.diff.outputs.count != '0'
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: '3.12'
                   cache: 'pip'
@@ -170,7 +170,7 @@ jobs:
 
             - name: Post PR comment
               if: steps.diff.outputs.count != '0'
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       const fs = require('fs');
