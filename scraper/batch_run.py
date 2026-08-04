@@ -210,6 +210,11 @@ def _process_company(
         summary_entry.update({"status": "fail", "error": msg})
         return summary_entry, "\n".join(out)
 
+    # companies.yaml is authoritative for the name; the scrape endpoint only derives
+    # one from the URL slug (e.g. "Abb", "Storaenso") which loses correct casing.
+    if company.get("name"):
+        result["company_name"] = company["name"]
+
     total_positions = sum(len(cg.get("jobs", [])) for cg in result.get("countries", []))
     country_names = [cg["country_name"] for cg in result.get("countries", [])]
     out.append(
