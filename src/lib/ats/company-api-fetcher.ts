@@ -349,12 +349,14 @@ export async function enrichDescriptions(
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
-        if (skipUrls?.has(j.url)) return false;
+        // skipUrls only caches classification, not location — so a cached URL still
+        // missing its location must be fetched, or location-from-HTML companies hit 0.
+        const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
+            !skipUrls?.has(j.url) &&
             !titleAppearsNonEnglish(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
-        const wantsLocation = !!locationRegex && !j.location;
         return wantsDescription || wantsLocation;
     });
 
@@ -382,6 +384,7 @@ export async function enrichDescriptions(
                     return;
                 }
                 if (
+                    !skipUrls?.has(job.url!) &&
                     !titleAppearsNonEnglish(job.title) &&
                     !job.descriptionText
                 ) {
