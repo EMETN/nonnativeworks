@@ -188,7 +188,9 @@ def _process_company(
     summary_entry: dict = {
         "url": url,
         "status": "unknown",
-        "company_name": None,
+        # Seed with the YAML name so a scrape failure still shows it (the scrape-derived
+        # name isn't available until the scrape succeeds).
+        "company_name": company.get("name"),
         "total_positions": 0,
         "countries": [],
         "skipped_unknown_location": 0,
