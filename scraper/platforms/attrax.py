@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import SKIP_LOCATION_PATTERNS, build_job
 from title_language import _title_appears_non_english
-from tracked_countries import is_tracked_location
+from tracked_countries import TRACKED_NAMES, is_tracked_location
 
 _DESCRIPTION_SELECTORS = [
     "div[aria-label='Job description']",
@@ -24,6 +24,47 @@ _DESCRIPTION_SELECTORS = [
 ]
 
 _DESCRIPTION_BATCH = 5
+
+
+def _location_filter_group(soup):
+    for group in soup.select(
+        ".filtergroup, [class*='filtergroup'], [class*='filter-group']"
+    ):
+        header = group.select_one(
+            ".option-type-header, [class*='header'], legend, h2, h3"
+        )
+        if header and "location" in header.get_text(strip=True).lower():
+            return group
+    return None
+
+
+def resolve_tracked_country_options(base_url: str) -> str | None:
+    """`options` CSV for every tracked country the site lists, or None if unreadable."""
+    import requests
+    from bs4 import BeautifulSoup
+
+    # Fetch unfiltered — Attrax narrows the Location facet to the current selection.
+    base = urlunparse(urlparse(base_url)._replace(query="", fragment=""))
+    try:
+        resp = requests.get(base, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"Attrax: country-facet resolve failed ({e})", file=sys.stderr)
+        return None
+
+    group = _location_filter_group(BeautifulSoup(resp.content, "html.parser"))
+    if group is None:
+        print("Attrax: no Location filter group found", file=sys.stderr)
+        return None
+
+    ids: list[str] = []
+    for option in group.select("[data-option-id]"):
+        label = option.select_one("[aria-label]")
+        name = (label.get("aria-label") if label else "").strip().lower()
+        oid = option.get("data-option-id")
+        if name in TRACKED_NAMES and oid not in ids:
+            ids.append(oid)
+    return ",".join(ids) if ids else None
 
 
 def scrape_attrax_static(url: str) -> list[dict]:
@@ -243,7 +284,9 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
         for j in jobs
         if j.get("url")
         and not _title_appears_non_english(j.get("title", ""))
-        and is_tracked_location(j.get("location"))
+        # Include jobs whose tile had no location — the detail page carries it (recovered
+        # below), so skipping them here would drop the job as "unknown location".
+        and (not j.get("location") or is_tracked_location(j.get("location")))
     ]
     skipped = len(jobs) - len(targets)
     print(
@@ -264,6 +307,13 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
                     if tag:
                         job["descriptionHtml"] = str(tag)
                         break
+
+                if not job.get("location"):
+                    loc_val = soup.select_one(
+                        ".locationtext .attrax-job-information-widget__freetext-field-value"
+                    )
+                    if loc_val and loc_val.get_text(strip=True):
+                        job["location"] = loc_val.get_text(strip=True)
             except Exception as e:
                 print(f"Attrax: detail page error ({job['url']}): {e}", file=sys.stderr)
 

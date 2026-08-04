@@ -206,12 +206,21 @@ scrapers:
       name: SAP
       country_filter_param: 'optionsFacetsDD_country'
       countries:
-          - DE
-          - SE
-          - DK
-          - NL
           - FI
+          - SE
           - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
       pagination:
           type: offset
           param: startrow
@@ -306,24 +315,11 @@ scrapers:
     - match: 'swecogroup.com/careers/vacancies'
       name: Sweco Group
       country_filter_param: country
-      countries:
-          - SE
-          - DK
-          - NL
-          - FI
-          - DE
-          - 'NO'
-          - LT
-          - EE
-      country_values:
-          SE: '3'
-          DK: '4'
-          NL: '5'
-          FI: '7'
-          DE: '8'
-          'NO': '13'
-          LT: '16'
-          EE: '21'
+      # Countries + their opaque facet IDs are read live from the page's country
+      # <select> so a newly-added Sweco country is scraped without a code change.
+      country_from_select:
+          selector: 'select[name=country]'
+          strip_prefix: 'Sweco '
       pagination:
           type: page
           param: vacancy-page
@@ -439,12 +435,25 @@ scrapers:
       job_function_selector: 'li.job-list-01-list__job-info--category span'
 
     # ── E.ON ─────────────────────────────────────────────────────────────────
-    # Taleo-style tile layout. Only DE is a tracked country for E.ON.
     - match: 'careers.eon.com/search'
       name: E.ON
       country_filter_param: 'optionsFacetsDD_country'
       countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
           - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
       extra_params:
           sortColumn: referencedate
           sortDirection: desc

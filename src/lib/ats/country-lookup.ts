@@ -70,6 +70,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     monaco: { name: 'Monaco', code: 'MC', slug: 'monaco' },
     netherlands: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     'the netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+    'the-netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     holland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nederland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nld: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
@@ -1589,6 +1590,23 @@ export function extractCitiesForCountry(
             if (!seen.has(key)) {
                 seen.add(key);
                 results.push(segment);
+            }
+        }
+    }
+    if (results.length === 0) {
+        // No known city matched. When the whole location belongs to just this country,
+        // fall back to its leading place-name segment so small cities missing from
+        // CITY_MAP (e.g. "Mo i Rana, Norway") still show instead of no location at all.
+        const locCountries = lookupCountryFromLocation(location);
+        if (locCountries.length === 1 && locCountries[0].code === countryCode) {
+            for (const segment of segments) {
+                const resolved = lookupCountryFromLocation(segment);
+                // Skip the segment that is itself the country/region name.
+                if (resolved.length > 0 && !CITY_MAP[normalizeKey(segment)]) {
+                    continue;
+                }
+                results.push(segment);
+                break;
             }
         }
     }
