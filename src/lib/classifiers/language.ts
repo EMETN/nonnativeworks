@@ -1018,6 +1018,12 @@ export function detectNativeLanguage(
         return parts.map(p => p + suffix).join(' ');
       },
     )
+    // Treat line breaks (paragraph/list-item boundaries from stripHtml's block-tag
+    // conversion) as sentence boundaries — otherwise requirementNegatedByContext's
+    // "same clause" window can't tell "Norwegian" apart from an advantage phrase in
+    // the next paragraph when there's no punctuation between them (e.g. "Fluent in
+    // English and Norwegian\n\nDanish or Finnish considered as an advantage").
+    .replace(/\n+/g, '. ')
     .replace(/\s+/g, ' ');
 
   // For multi-language countries (CH, BE, LU) a requirement signal for one
