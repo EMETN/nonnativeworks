@@ -590,6 +590,7 @@ function buildAdvantageSignals(lang: string): string[] {
   signals.push(`${lang} a bonus`);
   signals.push(`ideally ${lang}`);
   signals.push(`ideally in ${lang}`);
+  signals.push(`ideally including ${lang}`);
   return signals;
 }
 
@@ -614,6 +615,7 @@ function buildRequirementSignals(lang: string): string[] {
     // Fluency / proficiency
     `fluent ${lang}`,
     `fluent in ${lang}`,
+    `fluent in spoken ${lang}`,
     `fluent level in ${lang}`,
     `fluent language skills in ${lang}`,
     `fluency in ${lang}`,
