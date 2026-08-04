@@ -243,7 +243,9 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
         for j in jobs
         if j.get("url")
         and not _title_appears_non_english(j.get("title", ""))
-        and is_tracked_location(j.get("location"))
+        # Include jobs whose tile had no location — the detail page carries it (recovered
+        # below), so skipping them here would drop the job as "unknown location".
+        and (not j.get("location") or is_tracked_location(j.get("location")))
     ]
     skipped = len(jobs) - len(targets)
     print(
@@ -264,6 +266,13 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
                     if tag:
                         job["descriptionHtml"] = str(tag)
                         break
+
+                if not job.get("location"):
+                    loc_val = soup.select_one(
+                        ".locationtext .attrax-job-information-widget__freetext-field-value"
+                    )
+                    if loc_val and loc_val.get_text(strip=True):
+                        job["location"] = loc_val.get_text(strip=True)
             except Exception as e:
                 print(f"Attrax: detail page error ({job['url']}): {e}", file=sys.stderr)
 
