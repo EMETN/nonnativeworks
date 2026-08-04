@@ -390,6 +390,14 @@ export const CASES: FixtureCase[] = [
     requires: true,
     advantage: false,
   },
+  {
+    label: '2a — requirement not negated by advantage phrase in a later paragraph (newline-separated, no punctuation)',
+    title: 'Account Manager',
+    desc: 'Fluent in English and Norwegian\n\nDanish or Finnish considered as an advantage',
+    country: 'NO',
+    requires: true,
+    advantage: false,
+  },
 
   // ── Phase 1b: Requirement wins when both signals are present ─────────────
 
