@@ -701,6 +701,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 { location: 'Belgium' },
                 { location: 'Poland' },
                 { location: 'France' },
+                { location: 'Luxembourg' },
+                { location: 'Switzerland' },
             ],
         },
         pagination: {
