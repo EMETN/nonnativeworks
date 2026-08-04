@@ -938,49 +938,36 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 },
             },
         },
+        // Randstad's internal careers site takes one country slug per request.
+        // Only countries with confirmed openings are listed (Nordics/Baltics return 0).
         repeatFor: {
             body: [
-                {
-                    data: {
-                        currentRoute: {
-                            path: '/jobs/careers-at-randstad/:searchParams*',
-                            url: '/jobs/careers-at-randstad/the-netherlands/',
-                            isExact: true,
-                            params: { searchParams: 'the-netherlands' },
-                            routeName: 'internal-search',
-                        },
-                        currentLanguage: 'en',
-                        searchParams: {
-                            country: 'the-netherlands',
-                            isInternal: true,
-                            locationData: {},
-                            specialism: null,
-                            subSpecialism: null,
-                            jobCategory: null,
-                        },
+                'the-netherlands',
+                'germany',
+                'belgium',
+                'france',
+                'poland',
+                'switzerland',
+            ].map((country) => ({
+                data: {
+                    currentRoute: {
+                        path: '/jobs/careers-at-randstad/:searchParams*',
+                        url: `/jobs/careers-at-randstad/${country}/`,
+                        isExact: true,
+                        params: { searchParams: country },
+                        routeName: 'internal-search',
+                    },
+                    currentLanguage: 'en',
+                    searchParams: {
+                        country,
+                        isInternal: true,
+                        locationData: {},
+                        specialism: null,
+                        subSpecialism: null,
+                        jobCategory: null,
                     },
                 },
-                {
-                    data: {
-                        currentRoute: {
-                            path: '/jobs/careers-at-randstad/:searchParams*',
-                            url: '/jobs/careers-at-randstad/germany/',
-                            isExact: true,
-                            params: { searchParams: 'germany' },
-                            routeName: 'internal-search',
-                        },
-                        currentLanguage: 'en',
-                        searchParams: {
-                            country: 'germany',
-                            isInternal: true,
-                            locationData: {},
-                            specialism: null,
-                            subSpecialism: null,
-                            jobCategory: null,
-                        },
-                    },
-                },
-            ],
+            })),
         },
         pagination: {
             type: 'page',
