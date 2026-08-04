@@ -321,8 +321,10 @@ scrapers:
           - NL
           - FI
           - DE
+          - BE
           - 'NO'
           - LT
+          - PL
           - EE
       country_values:
           SE: '3'
@@ -330,8 +332,10 @@ scrapers:
           NL: '5'
           FI: '7'
           DE: '8'
+          BE: '12'
           'NO': '13'
           LT: '16'
+          PL: '17'
           EE: '21'
       pagination:
           type: page
