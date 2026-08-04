@@ -206,12 +206,21 @@ scrapers:
       name: SAP
       country_filter_param: 'optionsFacetsDD_country'
       countries:
-          - DE
-          - SE
-          - DK
-          - NL
           - FI
+          - SE
           - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
       pagination:
           type: offset
           param: startrow
