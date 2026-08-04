@@ -658,24 +658,16 @@ export async function fetchWorkdayJobs(
                             );
                             for (const loc of locations) {
                                 const resolved = lookupCountryFromLocation(loc);
-                                if (resolved.length === 0) {
-                                    // Skip region strings like "Nordic" when other locations in the
-                                    // same posting resolve to a specific country.
-                                    if (anyResolved) continue;
-                                    const groupKey =
-                                        loc
-                                            .split(',')
-                                            .map((p) => p.trim())
-                                            .pop() ?? loc;
-                                    if (!byCountry.has(groupKey))
-                                        byCountry.set(groupKey, []);
-                                    byCountry.get(groupKey)!.push(loc);
-                                } else {
-                                    const groupKey = resolved[0].code;
-                                    if (!byCountry.has(groupKey))
-                                        byCountry.set(groupKey, []);
-                                    byCountry.get(groupKey)!.push(loc);
-                                }
+                                // Skip region strings like "Nordic" when other locations in the
+                                // same posting resolve to a specific country.
+                                if (resolved.length === 0 && anyResolved)
+                                    continue;
+                                // Unresolvable venue names share one bucket ('') so a multi-location
+                                // posting stays one job instead of exploding into one job per venue.
+                                const groupKey = resolved[0]?.code ?? '';
+                                if (!byCountry.has(groupKey))
+                                    byCountry.set(groupKey, []);
+                                byCountry.get(groupKey)!.push(loc);
                             }
                             for (const [countryKey, locs] of byCountry) {
                                 const citySet = new Set<string>();
