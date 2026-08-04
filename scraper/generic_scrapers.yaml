@@ -315,28 +315,11 @@ scrapers:
     - match: 'swecogroup.com/careers/vacancies'
       name: Sweco Group
       country_filter_param: country
-      countries:
-          - SE
-          - DK
-          - NL
-          - FI
-          - DE
-          - BE
-          - 'NO'
-          - LT
-          - PL
-          - EE
-      country_values:
-          SE: '3'
-          DK: '4'
-          NL: '5'
-          FI: '7'
-          DE: '8'
-          BE: '12'
-          'NO': '13'
-          LT: '16'
-          PL: '17'
-          EE: '21'
+      # Countries + their opaque facet IDs are read live from the page's country
+      # <select> so a newly-added Sweco country is scraped without a code change.
+      country_from_select:
+          selector: 'select[name=country]'
+          strip_prefix: 'Sweco '
       pagination:
           type: page
           param: vacancy-page

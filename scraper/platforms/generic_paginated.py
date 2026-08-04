@@ -719,6 +719,43 @@ def _fetch_detail_page(
 # ── main entry point ──────────────────────────────────────────────────────────
 
 
+def _countries_from_select(
+    session: "requests.Session", list_url: str, spec: dict
+) -> tuple[list[str], dict[str, str]]:
+    """Read a country ``<select>`` off the listing page → (countries, country_values),
+    so per-country iteration follows whatever the site offers instead of a hardcoded
+    list. Each option's label (minus an optional brand prefix) is both the filter key
+    and the country tag, and resolves downstream — so "Sweco Norge" still maps to NO.
+    """
+    selector = spec.get("selector", "select[name=country]")
+    strip_prefix = spec.get("strip_prefix", "")
+    skip_values = set(spec.get("skip_values", ["0", ""]))
+    try:
+        resp = session.get(list_url, timeout=20)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: country <select> fetch failed ({e})", file=sys.stderr)
+        return [], {}
+    select = BeautifulSoup(resp.content, "html.parser").select_one(selector)
+    if select is None:
+        print(f"generic: no country <select> matching {selector!r}", file=sys.stderr)
+        return [], {}
+
+    countries: list[str] = []
+    values: dict[str, str] = {}
+    for opt in select.select("option"):
+        value = (opt.get("value") or "").strip()
+        if value in skip_values:
+            continue
+        label = opt.get_text(strip=True)
+        if strip_prefix and label.startswith(strip_prefix):
+            label = label[len(strip_prefix) :].strip()
+        if label and label not in values:
+            countries.append(label)
+            values[label] = value
+    return countries, values
+
+
 def scrape_generic(url: str, cfg: dict) -> list[dict]:
     name = cfg.get("name", url)
     extract_mode = cfg.get("extract_mode", "css_cards")
@@ -736,6 +773,16 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     country_values: dict[str, str] = cfg.get("country_values", {})
 
     session = requests.Session()
+
+    country_from_select = cfg.get("country_from_select")
+    if country_from_select and country_filter_param:
+        countries, country_values = _countries_from_select(
+            session, list_url, country_from_select
+        )
+        print(
+            f"generic [{name}]: resolved {len(countries)} countries from <select>",
+            file=sys.stderr,
+        )
 
     if extract_mode == "xml_feed":
         jobs = _fetch_xml_feed(session, list_url, cfg)
