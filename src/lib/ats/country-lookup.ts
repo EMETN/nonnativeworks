@@ -70,6 +70,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     monaco: { name: 'Monaco', code: 'MC', slug: 'monaco' },
     netherlands: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     'the netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+    'the-netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     holland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nederland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nld: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },

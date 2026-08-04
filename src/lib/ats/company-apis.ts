@@ -983,6 +983,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 },
             })),
         },
+        repeatForCountryField: 'data.searchParams.country',
         pagination: {
             type: 'page',
             param: 'data.searchParams.page',
