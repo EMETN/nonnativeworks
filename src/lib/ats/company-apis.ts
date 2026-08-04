@@ -1100,8 +1100,7 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
-    'careers.deliveryhero.com':
-        'https://careers.deliveryhero.com/jobs?options=745%2C869%2C860',
+    'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────
