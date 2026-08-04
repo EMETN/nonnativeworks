@@ -154,10 +154,6 @@ companies:
       url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
       min_positions: 5
 
-    - name: Nordnet
-      url: https://career.nordnetab.com/jobs
-      min_positions: 3
-
     - name: Nokia
       url: https://jobs.nokia.com/en
       min_positions: 10
