@@ -27,6 +27,7 @@ from platforms.academicwork import scrape_academicwork_static
 from platforms.arla import scrape_arla_static
 from platforms.attrax import (
     enrich_attrax_descriptions,
+    resolve_tracked_country_options,
     scrape_attrax_playwright,
     scrape_attrax_static,
 )
@@ -69,16 +70,11 @@ PLATFORM_NESTE = "neste"
 PLATFORM_ROVIO = "rovio"
 PLATFORM_ZALANDO = "zalando"
 
-# Some career sites cap unfiltered results (e.g. 250 of 400+ jobs).
-# These overrides replace the input URL with a pre-filtered one that
-# covers only tracked countries, ensuring full coverage.
-URL_OVERRIDES: dict[str, tuple[str, str]] = {
-    # key: matched against the input URL (substring)
-    # value: (replacement_url, human-readable note for terminal output)
-    "careers.tieto.com": (
-        "https://careers.tieto.com/jobs?options=283%2C288%2C305%2C313%2C316%2C320%2C337%2C354",
-        "Tieto caps unfiltered results at 250 — filtering by tracked countries (DK, FI, DE, LV, LT, NO, PL, SE). Other tracked countries have no Tieto facet.",
-    ),
+# Attrax sites cap unfiltered results, so we pre-filter by country. Value: base jobs
+# URL whose opaque country facet resolve_tracked_country_options reads at scrape time.
+ATTRAX_COUNTRY_SITES: dict[str, str] = {
+    "careers.tieto.com": "https://careers.tieto.com/jobs",
+    "careers.deliveryhero.com": "https://careers.deliveryhero.com/jobs",
 }
 
 
@@ -171,10 +167,18 @@ def main():
 
     url = sys.argv[1]
 
-    for pattern, (override_url, note) in URL_OVERRIDES.items():
+    for pattern, base_url in ATTRAX_COUNTRY_SITES.items():
         if pattern in url:
-            print(f"URL override: {note}", file=sys.stderr)
-            url = override_url
+            options = resolve_tracked_country_options(base_url)
+            if options:
+                url = f"{base_url}?options={options}"
+                print(f"Attrax country filter → {url}", file=sys.stderr)
+            else:
+                url = base_url
+                print(
+                    f"Attrax country filter unresolved — scraping {base_url} unfiltered",
+                    file=sys.stderr,
+                )
             break
 
     print(f"Scraping: {url}", file=sys.stderr)
