@@ -292,40 +292,55 @@ def _process_company(
     return summary_entry, "\n".join(out)
 
 
+TABLE_HEADER = "| Company | Countries | Positions | Skipped | Status |\n| --- | --- | --- | --- | --- |"
+
+
+def _summary_row(e: dict) -> str:
+    company = e.get("company_name") or e["url"]
+    countries = ", ".join(e.get("countries", [])) or "—"
+    positions = str(e.get("total_positions", "—"))
+    skipped = e.get("skipped_unknown_location", 0) + e.get(
+        "skipped_untracked_country", 0
+    )
+    if e["status"] == "success":
+        status = "✅ ok"
+    elif e["status"] == "warning":
+        status = "⚠️ 0 positions — verify"
+    else:
+        status = f"❌ {e.get('error', 'unknown error')[:80]}"
+    # Link problem rows (warnings + failures) straight to the career page for verification.
+    if e["status"] != "success":
+        company = f"[{company}]({e['url']})"
+    return f"| {company} | {countries} | {positions} | {skipped} | {status} |"
+
+
 def _write_github_summary(entries: list[dict]) -> None:
-    """Append a Markdown results table to $GITHUB_STEP_SUMMARY if set."""
+    """Append a Markdown results summary to $GITHUB_STEP_SUMMARY if set.
+
+    Failures and warnings are listed first (what needs attention), OK companies after.
+    """
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not summary_path:
         return
 
+    failures = [e for e in entries if e["status"] == "fail"]
+    warnings = [e for e in entries if e["status"] == "warning"]
+    successes = [e for e in entries if e["status"] == "success"]
+
     lines = [
         "## Scrape results\n",
-        "| Company | Countries | Positions | Skipped | Status |",
-        "| --- | --- | --- | --- | --- |",
+        f"**{len(successes)} succeeded, {len(warnings)} warnings, {len(failures)} failed**\n",
     ]
-    for e in entries:
-        company = e.get("company_name") or e["url"]
-        countries = ", ".join(e.get("countries", [])) or "—"
-        positions = str(e.get("total_positions", "—"))
-        skipped = e.get("skipped_unknown_location", 0) + e.get(
-            "skipped_untracked_country", 0
-        )
-        if e["status"] == "success":
-            status = "✅ ok"
-        elif e["status"] == "warning":
-            company = f"[{company}]({e['url']})"  # clickable for quick verification
-            status = "⚠️ 0 positions — verify"
-        else:
-            error = e.get("error", "unknown error")
-            status = f"❌ {error[:80]}"
-        lines.append(
-            f"| {company} | {countries} | {positions} | {skipped} | {status} |"
-        )
 
-    successes = sum(1 for e in entries if e["status"] == "success")
-    warnings = sum(1 for e in entries if e["status"] == "warning")
-    failures = sum(1 for e in entries if e["status"] == "fail")
-    lines.append(f"\n**{successes} succeeded, {warnings} warnings, {failures} failed**")
+    attention = failures + warnings
+    if attention:
+        lines += [f"### Needs attention ({len(attention)})\n", TABLE_HEADER]
+        lines += [_summary_row(e) for e in attention]
+        lines.append("")
+
+    if successes:
+        lines += [f"### OK ({len(successes)})\n", TABLE_HEADER]
+        lines += [_summary_row(e) for e in successes]
 
     with open(summary_path, "a") as f:
         f.write("\n".join(lines) + "\n")
