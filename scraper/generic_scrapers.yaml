@@ -439,12 +439,25 @@ scrapers:
       job_function_selector: 'li.job-list-01-list__job-info--category span'
 
     # ── E.ON ─────────────────────────────────────────────────────────────────
-    # Taleo-style tile layout. Only DE is a tracked country for E.ON.
     - match: 'careers.eon.com/search'
       name: E.ON
       country_filter_param: 'optionsFacetsDD_country'
       countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
           - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
