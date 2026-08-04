@@ -1157,15 +1157,22 @@ export async function fetchCompanyApiJobs(
                     config.repeatForCountryField,
                 );
                 if (typeof countryName === 'string') {
-                    const targetCode =
-                        lookupCountryFromLocation(countryName)[0]?.code;
                     for (const job of jobs) {
+                        let country = countryName;
+                        if (config.repeatForPrefersItemCountry) {
+                            const own = lookupCountryFromLocation(
+                                job.location ?? '',
+                            );
+                            if (own.length === 1) country = own[0].name;
+                        }
+                        const targetCode =
+                            lookupCountryFromLocation(country)[0]?.code;
                         if (job.sourceId) {
                             job.descriptionApiId =
                                 job.descriptionApiId ?? job.sourceId;
-                            job.sourceId = `${job.sourceId}-${countryName}`;
+                            job.sourceId = `${job.sourceId}-${country}`;
                         }
-                        job.country_code = countryName;
+                        job.country_code = country;
                         if (job.cities && targetCode) {
                             const filtered = job.cities.filter((city) => {
                                 const resolved =

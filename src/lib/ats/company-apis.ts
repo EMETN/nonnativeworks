@@ -325,6 +325,16 @@ export interface CompanyApiConfig {
      * the country-based tagging that GET repeatFor does automatically.
      */
     repeatForCountryField?: string;
+    /**
+     * Only meaningful alongside repeatForCountryField. Some APIs leak jobs from a
+     * neighbouring country into a per-country query — e.g. Accenture returns Vilnius
+     * (Lithuania) postings under jobCountry=Latvia, and those countries have no working
+     * query of their own. When set, a job whose own mapped location resolves to a single
+     * country is tagged with that country instead of the queried one, so the leaked jobs
+     * land in the right place. Jobs whose location doesn't resolve still fall back to the
+     * queried country (preserving the default "trust the query" behaviour).
+     */
+    repeatForPrefersItemCountry?: boolean;
 }
 
 // ─── Company registry ────────────────────────────────────────────────────────
@@ -676,6 +686,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // 'jobCountry' in the body override contains the country name (e.g. "Finland")
         // used to filter the cities array to only cities in the queried country.
         repeatForCountryField: 'jobCountry',
+        repeatForPrefersItemCountry: true,
     },
 
     'jobs.ericsson.com': {
