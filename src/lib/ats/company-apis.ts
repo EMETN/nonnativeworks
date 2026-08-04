@@ -775,7 +775,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // city string (e.g. "Stockholm, Malmö, Göteborg") — lookupCountryFromLocation splits
         // it and resolves via CITY_MAP. description_stripped contains the full job description
         // as plain text (no HTML, actual Unicode characters) — sufficient for language classification.
-        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL&size=200',
+        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL%2Cfr-fr%2Cpl-pl%2Cen-be%2Cen-ch%2Cen-lu&size=200',
         method: 'GET',
         headers: {
             'User-Agent':
