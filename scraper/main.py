@@ -76,8 +76,8 @@ URL_OVERRIDES: dict[str, tuple[str, str]] = {
     # key: matched against the input URL (substring)
     # value: (replacement_url, human-readable note for terminal output)
     "careers.tieto.com": (
-        "https://careers.tieto.com/jobs?options=283%2C286%2C288%2C305%2C313%2C316%2C320%2C354",
-        "Tieto caps unfiltered results at 250 — filtering by tracked countries (FI, SE, NO, DK, NL, DE, EST, LAT, LIT)",
+        "https://careers.tieto.com/jobs?options=283%2C288%2C305%2C313%2C316%2C320%2C337%2C354",
+        "Tieto caps unfiltered results at 250 — filtering by tracked countries (DK, FI, DE, LV, LT, NO, PL, SE). Other tracked countries have no Tieto facet.",
     ),
 }
 
