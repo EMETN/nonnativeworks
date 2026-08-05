@@ -191,13 +191,13 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     # ── German ───────────────────────────────────────────────────────────
     "DE": [
-        "anforderung",    # requirement
-        "architekt",      # architect
-        "assistenz",      # assistant
-        "ausbilder",      # instructor, trainer
-        "ausbildung",     # apprenticeship / training
-        "aushilfe",       # temporary worker
-        "ausschreiberung", # tender
+        "anforderung",  # requirement
+        "architekt",  # architect
+        "assistenz",  # assistant
+        "ausbilder",  # instructor, trainer
+        "ausbildung",  # apprenticeship / training
+        "aushilfe",  # temporary worker
+        "ausschreiberung",  # tender
         "auszubildender",  # trainee
         "berater",        # consultant / advisor
         "datenbank",      # database
@@ -217,37 +217,37 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "glasfaser",      # fibre optic
         "informatik",     # computer science
         "infrastruktur",  # infrastructure
-        "ingenieur",      # engineer
-        "kauffrau",       # merchant / business person (female form)
-        "kaufmann",       # merchant / business person
-        "konstrukteur",   # designer / design engineer
-        "koordinator",    # coordinator
-        "kraftfahrer",    # driver
-        "laborant",       # laboratory technician
-        "landschaft",     # landscape
-        "logistik",       # logistics
+        "ingenieur",  # engineer
+        "kauffrau",  # merchant / business person (female form)
+        "kaufmann",  # merchant / business person
+        "konstrukteur",  # designer / design engineer
+        "koordinator",  # coordinator
+        "kraftfahrer",  # driver
+        "laborant",  # laboratory technician
+        "landschaft",  # landscape
+        "logistik",  # logistics
         "masterstudium",  # master's degree/programme
-        "mechaniker",     # mechanic
+        "mechaniker",  # mechanic
         "medienbranche",  # media sector
-        "mitarbeiter",    # staff
-        "praktikant",     # intern
-        "praktikum",      # internship
-        "projekt",        # project
-        "sachbearbeiter", # clerk / officer
-        "schwerpunkt",    # focus
-        "spezialist",     # specialist
-        "studium",        # degree programme
-        "teamleiter",     # team lead
-        "teamleitung",    # team leader
-        "technischer",    # technical
+        "mitarbeiter",  # staff
+        "praktikant",  # intern
+        "praktikum",  # internship
+        "projekt",  # project
+        "sachbearbeiter",  # clerk / officer
+        "schwerpunkt",  # focus
+        "spezialist",  # specialist
+        "studium",  # degree programme
+        "teamleiter",  # team lead
+        "teamleitung",  # team leader
+        "technischer",  # technical
         "verantwortung",  # responsibility
-        "verkehr",        # traffic
-        "verkäufer",      # salesperson
-        "vertrag",        # contract
-        "vertrieb",       # sales
-        "werkstudent",    # working student / student employee
-        "wirtschaft",     # economy
-        "zeichner",       # illustrator / draftsman
+        "verkehr",  # traffic
+        "verkäufer",  # salesperson
+        "vertrag",  # contract
+        "vertrieb",  # sales
+        "werkstudent",  # working student / student employee
+        "wirtschaft",  # economy
+        "zeichner",  # illustrator / draftsman
     ],
     # ── Icelandic ────────────────────────────────────────────────────────
     "IS": [
@@ -257,19 +257,19 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     # ── Latvian ──────────────────────────────────────────────────────────
     "LV": [
-        "izstrādātājs",   # developer
-        "konsultants",    # consultant
-        "pārdevējs",      # salesperson
-        "speciālists",    # specialist
-        "vadītājs",       # manager
+        "izstrādātājs",  # developer
+        "konsultants",  # consultant
+        "pārdevējs",  # salesperson
+        "speciālists",  # specialist
+        "vadītājs",  # manager
     ],
     # ── Lithuanian ───────────────────────────────────────────────────────
     "LT": [
-        "kūrėjas",        # developer / creator
-        "konsultantas",   # consultant
-        "pardavėjas",     # salesperson
-        "specialistas",   # specialist
-        "vadovas",        # manager / head
+        "kūrėjas",  # developer / creator
+        "konsultantas",  # consultant
+        "pardavėjas",  # salesperson
+        "specialistas",  # specialist
+        "vadovas",  # manager / head
     ],
     # ── Norwegian ────────────────────────────────────────────────────────
     "NO": [

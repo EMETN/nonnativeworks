@@ -2,5 +2,4 @@ node_modules
 dist
 .astro
 pnpm-lock.yaml
-# .astro files are formatted by the Astro VS Code extension, not Prettier
-*.astro
+pnpm-workspace.yaml

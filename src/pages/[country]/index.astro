@@ -34,11 +34,13 @@ const companies = await getCompanyStatsByCountry(
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <Breadcrumb items={[
-            { label: 'Home', href: '/' },
-            { label: 'Countries', href: '/countries' },
-            { label: country.name },
-        ]} />
+        <Breadcrumb
+            items={[
+                { label: 'Home', href: '/' },
+                { label: 'Countries', href: '/countries' },
+                { label: country.name },
+            ]}
+        />
 
         <!-- Title + Gauge -->
         <div
@@ -89,8 +91,16 @@ const companies = await getCompanyStatsByCountry(
         {
             companies.length === 0 ? (
                 <div class="text-center py-16 text-gray-500">
-                    <p>No companies tracked yet for <strong>{country.name}</strong>. Check back soon!</p>
-                    <a href="/countries" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse all countries</a>
+                    <p>
+                        No companies tracked yet for{' '}
+                        <strong>{country.name}</strong>. Check back soon!
+                    </p>
+                    <a
+                        href="/countries"
+                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                    >
+                        Browse all countries
+                    </a>
                 </div>
             ) : (
                 <CompanyGrid

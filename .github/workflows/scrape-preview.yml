@@ -5,204 +5,204 @@ name: Scrape preview
 # and posts the results as a PR comment so the change can be reviewed before merge.
 
 on:
-  pull_request:
-    paths:
-      - 'scraper/companies.yaml'
-  workflow_dispatch:
-    inputs:
-      write_to_dev:
-        description: 'Write results to the dev database (default: dry run only)'
-        type: boolean
-        default: false
-      all_companies:
-        description: 'Run all companies in companies.yaml, not just newly added ones'
-        type: boolean
-        default: false
+    pull_request:
+        paths:
+            - 'scraper/companies.yaml'
+    workflow_dispatch:
+        inputs:
+            write_to_dev:
+                description: 'Write results to the dev database (default: dry run only)'
+                type: boolean
+                default: false
+            all_companies:
+                description: 'Run all companies in companies.yaml, not just newly added ones'
+                type: boolean
+                default: false
 
 permissions:
-  contents: read
-  pull-requests: write  # needed to post the result comment
+    contents: read
+    pull-requests: write # needed to post the result comment
 
 jobs:
-  scrape-preview:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    scrape-preview:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
 
-    env:
-      # Scoped to the Doppler *dev* config so scrapes hit the dev database.
-      # Set this secret at: Settings → Secrets and variables → Actions → DOPPLER_TOKEN_DEV
-      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_DEV }}
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # needed to read the base-branch version of companies.yaml
-
-      - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v3
-
-      - name: Install PyYAML
-        run: pip install pyyaml
-
-      - name: Find new companies
-        id: diff
-        run: |
-          git show origin/${{ github.base_ref }}:scraper/companies.yaml > /tmp/base.yaml 2>/dev/null \
-            || echo "companies: []" > /tmp/base.yaml
-
-          python3 - <<'EOF'
-          import yaml, os
-
-          all_companies = "${{ inputs.all_companies }}" == "true"
-
-          with open("scraper/companies.yaml") as f:
-              head = yaml.safe_load(f) or {}
-          all_list = head.get("companies") or []
-
-          if all_companies:
-              selected = all_list
-          else:
-              with open("/tmp/base.yaml") as f:
-                  base = yaml.safe_load(f) or {}
-              base_urls = {c["url"] for c in (base.get("companies") or [])}
-              selected = [c for c in all_list if c["url"] not in base_urls]
-
-          with open("/tmp/new_companies.yaml", "w") as f:
-              yaml.dump({"companies": selected}, f)
-
-          names = ", ".join(c["name"] for c in selected) or "(none)"
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write(f"count={len(selected)}\n")
-              out.write(f"names={names}\n")
-
-          label = "all" if all_companies else "new"
-          print(f"Selected {label} companies ({len(selected)}): {names}")
-          EOF
-
-      - name: No new companies
-        if: steps.diff.outputs.count == '0'
-        run: echo "No new companies in this PR — skipping scrape preview."
-
-      # ── Node / Astro server ──────────────────────────────────────────────────
-
-      - name: Setup pnpm
-        if: steps.diff.outputs.count != '0'
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        if: steps.diff.outputs.count != '0'
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
-
-      - name: Install Node dependencies
-        if: steps.diff.outputs.count != '0'
-        run: pnpm install --frozen-lockfile
-
-      # ── Python / scraper ─────────────────────────────────────────────────────
-      # Must come BEFORE the Astro server starts so the server inherits Python 3.12
-      # in PATH. The server spawns `python3` as a subprocess for Layer 2 scraping;
-      # if setup-python runs after the server starts, the server's inherited PATH
-      # still points to the older system Python which lacks requests/bs4/playwright.
-
-      - name: Setup Python
-        if: steps.diff.outputs.count != '0'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: scraper/requirements.txt
-
-      - name: Install Python dependencies
-        if: steps.diff.outputs.count != '0'
-        run: pip install -r scraper/requirements.txt
-
-      - name: Install Playwright browser
-        if: steps.diff.outputs.count != '0'
-        run: playwright install --with-deps chromium
-
-      - name: Build Astro
-        if: steps.diff.outputs.count != '0'
-        run: pnpm build
-
-      - name: Start Astro server (dev DB)
-        if: steps.diff.outputs.count != '0'
-        run: |
-          doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
-          echo "SERVER_PID=$!" >> $GITHUB_ENV
         env:
-          HOST: 127.0.0.1
-          PORT: 4321
+            # Scoped to the Doppler *dev* config so scrapes hit the dev database.
+            # Set this secret at: Settings → Secrets and variables → Actions → DOPPLER_TOKEN_DEV
+            DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_DEV }}
 
-      - name: Wait for server to be ready
-        if: steps.diff.outputs.count != '0'
-        run: |
-          echo "Waiting for http://localhost:4321..."
-          for i in $(seq 1 60); do
-            if curl -s -o /dev/null http://localhost:4321; then
-              echo "Server ready after ${i}s"
-              exit 0
-            fi
-            echo "  attempt $i/60..."
-            sleep 1
-          done
-          echo "--- Astro server log ---"
-          cat /tmp/astro-server.log
-          echo "Server did not become ready within 60s"
-          exit 1
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0 # needed to read the base-branch version of companies.yaml
 
-      # ── Dry-run scrape ───────────────────────────────────────────────────────
+            - name: Install Doppler CLI
+              uses: dopplerhq/cli-action@v4
 
-      - name: Dump server log on failure
-        if: failure()
-        run: cat /tmp/astro-server.log
+            - name: Install PyYAML
+              run: pip install pyyaml
 
-      - name: Dry-run scrape
-        if: steps.diff.outputs.count != '0'
-        continue-on-error: true  # always post the comment even if the scrape fails
-        run: |
-          doppler run -- python scraper/batch_run.py \
-            --api-url http://localhost:4321 \
-            --companies-file /tmp/new_companies.yaml \
-            ${{ github.event_name == 'workflow_dispatch' && inputs.write_to_dev == true && '' || '--dry-run' }} \
-            2>&1 | tee /tmp/scrape_output.txt
+            - name: Find new companies
+              id: diff
+              run: |
+                  git show origin/${{ github.base_ref }}:scraper/companies.yaml > /tmp/base.yaml 2>/dev/null \
+                    || echo "companies: []" > /tmp/base.yaml
 
-      - name: Post PR comment
-        if: steps.diff.outputs.count != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const names = `${{ steps.diff.outputs.names }}`;
-            const output = fs.readFileSync('/tmp/scrape_output.txt', 'utf8').trim();
+                  python3 - <<'EOF'
+                  import yaml, os
 
-            // Surface a status header from batch_run.py's summary line so warnings/
-            // failures are visible without reading the raw log below.
-            const m = output.match(/Results:\s*(\d+)\s+succeeded,\s*(\d+)\s+warnings?,\s*(\d+)\s+failed/i);
-            let header = '';
-            if (m) {
-              const ok = Number(m[1]), w = Number(m[2]), f = Number(m[3]);
-              const emoji = f > 0 ? '❌' : (w > 0 ? '⚠️' : '✅');
-              const parts = [`${ok} succeeded`];
-              if (w > 0) parts.push(`**${w} warning${w === 1 ? '' : 's'}** (0 positions — verify manually)`);
-              if (f > 0) parts.push(`**${f} failed**`);
-              header = `${emoji} ${parts.join(', ')}\n\n`;
-            }
+                  all_companies = "${{ inputs.all_companies }}" == "true"
 
-            const body = [
-              `## Scrape preview — ${names}`,
-              '',
-              header + '```',
-              output,
-              '```',
-              '',
-              '_Dry run against the dev database — no data was written._',
-            ].join('\n');
+                  with open("scraper/companies.yaml") as f:
+                      head = yaml.safe_load(f) or {}
+                  all_list = head.get("companies") or []
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body,
-            });
+                  if all_companies:
+                      selected = all_list
+                  else:
+                      with open("/tmp/base.yaml") as f:
+                          base = yaml.safe_load(f) or {}
+                      base_urls = {c["url"] for c in (base.get("companies") or [])}
+                      selected = [c for c in all_list if c["url"] not in base_urls]
+
+                  with open("/tmp/new_companies.yaml", "w") as f:
+                      yaml.dump({"companies": selected}, f)
+
+                  names = ", ".join(c["name"] for c in selected) or "(none)"
+                  with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+                      out.write(f"count={len(selected)}\n")
+                      out.write(f"names={names}\n")
+
+                  label = "all" if all_companies else "new"
+                  print(f"Selected {label} companies ({len(selected)}): {names}")
+                  EOF
+
+            - name: No new companies
+              if: steps.diff.outputs.count == '0'
+              run: echo "No new companies in this PR — skipping scrape preview."
+
+            # ── Node / Astro server ──────────────────────────────────────────────────
+
+            - name: Setup pnpm
+              if: steps.diff.outputs.count != '0'
+              uses: pnpm/action-setup@v5
+
+            - name: Setup Node
+              if: steps.diff.outputs.count != '0'
+              uses: actions/setup-node@v5
+              with:
+                  node-version-file: '.node-version'
+                  cache: 'pnpm'
+
+            - name: Install Node dependencies
+              if: steps.diff.outputs.count != '0'
+              run: pnpm install --frozen-lockfile
+
+            # ── Python / scraper ─────────────────────────────────────────────────────
+            # Must come BEFORE the Astro server starts so the server inherits Python 3.12
+            # in PATH. The server spawns `python3` as a subprocess for Layer 2 scraping;
+            # if setup-python runs after the server starts, the server's inherited PATH
+            # still points to the older system Python which lacks requests/bs4/playwright.
+
+            - name: Setup Python
+              if: steps.diff.outputs.count != '0'
+              uses: actions/setup-python@v6
+              with:
+                  python-version: '3.12'
+                  cache: 'pip'
+                  cache-dependency-path: scraper/requirements.txt
+
+            - name: Install Python dependencies
+              if: steps.diff.outputs.count != '0'
+              run: pip install -r scraper/requirements.txt
+
+            - name: Install Playwright browser
+              if: steps.diff.outputs.count != '0'
+              run: playwright install --with-deps chromium
+
+            - name: Build Astro
+              if: steps.diff.outputs.count != '0'
+              run: pnpm build
+
+            - name: Start Astro server (dev DB)
+              if: steps.diff.outputs.count != '0'
+              run: |
+                  doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
+                  echo "SERVER_PID=$!" >> $GITHUB_ENV
+              env:
+                  HOST: 127.0.0.1
+                  PORT: 4321
+
+            - name: Wait for server to be ready
+              if: steps.diff.outputs.count != '0'
+              run: |
+                  echo "Waiting for http://localhost:4321..."
+                  for i in $(seq 1 60); do
+                    if curl -s -o /dev/null http://localhost:4321; then
+                      echo "Server ready after ${i}s"
+                      exit 0
+                    fi
+                    echo "  attempt $i/60..."
+                    sleep 1
+                  done
+                  echo "--- Astro server log ---"
+                  cat /tmp/astro-server.log
+                  echo "Server did not become ready within 60s"
+                  exit 1
+
+            # ── Dry-run scrape ───────────────────────────────────────────────────────
+
+            - name: Dump server log on failure
+              if: failure()
+              run: cat /tmp/astro-server.log
+
+            - name: Dry-run scrape
+              if: steps.diff.outputs.count != '0'
+              continue-on-error: true # always post the comment even if the scrape fails
+              run: |
+                  doppler run -- python scraper/batch_run.py \
+                    --api-url http://localhost:4321 \
+                    --companies-file /tmp/new_companies.yaml \
+                    ${{ github.event_name == 'workflow_dispatch' && inputs.write_to_dev == true && '' || '--dry-run' }} \
+                    2>&1 | tee /tmp/scrape_output.txt
+
+            - name: Post PR comment
+              if: steps.diff.outputs.count != '0'
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const names = `${{ steps.diff.outputs.names }}`;
+                      const output = fs.readFileSync('/tmp/scrape_output.txt', 'utf8').trim();
+
+                      // Surface a status header from batch_run.py's summary line so warnings/
+                      // failures are visible without reading the raw log below.
+                      const m = output.match(/Results:\s*(\d+)\s+succeeded,\s*(\d+)\s+warnings?,\s*(\d+)\s+failed/i);
+                      let header = '';
+                      if (m) {
+                        const ok = Number(m[1]), w = Number(m[2]), f = Number(m[3]);
+                        const emoji = f > 0 ? '❌' : (w > 0 ? '⚠️' : '✅');
+                        const parts = [`${ok} succeeded`];
+                        if (w > 0) parts.push(`**${w} warning${w === 1 ? '' : 's'}** (0 positions — verify manually)`);
+                        if (f > 0) parts.push(`**${f} failed**`);
+                        header = `${emoji} ${parts.join(', ')}\n\n`;
+                      }
+
+                      const body = [
+                        `## Scrape preview — ${names}`,
+                        '',
+                        header + '```',
+                        output,
+                        '```',
+                        '',
+                        '_Dry run against the dev database — no data was written._',
+                      ].join('\n');
+
+                      await github.rest.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body,
+                      });

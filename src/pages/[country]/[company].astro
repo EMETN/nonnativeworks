@@ -36,7 +36,6 @@ const positions = await getPositionsByCompany(
     cookies,
     company.company_id,
 );
-
 ---
 
 <BaseLayout
@@ -73,19 +72,23 @@ const positions = await getPositionsByCompany(
         />
 
         <!-- Title + Gauge -->
-        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
+        <div
+            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
+        >
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
             </h1>
-            {company.total_positions > 0 && (
-                <CompanyGauge
-                    englishPositions={company.english_positions}
-                    totalPositions={company.total_positions}
-                />
-            )}
+            {
+                company.total_positions > 0 && (
+                    <CompanyGauge
+                        englishPositions={company.english_positions}
+                        totalPositions={company.total_positions}
+                    />
+                )
+            }
         </div>
 
         {
@@ -109,8 +112,16 @@ const positions = await getPositionsByCompany(
         {
             positions.length === 0 ? (
                 <div class="text-center py-16 text-gray-500">
-                    <p>No positions tracked yet for <strong>{company.name}</strong>. Check back soon!</p>
-                    <a href={`/${countrySlug}`} class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse other companies in {country.name}</a>
+                    <p>
+                        No positions tracked yet for{' '}
+                        <strong>{company.name}</strong>. Check back soon!
+                    </p>
+                    <a
+                        href={`/${countrySlug}`}
+                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                    >
+                        Browse other companies in {country.name}
+                    </a>
                 </div>
             ) : (
                 <>
@@ -119,7 +130,13 @@ const positions = await getPositionsByCompany(
                         careerPageUrl={company.career_page_url}
                         client:idle
                     />
-                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                    <p
+                        class="text-xs sm:text-sm text-gray-500 mt-4"
+                        title={new Date(company.updated_at).toLocaleDateString(
+                            'en-GB',
+                            { day: 'numeric', month: 'short', year: 'numeric' },
+                        )}
+                    >
                         Updated {timeAgo(company.updated_at)}
                     </p>
                 </>
@@ -129,8 +146,12 @@ const positions = await getPositionsByCompany(
     <script is:inline>
         const fromCompany = sessionStorage.getItem('nav-from-company');
         if (fromCompany) {
-            document.getElementById('breadcrumb-country').classList.add('hidden');
-            document.getElementById('breadcrumb-company').classList.remove('hidden');
+            document
+                .getElementById('breadcrumb-country')
+                .classList.add('hidden');
+            document
+                .getElementById('breadcrumb-company')
+                .classList.remove('hidden');
             sessionStorage.removeItem('nav-from-company');
         }
     </script>

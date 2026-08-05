@@ -88,7 +88,11 @@
 
 import type { RawJob } from "./types";
 import { titleAppearsNonEnglishExcludingCityNames } from "./title-language";
-import { lookupCountryFromLocation, extractCitiesForCountry, isCountryKey } from "./country-lookup";
+import {
+    lookupCountryFromLocation,
+    extractCitiesForCountry,
+    isCountryKey
+} from "./country-lookup";
 
 const DESCRIPTION_BATCH = 5;
 // Pause between concurrent batches so a throttled batch gets breathing room
@@ -96,36 +100,49 @@ const DESCRIPTION_BATCH = 5;
 const INTER_BATCH_DELAY_MS = 400;
 
 function extractOgDescription(html: string): string | undefined {
-  const m =
-    html.match(
-      /<meta[^>]+(?:name="description"|property="og:description")[^>]+content="([^"]+)"/i,
-    ) ??
-    html.match(
-      /<meta[^>]+content="([^"]+)"[^>]+(?:name="description"|property="og:description")/i,
-    );
-  return m?.[1] ? m[1].trim() : undefined;
+    const m =
+        html.match(
+            /<meta[^>]+(?:name="description"|property="og:description")[^>]+content="([^"]+)"/i,
+        ) ??
+        html.match(
+            /<meta[^>]+content="([^"]+)"[^>]+(?:name="description"|property="og:description")/i,
+        );
+    return m?.[1] ? m[1].trim() : undefined;
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, " ")
-    // Decode named HTML entities that affect language detection (Nordic + common chars).
-    // Workday returns job descriptions as HTML inside JSON; entities are not decoded
-    // automatically and would otherwise prevent the native-character frequency check.
-    .replace(/&auml;/g, 'ä').replace(/&Auml;/g, 'Ä')
-    .replace(/&ouml;/g, 'ö').replace(/&Ouml;/g, 'Ö')
-    .replace(/&aring;/g, 'å').replace(/&Aring;/g, 'Å')
-    .replace(/&oslash;/g, 'ø').replace(/&Oslash;/g, 'Ø')
-    .replace(/&aelig;/g, 'æ').replace(/&AElig;/g, 'Æ')
-    .replace(/&uuml;/g, 'ü').replace(/&Uuml;/g, 'Ü')
-    .replace(/&szlig;/g, 'ß')
-    .replace(/&eacute;/g, 'é').replace(/&Eacute;/g, 'É')
-    .replace(/&egrave;/g, 'è').replace(/&Egrave;/g, 'È')
-    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
-    .replace(/\s+/g, " ")
-    .trim();
+    return (
+        html
+            .replace(/<[^>]+>/g, ' ')
+            // Decode named HTML entities that affect language detection (Nordic + common chars).
+            // Workday returns job descriptions as HTML inside JSON; entities are not decoded
+            // automatically and would otherwise prevent the native-character frequency check.
+            .replace(/&auml;/g, 'ä')
+            .replace(/&Auml;/g, 'Ä')
+            .replace(/&ouml;/g, 'ö')
+            .replace(/&Ouml;/g, 'Ö')
+            .replace(/&aring;/g, 'å')
+            .replace(/&Aring;/g, 'Å')
+            .replace(/&oslash;/g, 'ø')
+            .replace(/&Oslash;/g, 'Ø')
+            .replace(/&aelig;/g, 'æ')
+            .replace(/&AElig;/g, 'Æ')
+            .replace(/&uuml;/g, 'ü')
+            .replace(/&Uuml;/g, 'Ü')
+            .replace(/&szlig;/g, 'ß')
+            .replace(/&eacute;/g, 'é')
+            .replace(/&Eacute;/g, 'É')
+            .replace(/&egrave;/g, 'è')
+            .replace(/&Egrave;/g, 'È')
+            .replace(/&amp;/g, '&')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+            .replace(/&#x([0-9a-f]+);/gi, (_, h) =>
+                String.fromCharCode(parseInt(h, 16)),
+            )
+            .replace(/\s+/g, ' ')
+            .trim()
+    );
 }
 
 /**
@@ -136,28 +153,28 @@ function stripHtml(html: string): string {
  *                  → https://wd3.myworkdaysite.com/wday/cxs/edenpeople/Edenred_Careers/job/Foo_R-123
  */
 function publicUrlToDetailApiUrl(publicUrl: string): string | null {
-  try {
-    const parsed = new URL(publicUrl);
-    const isWorkdayJobs = parsed.hostname.endsWith(".myworkdayjobs.com");
-    const isWorkdaySite = parsed.hostname.endsWith(".myworkdaysite.com");
-    if (!isWorkdayJobs && !isWorkdaySite) return null;
-    const segments = parsed.pathname.split("/").filter(Boolean);
-    let company: string;
-    let rest: string;
-    if (isWorkdayJobs) {
-      company = parsed.hostname.split(".")[0];
-      if (segments.length < 2) return null;
-      rest = segments.slice(1).join("/");
-    } else {
-      // Path: /{locale}/recruiting/{company}/{site}/job/...
-      company = segments[2] ?? "";
-      if (!company || segments.length < 4) return null;
-      rest = segments.slice(3).join("/");
+    try {
+        const parsed = new URL(publicUrl);
+        const isWorkdayJobs = parsed.hostname.endsWith('.myworkdayjobs.com');
+        const isWorkdaySite = parsed.hostname.endsWith('.myworkdaysite.com');
+        if (!isWorkdayJobs && !isWorkdaySite) return null;
+        const segments = parsed.pathname.split('/').filter(Boolean);
+        let company: string;
+        let rest: string;
+        if (isWorkdayJobs) {
+            company = parsed.hostname.split('.')[0];
+            if (segments.length < 2) return null;
+            rest = segments.slice(1).join('/');
+        } else {
+            // Path: /{locale}/recruiting/{company}/{site}/job/...
+            company = segments[2] ?? '';
+            if (!company || segments.length < 4) return null;
+            rest = segments.slice(3).join('/');
+        }
+        return `https://${parsed.hostname}/wday/cxs/${company}/${rest}`;
+    } catch {
+        return null;
     }
-    return `https://${parsed.hostname}/wday/cxs/${company}/${rest}`;
-  } catch {
-    return null;
-  }
 }
 
 const DESCRIPTION_FETCH_ATTEMPTS = 2;
@@ -287,15 +304,15 @@ export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<s
 }
 
 export interface WorkdayUrlParts {
-  host: string;
-  company: string;
-  site: string;
-  /** Locale segment from the career page URL, e.g. "en-US", "fi-FI". Used when building public job URLs. */
-  locale: string;
-  /** Facet filters to include in every API request, e.g. { locationCountry: ['abc123', ...] }. */
-  appliedFacets?: Record<string, string[]>;
-  /** Extra path segments between locale and site for myworkdaysite.com URLs (e.g. "recruiting/edenpeople"). */
-  sitePathPrefix?: string;
+    host: string;
+    company: string;
+    site: string;
+    /** Locale segment from the career page URL, e.g. "en-US", "fi-FI". Used when building public job URLs. */
+    locale: string;
+    /** Facet filters to include in every API request, e.g. { locationCountry: ['abc123', ...] }. */
+    appliedFacets?: Record<string, string[]>;
+    /** Extra path segments between locale and site for myworkdaysite.com URLs (e.g. "recruiting/edenpeople"). */
+    sitePathPrefix?: string;
 }
 
 /**
@@ -311,79 +328,84 @@ export interface WorkdayUrlParts {
  * returns jobs matching those filters (e.g. specific countries).
  */
 export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
-  try {
-    const parsed = new URL(url);
-    const isWorkdayJobs = parsed.hostname.endsWith(".myworkdayjobs.com");
-    const isWorkdaySite = parsed.hostname.endsWith(".myworkdaysite.com");
-    if (!isWorkdayJobs && !isWorkdaySite) return null;
+    try {
+        const parsed = new URL(url);
+        const isWorkdayJobs = parsed.hostname.endsWith('.myworkdayjobs.com');
+        const isWorkdaySite = parsed.hostname.endsWith('.myworkdaysite.com');
+        if (!isWorkdayJobs && !isWorkdaySite) return null;
 
-    const LOCALE_RE = /^[a-z]{2}-[A-Z]{2}$/;
-    const segments = parsed.pathname.split("/").filter(Boolean);
+        const LOCALE_RE = /^[a-z]{2}-[A-Z]{2}$/;
+        const segments = parsed.pathname.split('/').filter(Boolean);
 
-    let company: string;
-    let locale: string;
-    let site: string;
-    let sitePathPrefix: string | undefined;
+        let company: string;
+        let locale: string;
+        let site: string;
+        let sitePathPrefix: string | undefined;
 
-    if (isWorkdayJobs) {
-      company = parsed.hostname.split(".")[0];
-      locale = segments.length >= 2 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
-      site = segments[segments.length - 1];
-    } else {
-      // myworkdaysite.com: wd{N}.myworkdaysite.com/{locale}/recruiting/{company}/{site}
-      locale = segments.length >= 1 && LOCALE_RE.test(segments[0]) ? segments[0] : "en-US";
-      company = segments[2] ?? "";
-      site = segments[3] ?? segments[segments.length - 1];
-      if (company) sitePathPrefix = `recruiting/${company}`;
+        if (isWorkdayJobs) {
+            company = parsed.hostname.split('.')[0];
+            locale =
+                segments.length >= 2 && LOCALE_RE.test(segments[0])
+                    ? segments[0]
+                    : 'en-US';
+            site = segments[segments.length - 1];
+        } else {
+            // myworkdaysite.com: wd{N}.myworkdaysite.com/{locale}/recruiting/{company}/{site}
+            locale =
+                segments.length >= 1 && LOCALE_RE.test(segments[0])
+                    ? segments[0]
+                    : 'en-US';
+            company = segments[2] ?? '';
+            site = segments[3] ?? segments[segments.length - 1];
+            if (company) sitePathPrefix = `recruiting/${company}`;
+        }
+
+        if (!company || !site) return null;
+
+        const FACET_PARAMS = [
+            'locationCountry',
+            'Country',
+            'locationHierarchy1',
+            'locationRegionStateProvince',
+            'workerSubType',
+            'jobFamilyGroup',
+        ];
+        const appliedFacets: Record<string, string[]> = {};
+        for (const param of FACET_PARAMS) {
+            const values = parsed.searchParams.getAll(param);
+            if (values.length > 0) appliedFacets[param] = values;
+        }
+
+        return {
+            host: parsed.hostname,
+            company,
+            site,
+            locale,
+            ...(sitePathPrefix && { sitePathPrefix }),
+            ...(Object.keys(appliedFacets).length > 0 && { appliedFacets }),
+        };
+    } catch {
+        return null;
     }
-
-    if (!company || !site) return null;
-
-    const FACET_PARAMS = [
-      "locationCountry",
-      "Country",
-      "locationHierarchy1",
-      "locationRegionStateProvince",
-      "workerSubType",
-      "jobFamilyGroup",
-    ];
-    const appliedFacets: Record<string, string[]> = {};
-    for (const param of FACET_PARAMS) {
-      const values = parsed.searchParams.getAll(param);
-      if (values.length > 0) appliedFacets[param] = values;
-    }
-
-    return {
-      host: parsed.hostname,
-      company,
-      site,
-      locale,
-      ...(sitePathPrefix && { sitePathPrefix }),
-      ...(Object.keys(appliedFacets).length > 0 && { appliedFacets }),
-    };
-  } catch {
-    return null;
-  }
 }
 
 function buildJobUrl(parts: WorkdayUrlParts, externalPath: string): string {
-  if (parts.sitePathPrefix) {
-    return `https://${parts.host}/${parts.locale}/${parts.sitePathPrefix}/${parts.site}${externalPath}`;
-  }
-  return `https://${parts.host}/${parts.locale}/${parts.site}${externalPath}`;
+    if (parts.sitePathPrefix) {
+        return `https://${parts.host}/${parts.locale}/${parts.sitePathPrefix}/${parts.site}${externalPath}`;
+    }
+    return `https://${parts.host}/${parts.locale}/${parts.site}${externalPath}`;
 }
 
 interface WorkdayJobPosting {
-  title: string;
-  locationsText?: string;
-  externalPath: string;
+    title: string;
+    locationsText?: string;
+    externalPath: string;
 }
 
 interface WorkdayResponse {
-  total?: number;
-  jobPostings?: WorkdayJobPosting[];
+    total?: number;
+    jobPostings?: WorkdayJobPosting[];
 }
-
 
 const PAGE_SIZE = 20; // Workday rejects limit > 20
 const EXPAND_BATCH = 5;
@@ -396,8 +418,8 @@ const MULTI_LOC_RE = /^\d+ locations?$|^multiple locations?$/i;
  * fetch the job detail to get the proper location from jobPostingInfo.location.
  */
 function looksLikeVenueName(text: string): boolean {
-  if (!text || MULTI_LOC_RE.test(text.trim())) return false;
-  return text === text.toUpperCase() && !text.includes(',');
+    if (!text || MULTI_LOC_RE.test(text.trim())) return false;
+    return text === text.toUpperCase() && !text.includes(',');
 }
 
 /**
@@ -406,20 +428,30 @@ function looksLikeVenueName(text: string): boolean {
  *   - Detail API format:      "Denmark, Copenhagen, 1098"              → "Copenhagen"
  *   - Standard format:        "Copenhagen, Denmark"                    → "Copenhagen"
  */
-function parseCityFromWorkdayLoc(loc: string, countryCode: string): string | undefined {
-  // Venue code or ISO prefix: first dash-segment is all uppercase letters+digits → city is second
-  const dashParts = loc.split(/\s+-\s+/);
-  if (dashParts.length >= 2 && /^[A-Z]{2}[A-Z0-9]*$/.test(dashParts[0].trim())) {
-    return dashParts[1].trim() || undefined;
-  }
-  // Try CITY_MAP lookup first (handles "Copenhagen, Denmark" and "Denmark, Copenhagen, 1098")
-  const byMap = extractCitiesForCountry(loc, countryCode);
-  if (byMap.length > 0) return byMap[0];
-  // Fallback for cities not in CITY_MAP: if first comma segment is a country name use second,
-  // otherwise use first (e.g. "Great Britain, Maidenhead, SL6 8AA" → "Maidenhead")
-  const commaParts = loc.split(',').map((s) => s.trim()).filter(Boolean);
-  if (commaParts.length >= 2 && isCountryKey(commaParts[0])) return commaParts[1];
-  return commaParts[0] || undefined;
+function parseCityFromWorkdayLoc(
+    loc: string,
+    countryCode: string,
+): string | undefined {
+    // Venue code or ISO prefix: first dash-segment is all uppercase letters+digits → city is second
+    const dashParts = loc.split(/\s+-\s+/);
+    if (
+        dashParts.length >= 2 &&
+        /^[A-Z]{2}[A-Z0-9]*$/.test(dashParts[0].trim())
+    ) {
+        return dashParts[1].trim() || undefined;
+    }
+    // Try CITY_MAP lookup first (handles "Copenhagen, Denmark" and "Denmark, Copenhagen, 1098")
+    const byMap = extractCitiesForCountry(loc, countryCode);
+    if (byMap.length > 0) return byMap[0];
+    // Fallback for cities not in CITY_MAP: if first comma segment is a country name use second,
+    // otherwise use first (e.g. "Great Britain, Maidenhead, SL6 8AA" → "Maidenhead")
+    const commaParts = loc
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    if (commaParts.length >= 2 && isCountryKey(commaParts[0]))
+        return commaParts[1];
+    return commaParts[0] || undefined;
 }
 
 /**
@@ -449,238 +481,261 @@ async function fetchJobLocations(
       console.log(`[workday] detail fetch ${res.status} for ${externalPath}`);
       return { locations: [] };
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await res.json();
-    const info = data.jobPostingInfo ?? data.jobPosting ?? data;
-    const primary = typeof info.location === "string" ? info.location : undefined;
-    const additional: string[] = Array.isArray(info.additionalLocations)
-      ? (info.additionalLocations as unknown[]).filter((l): l is string => typeof l === "string")
-      : [];
-    const locations = [primary, ...additional].filter(
-      (l): l is string => l !== undefined && l.length > 0,
-    );
-    if (locations.length === 0) {
-      console.log(`[workday] no locations in detail response for ${externalPath} — keys: ${Object.keys(info).join(", ")}`);
-    }
-    const description =
-      typeof info.jobDescription === "string" && info.jobDescription
-        ? stripHtml(info.jobDescription)
-        : undefined;
-    const countryDescriptor =
-      typeof info.country?.descriptor === "string" && info.country.descriptor
-        ? info.country.descriptor
-        : undefined;
-    return { locations, description, countryDescriptor };
-  } catch (e) {
-    console.log(`[workday] detail fetch error for ${externalPath}: ${e}`);
-    return { locations: [] };
-  }
 }
 
 export async function fetchWorkdayJobs(
-  parts: WorkdayUrlParts,
+    parts: WorkdayUrlParts,
 ): Promise<RawJob[]> {
-  const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
-  const allPostings: WorkdayJobPosting[] = [];
-  let offset = 0;
-  let total = Infinity;
+    const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
+    const allPostings: WorkdayJobPosting[] = [];
+    let offset = 0;
+    let total = Infinity;
 
-  while (offset < total) {
-    const origin = `https://${parts.host}`;
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        origin: origin,
-        referer: `${origin}/`,
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-      body: JSON.stringify({
-        appliedFacets: parts.appliedFacets ?? {},
-        limit: PAGE_SIZE,
-        offset,
-        searchText: "",
-      }),
-    });
+    while (offset < total) {
+        const origin = `https://${parts.host}`;
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                origin: origin,
+                referer: `${origin}/`,
+                'user-agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+            body: JSON.stringify({
+                appliedFacets: parts.appliedFacets ?? {},
+                limit: PAGE_SIZE,
+                offset,
+                searchText: '',
+            }),
+        });
 
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(
-        `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
-      );
+        if (!res.ok) {
+            const body = await res.text();
+            throw new Error(
+                `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
+            );
+        }
+
+        const data: WorkdayResponse = await res.json();
+        const postings = data.jobPostings ?? [];
+        allPostings.push(...postings);
+        if (total === Infinity && data.total != null) total = data.total;
+
+        offset += PAGE_SIZE;
+        if (postings.length < PAGE_SIZE) break;
     }
 
-    const data: WorkdayResponse = await res.json();
-    const postings = data.jobPostings ?? [];
-    allPostings.push(...postings);
-    if (total === Infinity && data.total != null) total = data.total;
+    // Split into single-location, venue-name, multi-location, and unresolvable postings.
+    // Unresolvable: locationsText exists but lookupCountryFromLocation can't identify a country.
+    // These go through the detail API to extract jobPostingInfo.country.descriptor.
+    const allJobs: RawJob[] = [];
+    const multiLocQueue: WorkdayJobPosting[] = [];
+    const venueQueue: WorkdayJobPosting[] = [];
+    const needsCountryDetail: WorkdayJobPosting[] = [];
 
-    offset += PAGE_SIZE;
-    if (postings.length < PAGE_SIZE) break;
-  }
-
-  // Split into single-location, venue-name, multi-location, and unresolvable postings.
-  // Unresolvable: locationsText exists but lookupCountryFromLocation can't identify a country.
-  // These go through the detail API to extract jobPostingInfo.country.descriptor.
-  const allJobs: RawJob[] = [];
-  const multiLocQueue: WorkdayJobPosting[] = [];
-  const venueQueue: WorkdayJobPosting[] = [];
-  const needsCountryDetail: WorkdayJobPosting[] = [];
-
-  for (const posting of allPostings) {
-    const jobUrl = buildJobUrl(parts, posting.externalPath);
-    const locText = posting.locationsText ?? "";
-    const resolvedCountries = lookupCountryFromLocation(locText);
-    if (MULTI_LOC_RE.test(locText.trim())) {
-      multiLocQueue.push(posting);
-    } else if (looksLikeVenueName(locText)) {
-      venueQueue.push(posting);
-    } else if (locText && resolvedCountries.length === 0) {
-      needsCountryDetail.push(posting);
-    } else {
-      const city = resolvedCountries.length > 0
-        ? parseCityFromWorkdayLoc(locText, resolvedCountries[0].code)
-        : undefined;
-      allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl, ...(city && { city }) });
-    }
-  }
-
-  // Resolve venue-name postings by fetching the detail API for the real location.
-  if (venueQueue.length > 0) {
-    console.log(`[workday] resolving locations for ${venueQueue.length} venue-name postings (of ${allPostings.length} total)`);
-    for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
-      await Promise.all(
-        venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = buildJobUrl(parts, posting.externalPath);
-          const { locations, description } = await fetchJobLocations(
-            parts.host, parts.company, parts.site, posting.externalPath,
-          );
-          // Use the detail location if available; fall back to the original venue string.
-          const location = locations[0] ?? posting.locationsText;
-          const resolvedForCity = lookupCountryFromLocation(location ?? "");
-          const city = resolvedForCity.length > 0
-            ? parseCityFromWorkdayLoc(location ?? "", resolvedForCity[0].code)
-            : undefined;
-          allJobs.push({
-            title: posting.title,
-            url: jobUrl,
-            location,
-            ...(city && { city }),
-            ...(description && { descriptionText: description }),
-          });
-        }),
-      );
-      if (i + EXPAND_BATCH < venueQueue.length) await delay(INTER_BATCH_DELAY_MS);
-    }
-  }
-
-  // Resolve postings whose locationsText couldn't be mapped to a country.
-  // The detail API's jobPostingInfo.country.descriptor (e.g. "Denmark") is used as the
-  // location fallback, handling cases like "Home office DK" (already caught by the trailing
-  // ISO code heuristic) and fully opaque strings like "Distance office".
-  if (needsCountryDetail.length > 0) {
-    console.log(`[workday] resolving country for ${needsCountryDetail.length} unresolvable-location postings (of ${allPostings.length} total)`);
-    for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
-      await Promise.all(
-        needsCountryDetail.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = buildJobUrl(parts, posting.externalPath);
-          const { locations, countryDescriptor, description } = await fetchJobLocations(
-            parts.host, parts.company, parts.site, posting.externalPath,
-          );
-          // Prefer countryDescriptor ("Denmark") for country resolution; fall back to
-          // locations[0] (venue code like "DKRJZ51 - Tinglev - ...") which resolves via
-          // leading-code detection, then to the original locationsText as last resort.
-          const location = countryDescriptor ?? locations[0] ?? posting.locationsText;
-          const resolvedForCity = lookupCountryFromLocation(location ?? "");
-          const city = locations[0] && resolvedForCity.length > 0
-            ? parseCityFromWorkdayLoc(locations[0], resolvedForCity[0].code)
-            : undefined;
-          allJobs.push({
-            title: posting.title,
-            url: jobUrl,
-            location,
-            ...(city && { city }),
-            ...(description && { descriptionText: description }),
-          });
-        }),
-      );
-      if (i + EXPAND_BATCH < needsCountryDetail.length) await delay(INTER_BATCH_DELAY_MS);
-    }
-  }
-
-  // Expand multi-location postings by fetching each job's detail page.
-  if (multiLocQueue.length > 0) {
-    console.log(`[workday] expanding ${multiLocQueue.length} multi-location postings (of ${allPostings.length} total)`);
-    for (let i = 0; i < multiLocQueue.length; i += EXPAND_BATCH) {
-      await Promise.all(
-        multiLocQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-          const jobUrl = buildJobUrl(parts, posting.externalPath);
-          const { locations, description, countryDescriptor } = await fetchJobLocations(
-            parts.host, parts.company, parts.site, posting.externalPath,
-          );
-          if (locations.length > 0) {
-            // Group locations by resolved country code so that multiple cities in
-            // the same country become one job entry. Using lookupCountryFromLocation
-            // handles bare city names (e.g. "Espoo", "Turku") correctly — they both
-            // resolve to "FI" and are merged, rather than being treated as separate
-            // groups by the last-comma-segment heuristic.
-            const byCountry = new Map<string, string[]>();
-            const anyResolved = locations.some((l) => lookupCountryFromLocation(l).length > 0);
-            // None of the location strings matched CITY_MAP/COUNTRY_MAP (e.g. small
-            // towns not yet catalogued). Fall back to the detail API's
-            // country.descriptor (e.g. "France") — already fetched in this same
-            // call — instead of grouping under a bogus non-country key derived from
-            // the raw city string, which would just get dropped again downstream.
-            const descriptorCountry = !anyResolved && countryDescriptor
-              ? lookupCountryFromLocation(countryDescriptor)
-              : [];
-            for (const loc of locations) {
-              const resolved = lookupCountryFromLocation(loc);
-              if (resolved.length === 0) {
-                // Skip region strings like "Nordic" when other locations in the
-                // same posting resolve to a specific country.
-                if (anyResolved) continue;
-                const groupKey = descriptorCountry.length > 0
-                  ? descriptorCountry[0].code
-                  : (loc.split(",").map((p) => p.trim()).pop() ?? loc);
-                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
-                byCountry.get(groupKey)!.push(loc);
-              } else {
-                const groupKey = resolved[0].code;
-                if (!byCountry.has(groupKey)) byCountry.set(groupKey, []);
-                byCountry.get(groupKey)!.push(loc);
-              }
-            }
-            for (const [countryKey, locs] of byCountry) {
-              const citySet = new Set<string>();
-              for (const loc of locs) {
-                const city = parseCityFromWorkdayLoc(loc, countryKey);
-                if (city) citySet.add(city);
-              }
-              // country_code is set whenever resolution came from the descriptor
-              // fallback rather than a real country/city match on locs[0], since
-              // locs[0] itself (an uncatalogued city name) won't re-resolve
-              // downstream in buildScrapeResult otherwise.
-              allJobs.push({
+    for (const posting of allPostings) {
+        const jobUrl = buildJobUrl(parts, posting.externalPath);
+        const locText = posting.locationsText ?? '';
+        const resolvedCountries = lookupCountryFromLocation(locText);
+        if (MULTI_LOC_RE.test(locText.trim())) {
+            multiLocQueue.push(posting);
+        } else if (looksLikeVenueName(locText)) {
+            venueQueue.push(posting);
+        } else if (locText && resolvedCountries.length === 0) {
+            needsCountryDetail.push(posting);
+        } else {
+            const city =
+                resolvedCountries.length > 0
+                    ? parseCityFromWorkdayLoc(
+                          locText,
+                          resolvedCountries[0].code,
+                      )
+                    : undefined;
+            allJobs.push({
                 title: posting.title,
+                location: posting.locationsText,
                 url: jobUrl,
                 location: locs[0], // first full string drives country resolution
                 ...(descriptorCountry.length > 0 && { country_code: countryKey }),
                 ...(citySet.size > 0 && { cities: [...citySet] }),
                 ...(description && { descriptionText: description }),
-              });
-            }
-          } else {
+            });
+          }
+        } else {
             // Detail fetch failed — keep the original ambiguous locationsText as fallback.
             allJobs.push({ title: posting.title, location: posting.locationsText, url: jobUrl });
-          }
-        }),
-      );
-      if (i + EXPAND_BATCH < multiLocQueue.length) await delay(INTER_BATCH_DELAY_MS);
+        }
     }
-  }
+    if (i + EXPAND_BATCH < multiLocQueue.length) await delay(INTER_BATCH_DELAY_MS);
 
-  return allJobs;
+
+    // Resolve venue-name postings by fetching the detail API for the real location.
+    if (venueQueue.length > 0) {
+        console.log(
+            `[workday] resolving locations for ${venueQueue.length} venue-name postings (of ${allPostings.length} total)`,
+        );
+        for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
+            await Promise.all(
+                venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
+                    const jobUrl = buildJobUrl(parts, posting.externalPath);
+                    const { locations, description } = await fetchJobLocations(
+                        parts.host,
+                        parts.company,
+                        parts.site,
+                        posting.externalPath,
+                    );
+                    // Use the detail location if available; fall back to the original venue string.
+                    const location = locations[0] ?? posting.locationsText;
+                    const resolvedForCity = lookupCountryFromLocation(
+                        location ?? '',
+                    );
+                    const city =
+                        resolvedForCity.length > 0
+                            ? parseCityFromWorkdayLoc(
+                                  location ?? '',
+                                  resolvedForCity[0].code,
+                              )
+                            : undefined;
+                    allJobs.push({
+                        title: posting.title,
+                        url: jobUrl,
+                        location,
+                        ...(city && { city }),
+                        ...(description && { descriptionText: description }),
+                    });
+                }),
+            );
+        }
+    }
+
+    // Resolve postings whose locationsText couldn't be mapped to a country.
+    // The detail API's jobPostingInfo.country.descriptor (e.g. "Denmark") is used as the
+    // location fallback, handling cases like "Home office DK" (already caught by the trailing
+    // ISO code heuristic) and fully opaque strings like "Distance office".
+    if (needsCountryDetail.length > 0) {
+        console.log(
+            `[workday] resolving country for ${needsCountryDetail.length} unresolvable-location postings (of ${allPostings.length} total)`,
+        );
+        for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
+            await Promise.all(
+                needsCountryDetail
+                    .slice(i, i + EXPAND_BATCH)
+                    .map(async (posting) => {
+                        const jobUrl = buildJobUrl(parts, posting.externalPath);
+                        const { locations, countryDescriptor, description } =
+                            await fetchJobLocations(
+                                parts.host,
+                                parts.company,
+                                parts.site,
+                                posting.externalPath,
+                            );
+                        // Prefer countryDescriptor ("Denmark") for country resolution; fall back to
+                        // locations[0] (venue code like "DKRJZ51 - Tinglev - ...") which resolves via
+                        // leading-code detection, then to the original locationsText as last resort.
+                        const location =
+                            countryDescriptor ??
+                            locations[0] ??
+                            posting.locationsText;
+                        const resolvedForCity = lookupCountryFromLocation(
+                            location ?? '',
+                        );
+                        const city =
+                            locations[0] && resolvedForCity.length > 0
+                                ? parseCityFromWorkdayLoc(
+                                      locations[0],
+                                      resolvedForCity[0].code,
+                                  )
+                                : undefined;
+                        allJobs.push({
+                            title: posting.title,
+                            url: jobUrl,
+                            location,
+                            ...(city && { city }),
+                            ...(description && {
+                                descriptionText: description,
+                            }),
+                        });
+                    }),
+            );
+        }
+    }
+
+    // Expand multi-location postings by fetching each job's detail page.
+    if (multiLocQueue.length > 0) {
+        console.log(
+            `[workday] expanding ${multiLocQueue.length} multi-location postings (of ${allPostings.length} total)`,
+        );
+        for (let i = 0; i < multiLocQueue.length; i += EXPAND_BATCH) {
+            await Promise.all(
+                multiLocQueue
+                    .slice(i, i + EXPAND_BATCH)
+                    .map(async (posting) => {
+                        const jobUrl = buildJobUrl(parts, posting.externalPath);
+                        const { locations, description } =
+                            await fetchJobLocations(
+                                parts.host,
+                                parts.company,
+                                parts.site,
+                                posting.externalPath,
+                            );
+                        if (locations.length > 0) {
+                            // Group locations by resolved country code so that multiple cities in
+                            // the same country become one job entry. Using lookupCountryFromLocation
+                            // handles bare city names (e.g. "Espoo", "Turku") correctly — they both
+                            // resolve to "FI" and are merged, rather than being treated as separate
+                            // groups by the last-comma-segment heuristic.
+                            const byCountry = new Map<string, string[]>();
+                            const anyResolved = locations.some(
+                                (l) => lookupCountryFromLocation(l).length > 0,
+                            );
+                            for (const loc of locations) {
+                                const resolved = lookupCountryFromLocation(loc);
+                                // Skip region strings like "Nordic" when other locations in the
+                                // same posting resolve to a specific country.
+                                if (resolved.length === 0 && anyResolved)
+                                    continue;
+                                // Unresolvable venue names share one bucket ('') so a multi-location
+                                // posting stays one job instead of exploding into one job per venue.
+                                const groupKey = resolved[0]?.code ?? '';
+                                if (!byCountry.has(groupKey))
+                                    byCountry.set(groupKey, []);
+                                byCountry.get(groupKey)!.push(loc);
+                            }
+                            for (const [countryKey, locs] of byCountry) {
+                                const citySet = new Set<string>();
+                                for (const loc of locs) {
+                                    const city = parseCityFromWorkdayLoc(
+                                        loc,
+                                        countryKey,
+                                    );
+                                    if (city) citySet.add(city);
+                                }
+                                allJobs.push({
+                                    title: posting.title,
+                                    url: jobUrl,
+                                    location: locs[0], // first full string drives country resolution
+                                    ...(citySet.size > 0 && {
+                                        cities: [...citySet],
+                                    }),
+                                    ...(description && {
+                                        descriptionText: description,
+                                    }),
+                                });
+                            }
+                        } else {
+                            // Detail fetch failed — keep the original ambiguous locationsText as fallback.
+                            allJobs.push({
+                                title: posting.title,
+                                location: posting.locationsText,
+                                url: jobUrl,
+                            });
+                        }
+                    }),
+            );
+        }
+    }
+
+    return allJobs;
 }

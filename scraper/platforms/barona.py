@@ -72,13 +72,15 @@ def _fetch_barona_listing() -> list[dict]:
             if job_id in seen_ids:
                 continue
             seen_ids.add(job_id)
-            jobs.append({
-                "title": item.get("title", ""),
-                "url": item.get("applyUrl", ""),
-                "location": item.get("country", ""),   # ISO2 code e.g. "FI"
-                "city": item.get("city", ""),
-                "descriptionHtml": item.get("description", ""),
-            })
+            jobs.append(
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("applyUrl", ""),
+                    "location": item.get("country", ""),  # ISO2 code e.g. "FI"
+                    "city": item.get("city", ""),
+                    "descriptionHtml": item.get("description", ""),
+                }
+            )
             new_count += 1
 
         print(
@@ -169,7 +171,10 @@ def _scrape_barona_inner(url: str) -> list[dict]:
 
         try:
             # One page load to establish Cloudflare clearance.
-            print("barona: opening baronacareers.com for Cloudflare clearance…", file=sys.stderr)
+            print(
+                "barona: opening baronacareers.com for Cloudflare clearance…",
+                file=sys.stderr,
+            )
             pw_page.goto(
                 "https://www.baronacareers.com/fi/en/jobs",
                 wait_until="domcontentloaded",
@@ -188,7 +193,10 @@ def _scrape_barona_inner(url: str) -> list[dict]:
                 result = _browser_fetch(pw_page, api_url)
                 if not result:
                     failed += 1
-                    print(f"barona: page_info fetch returned null for {job['url']}", file=sys.stderr)
+                    print(
+                        f"barona: page_info fetch returned null for {job['url']}",
+                        file=sys.stderr,
+                    )
                     continue
 
                 requirements = (

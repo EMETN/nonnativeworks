@@ -55,16 +55,17 @@ WORKDIR /workspace
 
 # --- PYTHON SETUP (venv) ---
 
-# Copy requirements first for better caching
-COPY ./scraper/requirements.txt /workspace/
+# Copy dependency manifests first for better caching
+COPY ./scraper/requirements.txt ./scraper/pyproject.toml /workspace/
 
 # Create virtual environment outside /workspace so the bind mount doesn't shadow it
 RUN python3 -m venv /opt/scraper-venv
 
-# Install Python dependencies into venv
+# Install Python dependencies into venv (runtime deps + dev tooling group: ruff)
 RUN --mount=type=cache,target=/root/.cache/pip \
     /opt/scraper-venv/bin/pip install --upgrade pip && \
-    /opt/scraper-venv/bin/pip install -r /workspace/requirements.txt
+    /opt/scraper-venv/bin/pip install -r /workspace/requirements.txt && \
+    /opt/scraper-venv/bin/pip install --group /workspace/pyproject.toml:dev
 
 # Make venv the default Python
 ENV PATH="/opt/scraper-venv/bin:$PATH"

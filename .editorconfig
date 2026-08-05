@@ -1,0 +1,15 @@
+# EditorConfig — cross-editor consistency. https://editorconfig.org
+# Mirrors Prettier (tabWidth 4) and Ruff (4-space) so editors and formatters agree.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Markdown: trailing spaces are meaningful (hard line breaks).
+[*.md]
+trim_trailing_whitespace = false

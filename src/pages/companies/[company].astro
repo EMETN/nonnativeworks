@@ -38,25 +38,31 @@ const entries = company.entries.map((e) => ({
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <Breadcrumb items={[
-            { label: 'Home', href: '/' },
-            { label: 'Companies', href: '/companies' },
-            { label: company.name },
-        ]} />
+        <Breadcrumb
+            items={[
+                { label: 'Home', href: '/' },
+                { label: 'Companies', href: '/companies' },
+                { label: company.name },
+            ]}
+        />
 
-        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
+        <div
+            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
+        >
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
             </h1>
-            {company.total_positions > 0 && (
-                <CompanyGauge
-                    englishPositions={company.english_positions}
-                    totalPositions={company.total_positions}
-                />
-            )}
+            {
+                company.total_positions > 0 && (
+                    <CompanyGauge
+                        englishPositions={company.english_positions}
+                        totalPositions={company.total_positions}
+                    />
+                )
+            }
         </div>
 
         {
@@ -84,8 +90,16 @@ const entries = company.entries.map((e) => ({
         {
             company.total_positions === 0 ? (
                 <div class="text-center py-16 text-gray-500">
-                    <p>No positions tracked yet for <strong>{company.name}</strong>. Check back soon!</p>
-                    <a href="/companies" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse all companies</a>
+                    <p>
+                        No positions tracked yet for{' '}
+                        <strong>{company.name}</strong>. Check back soon!
+                    </p>
+                    <a
+                        href="/companies"
+                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                    >
+                        Browse all companies
+                    </a>
                 </div>
             ) : (
                 <>
@@ -94,7 +108,13 @@ const entries = company.entries.map((e) => ({
                         companySlug={companySlug!}
                         client:idle
                     />
-                    <p class="text-xs sm:text-sm text-gray-500 mt-4" title={new Date(company.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}>
+                    <p
+                        class="text-xs sm:text-sm text-gray-500 mt-4"
+                        title={new Date(company.updated_at).toLocaleDateString(
+                            'en-GB',
+                            { day: 'numeric', month: 'short', year: 'numeric' },
+                        )}
+                    >
                         Updated {timeAgo(company.updated_at)}
                     </p>
                 </>

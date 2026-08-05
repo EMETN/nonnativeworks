@@ -58,11 +58,10 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 import yaml
-from pathlib import Path
 
 COMPANIES_FILE = Path(__file__).parent / "companies.yaml"
 
@@ -95,7 +94,9 @@ def _wait_for_server(api_url: str, max_wait: int = 30) -> None:
     raise RuntimeError(f"Server at {api_url} did not become ready within {max_wait}s")
 
 
-def _scrape(api_url: str, secret: str, url: str, timeout: int = SCRAPE_TIMEOUT_S) -> dict:
+def _scrape(
+    api_url: str, secret: str, url: str, timeout: int = SCRAPE_TIMEOUT_S
+) -> dict:
     resp = requests.post(
         f"{api_url}/api/admin/scrape",
         json={"url": url},
@@ -132,15 +133,17 @@ def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list
             positions.append(position)
         if not positions:
             continue
-        entries.append({
-            "company_name": scrape_result["company_name"],
-            "career_page_url": scrape_result["career_page_url"],
-            "country": country_group["country"],
-            "country_name": country_group["country_name"],
-            "country_code": country_group["country_code"],
-            "is_english_company": is_english_company,
-            "positions": positions,
-        })
+        entries.append(
+            {
+                "company_name": scrape_result["company_name"],
+                "career_page_url": scrape_result["career_page_url"],
+                "country": country_group["country"],
+                "country_name": country_group["country_name"],
+                "country_code": country_group["country_code"],
+                "is_english_company": is_english_company,
+                "positions": positions,
+            }
+        )
     return entries
 
 
@@ -155,7 +158,9 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
     return resp.json()
 
 
-def _cleanup_stale_countries(api_url: str, secret: str, company_name: str, keep_countries: list[str]) -> None:
+def _cleanup_stale_countries(
+    api_url: str, secret: str, company_name: str, keep_countries: list[str]
+) -> None:
     """Remove DB entries for countries where the company no longer has any jobs."""
     resp = requests.post(
         f"{api_url}/api/admin/cleanup-stale-countries",
@@ -183,7 +188,9 @@ def _process_company(
     summary_entry: dict = {
         "url": url,
         "status": "unknown",
-        "company_name": None,
+        # Seed with the YAML name so a scrape failure still shows it (the scrape-derived
+        # name isn't available until the scrape succeeds).
+        "company_name": company.get("name"),
         "total_positions": 0,
         "countries": [],
         "skipped_unknown_location": 0,
@@ -205,6 +212,11 @@ def _process_company(
         summary_entry.update({"status": "fail", "error": msg})
         return summary_entry, "\n".join(out)
 
+    # companies.yaml is authoritative for the name; the scrape endpoint only derives
+    # one from the URL slug (e.g. "Abb", "Storaenso") which loses correct casing.
+    if company.get("name"):
+        result["company_name"] = company["name"]
+
     total_positions = sum(len(cg.get("jobs", [])) for cg in result.get("countries", []))
     country_names = [cg["country_name"] for cg in result.get("countries", [])]
     out.append(
@@ -216,13 +228,15 @@ def _process_company(
         f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}"
     )
 
-    summary_entry.update({
-        "company_name": result.get("company_name"),
-        "total_positions": total_positions,
-        "countries": country_names,
-        "skipped_unknown_location": result.get("skipped_unknown_location", 0),
-        "skipped_untracked_country": result.get("skipped_untracked_country", 0),
-    })
+    summary_entry.update(
+        {
+            "company_name": result.get("company_name"),
+            "total_positions": total_positions,
+            "countries": country_names,
+            "skipped_unknown_location": result.get("skipped_unknown_location", 0),
+            "skipped_untracked_country": result.get("skipped_untracked_country", 0),
+        }
+    )
 
     # ── Validate ──────────────────────────────────────────────────────────
     # min_positions: 0 opts a company into warning-on-empty (verify, don't fail).
@@ -270,7 +284,9 @@ def _process_company(
     if company_name_for_cleanup and payload:
         scraped_country_slugs = [entry["country"] for entry in payload]
         try:
-            _cleanup_stale_countries(api_url, secret, company_name_for_cleanup, scraped_country_slugs)
+            _cleanup_stale_countries(
+                api_url, secret, company_name_for_cleanup, scraped_country_slugs
+            )
             out.append(f"  stale-country cleanup ok (kept: {scraped_country_slugs})")
         except Exception as e:
             out.append(f"  WARN — stale-country cleanup failed (non-fatal): {e}")
@@ -278,36 +294,55 @@ def _process_company(
     return summary_entry, "\n".join(out)
 
 
+TABLE_HEADER = "| Company | Countries | Positions | Skipped | Status |\n| --- | --- | --- | --- | --- |"
+
+
+def _summary_row(e: dict) -> str:
+    company = e.get("company_name") or e["url"]
+    countries = ", ".join(e.get("countries", [])) or "—"
+    positions = str(e.get("total_positions", "—"))
+    skipped = e.get("skipped_unknown_location", 0) + e.get(
+        "skipped_untracked_country", 0
+    )
+    if e["status"] == "success":
+        status = "✅ ok"
+    elif e["status"] == "warning":
+        status = "⚠️ 0 positions — verify"
+    else:
+        status = f"❌ {e.get('error', 'unknown error')[:80]}"
+    # Link problem rows (warnings + failures) straight to the career page for verification.
+    if e["status"] != "success":
+        company = f"[{company}]({e['url']})"
+    return f"| {company} | {countries} | {positions} | {skipped} | {status} |"
+
+
 def _write_github_summary(entries: list[dict]) -> None:
-    """Append a Markdown results table to $GITHUB_STEP_SUMMARY if set."""
+    """Append a Markdown results summary to $GITHUB_STEP_SUMMARY if set.
+
+    Failures and warnings are listed first (what needs attention), OK companies after.
+    """
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not summary_path:
         return
 
+    failures = [e for e in entries if e["status"] == "fail"]
+    warnings = [e for e in entries if e["status"] == "warning"]
+    successes = [e for e in entries if e["status"] == "success"]
+
     lines = [
         "## Scrape results\n",
-        "| Company | Countries | Positions | Skipped | Status |",
-        "| --- | --- | --- | --- | --- |",
+        f"**{len(successes)} succeeded, {len(warnings)} warnings, {len(failures)} failed**\n",
     ]
-    for e in entries:
-        company = e.get("company_name") or e["url"]
-        countries = ", ".join(e.get("countries", [])) or "—"
-        positions = str(e.get("total_positions", "—"))
-        skipped = e.get("skipped_unknown_location", 0) + e.get("skipped_untracked_country", 0)
-        if e["status"] == "success":
-            status = "✅ ok"
-        elif e["status"] == "warning":
-            company = f"[{company}]({e['url']})"  # clickable for quick verification
-            status = "⚠️ 0 positions — verify"
-        else:
-            error = e.get("error", "unknown error")
-            status = f"❌ {error[:80]}"
-        lines.append(f"| {company} | {countries} | {positions} | {skipped} | {status} |")
 
-    successes = sum(1 for e in entries if e["status"] == "success")
-    warnings = sum(1 for e in entries if e["status"] == "warning")
-    failures = sum(1 for e in entries if e["status"] == "fail")
-    lines.append(f"\n**{successes} succeeded, {warnings} warnings, {failures} failed**")
+    attention = failures + warnings
+    if attention:
+        lines += [f"### Needs attention ({len(attention)})\n", TABLE_HEADER]
+        lines += [_summary_row(e) for e in attention]
+        lines.append("")
+
+    if successes:
+        lines += [f"### OK ({len(successes)})\n", TABLE_HEADER]
+        lines += [_summary_row(e) for e in successes]
 
     with open(summary_path, "a") as f:
         f.write("\n".join(lines) + "\n")
@@ -315,18 +350,36 @@ def _write_github_summary(entries: list[dict]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Batch scrape and upload job")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Scrape and validate but skip the upload step")
-    parser.add_argument("--api-url", default="http://localhost:4321",
-                        help="Base URL of the Astro server (default: http://localhost:4321)")
-    parser.add_argument("--slice", nargs=2, type=int, metavar=("INDEX", "TOTAL"),
-                        default=[0, 1],
-                        help="Process only slice INDEX of TOTAL (0-based, round-robin). "
-                             "Default: 0 1 (all companies).")
-    parser.add_argument("--companies-file", default=None,
-                        help="Path to a companies YAML file (default: scraper/companies.yaml).")
-    parser.add_argument("--scrape-timeout", type=int, default=None,
-                        help="HTTP read timeout in seconds for each scrape call (default: 700).")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Scrape and validate but skip the upload step",
+    )
+    parser.add_argument(
+        "--api-url",
+        default="http://localhost:4321",
+        help="Base URL of the Astro server (default: http://localhost:4321)",
+    )
+    parser.add_argument(
+        "--slice",
+        nargs=2,
+        type=int,
+        metavar=("INDEX", "TOTAL"),
+        default=[0, 1],
+        help="Process only slice INDEX of TOTAL (0-based, round-robin). "
+        "Default: 0 1 (all companies).",
+    )
+    parser.add_argument(
+        "--companies-file",
+        default=None,
+        help="Path to a companies YAML file (default: scraper/companies.yaml).",
+    )
+    parser.add_argument(
+        "--scrape-timeout",
+        type=int,
+        default=None,
+        help="HTTP read timeout in seconds for each scrape call (default: 700).",
+    )
     args = parser.parse_args()
 
     if args.scrape_timeout is not None:
@@ -367,12 +420,20 @@ def main() -> int:
     valid_companies = [c for c in companies if c.get("url", "").strip()]
     skipped = len(companies) - len(valid_companies)
     if skipped:
-        print(f"WARNING: {skipped} company entries missing 'url', skipping", file=sys.stderr)
+        print(
+            f"WARNING: {skipped} company entries missing 'url', skipping",
+            file=sys.stderr,
+        )
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {
             executor.submit(
-                _process_company, company, args.api_url, secret, args.dry_run, SCRAPE_TIMEOUT_S
+                _process_company,
+                company,
+                args.api_url,
+                secret,
+                args.dry_run,
+                SCRAPE_TIMEOUT_S,
             ): company
             for company in valid_companies
         }
@@ -381,7 +442,9 @@ def main() -> int:
             print(output, flush=True)
             summary_entries.append(entry)
             if entry["status"] == "success":
-                successes.append({"url": entry["url"], "positions": entry["total_positions"]})
+                successes.append(
+                    {"url": entry["url"], "positions": entry["total_positions"]}
+                )
             elif entry["status"] == "warning":
                 warnings.append({"url": entry["url"], "error": entry["error"]})
             else:
@@ -389,7 +452,9 @@ def main() -> int:
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'═' * 60}")
-    print(f"Results: {len(successes)} succeeded, {len(warnings)} warnings, {len(failures)} failed")
+    print(
+        f"Results: {len(successes)} succeeded, {len(warnings)} warnings, {len(failures)} failed"
+    )
 
     if warnings:
         print("\nWarnings (0 positions — verify manually):")
