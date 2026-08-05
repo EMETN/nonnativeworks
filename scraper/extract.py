@@ -28,6 +28,50 @@ LOCATION_CLASS_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
+# Nav/footer/header/social chrome — excluded so empty career pages don't yield
+# menu and social links as "jobs".
+CHROME_TAGS = {"nav", "header", "footer"}
+CHROME_ROLES = {"navigation", "banner", "contentinfo"}
+CHROME_ATTR_PATTERNS = re.compile(
+    r"(^|[-_ ])(nav|navbar|navigation|menu|megamenu|footer|social|breadcrumb"
+    r"|cookie|newsletter|subscribe|sidebar|topbar)([-_ ]|$)",
+    re.IGNORECASE,
+)
+
+# Empty-state text from async ATS embeds (e.g. Greenhouse "no current openings").
+NON_JOB_TITLE_PATTERNS = re.compile(
+    r"(loading|coming soon|there are no|no (current |open )?"
+    r"(openings|positions|vacancies|roles)|sign\s?in|log\s?in|log\s?out"
+    r"|subscribe|newsletter)",
+    re.IGNORECASE,
+)
+
+# Above this a container is a page/section wrapper (e.g. <body>), not a job card.
+MAX_CONTAINER_LINKS = 5
+
+
+def _in_page_chrome(tag) -> bool:
+    """True if the tag or an ancestor is site navigation/footer/header/social chrome."""
+    for node in [tag, *tag.parents]:
+        if getattr(node, "name", None) in CHROME_TAGS:
+            return True
+        get = getattr(node, "get", None)
+        if get is None:
+            continue
+        if get("role", "") in CHROME_ROLES:
+            return True
+        attr_blob = " ".join([*get("class", []), get("id") or ""])
+        if attr_blob.strip() and CHROME_ATTR_PATTERNS.search(attr_blob):
+            return True
+    return False
+
+
+def _is_job_title(title: str) -> bool:
+    """Reject empty, over-long, or obvious non-job placeholder/chrome titles."""
+    if not title or len(title) < 2 or len(title) > 120:
+        return False
+    return not NON_JOB_TITLE_PATTERNS.search(title)
+
 
 def extract_jobs(soup, base_url: str) -> list[dict]:
     """Try several heuristics and return whichever finds the most jobs."""
@@ -56,9 +100,15 @@ def extract_from_job_containers(soup, base_url: str) -> list[dict]:
         # Avoid deeply nested matches (only pick leaf-ish containers)
         if len(list(tag.find_all(class_=JOB_CLASS_PATTERNS))) > 2:
             continue
+        if _in_page_chrome(tag):
+            continue
+        if len(tag.find_all("a", href=True)) > MAX_CONTAINER_LINKS:
+            continue
 
         title, url = extract_title_and_url(tag, base_url)
-        if not title or len(title) < 2 or len(title) > 120:
+        if not _is_job_title(title):
+            continue
+        if not url:
             continue
         location = extract_location(tag)
         key = job_key(build_job(title, url, location))
@@ -80,11 +130,13 @@ def extract_from_lists(soup, base_url: str) -> list[dict]:
         items = ul.find_all("li", recursive=False)
         if len(items) < 3:
             continue
+        if _in_page_chrome(ul):
+            continue
 
         candidate_jobs = []
         for li in items:
             title, url = extract_title_and_url(li, base_url)
-            if not title or len(title) < 2 or len(title) > 120:
+            if not _is_job_title(title):
                 continue
             location = extract_location(li)
             candidate_jobs.append(build_job(title, url, location))
@@ -115,8 +167,10 @@ def extract_from_links(soup, base_url: str) -> list[dict]:
         path = urlparse(abs_url).path
         if not APPLY_URL_PATTERNS.search(path):
             continue
+        if _in_page_chrome(a):
+            continue
         title = a.get_text(separator=" ", strip=True)
-        if not title or len(title) < 4 or len(title) > 120:
+        if len(title) < 4 or not _is_job_title(title):
             continue
         location = extract_location(a.parent or a)
         key = job_key(build_job(title, abs_url, location))
