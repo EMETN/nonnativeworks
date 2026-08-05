@@ -132,6 +132,7 @@ for domain in \
     "nitor.com" \
     "alpha-sense.com" \
     "rovio.com" \
+    "yousician.com" \
     "careers.microsoft.com" \
     "apply.careers.microsoft.com" \
     "s-pankki.fi" \
