@@ -82,14 +82,16 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif;";
             ))
         }
     </div>
-    {seeAllHref && seeAllLabel && (
-        <div class="flex justify-center mt-5">
-            <a
-                href={seeAllHref}
-                class="text-sm sm:text-base font-medium text-gray-900 border border-gray-200 hover:border-gray-400 px-5 py-2 rounded-lg transition-colors"
-                >{seeAllLabel}</a
-            >
-        </div>
-    )}
+    {
+        seeAllHref && seeAllLabel && (
+            <div class="flex justify-center mt-5">
+                <a
+                    href={seeAllHref}
+                    class="text-sm sm:text-base font-medium text-gray-900 border border-gray-200 hover:border-gray-400 px-5 py-2 rounded-lg transition-colors"
+                >
+                    {seeAllLabel}
+                </a>
+            </div>
+        )
+    }
 </div>
-

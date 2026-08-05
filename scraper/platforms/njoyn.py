@@ -7,17 +7,33 @@ establish a real browser session before any listing data is returned.
 Pagination is driven by clicking the "Next" button rather than raw POSTs.
 """
 
+import contextlib
 import re
 import sys
 from urllib.parse import urljoin
 
-from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
+from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import build_job
 from title_language import _title_appears_non_english_excluding_cities
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
-NJOYN_TRACKED_COUNTRIES = ["FI", "SE", "NO", "DK", "NL", "DE", "EE", "LV", "LT", "PL", "FR", "BE", "LU", "CH"]
+NJOYN_TRACKED_COUNTRIES = [
+    "FI",
+    "SE",
+    "NO",
+    "DK",
+    "NL",
+    "DE",
+    "EE",
+    "LV",
+    "LT",
+    "PL",
+    "FR",
+    "BE",
+    "LU",
+    "CH",
+]
 
 # Country names (lowercase) expected for each tracked country code.
 # Used to validate tombstone Country values against the active filter — some companies
@@ -45,12 +61,15 @@ NJOYN_SUBPROCESS_TIMEOUT = 3600
 
 
 def scrape_njoyn_playwright(url: str) -> list[dict]:
-    return _run_in_subprocess(_scrape_njoyn_playwright_inner, url, timeout=NJOYN_SUBPROCESS_TIMEOUT)
+    return _run_in_subprocess(
+        _scrape_njoyn_playwright_inner, url, timeout=NJOYN_SUBPROCESS_TIMEOUT
+    )
 
 
 def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
     try:
-        from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+        from playwright.sync_api import TimeoutError as PWTimeout
+        from playwright.sync_api import sync_playwright
     except ImportError:
         print("playwright not installed", file=sys.stderr)
         return []
@@ -77,11 +96,14 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
             pw_page.goto(url, wait_until="domcontentloaded", timeout=30_000)
             pw_page.wait_for_timeout(2_000)
 
-            for selector in ["[id*='cookie'] button", "[class*='cookie'] button", "[aria-label='Accept']", "#onetrust-accept-btn-handler"]:
-                try:
+            for selector in [
+                "[id*='cookie'] button",
+                "[class*='cookie'] button",
+                "[aria-label='Accept']",
+                "#onetrust-accept-btn-handler",
+            ]:
+                with contextlib.suppress(Exception):
                     pw_page.click(selector, timeout=2_000)
-                except Exception:
-                    pass
 
             # The country filter is hidden behind an "Advanced Search Parameters" button.
             # Click it to reveal the dropdown before checking for it.
@@ -113,7 +135,9 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                     try:
                         if "country" in (label.inner_text() or "").lower():
                             # Look for a sibling or nearby select
-                            sel = label.query_selector("select") or pw_page.query_selector(
+                            sel = label.query_selector(
+                                "select"
+                            ) or pw_page.query_selector(
                                 f"select[id='{label.get_attribute('for')}']"
                             )
                             if sel:
@@ -123,14 +147,23 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                         pass
 
             if country_select:
-                select_name = country_select.get_attribute("name") or country_select.get_attribute("id") or "country"
+                (
+                    country_select.get_attribute("name")
+                    or country_select.get_attribute("id")
+                    or "country"
+                )
                 available = [
                     o.get_attribute("value")
                     for o in country_select.query_selector_all("option")
                     if o.get_attribute("value")
                 ]
-                countries_to_scrape = [c for c in NJOYN_TRACKED_COUNTRIES if c in available]
-                print(f"njoyn: country filter found — scraping {countries_to_scrape}", file=sys.stderr)
+                countries_to_scrape = [
+                    c for c in NJOYN_TRACKED_COUNTRIES if c in available
+                ]
+                print(
+                    f"njoyn: country filter found — scraping {countries_to_scrape}",
+                    file=sys.stderr,
+                )
             else:
                 countries_to_scrape = [None]  # None = no filter, scrape all
                 print("njoyn: no country filter found — scraping all", file=sys.stderr)
@@ -144,7 +177,11 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                     pw_page.wait_for_timeout(1_500)
 
                     # Re-open Advanced Search if needed
-                    for adv_sel in ["a:has-text('Advanced Search Parameters')", "a:has-text('Advanced Search')", "input[value*='Advanced Search']"]:
+                    for adv_sel in [
+                        "a:has-text('Advanced Search Parameters')",
+                        "a:has-text('Advanced Search')",
+                        "input[value*='Advanced Search']",
+                    ]:
                         try:
                             pw_page.click(adv_sel, timeout=2_000)
                             pw_page.wait_for_timeout(800)
@@ -159,7 +196,10 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                         "select[name*='country' i], select[id*='country' i]"
                     )
                     if not current_select:
-                        print(f"njoyn: country dropdown not found for {country_code}, skipping", file=sys.stderr)
+                        print(
+                            f"njoyn: country dropdown not found for {country_code}, skipping",
+                            file=sys.stderr,
+                        )
                         continue
 
                     current_select.select_option(country_code)
@@ -177,12 +217,19 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                         pw_page.wait_for_load_state("domcontentloaded", timeout=15_000)
                         pw_page.wait_for_timeout(1_500)
                     except PWTimeout:
-                        print(f"njoyn: timed out loading country {country_code}", file=sys.stderr)
+                        print(
+                            f"njoyn: timed out loading country {country_code}",
+                            file=sys.stderr,
+                        )
                         continue
 
                 page_num = 1
                 while True:
-                    print(f"njoyn: extracting page {page_num}" + (f" [{country_code}]" if country_code else ""), file=sys.stderr)
+                    print(
+                        f"njoyn: extracting page {page_num}"
+                        + (f" [{country_code}]" if country_code else ""),
+                        file=sys.stderr,
+                    )
 
                     # Retry page.content() once — it can fail if the page is mid-navigation
                     try:
@@ -208,8 +255,13 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                                 tc = (job.pop("tombstone_country", None) or "").lower()
                                 if tc:
                                     expected = NJOYN_COUNTRY_NAMES.get(country_code, [])
-                                    if expected and not any(name in tc for name in expected):
-                                        print(f"njoyn: skipping '{job['title']}' — tombstone country '{tc}' doesn't match filter {country_code}", file=sys.stderr)
+                                    if expected and not any(
+                                        name in tc for name in expected
+                                    ):
+                                        print(
+                                            f"njoyn: skipping '{job['title']}' — tombstone country '{tc}' doesn't match filter {country_code}",
+                                            file=sys.stderr,
+                                        )
                                         continue
                                 job["country_code"] = country_code
                             else:
@@ -217,7 +269,10 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
                             jobs.append(job)
                             new_count += 1
 
-                    print(f"njoyn: page {page_num} — {new_count} new jobs ({len(jobs)} total)", file=sys.stderr)
+                    print(
+                        f"njoyn: page {page_num} — {new_count} new jobs ({len(jobs)} total)",
+                        file=sys.stderr,
+                    )
 
                     next_el = (
                         pw_page.query_selector("a[title='Next']")
@@ -296,6 +351,7 @@ def _extract_description_html(full_html: str) -> str:
     they are removed regardless of whether a specific selector matches.
     """
     from bs4 import BeautifulSoup
+
     soup = BeautifulSoup(full_html, "html.parser")
     _strip_boilerplate_sections(soup)
     for selector in _NJOYN_DESC_SELECTORS:
@@ -319,9 +375,13 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
         return
 
     import re as _re
+
     _strip_tags = _re.compile(r"<[^>]+>")
 
-    print(f"njoyn: fetching descriptions for {len(targets)} English-titled jobs", file=sys.stderr)
+    print(
+        f"njoyn: fetching descriptions for {len(targets)} English-titled jobs",
+        file=sys.stderr,
+    )
     for i, job in enumerate(targets):
         try:
             pw_page.goto(job["url"], wait_until="domcontentloaded", timeout=20_000)
@@ -329,14 +389,22 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
             html = _extract_description_html(pw_page.content())
             plain = _strip_tags.sub(" ", html).strip()
             if len(plain) < _MIN_DESCRIPTION_TEXT_LENGTH:
-                print(f"njoyn: skipping '{job['title']}' — placeholder description ({len(plain)} chars)", file=sys.stderr)
+                print(
+                    f"njoyn: skipping '{job['title']}' — placeholder description ({len(plain)} chars)",
+                    file=sys.stderr,
+                )
                 job["_placeholder"] = True
             else:
                 job["descriptionHtml"] = html
         except Exception as e:
-            print(f"njoyn: description fetch failed for {job['url']}: {e}", file=sys.stderr)
+            print(
+                f"njoyn: description fetch failed for {job['url']}: {e}",
+                file=sys.stderr,
+            )
         if (i + 1) % 5 == 0:
-            print(f"njoyn: enriched {i + 1}/{len(targets)} descriptions", file=sys.stderr)
+            print(
+                f"njoyn: enriched {i + 1}/{len(targets)} descriptions", file=sys.stderr
+            )
 
 
 def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
@@ -391,7 +459,9 @@ def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
         tombstone_country = tombstone("Country")
 
         # URL from the "View Job Details" link
-        link = detail_div.find("a", href=re.compile(r"JobDetails|jobdetails|Jobid", re.I))
+        link = detail_div.find(
+            "a", href=re.compile(r"JobDetails|jobdetails|Jobid", re.I)
+        )
         href = link.get("href", "") if link else ""
         job_url = urljoin(base_url, href) if href else None
 

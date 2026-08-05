@@ -51,8 +51,13 @@ _HEADERS = {
 
 # Employment-type tokens in both English and Finnish
 _EMPLOYMENT_TYPES = {
-    "full time", "part time", "temporary", "contract",   # English
-    "kokoaikainen", "osa-aikainen", "määräaikainen",     # Finnish
+    "full time",
+    "part time",
+    "temporary",
+    "contract",  # English
+    "kokoaikainen",
+    "osa-aikainen",
+    "määräaikainen",  # Finnish
 }
 
 # Link path segment that identifies job detail pages on this site
@@ -150,7 +155,9 @@ def _fetch_description(session: requests.Session, job_url: str) -> str:
         resp.raise_for_status()
         return resp.text
     except Exception as e:
-        print(f"academicwork: description fetch error ({job_url}): {e}", file=sys.stderr)
+        print(
+            f"academicwork: description fetch error ({job_url}): {e}", file=sys.stderr
+        )
         return ""
 
 
@@ -168,7 +175,9 @@ def scrape_academicwork_static(url: str) -> list[dict]:
             break
 
         # Deduplicate across pages (same job can appear on multiple pages)
-        new_jobs = [j for j in page_jobs if j.get("url", "").split("?")[0] not in seen_urls]
+        new_jobs = [
+            j for j in page_jobs if j.get("url", "").split("?")[0] not in seen_urls
+        ]
         for j in new_jobs:
             seen_urls.add(j.get("url", "").split("?")[0])
         all_jobs.extend(new_jobs)

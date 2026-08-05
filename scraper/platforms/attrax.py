@@ -4,9 +4,10 @@ Attrax ATS — paginated static + Playwright scraper.
 Used by: careers.tieto.com, careers.deliveryhero.com and other Attrax-based career sites.
 """
 
+import contextlib
 import re
 import sys
-from urllib.parse import urljoin, urlparse, urlencode, urlunparse, parse_qs
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import build_job, SKIP_LOCATION_PATTERNS
@@ -25,6 +26,47 @@ _DESCRIPTION_SELECTORS = [
 _DESCRIPTION_BATCH = 5
 
 
+def _location_filter_group(soup):
+    for group in soup.select(
+        ".filtergroup, [class*='filtergroup'], [class*='filter-group']"
+    ):
+        header = group.select_one(
+            ".option-type-header, [class*='header'], legend, h2, h3"
+        )
+        if header and "location" in header.get_text(strip=True).lower():
+            return group
+    return None
+
+
+def resolve_tracked_country_options(base_url: str) -> str | None:
+    """`options` CSV for every tracked country the site lists, or None if unreadable."""
+    import requests
+    from bs4 import BeautifulSoup
+
+    # Fetch unfiltered — Attrax narrows the Location facet to the current selection.
+    base = urlunparse(urlparse(base_url)._replace(query="", fragment=""))
+    try:
+        resp = requests.get(base, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"Attrax: country-facet resolve failed ({e})", file=sys.stderr)
+        return None
+
+    group = _location_filter_group(BeautifulSoup(resp.content, "html.parser"))
+    if group is None:
+        print("Attrax: no Location filter group found", file=sys.stderr)
+        return None
+
+    ids: list[str] = []
+    for option in group.select("[data-option-id]"):
+        label = option.select_one("[aria-label]")
+        name = (label.get("aria-label") if label else "").strip().lower()
+        oid = option.get("data-option-id")
+        if name in TRACKED_NAMES and oid not in ids:
+            ids.append(oid)
+    return ",".join(ids) if ids else None
+
+
 def scrape_attrax_static(url: str) -> list[dict]:
     """Iterate ?page=N with plain requests — works if Attrax renders server-side."""
     import requests
@@ -37,7 +79,9 @@ def scrape_attrax_static(url: str) -> list[dict]:
         return urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
 
     session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+    session.headers["User-Agent"] = (
+        "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+    )
 
     jobs: list[dict] = []
     seen: set[str] = set()
@@ -67,7 +111,10 @@ def scrape_attrax_static(url: str) -> list[dict]:
                 jobs.append(job)
                 new_count += 1
 
-        print(f"Attrax static: page {page_num} — {new_count} new jobs ({len(jobs)} total)", file=sys.stderr)
+        print(
+            f"Attrax static: page {page_num} — {new_count} new jobs ({len(jobs)} total)",
+            file=sys.stderr,
+        )
 
         if new_count == 0:
             break
@@ -112,11 +159,13 @@ def _scrape_attrax_playwright_inner(url: str) -> list[dict]:
 
                 # Dismiss cookie banners on first page only
                 if page_num == 1:
-                    for selector in ["[id*='cookie'] button", "[class*='cookie'] button", "[aria-label='Accept']"]:
-                        try:
+                    for selector in [
+                        "[id*='cookie'] button",
+                        "[class*='cookie'] button",
+                        "[aria-label='Accept']",
+                    ]:
+                        with contextlib.suppress(Exception):
                             pw_page.click(selector, timeout=2_000)
-                        except Exception:
-                            pass
 
                 soup = BeautifulSoup(pw_page.content(), "html.parser")
                 page_jobs = extract_attrax_jobs(soup, url)
@@ -126,13 +175,19 @@ def _scrape_attrax_playwright_inner(url: str) -> list[dict]:
 
                 new_count = 0
                 for job in page_jobs:
-                    key = job.get("url") or f"{job['title'].lower()}|{job.get('location', '')}"
+                    key = (
+                        job.get("url")
+                        or f"{job['title'].lower()}|{job.get('location', '')}"
+                    )
                     if key not in seen:
                         seen.add(key)
                         jobs.append(job)
                         new_count += 1
 
-                print(f"Attrax: page {page_num} — {new_count} new jobs ({len(jobs)} total)", file=sys.stderr)
+                print(
+                    f"Attrax: page {page_num} — {new_count} new jobs ({len(jobs)} total)",
+                    file=sys.stderr,
+                )
 
                 # Stop if no new jobs were found (dedup guard against infinite loops)
                 if new_count == 0:
@@ -150,7 +205,7 @@ def _clean_text(tag) -> str:
     """Join child text nodes with a space, then fix spaces before punctuation."""
     text = tag.get_text(separator=" ", strip=True)
     # Remove space inserted before comma/period/semicolon by the separator
-    return re.sub(r'\s+([,;.])', r'\1', text)
+    return re.sub(r"\s+([,;.])", r"\1", text)
 
 
 def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
@@ -176,7 +231,10 @@ def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
 
         # Location: prefer free-text field ("Tampere, Finland"), fall back to structured city
         location = None
-        for loc_class in ("attrax-vacancy-tile__location-freetext", "attrax-vacancy-tile__option-location"):
+        for loc_class in (
+            "attrax-vacancy-tile__location-freetext",
+            "attrax-vacancy-tile__option-location",
+        ):
             loc_tag = tile.find(class_=loc_class)
             if loc_tag:
                 val = loc_tag.find(class_="attrax-vacancy-tile__item-value")
@@ -207,7 +265,9 @@ def extract_attrax_jobs(soup, base_url: str) -> list[dict]:
                     job["work_model"] = "hybrid"
                 elif "remote" in wm_text:
                     job["work_model"] = "remote"
-                elif "on-site" in wm_text or "onsite" in wm_text or "on site" in wm_text:
+                elif (
+                    "on-site" in wm_text or "onsite" in wm_text or "on site" in wm_text
+                ):
                     job["work_model"] = "on-site"
 
         jobs.append(job)
@@ -220,16 +280,20 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
     from bs4 import BeautifulSoup
 
     targets = [
-        j for j in jobs
+        j
+        for j in jobs
         if j.get("url")
         and not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]
     skipped = len(jobs) - len(targets)
-    print(f"Attrax: fetching descriptions for {len(targets)} jobs ({skipped} skipped — non-English title or untracked country)", file=sys.stderr)
+    print(
+        f"Attrax: fetching descriptions for {len(targets)} jobs ({skipped} skipped — non-English title or untracked country)",
+        file=sys.stderr,
+    )
 
     for i in range(0, len(targets), _DESCRIPTION_BATCH):
-        batch = targets[i:i + _DESCRIPTION_BATCH]
+        batch = targets[i : i + _DESCRIPTION_BATCH]
         for job in batch:
             try:
                 resp = session.get(job["url"], timeout=20)
@@ -241,6 +305,13 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
                     if tag:
                         job["descriptionHtml"] = str(tag)
                         break
+
+                if not job.get("location"):
+                    loc_val = soup.select_one(
+                        ".locationtext .attrax-job-information-widget__freetext-field-value"
+                    )
+                    if loc_val and loc_val.get_text(strip=True):
+                        job["location"] = loc_val.get_text(strip=True)
             except Exception as e:
                 print(f"Attrax: detail page error ({job['url']}): {e}", file=sys.stderr)
 

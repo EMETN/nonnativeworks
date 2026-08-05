@@ -42,6 +42,7 @@ All modes share the same two-phase structure:
      assignment is skipped, but the description fetch itself still runs.
 """
 
+import contextlib
 import json as json_mod
 import re
 import sys
@@ -75,6 +76,7 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
 
 
 # ── css_cards helpers ─────────────────────────────────────────────────────────
+
 
 def _page_param_value(pagination: dict, page_number: int) -> int:
     ptype = pagination.get("type", "offset")
@@ -175,6 +177,7 @@ def _fetch_css_cards_page(
 
 # ── attribute_json helpers ────────────────────────────────────────────────────
 
+
 def _extract_attribute_json(html: str, cfg: dict) -> list[dict]:
     """Extract jobs from a JSON array stored in an HTML element attribute."""
     fields = cfg.get("fields", {})
@@ -202,10 +205,10 @@ def _extract_attribute_json(html: str, cfg: dict) -> list[dict]:
         print("generic: attribute JSON is not an array", file=sys.stderr)
         return []
 
-    title_field       = fields.get("title", "title")
-    url_field         = fields.get("url", "url")
-    location_field    = fields.get("location")
-    country_field     = fields.get("country")
+    title_field = fields.get("title", "title")
+    url_field = fields.get("url", "url")
+    location_field = fields.get("location")
+    country_field = fields.get("country")
     job_function_field = fields.get("job_function")
 
     jobs = []
@@ -214,7 +217,7 @@ def _extract_attribute_json(html: str, cfg: dict) -> list[dict]:
         if not title:
             continue
 
-        job_url      = item.get(url_field) if url_field else None
+        job_url = item.get(url_field) if url_field else None
         job_function = item.get(job_function_field) if job_function_field else None
 
         # countries and locations are treated as parallel arrays:
@@ -230,7 +233,11 @@ def _extract_attribute_json(html: str, cfg: dict) -> list[dict]:
         if countries:
             # Fan out one job entry per country
             for i, country in enumerate(countries):
-                location = locations[i] if i < len(locations) else (locations[0] if locations else None)
+                location = (
+                    locations[i]
+                    if i < len(locations)
+                    else (locations[0] if locations else None)
+                )
                 job = build_job(title, job_url, location)
                 job["country_code"] = country
                 if job_function:
@@ -262,6 +269,7 @@ def _fetch_attribute_json_page(
 
 
 # ── script_json / script_var_json helpers ─────────────────────────────────────
+
 
 def _get_nested(obj, path: str):
     """Dot-notation access into a nested dict, e.g. 'header.roleTitle'."""
@@ -300,14 +308,14 @@ def _search_rsc_pushes(text: str, script_key: str) -> list | None:
 
 def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
     """Extract jobs from a JSON array embedded in a Next.js RSC script tag."""
-    fields          = cfg.get("fields", {})
-    script_key      = cfg["script_key"]
-    title_field     = fields.get("title", "title")
-    url_field       = fields.get("url", "url")
+    fields = cfg.get("fields", {})
+    script_key = cfg["script_key"]
+    title_field = fields.get("title", "title")
+    url_field = fields.get("url", "url")
     locations_field = fields.get("locations")
-    loc_subfield    = fields.get("location_subfield")
-    ctry_subfield   = fields.get("country_subfield")
-    jf_field        = fields.get("job_function")
+    loc_subfield = fields.get("location_subfield")
+    ctry_subfield = fields.get("country_subfield")
+    jf_field = fields.get("job_function")
 
     soup = BeautifulSoup(html, "html.parser")
     items = None
@@ -329,9 +337,9 @@ def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
         if not title:
             continue
 
-        raw_url  = _get_nested(item, url_field) if url_field else None
-        job_url  = urljoin(base_url, raw_url) if raw_url else None
-        jf       = _get_nested(item, jf_field) if jf_field else None
+        raw_url = _get_nested(item, url_field) if url_field else None
+        job_url = urljoin(base_url, raw_url) if raw_url else None
+        jf = _get_nested(item, jf_field) if jf_field else None
         loc_objs = _get_nested(item, locations_field) if locations_field else []
         if not isinstance(loc_objs, list):
             loc_objs = []
@@ -340,7 +348,7 @@ def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
             for loc_obj in loc_objs:
                 if not isinstance(loc_obj, dict):
                     continue
-                country  = loc_obj.get(ctry_subfield)
+                country = loc_obj.get(ctry_subfield)
                 location = loc_obj.get(loc_subfield) if loc_subfield else None
                 job = build_job(title, job_url, location)
                 if country:
@@ -371,9 +379,11 @@ def _fetch_script_json_page(
         return []
     return _extract_script_json(resp.text, cfg, list_url)
 
+
 # ── teamtailor helpers ────────────────────────────────────────────────────────
 
 _MIDDOT = "·"
+
 
 def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
     link = card.find("a", href=True)
@@ -411,7 +421,7 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
             for part in location.split(","):
                 s = part.strip()
                 if s.lower().startswith(cn_lower + " "):
-                    s = s[len(company_name):].strip()
+                    s = s[len(company_name) :].strip()
                 stripped_parts.append(s)
             cleaned = ", ".join(stripped_parts)
             location = cleaned or location
@@ -445,6 +455,7 @@ def _fetch_teamtailor_page(
 
 
 # ── xml_feed helpers ──────────────────────────────────────────────────────────
+
 
 def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
     """Extract jobs from an XML job feed (e.g. Volvo's SuccessFactors feed)."""
@@ -632,10 +643,8 @@ def _extract_rsc_description(raw_html: str) -> str:
             continue
         m = re.search(r'\[1,"((?:[^"\\]|\\.)*)"\]', text, re.DOTALL)
         if m:
-            try:
+            with contextlib.suppress(Exception):
                 payload += json_mod.loads('"' + m.group(1) + '"')
-            except Exception:
-                pass
     if not payload:
         return ""
     rsc_soup = BeautifulSoup(payload, "html.parser")
@@ -660,7 +669,10 @@ def _fetch_detail_page(
     try:
         resp = session.get(job_url, timeout=20, headers=_HEADERS)
         if resp.status_code in _GONE_STATUSES:
-            print(f"generic: detail page gone (HTTP {resp.status_code}): {job_url}", file=sys.stderr)
+            print(
+                f"generic: detail page gone (HTTP {resp.status_code}): {job_url}",
+                file=sys.stderr,
+            )
             return "", None, None, True
         resp.raise_for_status()
         raw_html = resp.text
@@ -690,7 +702,10 @@ def _fetch_detail_page(
 
         # If the selector result is too short the page likely uses Next.js RSC
         # streaming — real content lives in __next_f.push script chunks, not the DOM.
-        if len(BeautifulSoup(desc_html, "html.parser").get_text()) < _MIN_DESCRIPTION_TEXT_LEN:
+        if (
+            len(BeautifulSoup(desc_html, "html.parser").get_text())
+            < _MIN_DESCRIPTION_TEXT_LEN
+        ):
             rsc_html = _extract_rsc_description(raw_html)
             if rsc_html:
                 desc_html = rsc_html
@@ -705,7 +720,9 @@ def _fetch_detail_page(
         if detail_loc_sel:
             loc_tags = soup.select(detail_loc_sel)
             if loc_tags:
-                locations = [t.get_text(strip=True) for t in loc_tags if t.get_text(strip=True)]
+                locations = [
+                    t.get_text(strip=True) for t in loc_tags if t.get_text(strip=True)
+                ]
 
         return desc_html, job_function, locations, False
     except Exception as e:
@@ -715,23 +732,71 @@ def _fetch_detail_page(
 
 # ── main entry point ──────────────────────────────────────────────────────────
 
+
+def _countries_from_select(
+    session: "requests.Session", list_url: str, spec: dict
+) -> tuple[list[str], dict[str, str]]:
+    """Read a country ``<select>`` off the listing page → (countries, country_values),
+    so per-country iteration follows whatever the site offers instead of a hardcoded
+    list. Each option's label (minus an optional brand prefix) is both the filter key
+    and the country tag, and resolves downstream — so "Sweco Norge" still maps to NO.
+    """
+    selector = spec.get("selector", "select[name=country]")
+    strip_prefix = spec.get("strip_prefix", "")
+    skip_values = set(spec.get("skip_values", ["0", ""]))
+    try:
+        resp = session.get(list_url, timeout=20)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: country <select> fetch failed ({e})", file=sys.stderr)
+        return [], {}
+    select = BeautifulSoup(resp.content, "html.parser").select_one(selector)
+    if select is None:
+        print(f"generic: no country <select> matching {selector!r}", file=sys.stderr)
+        return [], {}
+
+    countries: list[str] = []
+    values: dict[str, str] = {}
+    for opt in select.select("option"):
+        value = (opt.get("value") or "").strip()
+        if value in skip_values:
+            continue
+        label = opt.get_text(strip=True)
+        if strip_prefix and label.startswith(strip_prefix):
+            label = label[len(strip_prefix) :].strip()
+        if label and label not in values:
+            countries.append(label)
+            values[label] = value
+    return countries, values
+
+
 def scrape_generic(url: str, cfg: dict) -> list[dict]:
-    name         = cfg.get("name", url)
+    name = cfg.get("name", url)
     extract_mode = cfg.get("extract_mode", "css_cards")
-    pagination   = cfg.get("pagination", {})
-    ptype        = pagination.get("type", "none")
-    page_size    = pagination.get("page_size", 25)
-    max_pages    = pagination.get("max_pages", _DEFAULT_MAX_PAGES)
-    desc_sel     = cfg.get("description_selector")
-    jf_sel       = cfg.get("job_function_selector")
+    pagination = cfg.get("pagination", {})
+    ptype = pagination.get("type", "none")
+    page_size = pagination.get("page_size", 25)
+    max_pages = pagination.get("max_pages", _DEFAULT_MAX_PAGES)
+    desc_sel = cfg.get("description_selector")
+    jf_sel = cfg.get("job_function_selector")
     detail_loc_sel = cfg.get("detail_location_selector")
-    list_url     = cfg.get("list_url", url)
+    list_url = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
     country_filter_param: str | None = cfg.get("country_filter_param")
     countries: list[str] = cfg.get("countries", [])
     country_values: dict[str, str] = cfg.get("country_values", {})
 
     session = requests.Session()
+
+    country_from_select = cfg.get("country_from_select")
+    if country_from_select and country_filter_param:
+        countries, country_values = _countries_from_select(
+            session, list_url, country_from_select
+        )
+        print(
+            f"generic [{name}]: resolved {len(countries)} countries from <select>",
+            file=sys.stderr,
+        )
 
     if extract_mode == "xml_feed":
         jobs = _fetch_xml_feed(session, list_url, cfg)
@@ -781,9 +846,15 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         else:
             param_name = pagination["param"]
             for page_num in range(max_pages):
-                params = {**base_params, param_name: _page_param_value(pagination, page_num)}
+                params = {
+                    **base_params,
+                    param_name: _page_param_value(pagination, page_num),
+                }
                 jobs = fetch_page(session, list_url, params, cfg)
-                print(f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs", file=sys.stderr)
+                print(
+                    f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs",
+                    file=sys.stderr,
+                )
 
                 new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
                 for j in new_jobs:
@@ -828,20 +899,29 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     jobs_needing_detail = {j["url"] for j in english_jobs if j.get("url")}
     jobs_needing_detail.update(j["url"] for j in multi_loc_jobs if j.get("url"))
     unique_urls = list(dict.fromkeys(jobs_needing_detail))
-    print(f"generic [{name}]: fetching details for {len(unique_urls)} jobs", file=sys.stderr)
+    print(
+        f"generic [{name}]: fetching details for {len(unique_urls)} jobs",
+        file=sys.stderr,
+    )
 
     detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
     for i, job_url in enumerate(unique_urls):
         result = _fetch_detail_page(session, job_url, desc_sel, jf_sel, detail_loc_sel)
         detail_cache[job_url] = result
         if (i + 1) % 10 == 0:
-            print(f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}", file=sys.stderr)
+            print(
+                f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}",
+                file=sys.stderr,
+            )
 
     gone_urls: set[str] = {u for u, (_, _, _, gone) in detail_cache.items() if gone}
     if gone_urls:
         before = len(all_jobs)
         all_jobs = [j for j in all_jobs if j.get("url") not in gone_urls]
-        print(f"generic [{name}]: dropped {before - len(all_jobs)} jobs with expired detail pages", file=sys.stderr)
+        print(
+            f"generic [{name}]: dropped {before - len(all_jobs)} jobs with expired detail pages",
+            file=sys.stderr,
+        )
 
     for job in english_jobs:
         url = job.get("url", "")
@@ -872,7 +952,10 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
                 copy["location"] = loc
                 expanded.append(copy)
         if len(expanded) != len(all_jobs):
-            print(f"generic [{name}]: expanded multi-location jobs: {len(all_jobs)} → {len(expanded)}", file=sys.stderr)
+            print(
+                f"generic [{name}]: expanded multi-location jobs: {len(all_jobs)} → {len(expanded)}",
+                file=sys.stderr,
+            )
         all_jobs = expanded
 
     print(f"generic [{name}]: done — {len(all_jobs)} total jobs", file=sys.stderr)

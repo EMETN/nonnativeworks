@@ -131,177 +131,137 @@
 #   fields.description    Child element for HTML description (default: "description")
 
 scrapers:
-  
-  # ── Bolt ────────────────────────────────────────────────────────────────────
-  - match: "bolt.eu/en/careers/positions"
-    name: Bolt
-    extract_mode: script_json
-    script_key: parsedJobs
-    pagination:
-      type: page
-      param: page
-      page_size: 20
-    description_selector: "main"
-    fields:
-      title: header.roleTitle
-      url: body.applyLinkProps.href
-      locations: header.locations
-      location_subfield: city
-      country_subfield: countryCode
-      job_function: header.teamTitle
+    # ── Bolt ────────────────────────────────────────────────────────────────────
+    - match: 'bolt.eu/en/careers/positions'
+      name: Bolt
+      extract_mode: script_json
+      script_key: parsedJobs
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+      description_selector: 'main'
+      fields:
+          title: header.roleTitle
+          url: body.applyLinkProps.href
+          locations: header.locations
+          location_subfield: city
+          country_subfield: countryCode
+          job_function: header.teamTitle
 
-  # ── Allianz ────────────────────────────────────────────────────────────────────
-  - match: "careers.allianz.com/global/en/search-results"
-    name: Allianz
-    extract_mode: script_var_json
-    var_name: phApp
-    data_path: data.jobs
-    pagination:
-      type: offset
-      param: from
-      page_size: 10
-    extra_params:
-      s: 1
-    fields:
-      title: title
-      url: applyUrl
-      location: city
-  
-    # ── Metso ────────────────────────────────────────────────────────────────────
-  - match: "metso.com/corporate/careers/open-jobs"
-    name: Metso
-    extract_mode: attribute_json
-    pagination:
-      type: none
-    container_selector: "careers-list-page"
-    attribute_name: "open-positions"
-    description_selector: ".jobdescription"
-    fields:
-      title: title
-      url: url
-      location: locations
-      country: countries
-      job_function: jobFamily
-  
-  # ── Neste ────────────────────────────────────────────────────────────────────
-  - match: "jobs.neste.com"
-    name: Neste
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "a.jobTitle-link"
-    location_selector: "td.colLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "[data-careersite-propertyid='department']"
+    # ── Allianz ────────────────────────────────────────────────────────────────────
+    - match: 'careers.allianz.com/global/en/search-results'
+      name: Allianz
+      extract_mode: script_var_json
+      var_name: phApp
+      data_path: data.jobs
+      pagination:
+          type: offset
+          param: from
+          page_size: 10
+      extra_params:
+          s: 1
+      fields:
+          title: title
+          url: applyUrl
+          location: city
 
-  # ── SAP ──────────────────────────────────────────────────────────────────────
-  # Taleo instance that only accepts one country per request. country_filter_param
-  # + countries makes the scraper iterate one paginated fetch per country and
-  # merge results before description enrichment.
-  - match: "jobs.sap.com"
-    name: SAP
-    country_filter_param: "optionsFacetsDD_country"
-    countries:
-      - DE
-      - SE
-      - DK
-      - NL
-      - FI
-      - "NO"
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "a.jobTitle-link"
-    location_selector: "td.colLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "[data-careersite-propertyid='department']"
+      # ── Metso ────────────────────────────────────────────────────────────────────
+    - match: 'metso.com/corporate/careers/open-jobs'
+      name: Metso
+      extract_mode: attribute_json
+      pagination:
+          type: none
+      container_selector: 'careers-list-page'
+      attribute_name: 'open-positions'
+      description_selector: '.jobdescription'
+      fields:
+          title: title
+          url: url
+          location: locations
+          country: countries
+          job_function: jobFamily
 
-  # ── Vaisala ──────────────────────────────────────────────────────────────────
-  - match: "careers.vaisala.com"
-    name: Vaisala
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "a.jobTitle-link"
-    location_selector: "td.colLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "[data-careersite-propertyid='department']"
+    # ── Neste ────────────────────────────────────────────────────────────────────
+    - match: 'jobs.neste.com'
+      name: Neste
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'a.jobTitle-link'
+      location_selector: 'td.colLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: "[data-careersite-propertyid='department']"
 
-  # ── Fortum ──────────────────────────────────────────────────────────────────
-  - match: "jobs.fortum.com"
-    name: Fortum
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "a.jobTitle-link"
-    location_selector: "td.colLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "[data-careersite-propertyid='department']"
-  
-  # ── Hiab ──────────────────────────────────────────────────────────────────
-  - match: "careers.hiab.com/search"
-    name: Hiab
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "td.colTitle a.jobTitle-link"
-    location_selector: "td.colLocation .jobLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "td.colFacility jobFacility"
+    # ── SAP ──────────────────────────────────────────────────────────────────────
+    # Taleo instance that only accepts one country per request. country_filter_param
+    # + countries makes the scraper iterate one paginated fetch per country and
+    # merge results before description enrichment.
+    - match: 'jobs.sap.com'
+      name: SAP
+      country_filter_param: 'optionsFacetsDD_country'
+      countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'a.jobTitle-link'
+      location_selector: 'td.colLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: "[data-careersite-propertyid='department']"
 
-  # ── Wärtsilä ──────────────────────────────────────────────────────────────────
-  - match: "careers.wartsila.com/search"
-    name: Wärtsilä
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "tr.data-row"
-    title_selector: "td.colTitle a.jobTitle-link"
-    location_selector: "td.colLocation .jobLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "td.colFacility jobFacility"
+    # ── Vaisala ──────────────────────────────────────────────────────────────────
+    - match: 'careers.vaisala.com'
+      name: Vaisala
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'a.jobTitle-link'
+      location_selector: 'td.colLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: "[data-careersite-propertyid='department']"
 
-   # ── Vestas ──────────────────────────────────────────────────────────────────
-  - match: "careers.vestas.com/search"
-    name: Vestas
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 10
-    card_selector: "tr.data-row"
-    title_selector: "td.colTitle a.jobTitle-link"
-    location_selector: "td.colLocation .jobLocation"
-    description_selector: ".jobdescription"
-    job_function_selector: "td.colFacility jobFacility"
+    # ── Fortum ──────────────────────────────────────────────────────────────────
+    - match: 'jobs.fortum.com'
+      name: Fortum
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'a.jobTitle-link'
+      location_selector: 'td.colLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: "[data-careersite-propertyid='department']"
 
   # ── Sweco Group ──────────────────────────────────────────────────────────────────
   # description_selector is required here: without it, the fallback selector chain
@@ -322,157 +282,238 @@ scrapers:
   # classes are listed so all matches get concatenated (see _fetch_detail_page) —
   # using only "section.cb" on sweco.nl silently dropped the intro paragraph and
   # caused genuinely Dutch-language postings to be misclassified as English.
-  - match: "swecogroup.com/careers/vacancies"
-    name: Sweco Group
-    description_selector: "section.recruitee-vacancy-desc, section.cb"
-    country_filter_param: country
-    countries:
-      - SE
-      - DK
-      - NL
-      - FI
-      - DE
-      - "NO"
-      - LT
-      - EE
-    country_values:
-      SE: "3"
-      DK: "4"
-      NL: "5"
-      FI: "7"
-      DE: "8"
-      "NO": "13"
-      LT: "16"
-      EE: "21"
-    pagination:
-      type: page
-      param: vacancy-page
-      page_size: 10
-    extra_params:
-      scroll-to: vacancies-top
-    card_selector: "tr.vacancy--list"
-    title_selector: "h3.vacancy__title"
-    location_selector: "em.vacancy__location"
-    url_selector: "a.js-vacancy-link"
+    - match: "swecogroup.com/careers/vacancies"
+      name: Sweco Group
+      description_selector: "section.recruitee-vacancy-desc, section.cb"
+      country_filter_param: country
+      countries:
+        - SE
+        - DK
+        - NL
+        - FI
+        - DE
+        - "NO"
+        - LT
+        - EE
+      country_values:
+        SE: "3"
+        DK: "4"
+        NL: "5"
+        FI: "7"
+        DE: "8"
+        "NO": "13"
+        LT: "16"
+        EE: "21"
+      pagination:
+        type: page
+        param: vacancy-page
+        page_size: 10
+      extra_params:
+        scroll-to: vacancies-top
+      card_selector: "tr.vacancy--list"
+      title_selector: "h3.vacancy__title"
+      location_selector: "em.vacancy__location"
+      url_selector: "a.js-vacancy-link"
 
-  # ── Siemens Healthineers ─────────────────────────────────────────────────────
-  # Oracle/Taleo-style career site. The 42420 param is a country/region facet
-  # filter (numeric IDs), folderRecordsPerPage controls page size.
-  - match: "jobs.siemens-healthineers.com"
-    name: Siemens Healthineers
-    extra_params:
-      "42420": "[812124,812008,812020,812132,812010,812011,812130,812027,812013]"
-      "42420_format": "17573"
-      listFilterMode: "1"
-      folderRecordsPerPage: "6"
-    pagination:
-      type: offset
-      param: folderOffset
-      page_size: 6
-    card_selector: "article.article--result"
-    title_selector: "h3.article__header__text__title a.link"
-    location_selector: "span.list-item-location"
-    description_selector: "#section1__content .article__content__view__field__value"
-    detail_location_selector: "ul.list--locations li"
+    # ── Hiab ──────────────────────────────────────────────────────────────────
+    - match: 'careers.hiab.com/search'
+      name: Hiab
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'td.colTitle a.jobTitle-link'
+      location_selector: 'td.colLocation .jobLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: 'td.colFacility jobFacility'
 
-  # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
-  - match: "career.nordnetab.com"
-    name: Nordnet
-    extract_mode: teamtailor
-    description_selector: "div.prose"
-    pagination:
-      type: page
-      param: page
-      page_size: 25
+    # ── Wärtsilä ──────────────────────────────────────────────────────────────────
+    - match: 'careers.wartsila.com/search'
+      name: Wärtsilä
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'tr.data-row'
+      title_selector: 'td.colTitle a.jobTitle-link'
+      location_selector: 'td.colLocation .jobLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: 'td.colFacility jobFacility'
 
-  # ── UpCloud (TeamTailor) ────────────────────────────────────────────────────
-  - match: "upcloud.teamtailor.com"
-    name: UpCloud
-    extract_mode: teamtailor
-    description_selector: "div.prose"
-    pagination:
-      type: page
-      param: page
-      page_size: 25
+      # ── Vestas ──────────────────────────────────────────────────────────────────
+    - match: 'careers.vestas.com/search'
+      name: Vestas
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 10
+      card_selector: 'tr.data-row'
+      title_selector: 'td.colTitle a.jobTitle-link'
+      location_selector: 'td.colLocation .jobLocation'
+      description_selector: '.jobdescription'
+      job_function_selector: 'td.colFacility jobFacility'
 
-  # ── Futurice (TeamTailor) ────────────────────────────────────────────────────
-  - match: "careers.futurice.com/en-GB/jobs"
-    name: Futurice
-    extract_mode: teamtailor
-    description_selector: "div.prose"
-    pagination:
-      type: page
-      param: page
-      page_size: 25
+    # ── Sweco Group ──────────────────────────────────────────────────────────────────
+    - match: 'swecogroup.com/careers/vacancies'
+      name: Sweco Group
+      country_filter_param: country
+      # Countries + their opaque facet IDs are read live from the page's country
+      # <select> so a newly-added Sweco country is scraped without a code change.
+      country_from_select:
+          selector: 'select[name=country]'
+          strip_prefix: 'Sweco '
+      pagination:
+          type: page
+          param: vacancy-page
+          page_size: 10
+      extra_params:
+          scroll-to: vacancies-top
+      card_selector: 'tr.vacancy--list'
+      title_selector: 'h3.vacancy__title'
+      location_selector: 'em.vacancy__location'
+      url_selector: 'a.js-vacancy-link'
 
-  # ── Volvo Group ──────────────────────────────────────────────────────────────
-  # SuccessFactors XML job feed. Contains all fields inline (title, city,
-  # 2-letter country code, department, HTML description) — no detail page
-  # fetches needed.
-  - match: "jobs.volvogroup.com/feed"
-    name: Volvo Group
-    extract_mode: xml_feed
-    item_tag: job
-    fields:
-      title: title
-      url: url
-      location: city
-      country: country
-      job_function: department
-      description: description
+    # ── Siemens Healthineers ─────────────────────────────────────────────────────
+    # Oracle/Taleo-style career site. The 42420 param is a country/region facet
+    # filter (numeric IDs), folderRecordsPerPage controls page size.
+    - match: 'jobs.siemens-healthineers.com'
+      name: Siemens Healthineers
+      extra_params:
+          '42420': '[812124,812008,812020,812132,812010,812011,812130,812027,812013]'
+          '42420_format': '17573'
+          listFilterMode: '1'
+          folderRecordsPerPage: '6'
+      pagination:
+          type: offset
+          param: folderOffset
+          page_size: 6
+      card_selector: 'article.article--result'
+      title_selector: 'h3.article__header__text__title a.link'
+      location_selector: 'span.list-item-location'
+      description_selector: '#section1__content .article__content__view__field__value'
+      detail_location_selector: 'ul.list--locations li'
 
-  # ── Scout24 ─────────────────────────────────────────────────────────────────
-  # Static HTML career page, all jobs on one page. Location in subtitle is
-  # pipe-separated: "Berlin | immediately | Scout24 SE" — country-lookup
-  # handles the pipe split.
-  - match: "scout24.com/en/career/jobs"
-    name: Scout24
-    pagination:
-      type: none
-    card_selector: "div.teaser--job"
-    title_selector: "a.teaser__link"
-    location_selector: "div.teaser__subtitle"
-    description_selector: "div.job__main-column"
+    # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
+    - match: 'career.nordnetab.com'
+      name: Nordnet
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 25
 
-  # ── Munich Re ────────────────────────────────────────────────────────────
-  # Results come from /results endpoint as a partial HTML fragment.
-  # Filtered to Germany only (ActiveFacetID 2921044) — the only tracked country.
-  # All params from the working browser request are preserved; stripping any of
-  # them causes the server to return a JSON stub instead of HTML.
-  - match: "careers.munichre.com/en/search-jobs"
-    name: Munich Re
-    list_url: https://careers.munichre.com/en/search-jobs/results
-    extra_params:
-      ActiveFacetID: 2921044
-      RecordsPerPage: 15
-      "FacetFilters[0].Display": Germany
-      SearchResultsModuleName: "Section 19 - Search Results"
-      SearchFiltersModuleName: "Section 19 - Search Filters"
-    json_html_key: results
-    pagination:
-      type: page
-      param: CurrentPage
-      page_size: 15
-    card_selector: "div.search-results-list__details"
-    title_selector: "a.search-results-list__job-link"
-    location_selector: "li.job-list-01-list__job-info--location span"
-    job_function_selector: "li.job-list-01-list__job-info--category span"
+    # ── UpCloud (TeamTailor) ────────────────────────────────────────────────────
+    - match: 'upcloud.teamtailor.com'
+      name: UpCloud
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 25
 
-  # ── E.ON ─────────────────────────────────────────────────────────────────
-  # Taleo-style tile layout. Only DE is a tracked country for E.ON.
-  - match: "careers.eon.com/search"
-    name: E.ON
-    country_filter_param: "optionsFacetsDD_country"
-    countries:
-      - DE
-    extra_params:
-      sortColumn: referencedate
-      sortDirection: desc
-    pagination:
-      type: offset
-      param: startrow
-      page_size: 25
-    card_selector: "li.job-tile"
-    title_selector: "a.jobTitle-link"
-    location_selector: ".section-field.city > div"
-    description_selector: ".jobdescription"
+    # ── Futurice (TeamTailor) ────────────────────────────────────────────────────
+    - match: 'careers.futurice.com/en-GB/jobs'
+      name: Futurice
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 25
+
+    # ── Volvo Group ──────────────────────────────────────────────────────────────
+    # SuccessFactors XML job feed. Contains all fields inline (title, city,
+    # 2-letter country code, department, HTML description) — no detail page
+    # fetches needed.
+    - match: 'jobs.volvogroup.com/feed'
+      name: Volvo Group
+      extract_mode: xml_feed
+      item_tag: job
+      fields:
+          title: title
+          url: url
+          location: city
+          country: country
+          job_function: department
+          description: description
+
+    # ── Scout24 ─────────────────────────────────────────────────────────────────
+    # Static HTML career page, all jobs on one page. Location in subtitle is
+    # pipe-separated: "Berlin | immediately | Scout24 SE" — country-lookup
+    # handles the pipe split.
+    - match: 'scout24.com/en/career/jobs'
+      name: Scout24
+      pagination:
+          type: none
+      card_selector: 'div.teaser--job'
+      title_selector: 'a.teaser__link'
+      location_selector: 'div.teaser__subtitle'
+      description_selector: 'div.job__main-column'
+
+    # ── Munich Re ────────────────────────────────────────────────────────────
+    # Results come from /results endpoint as a partial HTML fragment.
+    # Filtered to Germany only (ActiveFacetID 2921044) — the only tracked country.
+    # All params from the working browser request are preserved; stripping any of
+    # them causes the server to return a JSON stub instead of HTML.
+    - match: 'careers.munichre.com/en/search-jobs'
+      name: Munich Re
+      list_url: https://careers.munichre.com/en/search-jobs/results
+      extra_params:
+          ActiveFacetID: 2921044
+          RecordsPerPage: 15
+          'FacetFilters[0].Display': Germany
+          SearchResultsModuleName: 'Section 19 - Search Results'
+          SearchFiltersModuleName: 'Section 19 - Search Filters'
+      json_html_key: results
+      pagination:
+          type: page
+          param: CurrentPage
+          page_size: 15
+      card_selector: 'div.search-results-list__details'
+      title_selector: 'a.search-results-list__job-link'
+      location_selector: 'li.job-list-01-list__job-info--location span'
+      job_function_selector: 'li.job-list-01-list__job-info--category span'
+
+    # ── E.ON ─────────────────────────────────────────────────────────────────
+    - match: 'careers.eon.com/search'
+      name: E.ON
+      country_filter_param: 'optionsFacetsDD_country'
+      countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
+      extra_params:
+          sortColumn: referencedate
+          sortDirection: desc
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 25
+      card_selector: 'li.job-tile'
+      title_selector: 'a.jobTitle-link'
+      location_selector: '.section-field.city > div'
+      description_selector: '.jobdescription'

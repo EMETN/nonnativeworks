@@ -31,18 +31,14 @@ const englishPositions = stats?.english_positions ?? 0;
 <BaseLayout
     title="Companies"
     description="Browse all companies with English-friendly job positions — no local language required."
-    breadcrumbs={[
-        { name: 'Home', href: '/' },
-        { name: 'Companies' },
-    ]}
+    breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Companies' }]}
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
     >
-        <Breadcrumb items={[
-            { label: 'Home', href: '/' },
-            { label: 'Companies' },
-        ]} />
+        <Breadcrumb
+            items={[{ label: 'Home', href: '/' }, { label: 'Companies' }]}
+        />
 
         <div
             class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
@@ -74,7 +70,12 @@ const englishPositions = stats?.english_positions ?? 0;
             ) : companies.length === 0 ? (
                 <div class="text-center py-16 text-gray-500">
                     <p>No companies tracked yet. Check back soon!</p>
-                    <a href="/countries" class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline">Browse countries instead</a>
+                    <a
+                        href="/countries"
+                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                    >
+                        Browse countries instead
+                    </a>
                 </div>
             ) : (
                 <>

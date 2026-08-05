@@ -14,7 +14,7 @@ paginated request for each entry in `repeatFor.body` and merges the results.
 **Currently tracked countries included:**
 
 | Country     | `jobCountry`  | `countrySite` |
-|-------------|---------------|---------------|
+| ----------- | ------------- | ------------- |
 | Finland     | `Finland`     | `fi-en`       |
 | Sweden      | `Sweden`      | `se-en`       |
 | Norway      | `Norway`      | `no-en`       |
@@ -44,18 +44,19 @@ a Workday URL that pre-filters by country using `locationCountry` facet IDs.
 
 **Currently included `locationCountry` facet IDs:**
 
-| ID                                   | Country (unverified — confirm via scraper output) |
-|--------------------------------------|---------------------------------------------------|
-| `49ab063f422741e2aef271de00efeac8`   | ?                                                 |
-| `dcc5b7608d8644b3a93716604e78e995`   | ?                                                 |
-| `6a800a4736884df5826858d435650f45`   | ?                                                 |
-| `d07f8ca8625e4345b98a91d0558b872a`   | ?                                                 |
-| `9696868b09c64d52a62ee13b052383cc`   | ?                                                 |
-| `8a0328effd25491fb8e6a08801f08e94`   | ?                                                 |
-| `038b0482bfea403abb61c9bcc3d7eb60`   | ?                                                 |
-| `0afb2fa656da42e8bfb6d47bd24a26fa`   | ?                                                 |
+| ID                                 | Country (unverified — confirm via scraper output) |
+| ---------------------------------- | ------------------------------------------------- |
+| `49ab063f422741e2aef271de00efeac8` | ?                                                 |
+| `dcc5b7608d8644b3a93716604e78e995` | ?                                                 |
+| `6a800a4736884df5826858d435650f45` | ?                                                 |
+| `d07f8ca8625e4345b98a91d0558b872a` | ?                                                 |
+| `9696868b09c64d52a62ee13b052383cc` | ?                                                 |
+| `8a0328effd25491fb8e6a08801f08e94` | ?                                                 |
+| `038b0482bfea403abb61c9bcc3d7eb60` | ?                                                 |
+| `0afb2fa656da42e8bfb6d47bd24a26fa` | ?                                                 |
 
 **How to find a new country's facet ID:**
+
 1. Go to `https://careers.abb/global/en/search-results`
 2. Apply the country filter for the new country in the UI
 3. Copy the `locationCountry=<id>` value from the updated URL

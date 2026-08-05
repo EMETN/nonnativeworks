@@ -18,77 +18,77 @@ import { getCityNames } from './country-lookup';
 
 // ── Danish ───────────────────────────────────────────────────────────────────
 const DK: string[] = [
-  'afdelingsleder', // department manager
-  'afvanding',      // drainage
-  'arkitekt',       // architect
-  'boreformand',    // drilling foreman
-  'fagchef',        // head of department
-  'fagspecialist',  // subject specialist
-  'hjælper',        // assistant
-  'karriere',       // career
-  'konsulent',      // consultant
-  'offentlige',     // public
-  'projectchef',    // project manager
-  'projectleder',   // project manager
-  'rådgiver',       // advisor
-  'sagsbehandler',  // case officer
-  'sælger',         // salesperson
-  'statiker',       // structural engineer
-  'tilbudspartner', // offer partner
-  'udvikler',       // developer
+    'afdelingsleder', // department manager
+    'afvanding', // drainage
+    'arkitekt', // architect
+    'boreformand', // drilling foreman
+    'fagchef', // head of department
+    'fagspecialist', // subject specialist
+    'hjælper', // assistant
+    'karriere', // career
+    'konsulent', // consultant
+    'offentlige', // public
+    'projectchef', // project manager
+    'projectleder', // project manager
+    'rådgiver', // advisor
+    'sagsbehandler', // case officer
+    'sælger', // salesperson
+    'statiker', // structural engineer
+    'tilbudspartner', // offer partner
+    'udvikler', // developer
 ];
 
 // ── Dutch ─────────────────────────────────────────────────────────────────────
 const NL: string[] = [
-  'adviseur',       // advisor
-  'afstudeer',      // graduate
-  'afstuderen',     // graduate
-  'automatiseerder', // automater
-  'automatisering', // automation
-  'beheerder',      // administrator
-  'bouwkundig',     // architectural
-  'constructeur',   // constructor / manufacturer
-  'coördinator',    // coordinator
-  'defensie',       // defence
-  'gezocht',        // wanted
-  'informatie',     // information
-  'innovatie',      // innovation
-  'medewerker',     // employee / associate
-  'monteur',        // installer
-  'netwerk',        // network
-  'omgeving',       // environment
-  'ontwerp',        // design
-  'ontwikkelaar',   // developer
-  'openbaar',       // public
-  'overheid',       // government
-  'projectleider',  // project manager
-  'publieke',       // public
-  'spoordomein',    // railway network
-  'stagiair',       // intern
-  'technieker',     // technician
-  'technisch',      // technical
-  'telecommunicatie', // telecommunications
-  'transitie',      // transition
-  'uitvoerder',     // executor / operative
-  'veiligheid',     // safety
-  'verkoper',       // salesperson
-  'verzekeringen',  // insurance
-  'virtualisatie',  // virtualization
-  'voorbereider',   // planner
-  'voorziening',    // facility
+    'adviseur', // advisor
+    'afstudeer', // graduate
+    'afstuderen', // graduate
+    'automatiseerder', // automater
+    'automatisering', // automation
+    'beheerder', // administrator
+    'bouwkundig', // architectural
+    'constructeur', // constructor / manufacturer
+    'coördinator', // coordinator
+    'defensie', // defence
+    'gezocht', // wanted
+    'informatie', // information
+    'innovatie', // innovation
+    'medewerker', // employee / associate
+    'monteur', // installer
+    'netwerk', // network
+    'omgeving', // environment
+    'ontwerp', // design
+    'ontwikkelaar', // developer
+    'openbaar', // public
+    'overheid', // government
+    'projectleider', // project manager
+    'publieke', // public
+    'spoordomein', // railway network
+    'stagiair', // intern
+    'technieker', // technician
+    'technisch', // technical
+    'telecommunicatie', // telecommunications
+    'transitie', // transition
+    'uitvoerder', // executor / operative
+    'veiligheid', // safety
+    'verkoper', // salesperson
+    'verzekeringen', // insurance
+    'virtualisatie', // virtualization
+    'voorbereider', // planner
+    'voorziening', // facility
 ];
 
 // ── Estonian ─────────────────────────────────────────────────────────────────
 const EE: string[] = [
-  'arendaja',       // developer
-  'insener',       // engineer
-  'juht',           // manager / head
-  'konstruktorit',  // design engineer
-  'modelleerija',   // modeler
-  'müügijuht',      // sales manager
-  'nõustaja',       // advisor
-  'projekteerija',  // designer
-  'spetsialist',    // specialist
+    'arendaja', // developer
+    'insener', // engineer
+    'juht', // manager / head
+    'konstruktorit', // design engineer
+    'modelleerija', // modeler
+    'müügijuht', // sales manager
+    'nõustaja', // advisor
+    'projekteerija', // designer
+    'spetsialist', // specialist
 ];
 
 // ── Finnish ──────────────────────────────────────────────────────────────────
@@ -155,6 +155,7 @@ const FR: string[] = [
   'conseiller',      // advisor
   'dessinateur',     // illustrator
   'developpeur',     // developer (accent-free "développeur")
+  'directeur',       // director
   'electricien',     // electrician (accent-free "électricien")
   'electronique',    // electronics
   'embauche',        // hiring
@@ -263,20 +264,20 @@ const IS: string[] = [
 
 // ── Latvian ───────────────────────────────────────────────────────────────────
 const LV: string[] = [
-  'izstrādātājs',   // developer
-  'konsultants',    // consultant
-  'pārdevējs',      // salesperson
-  'speciālists',    // specialist
-  'vadītājs',       // manager
+    'izstrādātājs', // developer
+    'konsultants', // consultant
+    'pārdevējs', // salesperson
+    'speciālists', // specialist
+    'vadītājs', // manager
 ];
 
 // ── Lithuanian ───────────────────────────────────────────────────────────────
 const LT: string[] = [
-  'kūrėjas',        // developer / creator
-  'konsultantas',   // consultant
-  'pardavėjas',     // salesperson
-  'specialistas',   // specialist
-  'vadovas',        // manager / head
+    'kūrėjas', // developer / creator
+    'konsultantas', // consultant
+    'pardavėjas', // salesperson
+    'specialistas', // specialist
+    'vadovas', // manager / head
 ];
 
 // ── Norwegian ─────────────────────────────────────────────────────────────────
@@ -363,7 +364,18 @@ const SE: string[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALL_KEYWORDS: string[] = [
-  ...DK, ...NL, ...EE, ...FI, ...FR, ...DE, ...IS, ...LV, ...LT, ...NO, ...PL, ...SE,
+    ...DK,
+    ...NL,
+    ...EE,
+    ...FI,
+    ...FR,
+    ...DE,
+    ...IS,
+    ...LV,
+    ...LT,
+    ...NO,
+    ...PL,
+    ...SE,
 ];
 
 // Pre-compiled regex for performance — rebuilt once at module load.
@@ -372,8 +384,8 @@ const ALL_KEYWORDS: string[] = [
 // "kehitysjohtaja"; "myynti" matches "myyntiassistentti").
 // False positives are negligible: these roots never appear inside English words.
 export const KEYWORDS_RE = new RegExp(
-  `(${ALL_KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
-  'i',
+    `(${ALL_KEYWORDS.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
+    'i',
 );
 
 // Non-ASCII characters used by tracked-country languages.
@@ -388,21 +400,22 @@ const NON_ASCII_RE = /[äöüåéèêëàâîïôùûçñßãõøæœþðāčē�
  * and keeps only the left-hand (English) side.
  */
 export function stripBilingualSuffix(title: string): string {
-  const latvianRe = /[āčēģīķļņōŗšūž]/i;
-  let idx = 0;
-  while (idx < title.length) {
-    const slashPos = title.indexOf('/', idx);
-    if (slashPos === -1) break;
-    const nextSlash = title.indexOf('/', slashPos + 1);
-    const segment = nextSlash === -1
-      ? title.slice(slashPos + 1)
-      : title.slice(slashPos + 1, nextSlash);
-    if (latvianRe.test(segment)) {
-      return title.slice(0, slashPos).trim();
+    const latvianRe = /[āčēģīķļņōŗšūž]/i;
+    let idx = 0;
+    while (idx < title.length) {
+        const slashPos = title.indexOf('/', idx);
+        if (slashPos === -1) break;
+        const nextSlash = title.indexOf('/', slashPos + 1);
+        const segment =
+            nextSlash === -1
+                ? title.slice(slashPos + 1)
+                : title.slice(slashPos + 1, nextSlash);
+        if (latvianRe.test(segment)) {
+            return title.slice(0, slashPos).trim();
+        }
+        idx = slashPos + 1;
     }
-    idx = slashPos + 1;
-  }
-  return title;
+    return title;
 }
 
 /**
