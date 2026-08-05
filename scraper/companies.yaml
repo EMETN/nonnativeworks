@@ -83,7 +83,7 @@ companies:
       min_positions: 3
 
     - name: E.ON
-      url: https://careers.eon.com/search
+      url: https://jobs.eon.com
       min_positions: 10
 
     - name: Ericsson

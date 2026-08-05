@@ -114,6 +114,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                        |
 | Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                     |
 | Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings) |
+| E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)             |
 
 ---
 
@@ -155,7 +156,6 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                           |
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                           |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                           |
-| E.ON                 | `careers.eon.com/search`                                    | `css_cards`                 | Paginated `?startrow=N` table; 25 rows                                                  |
 | Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                  |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
