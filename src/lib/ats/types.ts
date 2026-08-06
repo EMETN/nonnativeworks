@@ -85,4 +85,5 @@ export interface ScrapeResult {
     skipped_unknown_location: number;
     skipped_untracked_country: number;
     countries: ScrapeCountryGroup[];
+    warning?: string;
 }
