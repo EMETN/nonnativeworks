@@ -456,6 +456,47 @@ def _fetch_teamtailor_page(
 
 # ── xml_feed helpers ──────────────────────────────────────────────────────────
 
+_XML_CHAR_REF = re.compile(r"&#(x?)([0-9A-Fa-f]+);")
+_XML_CHAR_REF_PAIR = re.compile(r"&#(x?)([0-9A-Fa-f]+);&#(x?)([0-9A-Fa-f]+);")
+
+
+def _char_ref_value(prefix: str, digits: str) -> int:
+    return int(digits, 16) if prefix else int(digits)
+
+
+def _is_valid_xml_char(n: int) -> bool:
+    # XML 1.0 legal chars; notably excludes UTF-16 surrogates (0xD800–0xDFFF).
+    return (
+        n in (0x9, 0xA, 0xD)
+        or 0x20 <= n <= 0xD7FF
+        or 0xE000 <= n <= 0xFFFD
+        or 0x10000 <= n <= 0x10FFFF
+    )
+
+
+def _sanitize_xml_char_refs(content: bytes) -> bytes:
+    """Repair feeds that encode emoji as raw UTF-16 surrogate-pair character
+    references (e.g. `&#55357;&#56658;`). Those are illegal in XML 1.0, so a strict
+    parser rejects the *entire* document over one bad job. Recombine surrogate pairs
+    into the real codepoint and drop any remaining references to invalid characters."""
+    text = content.decode("utf-8", "replace")
+
+    def combine(m: "re.Match[str]") -> str:
+        hi = _char_ref_value(m.group(1), m.group(2))
+        lo = _char_ref_value(m.group(3), m.group(4))
+        if 0xD800 <= hi <= 0xDBFF and 0xDC00 <= lo <= 0xDFFF:
+            cp = 0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00)
+            return f"&#{cp};"
+        return m.group(0)
+
+    def drop_invalid(m: "re.Match[str]") -> str:
+        n = _char_ref_value(m.group(1), m.group(2))
+        return m.group(0) if _is_valid_xml_char(n) else ""
+
+    text = _XML_CHAR_REF_PAIR.sub(combine, text)
+    text = _XML_CHAR_REF.sub(drop_invalid, text)
+    return text.encode("utf-8")
+
 
 def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
     """Extract jobs from an XML job feed (e.g. Volvo's SuccessFactors feed)."""
@@ -470,7 +511,7 @@ def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
     desc_field = fields.get("description", "description")
     item_tag = cfg.get("item_tag", "job")
 
-    root = ET.fromstring(content)
+    root = ET.fromstring(_sanitize_xml_char_refs(content))
     items = root.iter(item_tag)
 
     jobs = []
