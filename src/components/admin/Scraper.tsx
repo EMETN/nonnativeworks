@@ -45,6 +45,7 @@ type Phase =
     | { kind: 'idle' }
     | { kind: 'scraping' }
     | { kind: 'review'; data: ReviewData }
+    | { kind: 'empty'; message: string }
     | { kind: 'uploading' }
     | { kind: 'done'; uploadResult: UploadResult }
     | { kind: 'error'; message: string };
@@ -110,6 +111,16 @@ export default function Scraper() {
                 setPhase({
                     kind: 'error',
                     message: data.error ?? 'Scrape failed',
+                });
+                return;
+            }
+            const countries = data.countries ?? [];
+            if (countries.length === 0) {
+                setPhase({
+                    kind: 'empty',
+                    message:
+                        data.warning ??
+                        'No open positions found for this page.',
                 });
                 return;
             }
@@ -301,6 +312,21 @@ export default function Scraper() {
             {phase.kind === 'error' && (
                 <div class="space-y-3">
                     <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                        {phase.message}
+                    </div>
+                    <button
+                        onClick={handleReset}
+                        class="text-sm text-gray-500 hover:text-gray-700 underline"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
+
+            {/* Empty */}
+            {phase.kind === 'empty' && (
+                <div class="space-y-3">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
                         {phase.message}
                     </div>
                     <button
