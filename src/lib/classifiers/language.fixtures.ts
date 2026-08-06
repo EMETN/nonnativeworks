@@ -2050,4 +2050,57 @@ export const CASES: FixtureCase[] = [
         requires: true,
         advantage: false,
     },
+
+    // ── Compound-mention advantage misattribution across languages (2026-08-06) ─
+    // buildAdvantageRegex's compound-mention gap tolerance (up to 8 words) used to
+    // let e.g. "proficiency in Dutch" reach across "and English" to steal French's
+    // advantage phrase, wrongly downgrading a genuine Dutch requirement to "advantage".
+    {
+        label: '2a — "Fluency in English and Dutch" → BE required',
+        title: 'Engineer',
+        desc: 'Fluency in English and Dutch',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Language: Proficiency in Dutch and English (French is considered an asset)." → BE required (French advantage phrase not misattributed to Dutch)',
+        title: 'Engineer',
+        desc: 'Language: Proficiency in Dutch and English (French is considered an asset).',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Language proficiency in Dutch and English (French is considered an asset)" → BE required (no trailing period)',
+        title: 'Engineer',
+        desc: 'Language proficiency in Dutch and English (French is considered an asset)',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "A native speaker in French or Dutch and professional working proficiency in English" → BE required',
+        title: 'Engineer',
+        desc: 'A native speaker in French or Dutch and professional working proficiency in English',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Fluent in English and at least French or Dutch" → BE required',
+        title: 'Engineer',
+        desc: 'Fluent in English and at least French or Dutch',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Fluent in English and a very good level of Dutch are mandatory. French will be a plus." → BE required',
+        title: 'Engineer',
+        desc: 'Fluent in English and a very good level of Dutch are mandatory. French will be a plus.',
+        country: 'BE',
+        requires: true,
+        advantage: false,
+    },
 ];
