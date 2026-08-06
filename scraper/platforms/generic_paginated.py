@@ -546,10 +546,10 @@ def _fetch_xml_feed(session: requests.Session, url: str, cfg: dict) -> list[dict
     try:
         resp = session.get(url, timeout=30, headers=_HEADERS)
         resp.raise_for_status()
+        return _extract_xml_feed(resp.content, cfg, url)
     except Exception as e:
-        print(f"generic: xml feed fetch error ({url}): {e}", file=sys.stderr)
+        print(f"generic: xml feed error ({url}): {e}", file=sys.stderr)
         return []
-    return _extract_xml_feed(resp.content, cfg, url)
 
 
 def _find_jobs_payload(html: str):
