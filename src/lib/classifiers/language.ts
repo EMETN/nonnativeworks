@@ -529,7 +529,9 @@ function buildAdvantageRegex(lang: string): RegExp {
     );
     // Optional modifier between operator and article: "considered", "considered as", "seen as",
     // or any single word (handles typos like "considerd" and extras like "also", "really").
-    const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)\\b`;
+    // The bare "considered(?: as)?" alternative handles ellipsis where "is" is dropped
+    // entirely, e.g. "French or German considered a strong advantage".
+    const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)\\b`;
     // Gap words in the compound-mention branch must not cross over a DIFFERENT
     // language's name — otherwise "proficiency in Dutch and English (French is
     // considered an asset)" would let "proficiency in Dutch" reach across "and
@@ -585,8 +587,12 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
     const listTail = `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+or\\s+[a-z]+)?`;
+    // Leading optional "considered " consumes ellipsis phrasing like "French or
+    // German considered a strong advantage" without eating into the {0,2} gap-word
+    // budget below (which alone can't span "considered a strong").
     const advantageSuffix =
-        `\\s+(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
+        `\\s+(?:considered\\s+)?` +
+        `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
         `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
 }
@@ -681,6 +687,7 @@ function buildRequirementSignals(lang: string): string[] {
     `professional ${lang}`,
     `${lang} at a professional level`,
     `${lang} at professional level`,
+    `${lang} at fluent level`,
     `excellent ${lang}`,
     `strong ${lang}`,
     `communicative ${lang}`,
@@ -774,13 +781,19 @@ function buildRequirementSignals(lang: string): string[] {
     `some ${lang}`,
     // "at least {lang}" — e.g. "Fluent in English and at least French or Dutch"
     `at least ${lang}`,
-    // "native speaker in {lang}" — e.g. "A native speaker in French or Dutch"
+    // "native speaker in/of {lang}" / "native speaker {lang}" — e.g. "A native
+    // speaker in French or Dutch", "A native speaker of French or Dutch",
+    // "A native speaker Dutch"
     `native speaker in ${lang}`,
+    `native speaker of ${lang}`,
+    `native speaker ${lang}`,
     // Confident communication
     `communicate confidently in ${lang}`,
-    // Comma-separated language lists: "English, {lang} and {other}", "{lang}, English"
+    // Comma/semicolon-separated language lists: "English, {lang} and {other}",
+    // "{lang}, English", "English; {lang} and {other}"
     `english, ${lang}`,
     `${lang}, english`,
+    `english; ${lang}`,
     // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
     `local language ${lang}`,
     // "in addition to {lang}" — presupposes the language alongside English
@@ -963,6 +976,36 @@ function windowOversizedChunk(chunk: string): string[] {
 }
 
 /**
+ * Detects the language of `chunk`, using majority vote across its windows when
+ * it was split by windowOversizedChunk. A 500-char window is short enough that
+ * tinyld regularly misfires on ONE window even for genuinely English text (e.g.
+ * a single window scored "de" out of nine otherwise-"en" windows for a real
+ * English Capgemini ad) — accepting any single matching window turns that per-
+ * window noise into a wrong verdict for the whole (long) description. Requiring
+ * a strict majority means a lone noisy window can't flip it, while a
+ * genuinely native-language description still wins comfortably (e.g. 8 "nl" vs
+ * 3 "ber" out of 11 windows in a real Dutch ad).
+ */
+function detectChunkLanguage(chunk: string): string {
+    const windows = windowOversizedChunk(chunk);
+    if (windows.length <= 1) return detect(chunk);
+    const counts = new Map<string, number>();
+    for (const window of windows) {
+        const code = detect(window);
+        counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    let winner = '';
+    let winnerCount = 0;
+    for (const [code, count] of counts) {
+        if (count > winnerCount) {
+            winner = code;
+            winnerCount = count;
+        }
+    }
+    return winnerCount > windows.length / 2 ? winner : '';
+}
+
+/**
  * Like anyChunkInNativeLanguage but returns the matching chunk and detected
  * language code so callers can log exactly what triggered detection.
  *
@@ -982,14 +1025,12 @@ function findNativeLanguageChunk(
         .split(/\n+/)
         .map((c) => c.trim())
         .filter((c) => c.length >= 200);
-    const candidates = (
-        chunks.length > 0 ? chunks : [text.trim()]
-    ).flatMap(windowOversizedChunk);
+    const candidates = chunks.length > 0 ? chunks : [text.trim()];
     const nativeCharEntry = countryCode
         ? COUNTRY_NATIVE_CHARS[countryCode]
         : undefined;
     for (const chunk of candidates) {
-        const code = detect(chunk);
+        const code = detectChunkLanguage(chunk);
         if (!langCodes.includes(code)) continue;
         // If we have a native-char pattern for this country, require at least 2
         // such characters in the chunk. A single accented letter from one word is
@@ -1065,15 +1106,14 @@ function findAnyNonEnglishChunk(
         .split(/\n+/)
         .map((c) => c.trim())
         .filter((c) => c.length >= 200);
-    const candidates = (
+    const candidates =
         chunks.length > 0
             ? chunks
             : text.trim().length >= 200
               ? [text.trim()]
-              : []
-    ).flatMap(windowOversizedChunk);
+              : [];
     for (const chunk of candidates) {
-        const code = detect(chunk);
+        const code = detectChunkLanguage(chunk);
         if (!code || code.length !== 2 || code === 'en') continue;
         if (!TRUSTED_LANG_CODES.has(code)) continue;
         if (
@@ -1382,6 +1422,29 @@ export function detectNativeLanguage(
                         phase: '1b',
                         description: 'generic local-language advantage phrase',
                         matched: genericAdvantageMatch[0],
+                    },
+                ],
+            };
+        }
+
+        // Generic "additional/other EU/European/local/regional languages is a plus" —
+        // same idea, but phrased as "additional languages" rather than "local language"
+        // (e.g. "knowledge of additional EU languages is a plus").
+        const genericAdditionalLangMatch = combined.match(
+            /\b(?:knowledge of\s+)?(?:additional|other)\s+(?:eu|european|local|regional)\s+languages?[^.]{0,40}(?:is|are|would\s+be)\s+(?:a\s+)?(?:plus|bonus|advantage|preferred|beneficial|preferable|an?\s+asset)\b/,
+        );
+        if (genericAdditionalLangMatch) {
+            return {
+                value: false,
+                local_language_advantage: true,
+                requiredLanguages: [],
+                preferredLanguages: langNames,
+                signals: [
+                    {
+                        phase: '1b',
+                        description:
+                            'generic "additional languages" advantage phrase',
+                        matched: genericAdditionalLangMatch[0],
                     },
                 ],
             };
@@ -1855,4 +1918,5 @@ export function detectNativeLanguage(
         ],
     };
 }
+
 
