@@ -346,71 +346,71 @@ export async function enrichDescriptions(
     locationRegex?: RegExp,
     descriptionRegex?: RegExp,
     skipUrls?: Set<string>,
-  ): Promise<void> {
-      const targets = jobs.filter((j) => {
+): Promise<void> {
+    const targets = jobs.filter((j) => {
         if (!j.url) return false;
         // skipUrls only caches classification, not location — so a cached URL still
         // missing its location must be fetched, or location-from-HTML companies hit 0.
-        const wantsLocation = 
-          !!locationRegex &&
-          !j.location;
+        const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
-          !skipUrls?.has(j.url) &&
-          !titleAppearsNonEnglishExcludingCityNames(j.title) &&
-          !j.descriptionHtml &&
-          !j.descriptionText;
+            !skipUrls?.has(j.url) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
+            !j.descriptionHtml &&
+            !j.descriptionText;
         return wantsDescription || wantsLocation;
-  });
+    });
 
-  const noUrl = jobs.length - targets.length;
-  console.log(`
-      [enrichDescriptions] ${targets.length} targets (${noUrl} skipped — no url or already enriched), locationRegex=${locationRegex ?? 'none'}, descriptionRegex=${descriptionRegex ?? 'none'}`);
+    const noUrl = jobs.length - targets.length;
+    console.log(
+        `[enrichDescriptions] ${targets.length} targets (${noUrl} skipped — no url or already enriched), locationRegex=${locationRegex ?? 'none'}, descriptionRegex=${descriptionRegex ?? 'none'}`,
+    );
 
-  let locationsSet = 0;
-  let htmlFailed = 0;
-  let goneCount = 0;
-  let regexMissed = 0;
+    let locationsSet = 0;
+    let htmlFailed = 0;
+    let goneCount = 0;
+    let regexMissed = 0;
 
-  for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
-    await Promise.all(
-      targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        const html = await fetchPageHtml(job.url!);
-        if (html === GONE_SENTINEL) {
-          job._gone = true;
-          goneCount++;
-          return;
-        }
-        if (!html) {
-          htmlFailed++;
-          return;
-        }
-        if (
-          !skipUrls?.has(job.url!) &&
-          !titleAppearsNonEnglishExcludingCityNames(job.title) &&
-          !job.descriptionText
-        ) {
-          if (descriptionRegex) {
-            const m = html.match(descriptionRegex);
-            job.descriptionHtml = m?.[1] ?? html;
-          } else {
-            job.descriptionHtml = html;
-          }
-        }
-        if (locationRegex && !job.location) {
-          const m = html.match(locationRegex);
-          if (m?.[1]) {
-            job.location = m[1].trim();
-            locationsSet++;
-          } else {
-            regexMissed++;
-            console.warn(
-                `[enrichDescriptions] location regex did not match for: ${job.url}`,
-              );
-            }
-          }
-        }),
-      ),
+    for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
+        await Promise.all(
+            targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
+                const html = await fetchPageHtml(job.url!);
+                if (html === GONE_SENTINEL) {
+                    job._gone = true;
+                    goneCount++;
+                    return;
+                }
+                if (!html) {
+                    htmlFailed++;
+                    return;
+                }
+                if (
+                    !skipUrls?.has(job.url!) &&
+                    !titleAppearsNonEnglishExcludingCityNames(job.title) &&
+                    !job.descriptionText
+                ) {
+                    if (descriptionRegex) {
+                        const m = html.match(descriptionRegex);
+                        job.descriptionHtml = m?.[1] ?? html;
+                    } else {
+                        job.descriptionHtml = html;
+                    }
+                }
+                if (locationRegex && !job.location) {
+                    const m = html.match(locationRegex);
+                    if (m?.[1]) {
+                        job.location = m[1].trim();
+                        locationsSet++;
+                    } else {
+                        regexMissed++;
+                        console.warn(
+                            `[enrichDescriptions] location regex did not match for: ${job.url}`,
+                        );
+                    }
+                }
+            }),
+        );
     }
+
     if (goneCount) {
         console.log(
             `[enrichDescriptions] ${goneCount} jobs marked gone (404/410)`,
