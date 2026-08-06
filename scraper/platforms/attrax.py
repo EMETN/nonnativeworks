@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
 from extract import build_job, SKIP_LOCATION_PATTERNS
 from title_language import _title_appears_non_english_excluding_cities
-from tracked_countries import is_tracked_location
+from tracked_countries import TRACKED_NAMES, is_tracked_location
 
 _DESCRIPTION_SELECTORS = [
     "div[aria-label='Job description']",
