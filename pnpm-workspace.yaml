@@ -3,6 +3,7 @@ allowBuilds:
   core-js: true
   esbuild: true
   sharp: true
+  simple-git-hooks: true
 minimumReleaseAgeExclude:
   - '@astrojs/netlify@8.2.0'
   - '@astrojs/node@11.1.0'
