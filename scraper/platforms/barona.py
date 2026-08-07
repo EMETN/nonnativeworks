@@ -138,8 +138,10 @@ def _scrape_barona_inner(url: str) -> list[dict]:
     # Only English-titled jobs need enrichment — non-English titles already
     # signal a native-language requirement via Phase 1a of the TS classifier.
     enrich_targets = [
-        j for j in jobs
-        if j.get("url") and not _title_appears_non_english_excluding_cities(j.get("title", ""))
+        j
+        for j in jobs
+        if j.get("url")
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
     ]
     skipped = len(jobs) - len(enrich_targets)
     print(

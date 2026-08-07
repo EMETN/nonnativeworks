@@ -190,11 +190,20 @@ def scrape_academicwork_static(url: str) -> list[dict]:
     # Descriptions are fetched from the English URL (/en/jobs/j/…?lang=en) so
     # the classifier sees English page content without Finnish site boilerplate.
     # The job slug and ID are identical between the Finnish and English URL paths.
-    english_jobs = [j for j in all_jobs if not _title_appears_non_english_excluding_cities(j.get("classifierTitle") or j.get("title", ""))]
-    unique_urls = list(dict.fromkeys(
-        _to_english_url(j["url"]) for j in english_jobs if j.get("url")
-    ))
-    print(f"academicwork: fetching descriptions for {len(unique_urls)} English-titled jobs", file=sys.stderr)
+    english_jobs = [
+        j
+        for j in all_jobs
+        if not _title_appears_non_english_excluding_cities(
+            j.get("classifierTitle") or j.get("title", "")
+        )
+    ]
+    unique_urls = list(
+        dict.fromkeys(_to_english_url(j["url"]) for j in english_jobs if j.get("url"))
+    )
+    print(
+        f"academicwork: fetching descriptions for {len(unique_urls)} English-titled jobs",
+        file=sys.stderr,
+    )
 
     desc_cache: dict[str, str] = {}
     for i, job_url in enumerate(unique_urls):

@@ -931,11 +931,16 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # picking up local-language nav/cookie-consent/footer text and producing
     # false native-language-requirement signals on an English-language posting.
     english_jobs = [
-        j for j in all_jobs
+        j
+        for j in all_jobs
         if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and (j.get("country_code") or is_tracked_location(j.get("location")))
     ]
-    multi_loc_jobs = [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)] if detail_loc_sel else []
+    multi_loc_jobs = (
+        [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)]
+        if detail_loc_sel
+        else []
+    )
 
     jobs_needing_detail = {j["url"] for j in english_jobs if j.get("url")}
     jobs_needing_detail.update(j["url"] for j in multi_loc_jobs if j.get("url"))

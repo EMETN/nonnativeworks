@@ -222,7 +222,8 @@ def scrape_arla_static(url: str) -> list[dict]:
     # Only enrich jobs in tracked countries — fetching descriptions for jobs in
     # Canada, UK, Poland, etc. wastes time and can cause timeouts on GitHub Actions.
     english_jobs = [
-        j for j in result
+        j
+        for j in result
         if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]

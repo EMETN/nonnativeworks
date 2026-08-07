@@ -19,175 +19,175 @@ _NON_ASCII_RE = re.compile(
 _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     # ── Danish ───────────────────────────────────────────────────────────
     "DK": [
-        "afdelingsleder", # department manager
-        "afvanding",      # drainage
-        "arkitekt",       # architect
-        "boreformand",    # drilling foreman
-        "fagchef",        # head of department
+        "afdelingsleder",  # department manager
+        "afvanding",  # drainage
+        "arkitekt",  # architect
+        "boreformand",  # drilling foreman
+        "fagchef",  # head of department
         "fagspecialist",  # subject specialist
-        "hjælper",        # assistant
-        "karriere",       # career
-        "konsulent",      # consultant
-        "offentlige",     # public
-        "projectchef",    # project manager
-        "projectleder",   # project manager
-        "rådgiver",       # advisor
+        "hjælper",  # assistant
+        "karriere",  # career
+        "konsulent",  # consultant
+        "offentlige",  # public
+        "projectchef",  # project manager
+        "projectleder",  # project manager
+        "rådgiver",  # advisor
         "sagsbehandler",  # case officer
-        "sælger",         # salesperson
-        "statiker",       # structural engineer
-        "tilbudspartner", # offer partner
-        "udvikler",       # developer
+        "sælger",  # salesperson
+        "statiker",  # structural engineer
+        "tilbudspartner",  # offer partner
+        "udvikler",  # developer
     ],
     # ── Dutch ────────────────────────────────────────────────────────────
     "NL": [
-        "adviseur",       # advisor
-        "afstudeer",      # graduate
-        "afstuderen",     # graduate
-        "automatiseerder", # automater
-        "automatisering", # automation
-        "beheerder",      # administrator
-        "bouwkundig",     # architectural
-        "constructeur",   # constructor / manufacturer
-        "coördinator",    # coordinator
-        "defensie",       # defence
-        "gezocht",        # wanted
-        "informatie",     # information
-        "innovatie",      # innovation
-        "medewerker",     # employee / associate
-        "monteur",        # installer
-        "netwerk",        # network
-        "omgeving",       # environment
-        "ontwerp",        # design
-        "ontwikkelaar",   # developer
-        "openbaar",       # public
-        "overheid",       # government
+        "adviseur",  # advisor
+        "afstudeer",  # graduate
+        "afstuderen",  # graduate
+        "automatiseerder",  # automater
+        "automatisering",  # automation
+        "beheerder",  # administrator
+        "bouwkundig",  # architectural
+        "constructeur",  # constructor / manufacturer
+        "coördinator",  # coordinator
+        "defensie",  # defence
+        "gezocht",  # wanted
+        "informatie",  # information
+        "innovatie",  # innovation
+        "medewerker",  # employee / associate
+        "monteur",  # installer
+        "netwerk",  # network
+        "omgeving",  # environment
+        "ontwerp",  # design
+        "ontwikkelaar",  # developer
+        "openbaar",  # public
+        "overheid",  # government
         "projectleider",  # project manager
-        "publieke",       # public
-        "spoordomein",    # railway network
-        "stagiair",       # intern
-        "technieker",     # technician
-        "technisch",      # technical
-        "telecommunicatie", # telecommunications
-        "transitie",      # transition
-        "uitvoerder",     # executor / operative
-        "veiligheid",     # safety
-        "verkoper",       # salesperson
+        "publieke",  # public
+        "spoordomein",  # railway network
+        "stagiair",  # intern
+        "technieker",  # technician
+        "technisch",  # technical
+        "telecommunicatie",  # telecommunications
+        "transitie",  # transition
+        "uitvoerder",  # executor / operative
+        "veiligheid",  # safety
+        "verkoper",  # salesperson
         "verzekeringen",  # insurance
         "virtualisatie",  # virtualization
-        "voorbereider",   # planner
-        "voorziening",    # facility
+        "voorbereider",  # planner
+        "voorziening",  # facility
     ],
     # ── Estonian ─────────────────────────────────────────────────────────
     "EE": [
-        "arendaja",       # developer
-        "insener",       # engineer
-        "juht",           # manager / head
+        "arendaja",  # developer
+        "insener",  # engineer
+        "juht",  # manager / head
         "konstruktorit",  # design engineer
-        "modelleerija",   # modeler
-        "müügijuht",      # sales manager
-        "nõustaja",       # advisor
+        "modelleerija",  # modeler
+        "müügijuht",  # sales manager
+        "nõustaja",  # advisor
         "projekteerija",  # designer
-        "spetsialist",    # specialist
+        "spetsialist",  # specialist
     ],
     # ── Finnish ──────────────────────────────────────────────────────────
     "FI": [
-        "ammattitaito",     # skill
-        "arkkitehti",       # architect
-        "asiakas",          # customer
-        "asennus",          # installation
-        "asentaja",         # installer
-        "asentajia",        # installers
-        "asiantuntija",     # specialist / expert
-        "finanssiala",      # finance sector
-        "hakemus",          # application (open application postings)
-        "hankinta",         # procurement
-        "hitsaaja",         # welder
-        "hoitaja",          # caregiver / nurse
-        "hovimestari",      # headwaiter
-        "huolto",           # maintenance
-        "johtaja",          # manager / director
-        "kehitys",          # development
-        "kokki",            # chef
-        "kokoonpanija",     # assembler
-        "koneistaja",       # machinist
-        "konsultti",        # consultant
-        "koordinaattori",   # coordinator
-        "kuljettaja",       # driver
-        "liiketoiminta",    # business
-        "mekaanikko",       # mechanic
-        "myynti",           # sales
-        "osaaja",           # specialist / expert
-        "palvelu",          # service
-        "rakennus",         # building
-        "rakentaja",        # builder
-        "ravintola",        # restaurant
-        "rekrytointi",      # recruitment
-        "suunnittelija",    # designer / planner
-        "tarjoilija",       # waiter
-        "testaaja",         # tester
-        "tiimi",            # team
-        "timpuri",          # carpenter
-        "toimiala",         # industry
-        "tuotanto",         # production
-        "tuotannon",        # production (genitive)
-        "tutkija",          # researcher
-        "valvoja",          # supervisor
-        "varasto",          # warehouse
-        "vastaanotto",      # reception / front desk
-        "vuoromestari",     # shift supervisor
+        "ammattitaito",  # skill
+        "arkkitehti",  # architect
+        "asiakas",  # customer
+        "asennus",  # installation
+        "asentaja",  # installer
+        "asentajia",  # installers
+        "asiantuntija",  # specialist / expert
+        "finanssiala",  # finance sector
+        "hakemus",  # application (open application postings)
+        "hankinta",  # procurement
+        "hitsaaja",  # welder
+        "hoitaja",  # caregiver / nurse
+        "hovimestari",  # headwaiter
+        "huolto",  # maintenance
+        "johtaja",  # manager / director
+        "kehitys",  # development
+        "kokki",  # chef
+        "kokoonpanija",  # assembler
+        "koneistaja",  # machinist
+        "konsultti",  # consultant
+        "koordinaattori",  # coordinator
+        "kuljettaja",  # driver
+        "liiketoiminta",  # business
+        "mekaanikko",  # mechanic
+        "myynti",  # sales
+        "osaaja",  # specialist / expert
+        "palvelu",  # service
+        "rakennus",  # building
+        "rakentaja",  # builder
+        "ravintola",  # restaurant
+        "rekrytointi",  # recruitment
+        "suunnittelija",  # designer / planner
+        "tarjoilija",  # waiter
+        "testaaja",  # tester
+        "tiimi",  # team
+        "timpuri",  # carpenter
+        "toimiala",  # industry
+        "tuotanto",  # production
+        "tuotannon",  # production (genitive)
+        "tutkija",  # researcher
+        "valvoja",  # supervisor
+        "varasto",  # warehouse
+        "vastaanotto",  # reception / front desk
+        "vuoromestari",  # shift supervisor
     ],
     # ── French ───────────────────────────────────────────────────────────
     "FR": [
-        "acheteur",        # buyer / purchaser
+        "acheteur",  # buyer / purchaser
         "administrateur",  # director
-        "alternance",      # apprenticeship / work-study program
-        "amenagement",     # planning / development (accent-free "aménagement")
-        "approvisionnement", # procurement / supply
-        "approvisionneur", # procurement officer
-        "architecte",      # architect
-        "batiment",        # building / construction (accent-free "bâtiment")
-        "cariste",         # forklift operator
-        "concepteur",      # designer
-        "conducteur",      # operator, conductor
-        "conseiller",      # advisor
-        "dessinateur",     # illustrator
-        "developpeur",     # developer (accent-free "développeur")
-        "electricien",     # electrician (accent-free "électricien")
-        "electronique",    # electronics
-        "embauche",        # hiring
-        "environnement",   # environment
-        "evaluateur",      # tester
-        "gestion",         # management
-        "industriel",      # industrial
-        "ingénieur",       # engineer
-        "juriste",         # legal counsel
-        "logiciel",        # software
-        "magasinier",      # warehouse clerk
-        "manutentionnaire", # warehouse handler
-        "menuisier",       # carpenter / joiner
-        "offre",           # offer
-        "ordonnanceur",    # scheduler
-        "peintre",         # painter
-        "planificateur",   # planner
-        "plateforme",      # platform
-        "plombier",        # plumber
-        "produit",         # product
-        "projet",          # projects
-        "qualite",         # quality (accent-free "qualité")
-        "recherche",       # research
-        "recrutement",     # recruitment
-        "reseau",          # network (accent-free "réseau")
-        "responsable",     # manager / lead
-        "secteur",         # sector
-        "securite",        # security (accent-free "sécurité")
-        "soudeur",         # welder
-        "soutien",         # support
-        "stagiaire",       # intern
-        "superviseur",     # supervisor
-        "technicien",      # technician
-        "testeur",         # tester
-        "thermique",       # thermal
-        "vendeur",         # salesperson
+        "alternance",  # apprenticeship / work-study program
+        "amenagement",  # planning / development (accent-free "aménagement")
+        "approvisionnement",  # procurement / supply
+        "approvisionneur",  # procurement officer
+        "architecte",  # architect
+        "batiment",  # building / construction (accent-free "bâtiment")
+        "cariste",  # forklift operator
+        "concepteur",  # designer
+        "conducteur",  # operator, conductor
+        "conseiller",  # advisor
+        "dessinateur",  # illustrator
+        "developpeur",  # developer (accent-free "développeur")
+        "electricien",  # electrician (accent-free "électricien")
+        "electronique",  # electronics
+        "embauche",  # hiring
+        "environnement",  # environment
+        "evaluateur",  # tester
+        "gestion",  # management
+        "industriel",  # industrial
+        "ingénieur",  # engineer
+        "juriste",  # legal counsel
+        "logiciel",  # software
+        "magasinier",  # warehouse clerk
+        "manutentionnaire",  # warehouse handler
+        "menuisier",  # carpenter / joiner
+        "offre",  # offer
+        "ordonnanceur",  # scheduler
+        "peintre",  # painter
+        "planificateur",  # planner
+        "plateforme",  # platform
+        "plombier",  # plumber
+        "produit",  # product
+        "projet",  # projects
+        "qualite",  # quality (accent-free "qualité")
+        "recherche",  # research
+        "recrutement",  # recruitment
+        "reseau",  # network (accent-free "réseau")
+        "responsable",  # manager / lead
+        "secteur",  # sector
+        "securite",  # security (accent-free "sécurité")
+        "soudeur",  # welder
+        "soutien",  # support
+        "stagiaire",  # intern
+        "superviseur",  # supervisor
+        "technicien",  # technician
+        "testeur",  # tester
+        "thermique",  # thermal
+        "vendeur",  # salesperson
     ],
     # ── German ───────────────────────────────────────────────────────────
     "DE": [
@@ -199,23 +199,23 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "aushilfe",  # temporary worker
         "ausschreiberung",  # tender
         "auszubildender",  # trainee
-        "berater",        # consultant / advisor
-        "datenbank",      # database
-        "digitalisierung", # digitalization
-        "elektroniker",   # electrician
-        "energiebranche", # energy sector
-        "entwickler",     # developer
-        "entwicklung",    # development
-        "erfahrung",      # experience
-        "fachbereich",    # department
-        "fachexperte",    # subject matter expert
+        "berater",  # consultant / advisor
+        "datenbank",  # database
+        "digitalisierung",  # digitalization
+        "elektroniker",  # electrician
+        "energiebranche",  # energy sector
+        "entwickler",  # developer
+        "entwicklung",  # development
+        "erfahrung",  # experience
+        "fachbereich",  # department
+        "fachexperte",  # subject matter expert
         "fachgutachter",  # expert / technical consultant
-        "fachkraft",      # skilled worker
-        "fachplaner",     # specialist planner
-        "genehmigung",    # approval
-        "geomatiker",     # geomatics engineer
-        "glasfaser",      # fibre optic
-        "informatik",     # computer science
+        "fachkraft",  # skilled worker
+        "fachplaner",  # specialist planner
+        "genehmigung",  # approval
+        "geomatiker",  # geomatics engineer
+        "glasfaser",  # fibre optic
+        "informatik",  # computer science
         "infrastruktur",  # infrastructure
         "ingenieur",  # engineer
         "kauffrau",  # merchant / business person (female form)
@@ -251,9 +251,9 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     # ── Icelandic ────────────────────────────────────────────────────────
     "IS": [
-        "sérfræðingur",    # specialist / expert
-        "stjórnandi",      # manager
-        "þróunarfulltrúi", # development representative
+        "sérfræðingur",  # specialist / expert
+        "stjórnandi",  # manager
+        "þróunarfulltrúi",  # development representative
     ],
     # ── Latvian ──────────────────────────────────────────────────────────
     "LV": [
@@ -273,81 +273,81 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     ],
     # ── Norwegian ────────────────────────────────────────────────────────
     "NO": [
-        "avdelingsleder", # department manager
-        "fagansvarlig",   # subject-matter responsible
-        "karriere",       # career
-        "konsulent",      # consultant
-        "koordinator",    # coordinator
-        "rådgiver",       # advisor
+        "avdelingsleder",  # department manager
+        "fagansvarlig",  # subject-matter responsible
+        "karriere",  # career
+        "konsulent",  # consultant
+        "koordinator",  # coordinator
+        "rådgiver",  # advisor
         "saksbehandler",  # case officer
-        "selger",         # salesperson
-        "utvikler",       # developer
+        "selger",  # salesperson
+        "utvikler",  # developer
     ],
     # ── Polish ───────────────────────────────────────────────────────────
     "PL": [
-        "brygadzista",    # foreman / shift supervisor
-        "doradca",        # advisor
+        "brygadzista",  # foreman / shift supervisor
+        "doradca",  # advisor
         "elektromonter",  # electrical installer
-        "elektryk",       # electrician
-        "handlowiec",     # salesperson
-        "informatyk",     # IT specialist
-        "inżynier",       # engineer
-        "inzynier",       # engineer (accent-free "inżynier")
-        "kelner",         # waiter
-        "kierowca",       # driver
-        "kierownictwo",   # management
-        "kierownik",      # manager / head
-        "konsultant",     # consultant
-        "koordynator",    # coordinator
-        "księgowy",       # accountant
-        "ksiegowy",       # accountant (accent-free "księgowy")
-        "kucharz",        # cook / chef
-        "magazyn",        # warehouse
-        "magazynier",     # warehouse worker
-        "malarz",         # painter
-        "mechanik",       # mechanic
-        "monter",         # installer / assembler
-        "opiekun",        # caregiver
-        "opiekunka",      # caregiver (female form)
-        "praktykant",     # intern
-        "pracownik",      # employee / worker
-        "prawnik",        # lawyer
-        "programista",    # programmer
-        "przedstawiciel", # representative
+        "elektryk",  # electrician
+        "handlowiec",  # salesperson
+        "informatyk",  # IT specialist
+        "inżynier",  # engineer
+        "inzynier",  # engineer (accent-free "inżynier")
+        "kelner",  # waiter
+        "kierowca",  # driver
+        "kierownictwo",  # management
+        "kierownik",  # manager / head
+        "konsultant",  # consultant
+        "koordynator",  # coordinator
+        "księgowy",  # accountant
+        "ksiegowy",  # accountant (accent-free "księgowy")
+        "kucharz",  # cook / chef
+        "magazyn",  # warehouse
+        "magazynier",  # warehouse worker
+        "malarz",  # painter
+        "mechanik",  # mechanic
+        "monter",  # installer / assembler
+        "opiekun",  # caregiver
+        "opiekunka",  # caregiver (female form)
+        "praktykant",  # intern
+        "pracownik",  # employee / worker
+        "prawnik",  # lawyer
+        "programista",  # programmer
+        "przedstawiciel",  # representative
         "recepcjonista",  # receptionist
-        "rekrutacja",     # recruitment
-        "specjalista",    # specialist
-        "spawacz",        # welder
-        "sprzedawca",     # salesperson
-        "stażysta",       # intern
-        "stazysta",       # intern (accent-free "stażysta")
-        "stolarz",        # carpenter
-        "zaopatrzenie",   # procurement / supply
+        "rekrutacja",  # recruitment
+        "specjalista",  # specialist
+        "spawacz",  # welder
+        "sprzedawca",  # salesperson
+        "stażysta",  # intern
+        "stazysta",  # intern (accent-free "stażysta")
+        "stolarz",  # carpenter
+        "zaopatrzenie",  # procurement / supply
     ],
     # ── Swedish ──────────────────────────────────────────────────────────
     "SE": [
-        "ansvarig",       # responsible / manager
-        "arkitekt",       # architect
-        "ekonom",         # economist
-        "erfaren",        # experienced
-        "förvaltare",     # administrator / manager
-        "gruppchef",      # group leader
-        "handläggare",    # administrator / officer
-        "informatiker",   # computer scientist
-        "konsult",        # consultant
-        "mekaniker",      # mechanic
+        "ansvarig",  # responsible / manager
+        "arkitekt",  # architect
+        "ekonom",  # economist
+        "erfaren",  # experienced
+        "förvaltare",  # administrator / manager
+        "gruppchef",  # group leader
+        "handläggare",  # administrator / officer
+        "informatiker",  # computer scientist
+        "konsult",  # consultant
+        "mekaniker",  # mechanic
         "projektledare",  # project manager
-        "rådgivare",      # advisor
-        "samordnare",     # coordinator
-        "säljare",        # salesperson
-        "tekniker",       # technician
-        "teknisk",        # technical
-        "testare",        # tester
-        "uppdragsledare", # project manager
-        "utredare",       # investigator
-        "utvecklare",     # developer
-        "validering",     # validation
-        "verksamhet",     # operations / business
+        "rådgivare",  # advisor
+        "samordnare",  # coordinator
+        "säljare",  # salesperson
+        "tekniker",  # technician
+        "teknisk",  # technical
+        "testare",  # tester
+        "uppdragsledare",  # project manager
+        "utredare",  # investigator
+        "utvecklare",  # developer
+        "validering",  # validation
+        "verksamhet",  # operations / business
     ],
 }
 
@@ -371,25 +371,102 @@ def _title_appears_non_english(title: str) -> bool:
 # titleAppearsNonEnglishExcludingCityNames() in src/lib/ats/title-language.ts —
 # keep both lists in sync.
 _NON_ASCII_CITY_NAMES = [
-    "asnières sur seine", "asunción", "bogotá", "bollnäs", "borlänge",
-    "borås", "brasília", "brüttisellen", "bucurești", "bäumenheim",
-    "bückeburg", "cesson-sevigné", "châtellerault", "ciudad de panamá",
-    "donauwörth", "düren", "düsseldorf", "enköping", "faßberg", "flöha",
-    "gdańsk", "gemünden am main", "genève", "großkrotzenburg",
-    "großmehring", "gävle", "gémenos", "göteborg", "götene", "hyvinkää",
-    "hämeenlinna", "ishøj", "jyväskylä", "jämsä", "järvenpää", "jönköping",
-    "kankaanpää", "klaipėda", "kraków", "kruså", "köln", "københavn",
-    "la ferté-saint-aubin", "lempäälä", "les sorinières", "linköping",
-    "luleå", "lübeck", "malmö", "montréal", "málaga", "mäntyharju",
-    "mölndal", "münchen", "norrköping", "nurmijärvi", "nyköping",
-    "nürnberg", "orléans", "osnabrück", "ostrołęka", "panevėžys",
-    "pieksämäki", "poznań", "pärnu", "québec", "riihimäki", "ringkøbing",
-    "rīga", "saarbrücken", "saint lô", "saint-étienne", "san josé",
-    "seinäjoki", "skellefteå", "sotteville-lès-rouen", "strømmen",
-    "são paulo", "tromsø", "umeå", "vallensbæk", "videbæk", "västerås",
-    "växjö", "vélizy-villacoublay", "województwo", "wrocław", "würzburg",
-    "ylöjärvi", "zürich", "älmhult", "örebro", "örnsköldsvik", "östersund",
-    "łódź", "šiauliai",
+    "asnières sur seine",
+    "asunción",
+    "bogotá",
+    "bollnäs",
+    "borlänge",
+    "borås",
+    "brasília",
+    "brüttisellen",
+    "bucurești",
+    "bäumenheim",
+    "bückeburg",
+    "cesson-sevigné",
+    "châtellerault",
+    "ciudad de panamá",
+    "donauwörth",
+    "düren",
+    "düsseldorf",
+    "enköping",
+    "faßberg",
+    "flöha",
+    "gdańsk",
+    "gemünden am main",
+    "genève",
+    "großkrotzenburg",
+    "großmehring",
+    "gävle",
+    "gémenos",
+    "göteborg",
+    "götene",
+    "hyvinkää",
+    "hämeenlinna",
+    "ishøj",
+    "jyväskylä",
+    "jämsä",
+    "järvenpää",
+    "jönköping",
+    "kankaanpää",
+    "klaipėda",
+    "kraków",
+    "kruså",
+    "köln",
+    "københavn",
+    "la ferté-saint-aubin",
+    "lempäälä",
+    "les sorinières",
+    "linköping",
+    "luleå",
+    "lübeck",
+    "malmö",
+    "montréal",
+    "málaga",
+    "mäntyharju",
+    "mölndal",
+    "münchen",
+    "norrköping",
+    "nurmijärvi",
+    "nyköping",
+    "nürnberg",
+    "orléans",
+    "osnabrück",
+    "ostrołęka",
+    "panevėžys",
+    "pieksämäki",
+    "poznań",
+    "pärnu",
+    "québec",
+    "riihimäki",
+    "ringkøbing",
+    "rīga",
+    "saarbrücken",
+    "saint lô",
+    "saint-étienne",
+    "san josé",
+    "seinäjoki",
+    "skellefteå",
+    "sotteville-lès-rouen",
+    "strømmen",
+    "são paulo",
+    "tromsø",
+    "umeå",
+    "vallensbæk",
+    "videbæk",
+    "västerås",
+    "växjö",
+    "vélizy-villacoublay",
+    "województwo",
+    "wrocław",
+    "würzburg",
+    "ylöjärvi",
+    "zürich",
+    "älmhult",
+    "örebro",
+    "örnsköldsvik",
+    "östersund",
+    "łódź",
+    "šiauliai",
 ]
 _CITY_NAME_RE = re.compile(
     "(" + "|".join(re.escape(c) for c in _NON_ASCII_CITY_NAMES) + ")",
