@@ -66,7 +66,6 @@ PLATFORM_ARLA = "arla"
 PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
 PLATFORM_BARONA = "barona"
-PLATFORM_NESTE = "neste"
 PLATFORM_ROVIO = "rovio"
 PLATFORM_ZALANDO = "zalando"
 
@@ -90,8 +89,6 @@ def detect_platform(html: str, url: str = "") -> str | None:
         return PLATFORM_NJOYN
     if "baronacareers.com" in url or "barona.fi" in url:
         return PLATFORM_BARONA
-    if "jobs.neste.com" in url:
-        return PLATFORM_NESTE
     if "rovio.com" in url:
         return PLATFORM_ROVIO
     if "jobs.zalando.com" in url:
@@ -249,18 +246,6 @@ def main():
             print(f"Barona hybrid found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Barona hybrid scraper failed: {e}", file=sys.stderr)
-        print(json.dumps(jobs, ensure_ascii=False))
-        return
-
-    if platform == PLATFORM_NESTE:
-        print(
-            "jobs.neste.com detected — using dedicated static scraper", file=sys.stderr
-        )
-        try:
-            jobs = scrape_neste_static(url)
-            print(f"Neste static found {len(jobs)} jobs", file=sys.stderr)
-        except Exception as e:
-            print(f"Neste static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 

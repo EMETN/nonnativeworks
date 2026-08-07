@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 
 from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 # ISO alpha-2 codes for countries tracked by NonNativeWorks.
 # Used to filter njoyn results instead of scraping all ~3000 global jobs.
@@ -373,7 +373,8 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
     targets = [
         j
         for j in jobs
-        if j.get("url") and not _title_appears_non_english(j.get("title", ""))
+        if j.get("url")
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
     ]
     if not targets:
         return
@@ -448,8 +449,10 @@ def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
         if not detail_div:
             continue
 
-        # Extract tombstone values by label
-        def tombstone(label: str) -> str | None:
+        # Extract tombstone values by label. Captures the loop variable `detail_div`,
+        # but is only ever called synchronously within this same iteration (never
+        # stored/deferred), so it can't observe a later h2's value.
+        def tombstone(label: str) -> str | None:  # noqa: B023
             for row in detail_div.find_all(class_="tombstonelabel"):
                 if label.lower() in row.get_text(strip=True).lower():
                     val = row.find_next_sibling(class_="tombstonevalue")

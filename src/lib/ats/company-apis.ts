@@ -798,11 +798,16 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'careers.capgemini.com': {
-        // Capgemini's internal job-stream API. country_code is a comma-separated list of
-        // locale/ISO codes covering all tracked countries. location is a comma-separated
-        // city string (e.g. "Stockholm, Malmö, Göteborg") — lookupCountryFromLocation splits
-        // it and resolves via CITY_MAP. description_stripped contains the full job description
-        // as plain text (no HTML, actual Unicode characters) — sufficient for language classification.
+        // Capgemini's internal job-stream API. The country_code query param is a comma-separated
+        // list of locale/ISO codes covering all tracked countries. Each returned item also carries
+        // its own country_code (e.g. "pl-pl", "fr-fr", "en-be") — a reliable per-job country signal
+        // independent of location text, so it's mapped as fields.country below and takes priority
+        // over location in buildScrapeResult (src/pages/api/admin/scrape.ts). location itself is a
+        // comma-separated city string (e.g. "Stockholm, Malmö, Göteborg") — sometimes listing every
+        // office a posting is open to, and occasionally a city missing from CITY_MAP entirely (e.g.
+        // "Diegem" for Belgium) — so it's kept only for city-list display via extractCitiesForCountry.
+        // description_stripped contains the full job description as plain text (no HTML, actual
+        // Unicode characters) — sufficient for language classification.
         url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL%2Cfr-fr%2Cpl-pl%2Cen-be%2Cen-ch%2Cen-lu&size=200',
         method: 'GET',
         headers: {
@@ -823,6 +828,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         fields: {
             title: 'title',
             location: 'location',
+            country: 'country_code',
             url: 'apply_job_url',
             id: 'id',
         },

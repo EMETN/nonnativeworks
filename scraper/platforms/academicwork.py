@@ -34,7 +34,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 BASE_URL = "https://www.academicwork.fi"
 LIST_PATH = "/avoimet-tyopaikat"
@@ -193,7 +193,7 @@ def scrape_academicwork_static(url: str) -> list[dict]:
     english_jobs = [
         j
         for j in all_jobs
-        if not _title_appears_non_english(
+        if not _title_appears_non_english_excluding_cities(
             j.get("classifierTitle") or j.get("title", "")
         )
     ]

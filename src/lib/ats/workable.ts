@@ -1,5 +1,5 @@
 import type { RawJob } from './types';
-import { titleAppearsNonEnglish } from './title-language';
+import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 
 const DESCRIPTION_BATCH = 1;
 
@@ -84,7 +84,7 @@ export async function enrichWorkableDescriptions(
     const targets = jobs.filter(
         (j) =>
             j.sourceId &&
-            !titleAppearsNonEnglish(j.title) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !(j.url && skipUrls?.has(j.url)),
     );
     console.log(

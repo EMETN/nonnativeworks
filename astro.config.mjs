@@ -32,7 +32,20 @@ export default defineConfig({
     vite: {
         plugins: [tailwindcss()],
         optimizeDeps: {
-            include: ['posthog-js/dist/module.full.no-external'],
+            // ClientRouter (astro:transitions) is only used by AdminLayout.astro, not any
+            // public page. Vite's dependency crawl runs from the pages it's actually seen,
+            // so on a fresh cache these virtual modules are undiscovered until the first
+            // admin page loads — triggering a disruptive mid-session re-optimization that
+            // can leave an in-flight page's module graph broken (dynamic import errors,
+            // islands stuck mid-hydration). Listing them here pre-bundles them at startup
+            // instead.
+            include: [
+                'posthog-js/dist/module.full.no-external',
+                'astro/virtual-modules/transitions-events.js',
+                'astro/virtual-modules/transitions-router.js',
+                'astro/virtual-modules/transitions-swap-functions.js',
+                'astro/virtual-modules/transitions-types.js',
+            ],
         },
         server: {
             proxy: {
