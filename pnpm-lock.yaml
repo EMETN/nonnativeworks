@@ -939,8 +939,8 @@ packages:
     resolution: {integrity: sha512-bv89TwwLba2Fxiji2xIaolejd8qXqZNb5GZqqv1EKfYPNrVcgK2b8gSCH1cjVVxHN7rmhzxwmolbIx7ikZik0A==}
     engines: {node: '>=20.6.1'}
 
-  '@netlify/api@15.1.0':
-    resolution: {integrity: sha512-JhnBtwAzy6pMv0hepMZn8qWbU9a+aeujJ9roXU4lVmXaIBnfl6Icso2TyVJgVCqoLwGw122Yh0RW5KdvPDFpBA==}
+  '@netlify/api@15.1.1':
+    resolution: {integrity: sha512-5PW8Yo6DsKHtBdbXJUtGOmkuGrACFVjNKYoF1S1d1PdsZHg21Sa/GjoQAQEfhq5AQyXdT9g7pZpL1PsdvXc8XA==}
     engines: {node: '>=22.12.0'}
 
   '@netlify/binary-info@1.0.0':
@@ -954,8 +954,8 @@ packages:
     resolution: {integrity: sha512-tuvkgL4jqdZl8Fh0KntyDAUP/cxvoSuCnKIqYpT8kpiyRiNsP+LqRLPIZ12JYQh5rZzqYhLLEueZjXKczgLCHw==}
     engines: {node: '>=20.6.1'}
 
-  '@netlify/config@25.2.0':
-    resolution: {integrity: sha512-zf+PgC+VLirOixRj1mb/r+jdHFi80l4piFQ0SDUA4TgzB42H+LZLci28zP0nR2BY1H1jVniNjw2WgpmzPNwSnA==}
+  '@netlify/config@25.2.1':
+    resolution: {integrity: sha512-fGjgANlTQFuEP5HUzfmVpcE/6o3fZu6Nr01d89jYgUk5LIsIS/FBRzyVI6PQ/MYRA/9YbEekHxVOPC/DF8J1CA==}
     engines: {node: '>=22.12.0'}
     hasBin: true
 
@@ -5803,9 +5803,9 @@ snapshots:
 
   '@netlify/ai@0.4.4':
     dependencies:
-      '@netlify/api': 15.1.0
+      '@netlify/api': 15.1.1
 
-  '@netlify/api@15.1.0':
+  '@netlify/api@15.1.1':
     dependencies:
       '@netlify/open-api': 2.57.0
       node-fetch: 3.3.2
@@ -5826,9 +5826,9 @@ snapshots:
     dependencies:
       '@netlify/runtime-utils': 2.3.0
 
-  '@netlify/config@25.2.0':
+  '@netlify/config@25.2.1':
     dependencies:
-      '@netlify/api': 15.1.0
+      '@netlify/api': 15.1.1
       '@netlify/headers-parser': 10.1.0
       '@netlify/redirect-parser': 16.1.0
       chalk: 5.6.2
@@ -5880,7 +5880,7 @@ snapshots:
     dependencies:
       '@netlify/ai': 0.4.4
       '@netlify/blobs': 10.7.12(supports-color@7.2.0)
-      '@netlify/config': 25.2.0
+      '@netlify/config': 25.2.1
       '@netlify/database-dev': 0.10.1
       '@netlify/dev-utils': 4.4.7
       '@netlify/edge-functions-dev': 1.0.23
