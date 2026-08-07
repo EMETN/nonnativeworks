@@ -157,7 +157,12 @@ def _enrich_rovio_descriptions(jobs: list[dict]) -> None:
     except ImportError:
         return
 
-    targets = [j for j in jobs if j.get("url") and not _title_appears_non_english_excluding_cities(j.get("title", ""))]
+    targets = [
+        j
+        for j in jobs
+        if j.get("url")
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
+    ]
     if not targets:
         return
 

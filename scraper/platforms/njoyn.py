@@ -370,7 +370,12 @@ def _enrich_njoyn_descriptions(pw_page, jobs: list[dict]) -> None:
     Jobs whose description text is shorter than _MIN_DESCRIPTION_TEXT_LENGTH after stripping
     HTML are marked with _placeholder=True so the caller can filter them out.
     """
-    targets = [j for j in jobs if j.get("url") and not _title_appears_non_english_excluding_cities(j.get("title", ""))]
+    targets = [
+        j
+        for j in jobs
+        if j.get("url")
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
+    ]
     if not targets:
         return
 
