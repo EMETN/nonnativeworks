@@ -630,187 +630,196 @@ function buildAdvantageSignals(lang: string): string[] {
         }
     }
 
-  signals.push(`as a plus in ${lang}`);
-  signals.push(`as a plus: ${lang}`);
-  signals.push(`nice to have: ${lang}`);
-  signals.push(`nice to have ${lang}`);
-  signals.push(`${lang} – nice to have`);
-  signals.push(`preferably ${lang}`);
-  signals.push(`preferably in ${lang}`);
-  signals.push(`preferably also ${lang}`);
-  signals.push(`preferably also in ${lang}`);
-  signals.push(`${lang} preferred`);
-  signals.push(`${lang} a plus`);
-  signals.push(`${lang} a bonus`);
-  signals.push(`ideally ${lang}`);
-  signals.push(`ideally in ${lang}`);
-  signals.push(`ideally including ${lang}`);
-  return signals;
+    signals.push(`as a plus in ${lang}`);
+    signals.push(`as a plus: ${lang}`);
+    signals.push(`nice to have: ${lang}`);
+    signals.push(`nice to have ${lang}`);
+    signals.push(`${lang} – nice to have`);
+    signals.push(`preferably ${lang}`);
+    signals.push(`preferably in ${lang}`);
+    signals.push(`preferably also ${lang}`);
+    signals.push(`preferably also in ${lang}`);
+    signals.push(`${lang} preferred`);
+    signals.push(`${lang} a plus`);
+    signals.push(`${lang} a bonus`);
+    signals.push(`ideally ${lang}`);
+    signals.push(`ideally in ${lang}`);
+    signals.push(`ideally including ${lang}`);
+    return signals;
 }
 
 /** Explicit phrases that indicate the local language is required. */
 function buildRequirementSignals(lang: string): string[] {
-  return [
-    // Direct requirement
-    `${lang} required`,
-    `${lang} is required`,
-    `${lang} is a must`,
-    `${lang} is mandatory`,
-    `${lang} – mandatory`,
-    `mandatory ${lang}`,
-    `${lang} is essential`,
-    `${lang} is necessary`,
-    `${lang} is needed`,
-    `${lang} is a requirement`,
-    `${lang} fluency`,
-    `requires ${lang}`,
-    `must speak ${lang}`,
-    `must be ${lang}`,
-    // Fluency / proficiency
-    `fluent ${lang}`,
-    `fluent in ${lang}`,
-    `fluent in spoken ${lang}`,
-    `fluent level in ${lang}`,
-    `fluent language skills in ${lang}`,
-    `fluency in ${lang}`,
-    `proficiency in ${lang}`,
-    `${lang} proficiency`,
-    `proficient in ${lang}`,
-    `${lang} proficient`,
-    `working proficiency in ${lang}`,
-    `${lang} language proficiency`,
-    `working knowledge of ${lang}`,
-    `knowledge of ${lang}`,
-    // Level descriptors
-    `business ${lang}`,
-    `business-level ${lang}`,
-    `professional ${lang}`,
-    `${lang} at a professional level`,
-    `${lang} at professional level`,
-    `${lang} at fluent level`,
-    `excellent ${lang}`,
-    `strong ${lang}`,
-    `communicative ${lang}`,
-    `${lang} communicative`,
-    // CEFR level suffixes (parens are stripped: "German (C1 level)" → "german c1 level")
-    `${lang} a1`, `${lang} a2`, `${lang} b1`, `${lang} b2`, `${lang} c1`, `${lang} c2`,
-    // CEFR level-of-language: "at least a B2 level of German"
-    `a1 level of ${lang}`, `a2 level of ${lang}`, `b1 level of ${lang}`,
-    `b2 level of ${lang}`, `c1 level of ${lang}`, `c2 level of ${lang}`,
-    // Generic level-of-language phrasing without a CEFR code: "a very good level of Dutch"
-    `level of ${lang}`,
-    // Level descriptors
-    `elementary ${lang}`,
-    `good ${lang}`,
-    `very good ${lang}`,
-    `good in ${lang}`,
-    // Native / mother tongue
-    `native level of ${lang}`,
-    `native ${lang}`,
-    `native in ${lang}`,
-    `${lang} native`,
-    `${lang}-native`,
-    `native-${lang}`,
-    `mother tongue ${lang}`,
-    `${lang} as mother tongue`,
-    `${lang} as a mother tongue`,
-    `mother language ${lang}`,
-    `${lang} as mother language`,
-    `${lang} as a mother language`,
-    // Speaker / communication
-    `${lang} speaker`,
-    `${lang} speaking`,
-    `speaks ${lang}`,
-    `speak ${lang}`,
-    `understand ${lang}`,
-    `communicate in ${lang}`,
-    `communicate fluently in ${lang}`,
-    `${lang} communication skills`,
-    `communication skills in ${lang}`,
-    `${lang} language skills`,
-    `${lang} skills`,
-    `command of ${lang}`,
-    `ability in ${lang}`,
-    // Understanding / comprehension
-    `understanding of ${lang}`,
-    `understanding of the ${lang} language`,
-    `good understanding of ${lang}`,
-    `good understanding of the ${lang} language`,
-    // Written + spoken
-    `written and spoken ${lang}`,
-    `spoken and written ${lang}`,
-    `${lang} written and spoken`,
-    `${lang} spoken and written`,
-    // Working language phrasing
-    `working language is ${lang}`,
-    `working language: ${lang}`,
-    `the working language is ${lang}`,
-    `${lang} working language`,
-    // "Both X and English" — local language is co-required alongside English
-    `both ${lang} and`,
-    `in both ${lang}`,
-    `both english and ${lang}`,
-    `${lang} and english`,
-    `english and ${lang}`,
-    `english, and ${lang}`,
-    `english as well as ${lang}`,
-    `${lang} as well as english`,
-    `english and also in ${lang}`,
-    `in english and also in ${lang}`,
-    `${lang} and also in english`,
-    `in ${lang} and also in english`,
-    `${lang}/english`,
-    `english/${lang}`,
-    `written and spoken English and ${lang}`,
-    // "skills in X and in English" — co-requirement with "in" before each language
-    `in ${lang} and in english`,
-    `in english and in ${lang}`,
-    `in ${lang} and english`,
-    `${lang} and in english`,
-    // Discussion / communication ability
-    `discussions in ${lang}`,
-    // Prerequisite / mastery phrasing
-    `mastering ${lang}`,
-    `${lang} is a prerequisite`,
-    `${lang} is prerequisite`,
-    // Minimum level requirements — even basic knowledge means English alone isn't enough
-    `basic ${lang}`,
-    `basic in ${lang}`,
-    `basic knowledge of ${lang}`,
-    `basic level of ${lang}`,
-    `some ${lang}`,
-    // "at least {lang}" — e.g. "Fluent in English and at least French or Dutch"
-    `at least ${lang}`,
-    // "native speaker in/of {lang}" / "native speaker {lang}" — e.g. "A native
-    // speaker in French or Dutch", "A native speaker of French or Dutch",
-    // "A native speaker Dutch"
-    `native speaker in ${lang}`,
-    `native speaker of ${lang}`,
-    `native speaker ${lang}`,
-    // Confident communication
-    `communicate confidently in ${lang}`,
-    // Comma/semicolon-separated language lists: "English, {lang} and {other}",
-    // "{lang}, English", "English; {lang} and {other}"
-    `english, ${lang}`,
-    `${lang}, english`,
-    `english; ${lang}`,
-    // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
-    `local language ${lang}`,
-    // "in addition to {lang}" — presupposes the language alongside English
-    `in addition to ${lang}`,
-    // "secondary language" / "second language" phrasing
-    `${lang} as a secondary language`,
-    `${lang} as a second language`,
-    `${lang} as secondary language`,
-    `${lang} as second language`,
-    // "either X or Y as a secondary language" — lang appears before "or" in an either/or
-    `either ${lang}`,
-    // CEFR-style level descriptors
-    `full professional proficiency in ${lang}`,
-    `professional proficiency in ${lang}`,
-    `full proficiency in ${lang}`,
-    `conversational ${lang}`,
-  ];
+    return [
+        // Direct requirement
+        `${lang} required`,
+        `${lang} is required`,
+        `${lang} is a must`,
+        `${lang} is mandatory`,
+        `${lang} – mandatory`,
+        `mandatory ${lang}`,
+        `${lang} is essential`,
+        `${lang} is necessary`,
+        `${lang} is needed`,
+        `${lang} is a requirement`,
+        `${lang} fluency`,
+        `requires ${lang}`,
+        `must speak ${lang}`,
+        `must be ${lang}`,
+        // Fluency / proficiency
+        `fluent ${lang}`,
+        `fluent in ${lang}`,
+        `fluent in spoken ${lang}`,
+        `fluent level in ${lang}`,
+        `fluent language skills in ${lang}`,
+        `fluency in ${lang}`,
+        `proficiency in ${lang}`,
+        `${lang} proficiency`,
+        `proficient in ${lang}`,
+        `${lang} proficient`,
+        `working proficiency in ${lang}`,
+        `${lang} language proficiency`,
+        `working knowledge of ${lang}`,
+        `knowledge of ${lang}`,
+        // Level descriptors
+        `business ${lang}`,
+        `business-level ${lang}`,
+        `professional ${lang}`,
+        `${lang} at a professional level`,
+        `${lang} at professional level`,
+        `${lang} at fluent level`,
+        `excellent ${lang}`,
+        `strong ${lang}`,
+        `communicative ${lang}`,
+        `${lang} communicative`,
+        // CEFR level suffixes (parens are stripped: "German (C1 level)" → "german c1 level")
+        `${lang} a1`,
+        `${lang} a2`,
+        `${lang} b1`,
+        `${lang} b2`,
+        `${lang} c1`,
+        `${lang} c2`,
+        // CEFR level-of-language: "at least a B2 level of German"
+        `a1 level of ${lang}`,
+        `a2 level of ${lang}`,
+        `b1 level of ${lang}`,
+        `b2 level of ${lang}`,
+        `c1 level of ${lang}`,
+        `c2 level of ${lang}`,
+        // Generic level-of-language phrasing without a CEFR code: "a very good level of Dutch"
+        `level of ${lang}`,
+        // Level descriptors
+        `elementary ${lang}`,
+        `good ${lang}`,
+        `very good ${lang}`,
+        `good in ${lang}`,
+        // Native / mother tongue
+        `native level of ${lang}`,
+        `native ${lang}`,
+        `native in ${lang}`,
+        `${lang} native`,
+        `${lang}-native`,
+        `native-${lang}`,
+        `mother tongue ${lang}`,
+        `${lang} as mother tongue`,
+        `${lang} as a mother tongue`,
+        `mother language ${lang}`,
+        `${lang} as mother language`,
+        `${lang} as a mother language`,
+        // Speaker / communication
+        `${lang} speaker`,
+        `${lang} speaking`,
+        `speaks ${lang}`,
+        `speak ${lang}`,
+        `understand ${lang}`,
+        `communicate in ${lang}`,
+        `communicate fluently in ${lang}`,
+        `${lang} communication skills`,
+        `communication skills in ${lang}`,
+        `${lang} language skills`,
+        `${lang} skills`,
+        `command of ${lang}`,
+        `ability in ${lang}`,
+        // Understanding / comprehension
+        `understanding of ${lang}`,
+        `understanding of the ${lang} language`,
+        `good understanding of ${lang}`,
+        `good understanding of the ${lang} language`,
+        // Written + spoken
+        `written and spoken ${lang}`,
+        `spoken and written ${lang}`,
+        `${lang} written and spoken`,
+        `${lang} spoken and written`,
+        // Working language phrasing
+        `working language is ${lang}`,
+        `working language: ${lang}`,
+        `the working language is ${lang}`,
+        `${lang} working language`,
+        // "Both X and English" — local language is co-required alongside English
+        `both ${lang} and`,
+        `in both ${lang}`,
+        `both english and ${lang}`,
+        `${lang} and english`,
+        `english and ${lang}`,
+        `english, and ${lang}`,
+        `english as well as ${lang}`,
+        `${lang} as well as english`,
+        `english and also in ${lang}`,
+        `in english and also in ${lang}`,
+        `${lang} and also in english`,
+        `in ${lang} and also in english`,
+        `${lang}/english`,
+        `english/${lang}`,
+        `written and spoken English and ${lang}`,
+        // "skills in X and in English" — co-requirement with "in" before each language
+        `in ${lang} and in english`,
+        `in english and in ${lang}`,
+        `in ${lang} and english`,
+        `${lang} and in english`,
+        // Discussion / communication ability
+        `discussions in ${lang}`,
+        // Prerequisite / mastery phrasing
+        `mastering ${lang}`,
+        `${lang} is a prerequisite`,
+        `${lang} is prerequisite`,
+        // Minimum level requirements — even basic knowledge means English alone isn't enough
+        `basic ${lang}`,
+        `basic in ${lang}`,
+        `basic knowledge of ${lang}`,
+        `basic level of ${lang}`,
+        `some ${lang}`,
+        // "at least {lang}" — e.g. "Fluent in English and at least French or Dutch"
+        `at least ${lang}`,
+        // "native speaker in/of {lang}" / "native speaker {lang}" — e.g. "A native
+        // speaker in French or Dutch", "A native speaker of French or Dutch",
+        // "A native speaker Dutch"
+        `native speaker in ${lang}`,
+        `native speaker of ${lang}`,
+        `native speaker ${lang}`,
+        // Confident communication
+        `communicate confidently in ${lang}`,
+        // Comma/semicolon-separated language lists: "English, {lang} and {other}",
+        // "{lang}, English", "English; {lang} and {other}"
+        `english, ${lang}`,
+        `${lang}, english`,
+        `english; ${lang}`,
+        // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
+        `local language ${lang}`,
+        // "in addition to {lang}" — presupposes the language alongside English
+        `in addition to ${lang}`,
+        // "secondary language" / "second language" phrasing
+        `${lang} as a secondary language`,
+        `${lang} as a second language`,
+        `${lang} as secondary language`,
+        `${lang} as second language`,
+        // "either X or Y as a secondary language" — lang appears before "or" in an either/or
+        `either ${lang}`,
+        // CEFR-style level descriptors
+        `full professional proficiency in ${lang}`,
+        `professional proficiency in ${lang}`,
+        `full proficiency in ${lang}`,
+        `conversational ${lang}`,
+    ];
 }
 
 // Language-context words that legitimately follow "knowledge of {lang}".
@@ -905,10 +914,18 @@ function requirementNegatedByContext(
     // unrelated advantage phrase in a later clause (e.g. "Fluent English and
     // Norwegian; Danish or Finnish considered as an advantage") would wrongly
     // negate the requirement in the earlier clause.
-    const sameClauseAdvMatch = REQUIREMENT_NEGATION_ADVANTAGE_RE.exec(sameClause);
+    const sameClauseAdvMatch =
+        REQUIREMENT_NEGATION_ADVANTAGE_RE.exec(sameClause);
     if (
         sameClauseAdvMatch &&
-        !(lang && textNamesOtherLanguageBefore(sameClause, lang, sameClauseAdvMatch.index))
+        !(
+            lang &&
+            textNamesOtherLanguageBefore(
+                sameClause,
+                lang,
+                sameClauseAdvMatch.index,
+            )
+        )
     ) {
         return 'advantage';
     }
@@ -1230,7 +1247,11 @@ export function detectNativeLanguage(
         for (const signal of buildRequirementSignals(lang)) {
             if (!combined.includes(signal)) continue;
             if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
-            const negation = requirementNegatedByContext(combined, signal, lang);
+            const negation = requirementNegatedByContext(
+                combined,
+                signal,
+                lang,
+            );
             if (negation === 'none' || negation === 'advantage') continue;
             const sigIdx = combined.indexOf(signal);
             const advOverlap = langAdvRegex.exec(combined);
@@ -1676,7 +1697,11 @@ export function detectNativeLanguage(
         for (const signal of buildRequirementSignals(lang)) {
             if (combined.includes(signal)) {
                 if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
-                const negation = requirementNegatedByContext(combined, signal, lang);
+                const negation = requirementNegatedByContext(
+                    combined,
+                    signal,
+                    lang,
+                );
                 if (negation === 'none') continue;
                 if (negation === 'advantage') {
                     // Only treat this as the final verdict if no OTHER country language is
@@ -1918,5 +1943,3 @@ export function detectNativeLanguage(
         ],
     };
 }
-
-

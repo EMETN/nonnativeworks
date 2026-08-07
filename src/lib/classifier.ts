@@ -59,17 +59,21 @@ export function classifyJobVerbose(
         ? stripProperNouns(descText, companyName)
         : undefined;
 
-  const classifierTitle = job.classifierTitle ?? job.title;
-  // Title AND description are both proper-noun-stripped (company + city names)
-  // before language detection. City names alone aren't a reliable enough
-  // requirement signal here — the fetch-skip decision upstream (see
-  // titleAppearsNonEnglishExcludingCityNames) already ensures a description
-  // gets fetched whenever a title's only non-English tell is a city name, so
-  // by the time we get here the real classifier has proper content to work
-  // with instead of leaning on a bare city name.
-  const cleanTitle = stripProperNouns(classifierTitle, companyName);
-  const { category, matchedKeyword, source } = classifyCategoryVerbose(classifierTitle, descText, job.jobFunction);
-  const langResult = detectNativeLanguage(cleanTitle, cleanDesc, countryCode);
+    const classifierTitle = job.classifierTitle ?? job.title;
+    // Title AND description are both proper-noun-stripped (company + city names)
+    // before language detection. City names alone aren't a reliable enough
+    // requirement signal here — the fetch-skip decision upstream (see
+    // titleAppearsNonEnglishExcludingCityNames) already ensures a description
+    // gets fetched whenever a title's only non-English tell is a city name, so
+    // by the time we get here the real classifier has proper content to work
+    // with instead of leaning on a bare city name.
+    const cleanTitle = stripProperNouns(classifierTitle, companyName);
+    const { category, matchedKeyword, source } = classifyCategoryVerbose(
+        classifierTitle,
+        descText,
+        job.jobFunction,
+    );
+    const langResult = detectNativeLanguage(cleanTitle, cleanDesc, countryCode);
 
     return {
         classified: {

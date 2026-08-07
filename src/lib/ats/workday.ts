@@ -86,13 +86,13 @@
  * |                 | or og:description / meta description as fallback            |
  */
 
-import type { RawJob } from "./types";
-import { titleAppearsNonEnglishExcludingCityNames } from "./title-language";
+import type { RawJob } from './types';
+import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
-    isCountryKey
-} from "./country-lookup";
+    isCountryKey,
+} from './country-lookup';
 
 const DESCRIPTION_BATCH = 5;
 // Pause between concurrent batches so a throttled batch gets breathing room
@@ -181,18 +181,18 @@ const DESCRIPTION_FETCH_ATTEMPTS = 2;
 const DESCRIPTION_RETRY_DELAY_MS = 750;
 
 function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const MAX_BACKOFF_RETRIES = 3;
 const BASE_BACKOFF_MS = 1000;
 
 function parseRetryAfterMs(header: string | null): number | null {
-  if (!header) return null;
-  const asSeconds = Number(header);
-  if (!Number.isNaN(asSeconds)) return asSeconds * 1000;
-  const asDate = Date.parse(header);
-  return Number.isNaN(asDate) ? null : Math.max(0, asDate - Date.now());
+    if (!header) return null;
+    const asSeconds = Number(header);
+    if (!Number.isNaN(asSeconds)) return asSeconds * 1000;
+    const asDate = Date.parse(header);
+    return Number.isNaN(asDate) ? null : Math.max(0, asDate - Date.now());
 }
 
 /**
@@ -202,18 +202,21 @@ function parseRetryAfterMs(header: string | null): number | null {
  * Thales with hundreds of postings), and without this the batch loops below
  * would silently lose data for every job that got rate-limited.
  */
-async function fetchWithBackoff(url: string, init: RequestInit): Promise<Response> {
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, init);
-    if (res.status === 429 && attempt < MAX_BACKOFF_RETRIES) {
-      const wait =
-        parseRetryAfterMs(res.headers.get("retry-after")) ??
-        BASE_BACKOFF_MS * 2 ** attempt + Math.random() * 250;
-      await delay(wait);
-      continue;
+async function fetchWithBackoff(
+    url: string,
+    init: RequestInit,
+): Promise<Response> {
+    for (let attempt = 0; ; attempt++) {
+        const res = await fetch(url, init);
+        if (res.status === 429 && attempt < MAX_BACKOFF_RETRIES) {
+            const wait =
+                parseRetryAfterMs(res.headers.get('retry-after')) ??
+                BASE_BACKOFF_MS * 2 ** attempt + Math.random() * 250;
+            await delay(wait);
+            continue;
+        }
+        return res;
     }
-    return res;
-  }
 }
 
 /**
@@ -224,83 +227,98 @@ async function fetchWithBackoff(url: string, init: RequestInit): Promise<Respons
  * behaviour, not a failure.
  */
 async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
-  // Prefer the JSON detail API — jobPostingInfo.jobDescription is the
-  // full rich description, far more useful for language classification
-  // than the short og:description meta tag.
-  const apiUrl = publicUrlToDetailApiUrl(job.url!);
-  if (apiUrl) {
-    const origin = new URL(job.url!).origin;
-    const apiRes = await fetchWithBackoff(apiUrl, {
-      headers: {
-        accept: "application/json",
-        origin,
-        referer: `${origin}/`,
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-    });
-    if (apiRes.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await apiRes.json();
-      const info = data.jobPostingInfo ?? data.jobPosting ?? data;
-      if (typeof info.jobDescription === "string" && info.jobDescription) {
-        job.descriptionText = stripHtml(info.jobDescription);
-        return true;
-      }
+    // Prefer the JSON detail API — jobPostingInfo.jobDescription is the
+    // full rich description, far more useful for language classification
+    // than the short og:description meta tag.
+    const apiUrl = publicUrlToDetailApiUrl(job.url!);
+    if (apiUrl) {
+        const origin = new URL(job.url!).origin;
+        const apiRes = await fetchWithBackoff(apiUrl, {
+            headers: {
+                accept: 'application/json',
+                origin,
+                referer: `${origin}/`,
+                'user-agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+        });
+        if (apiRes.ok) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data: any = await apiRes.json();
+            const info = data.jobPostingInfo ?? data.jobPosting ?? data;
+            if (
+                typeof info.jobDescription === 'string' &&
+                info.jobDescription
+            ) {
+                job.descriptionText = stripHtml(info.jobDescription);
+                return true;
+            }
+        }
     }
-  }
-  // Fall back to scraping og:description from the HTML page.
-  const res = await fetchWithBackoff(job.url!, {
-    headers: { "User-Agent": "Mozilla/5.0" },
-  });
-  if (!res.ok) {
-    throw new Error(`HTML fallback returned ${res.status}`);
-  }
-  const html = await res.text();
-  const desc = extractOgDescription(html);
-  if (desc) {
-    job.descriptionText = desc;
-    return true;
-  }
-  return false;
+    // Fall back to scraping og:description from the HTML page.
+    const res = await fetchWithBackoff(job.url!, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    if (!res.ok) {
+        throw new Error(`HTML fallback returned ${res.status}`);
+    }
+    const html = await res.text();
+    const desc = extractOgDescription(html);
+    if (desc) {
+        job.descriptionText = desc;
+        return true;
+    }
+    return false;
 }
 
-export async function enrichWorkdayDescriptions(jobs: RawJob[], skipUrls?: Set<string>): Promise<void> {
-  const targets = jobs.filter(
-    (j) => j.url && !skipUrls?.has(j.url) && !titleAppearsNonEnglishExcludingCityNames(j.title) && !j.descriptionText,
-  );
-  console.log(
-    `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
-  );
-
-  let failures = 0;
-  for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
-    await Promise.all(
-      targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-        for (let attempt = 1; attempt <= DESCRIPTION_FETCH_ATTEMPTS; attempt++) {
-          try {
-            await fetchWorkdayDescriptionOnce(job);
-            return;
-          } catch (e) {
-            if (attempt < DESCRIPTION_FETCH_ATTEMPTS) {
-              await delay(DESCRIPTION_RETRY_DELAY_MS);
-              continue;
-            }
-            failures++;
-            console.log(
-              `[workday] description fetch failed for ${job.url}: ${e instanceof Error ? e.message : e}`,
-            );
-          }
-        }
-      }),
+export async function enrichWorkdayDescriptions(
+    jobs: RawJob[],
+    skipUrls?: Set<string>,
+): Promise<void> {
+    const targets = jobs.filter(
+        (j) =>
+            j.url &&
+            !skipUrls?.has(j.url) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
+            !j.descriptionText,
     );
-    if (i + DESCRIPTION_BATCH < targets.length) await delay(INTER_BATCH_DELAY_MS);
-  }
-  if (failures > 0) {
     console.log(
-      `[workday] description fetch failed for ${failures}/${targets.length} jobs after ${DESCRIPTION_FETCH_ATTEMPTS} attempts`,
+        `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
     );
-  }
+
+    let failures = 0;
+    for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
+        await Promise.all(
+            targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
+                for (
+                    let attempt = 1;
+                    attempt <= DESCRIPTION_FETCH_ATTEMPTS;
+                    attempt++
+                ) {
+                    try {
+                        await fetchWorkdayDescriptionOnce(job);
+                        return;
+                    } catch (e) {
+                        if (attempt < DESCRIPTION_FETCH_ATTEMPTS) {
+                            await delay(DESCRIPTION_RETRY_DELAY_MS);
+                            continue;
+                        }
+                        failures++;
+                        console.log(
+                            `[workday] description fetch failed for ${job.url}: ${e instanceof Error ? e.message : e}`,
+                        );
+                    }
+                }
+            }),
+        );
+        if (i + DESCRIPTION_BATCH < targets.length)
+            await delay(INTER_BATCH_DELAY_MS);
+    }
+    if (failures > 0) {
+        console.log(
+            `[workday] description fetch failed for ${failures}/${targets.length} jobs after ${DESCRIPTION_FETCH_ATTEMPTS} attempts`,
+        );
+    }
 }
 
 export interface WorkdayUrlParts {
@@ -460,53 +478,65 @@ function parseCityFromWorkdayLoc(
  * Endpoint: GET /wday/cxs/{company}/{site}{externalPath} (no "/jobs" segment).
  */
 async function fetchJobLocations(
-  host: string,
-  company: string,
-  site: string,
-  externalPath: string,
-): Promise<{ locations: string[]; description?: string; countryDescriptor?: string }> {
-  const origin = `https://${host}`;
-  const url = `${origin}/wday/cxs/${company}/${site}${externalPath}`;
-  try {
-    const res = await fetchWithBackoff(url, {
-      headers: {
-        accept: "application/json",
-        origin,
-        referer: `${origin}/`,
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-    });
-    if (!res.ok) {
-      console.log(`[workday] detail fetch ${res.status} for ${externalPath}`);
-      return { locations: [] };
+    host: string,
+    company: string,
+    site: string,
+    externalPath: string,
+): Promise<{
+    locations: string[];
+    description?: string;
+    countryDescriptor?: string;
+}> {
+    const origin = `https://${host}`;
+    const url = `${origin}/wday/cxs/${company}/${site}${externalPath}`;
+    try {
+        const res = await fetchWithBackoff(url, {
+            headers: {
+                accept: 'application/json',
+                origin,
+                referer: `${origin}/`,
+                'user-agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+        });
+        if (!res.ok) {
+            console.log(
+                `[workday] detail fetch ${res.status} for ${externalPath}`,
+            );
+            return { locations: [] };
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = await res.json();
+        const info = data.jobPostingInfo ?? data.jobPosting ?? data;
+        const primary =
+            typeof info.location === 'string' ? info.location : undefined;
+        const additional: string[] = Array.isArray(info.additionalLocations)
+            ? (info.additionalLocations as unknown[]).filter(
+                  (l): l is string => typeof l === 'string',
+              )
+            : [];
+        const locations = [primary, ...additional].filter(
+            (l): l is string => l !== undefined && l.length > 0,
+        );
+        if (locations.length === 0) {
+            console.log(
+                `[workday] no locations in detail response for ${externalPath} — keys: ${Object.keys(info).join(', ')}`,
+            );
+        }
+        const description =
+            typeof info.jobDescription === 'string' && info.jobDescription
+                ? stripHtml(info.jobDescription)
+                : undefined;
+        const countryDescriptor =
+            typeof info.country?.descriptor === 'string' &&
+            info.country.descriptor
+                ? info.country.descriptor
+                : undefined;
+        return { locations, description, countryDescriptor };
+    } catch (e) {
+        console.log(`[workday] detail fetch error for ${externalPath}: ${e}`);
+        return { locations: [] };
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await res.json();
-    const info = data.jobPostingInfo ?? data.jobPosting ?? data;
-    const primary = typeof info.location === "string" ? info.location : undefined;
-    const additional: string[] = Array.isArray(info.additionalLocations)
-      ? (info.additionalLocations as unknown[]).filter((l): l is string => typeof l === "string")
-      : [];
-    const locations = [primary, ...additional].filter(
-      (l): l is string => l !== undefined && l.length > 0,
-    );
-    if (locations.length === 0) {
-      console.log(`[workday] no locations in detail response for ${externalPath} — keys: ${Object.keys(info).join(", ")}`);
-    }
-    const description =
-      typeof info.jobDescription === "string" && info.jobDescription
-        ? stripHtml(info.jobDescription)
-        : undefined;
-    const countryDescriptor =
-      typeof info.country?.descriptor === "string" && info.country.descriptor
-        ? info.country.descriptor
-        : undefined;
-    return { locations, description, countryDescriptor };
-  } catch (e) {
-    console.log(`[workday] detail fetch error for ${externalPath}: ${e}`);
-    return { locations: [] };
-  }
 }
 
 export async function fetchWorkdayJobs(
