@@ -301,10 +301,10 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         );
     }
 
-    if (rawJobs.length === 0) {
-        throw new Error(
-            'No job listings found. The page may require a login or have no open positions.',
-        );
+    if (rawJobs.length === 0 && layer1Error) {
+        // An ATS API that errored is a real failure, not an empty page. Without
+        // layer1Error, zero jobs means the layers ran cleanly and found nothing.
+        throw new Error(layer1Error);
     }
 
     // Fall back to a configured display name for known Python-scraped companies,
@@ -519,13 +519,24 @@ function buildScrapeResult(
         outcomeCacheTotal: positionLogs.length,
     });
 
+    const countries = Array.from(groups.values());
+
+    let warning: string | undefined;
+    if (countries.length === 0) {
+        warning =
+            rawJobs.length === 0
+                ? 'No open positions found. The page has no listings we could detect, or it requires a login.'
+                : `Found ${rawJobs.length} position${rawJobs.length === 1 ? '' : 's'}, but none are in a tracked country.`;
+    }
+
     return {
         ats,
         company_name: companyName,
         career_page_url: careerUrl,
         skipped_unknown_location: skipped,
         skipped_untracked_country: skippedUntracked,
-        countries: Array.from(groups.values()),
+        countries,
+        warning,
     };
 }
 

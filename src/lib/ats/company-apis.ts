@@ -1088,6 +1088,45 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         companyName: 'Uniper',
         fetchDescription: true,
     },
+
+    // Same careers platform as Uniper. url is the apply link (always present).
+    'jobs.eon.com': {
+        url: 'https://jobs.eon.com/api/filter/query',
+        method: 'POST',
+        headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
+            Accept: '*/*',
+            Referer: 'https://jobs.eon.com/en',
+        },
+        body: {
+            searchQuery: '',
+            filter: {},
+            subclient: 'eon',
+            locale: 'en',
+        },
+        pagination: {
+            type: 'page',
+            param: 'page',
+            startPage: 0,
+            totalCountPath: 'totalHits',
+        },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'data.title',
+            location: 'data.locations.0.city',
+            country: 'data.locations.0.country',
+            jobFunction: 'data.jobField',
+            url: 'data.applicationUrl',
+            id: 'data.jobNumber',
+        },
+        keepQueryParams: true,
+        expandSecondaryLocations: {
+            path: 'data.locations',
+            cityField: 'data.city',
+        },
+        companyName: 'E.ON',
+    },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -1137,6 +1176,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
-    { urlSubstring: 'careers.eon.com', name: 'E.ON' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },
 ];
