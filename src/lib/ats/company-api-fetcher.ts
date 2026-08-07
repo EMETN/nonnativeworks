@@ -453,65 +453,65 @@ async function enrichDescriptionsFromApi(
     workModelField?: string,
 ): Promise<void> {
     const targets = jobs.filter(
-      (j) => (
-          j.descriptionApiId ??
-          j.sourceId) &&
-          !titleAppearsNonEnglishExcludingCityNames(j.title) &&
-          !j.descriptionText &&
-          !j.descriptionHtml
+        (j) =>
+            (j.descriptionApiId ?? j.sourceId) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
+            !j.descriptionText &&
+            !j.descriptionHtml,
     );
     console.log(
         `[enrichDescriptionsFromApi] fetching descriptions for ${targets.length} jobs`,
     );
     for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
-      await Promise.all(
-      targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-          const apiId = job.descriptionApiId ?? job.sourceId!;
-          const url = urlTemplate.replace(
-              '{sourceId}',
-              encodeURIComponent(apiId)
-          );
-          try {
-              const data = await fetchPage(
-                  url,
-                  'GET',
-                  undefined,
-                  headers,
+        await Promise.all(
+            targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
+                const apiId = job.descriptionApiId ?? job.sourceId!;
+                const url = urlTemplate.replace(
+                    '{sourceId}',
+                    encodeURIComponent(apiId),
                 );
-              const item = getPath(data, itemsPath);
-              const parts = fields
-                  .map((f) => getString(item, f))
-                  .filter((v): v is string => !!v);
-              if (parts.length) job.descriptionText = parts.join(' ');
-              if (locationField) {
-                  const city = getString(item, locationField);
-                if (city) {
-                    // City mode: prepend primary city to the existing secondary cities list
-                    if (job.cities) {
-                        job.cities = [city, ...job.cities];
-                    } else {
-                        job.city = city;
+                try {
+                    const data = await fetchPage(
+                        url,
+                        'GET',
+                        undefined,
+                        headers,
+                    );
+                    const item = getPath(data, itemsPath);
+                    const parts = fields
+                        .map((f) => getString(item, f))
+                        .filter((v): v is string => !!v);
+                    if (parts.length) job.descriptionText = parts.join(' ');
+                    if (locationField) {
+                        const city = getString(item, locationField);
+                        if (city) {
+                            // City mode: prepend primary city to the existing secondary cities list
+                            if (job.cities) {
+                                job.cities = [city, ...job.cities];
+                            } else {
+                                job.city = city;
+                            }
+                        }
                     }
+                    if (jobFunctionField) {
+                        const jf = getString(item, jobFunctionField);
+                        if (jf) job.jobFunction = jf;
+                    }
+                    if (workModelField) {
+                        const wm = getString(item, workModelField);
+                        if (wm)
+                            job.work_model =
+                                normaliseWorkModel(wm) ?? job.work_model;
+                    }
+                } catch (err) {
+                    console.warn(
+                        `[enrichDescriptionsFromApi] failed for sourceId=${job.sourceId}: ${err}`,
+                    );
                 }
-              }
-              if (jobFunctionField) {
-                  const jf = getString(item, jobFunctionField);
-                  if (jf) job.jobFunction = jf;
-              }
-              if (workModelField) {
-                  const wm = getString(item, workModelField);
-                  if (wm) job.work_model = 
-                      normaliseWorkModel(wm) ?? job.work_model;
-              }
-          } catch (err) {
-            console.warn(`[enrichDescriptionsFromApi] failed for sourceId=${job.sourceId}: ${err}`
-
-            );
-          }
-      }),
-    );
-    await sleep(randomDelay());
-  }
+            }),
+        );
+        await sleep(randomDelay());
+    }
 }
 
 /**
@@ -534,13 +534,13 @@ async function enrichLanguageRequirementFromApi(
     headers: Record<string, string>,
 ): Promise<void> {
     const targets = jobs.filter(
-        (j) => 
+        (j) =>
             j.url &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             j.requires_native_language === undefined,
-     );
+    );
     console.log(
-        `[enrichLanguageRequirementFromApi] ${targets.length} targets (${jobs.length - targets.length} skipped)`
+        `[enrichLanguageRequirementFromApi] ${targets.length} targets (${jobs.length - targets.length} skipped)`,
     );
     const transformRe = new RegExp(jobUrlTransform.match);
 
@@ -550,41 +550,41 @@ async function enrichLanguageRequirementFromApi(
         await Promise.all(
             targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
                 const jobPath = job.url!.replace(
-                transformRe,
-                jobUrlTransform.replace
-            );
-            const fetchUrl = urlTemplate.replace('{jobPath}', jobPath);
-            try {
-                const data = await fetchPage(
-                    fetchUrl,
-                    'GET',
-                    undefined,
-                    headers
+                    transformRe,
+                    jobUrlTransform.replace,
                 );
-                const item = getPath(data, itemsPath);
-                const languages = getPath(item, languagesPath);
-                if (Array.isArray(languages)) {
-                  job.requires_native_language = languages.some(
-                      (l: unknown) =>
-                          typeof l === 'string' &&
-                          l.toLowerCase() !== 'english',
+                const fetchUrl = urlTemplate.replace('{jobPath}', jobPath);
+                try {
+                    const data = await fetchPage(
+                        fetchUrl,
+                        'GET',
+                        undefined,
+                        headers,
                     );
-                    set++;
-                } else {
-                    missing++;
+                    const item = getPath(data, itemsPath);
+                    const languages = getPath(item, languagesPath);
+                    if (Array.isArray(languages)) {
+                        job.requires_native_language = languages.some(
+                            (l: unknown) =>
+                                typeof l === 'string' &&
+                                l.toLowerCase() !== 'english',
+                        );
+                        set++;
+                    } else {
+                        missing++;
+                    }
+                } catch (err) {
+                    console.warn(
+                        `[enrichLanguageRequirementFromApi] failed for ${job.url}: ${err}`,
+                    );
                 }
-            } catch (err) {
-                console.warn(
-                    `[enrichLanguageRequirementFromApi] failed for ${job.url}: ${err}`
-              );
-            }
-        }),
-      );
-      await sleep(randomDelay());
+            }),
+        );
+        await sleep(randomDelay());
     }
     console.log(
-          `[enrichLanguageRequirementFromApi] done — set: ${set}, missing/skipped: ${missing}`,
-      );
+        `[enrichLanguageRequirementFromApi] done — set: ${set}, missing/skipped: ${missing}`,
+    );
 }
 
 function buildGetUrl(template: string, param: string, value: number): string {

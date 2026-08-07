@@ -1976,7 +1976,7 @@ export const CASES: FixtureCase[] = [
     },
 
     // ── Baseline requirement phrasing sanity checks (2026-07-31) ───────────────
-      {
+    {
         label: '2a — "Fluent in written and spoken French and English" → FR required',
         title: 'Engineer',
         desc: 'Fluent in written and spoken French and English',
