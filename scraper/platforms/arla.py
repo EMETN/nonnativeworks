@@ -34,7 +34,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
 BASE_URL = "https://jobs.arla.com"
@@ -224,7 +224,7 @@ def scrape_arla_static(url: str) -> list[dict]:
     english_jobs = [
         j
         for j in result
-        if not _title_appears_non_english(j.get("title", ""))
+        if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]
     unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))

@@ -51,8 +51,8 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import LOCATION_CLASS_PATTERNS, build_job, job_key
-from title_language import _title_appears_non_english
+from extract import build_job, job_key, LOCATION_CLASS_PATTERNS
+from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
 _HEADERS = {
@@ -719,13 +719,27 @@ def _fetch_detail_page(
         raw_html = resp.text
         soup = BeautifulSoup(resp.content, "html.parser")
 
-        selectors = [desc_sel] if desc_sel else _DESCRIPTION_SELECTOR_FALLBACKS
         desc_html = ""
-        for sel in selectors:
-            tag = soup.select_one(sel)
-            if tag:
-                desc_html = str(tag)
-                break
+        if desc_sel:
+            # Company-configured selector: concatenate ALL matches, not just the
+            # first. Some sites (e.g. Sweco) split the job description across
+            # multiple sibling sections sharing one class (e.g. an "about the
+            # role" block plus separate "requirements"/"benefits" blocks) — using
+            # only the first match can silently drop the paragraph that actually
+            # carries the language signal.
+            tags = soup.select(desc_sel)
+            if tags:
+                desc_html = "".join(str(t) for t in tags)
+        else:
+            # Fallback chain: keep first-match-wins behaviour, since these
+            # selectors (e.g. "[class*='description']", "main") are broad enough
+            # that concatenating every match across many different companies'
+            # page structures would risk pulling in unrelated content.
+            for sel in _DESCRIPTION_SELECTOR_FALLBACKS:
+                tag = soup.select_one(sel)
+                if tag:
+                    desc_html = str(tag)
+                    break
 
         # If the selector result is too short the page likely uses Next.js RSC
         # streaming — real content lives in __next_f.push script chunks, not the DOM.
@@ -906,11 +920,21 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         loc = (job.get("location") or "").lower().strip()
         return loc in _MULTI_LOC_MARKERS
 
+    # A job's country is already known and trustworthy when it came from a
+    # country_filter_param pass (country_code set explicitly per-request) —
+    # trust that over is_tracked_location(), which returns False outright for
+    # a blank/missing location string. Without this, a job whose listing card
+    # has an empty location field (seen on Sweco: some postings render
+    # <em class="vacancy__location"> with no text) gets silently excluded from
+    # detail-page enrichment. Its description never gets fetched via desc_sel,
+    # and the TS-side fallback then does an unfiltered full-page fetch instead —
+    # picking up local-language nav/cookie-consent/footer text and producing
+    # false native-language-requirement signals on an English-language posting.
     english_jobs = [
         j
         for j in all_jobs
-        if not _title_appears_non_english(j.get("title", ""))
-        and is_tracked_location(j.get("location"))
+        if not _title_appears_non_english_excluding_cities(j.get("title", ""))
+        and (j.get("country_code") or is_tracked_location(j.get("location")))
     ]
     multi_loc_jobs = (
         [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)]

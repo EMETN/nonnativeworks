@@ -22,7 +22,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from extract import build_job
-from title_language import _title_appears_non_english
+from title_language import _title_appears_non_english_excluding_cities
 
 BASE_URL = "https://jobs.zalando.com"
 JOBS_LIST_URL = f"{BASE_URL}/en/jobs"
@@ -229,7 +229,9 @@ def scrape_zalando_static(url: str) -> list[dict]:
 
     # ── Phase 3: description enrichment for English-titled jobs ───────────────
     english_jobs = [
-        j for j in jobs if not _title_appears_non_english(j.get("title", ""))
+        j
+        for j in jobs
+        if not _title_appears_non_english_excluding_cities(j.get("title", ""))
     ]
 
     # Fetch each unique URL once; apply the result to all fan-out duplicates

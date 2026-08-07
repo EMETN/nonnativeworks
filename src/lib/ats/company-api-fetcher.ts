@@ -1,6 +1,6 @@
 import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
-import { titleAppearsNonEnglish } from './title-language';
+import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
 
 const MAX_PAGES = 50; // safety cap to avoid infinite loops
@@ -354,7 +354,7 @@ export async function enrichDescriptions(
         const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
             !skipUrls?.has(j.url) &&
-            !titleAppearsNonEnglish(j.title) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
         return wantsDescription || wantsLocation;
@@ -385,7 +385,7 @@ export async function enrichDescriptions(
                 }
                 if (
                     !skipUrls?.has(job.url!) &&
-                    !titleAppearsNonEnglish(job.title) &&
+                    !titleAppearsNonEnglishExcludingCityNames(job.title) &&
                     !job.descriptionText
                 ) {
                     if (descriptionRegex) {
@@ -455,7 +455,7 @@ async function enrichDescriptionsFromApi(
     const targets = jobs.filter(
         (j) =>
             (j.descriptionApiId ?? j.sourceId) &&
-            !titleAppearsNonEnglish(j.title) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionText &&
             !j.descriptionHtml,
     );
@@ -536,7 +536,7 @@ async function enrichLanguageRequirementFromApi(
     const targets = jobs.filter(
         (j) =>
             j.url &&
-            !titleAppearsNonEnglish(j.title) &&
+            !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             j.requires_native_language === undefined,
     );
     console.log(

@@ -9,9 +9,9 @@ import re
 import sys
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
-from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
-from extract import SKIP_LOCATION_PATTERNS, build_job
-from title_language import _title_appears_non_english
+from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
+from extract import build_job, SKIP_LOCATION_PATTERNS
+from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import TRACKED_NAMES, is_tracked_location
 
 _DESCRIPTION_SELECTORS = [
@@ -283,10 +283,8 @@ def enrich_attrax_descriptions(jobs: list[dict], session) -> None:
         j
         for j in jobs
         if j.get("url")
-        and not _title_appears_non_english(j.get("title", ""))
-        # Include jobs whose tile had no location — the detail page carries it (recovered
-        # below), so skipping them here would drop the job as "unknown location".
-        and (not j.get("location") or is_tracked_location(j.get("location")))
+        and not _title_appears_non_english_excluding_cities(j.get("title", ""))
+        and is_tracked_location(j.get("location"))
     ]
     skipped = len(jobs) - len(targets)
     print(

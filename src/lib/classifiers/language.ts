@@ -234,6 +234,14 @@ const KEYWORD_TO_CANONICAL_NAME: Record<string, string> = {
     arabic: 'Arabic',
 };
 
+// Every recognized language keyword, plus 'english' — used to detect when an
+// advantage/requirement phrase actually names a DIFFERENT language than the one
+// currently being evaluated (see textNamesOtherLanguageBefore below).
+const ALL_LANG_KEYWORDS = new Set([
+    ...Object.keys(KEYWORD_TO_CANONICAL_NAME),
+    'english',
+]);
+
 // Nordic/Scandinavian countries — used to gate group-language advantage phrases.
 const NORDIC_COUNTRY_CODES = new Set(['FI', 'SE', 'NO', 'DK', 'IS']);
 
@@ -401,6 +409,15 @@ const COUNTRY_NATIVE_CHARS: Partial<
     LV: { pattern: /[āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]/g, threshold: 15 },
     LT: { pattern: /[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g, threshold: 15 },
     PL: { pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/g, threshold: 10 },
+    // French diacritics are far less diagnostic per-character than Nordic ones — they
+    // show up as loanwords and, especially in this dataset, as French place names
+    // embedded in otherwise-English ads (e.g. "based in Vélizy-Villacoublay"). A
+    // higher threshold (vs. 10-15 for Nordic) keeps a handful of city-name mentions
+    // from tripping it, while genuine French body text — even short, boilerplate-free
+    // paragraphs — reliably runs 35+ occurrences. Tested against real Thales
+    // descriptions (36-106 chars) vs. a worst-case adversarial English paragraph
+    // listing every catalogued French city (14 chars).
+    FR: { pattern: /[éèêëàâîïôùûçœÉÈÊËÀÂÎÏÔÙÛÇŒ]/g, threshold: 25 },
 };
 
 function descriptionContainsNativeChars(
@@ -512,12 +529,27 @@ function buildAdvantageRegex(lang: string): RegExp {
     );
     // Optional modifier between operator and article: "considered", "considered as", "seen as",
     // or any single word (handles typos like "considerd" and extras like "also", "really").
-    const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)\\b`;
+    // The bare "considered(?: as)?" alternative handles ellipsis where "is" is dropped
+    // entirely, e.g. "French or German considered a strong advantage".
+    const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)\\b`;
+    // Gap words in the compound-mention branch must not cross over a DIFFERENT
+    // language's name — otherwise "proficiency in Dutch and English (French is
+    // considered an asset)" would let "proficiency in Dutch" reach across "and
+    // English" to steal French's advantage phrase. Blocking every other known
+    // language keyword (English included) makes the gap stop at the nearest
+    // language boundary instead.
+    const otherLangKeywords = [...ALL_LANG_KEYWORDS]
+        .filter((kw) => kw !== lang)
+        .map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
+    const gapWord = otherLangKeywords
+        ? `(?:\\s+(?!(?:${otherLangKeywords})\\b)\\w+)`
+        : `(?:\\s+\\w+)`;
     const parts = [
         `${bare}${operatorSuffix}`,
         // Compound mentions allow up to 8 gap words (e.g. "Finnish skills in both oral and written are seen as…")
         ...(compound.length > 0
-            ? [`(?:${compound.join('|')})(?:\\s+\\w+){0,8}${operatorSuffix}`]
+            ? [`(?:${compound.join('|')})${gapWord}{0,8}${operatorSuffix}`]
             : []),
     ];
     return new RegExp(`(?:${parts.join('|')})`);
@@ -555,8 +587,12 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
     const listTail = `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+or\\s+[a-z]+)?`;
+    // Leading optional "considered " consumes ellipsis phrasing like "French or
+    // German considered a strong advantage" without eating into the {0,2} gap-word
+    // budget below (which alone can't span "considered a strong").
     const advantageSuffix =
-        `\\s+(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
+        `\\s+(?:considered\\s+)?` +
+        `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
         `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
 }
@@ -608,6 +644,7 @@ function buildAdvantageSignals(lang: string): string[] {
     signals.push(`${lang} a bonus`);
     signals.push(`ideally ${lang}`);
     signals.push(`ideally in ${lang}`);
+    signals.push(`ideally including ${lang}`);
     return signals;
 }
 
@@ -632,12 +669,14 @@ function buildRequirementSignals(lang: string): string[] {
         // Fluency / proficiency
         `fluent ${lang}`,
         `fluent in ${lang}`,
+        `fluent in spoken ${lang}`,
         `fluent level in ${lang}`,
         `fluent language skills in ${lang}`,
         `fluency in ${lang}`,
         `proficiency in ${lang}`,
         `${lang} proficiency`,
         `proficient in ${lang}`,
+        `${lang} proficient`,
         `working proficiency in ${lang}`,
         `${lang} language proficiency`,
         `working knowledge of ${lang}`,
@@ -648,6 +687,7 @@ function buildRequirementSignals(lang: string): string[] {
         `professional ${lang}`,
         `${lang} at a professional level`,
         `${lang} at professional level`,
+        `${lang} at fluent level`,
         `excellent ${lang}`,
         `strong ${lang}`,
         `communicative ${lang}`,
@@ -666,6 +706,8 @@ function buildRequirementSignals(lang: string): string[] {
         `b2 level of ${lang}`,
         `c1 level of ${lang}`,
         `c2 level of ${lang}`,
+        // Generic level-of-language phrasing without a CEFR code: "a very good level of Dutch"
+        `level of ${lang}`,
         // Level descriptors
         `elementary ${lang}`,
         `good ${lang}`,
@@ -676,6 +718,8 @@ function buildRequirementSignals(lang: string): string[] {
         `native ${lang}`,
         `native in ${lang}`,
         `${lang} native`,
+        `${lang}-native`,
+        `native-${lang}`,
         `mother tongue ${lang}`,
         `${lang} as mother tongue`,
         `${lang} as a mother tongue`,
@@ -744,11 +788,21 @@ function buildRequirementSignals(lang: string): string[] {
         `basic knowledge of ${lang}`,
         `basic level of ${lang}`,
         `some ${lang}`,
+        // "at least {lang}" — e.g. "Fluent in English and at least French or Dutch"
+        `at least ${lang}`,
+        // "native speaker in/of {lang}" / "native speaker {lang}" — e.g. "A native
+        // speaker in French or Dutch", "A native speaker of French or Dutch",
+        // "A native speaker Dutch"
+        `native speaker in ${lang}`,
+        `native speaker of ${lang}`,
+        `native speaker ${lang}`,
         // Confident communication
         `communicate confidently in ${lang}`,
-        // Comma-separated language lists: "English, {lang} and {other}", "{lang}, English"
+        // Comma/semicolon-separated language lists: "English, {lang} and {other}",
+        // "{lang}, English", "English; {lang} and {other}"
         `english, ${lang}`,
         `${lang}, english`,
+        `english; ${lang}`,
         // "local language Swedish/Danish/Finnish" — umbrella phrasing in multi-country ads
         `local language ${lang}`,
         // "in addition to {lang}" — presupposes the language alongside English
@@ -816,15 +870,37 @@ const DIRECT_ADVANTAGE_SUFFIX_RE =
 type NegationKind = 'advantage' | 'none' | false;
 
 /**
+ * True when a different tracked language keyword (not `lang` itself) appears
+ * anywhere in `text` before `beforeIdx` — meaning a nearby advantage phrase
+ * more plausibly names that other language than `lang`. e.g. in "...Dutch and
+ * English (French is considered an asset)", checking lang='dutch' against the
+ * text up to the "is considered an asset" match finds "english" and "french"
+ * in between, so the advantage phrase shouldn't be attributed to Dutch.
+ */
+function textNamesOtherLanguageBefore(
+    text: string,
+    lang: string,
+    beforeIdx: number,
+): boolean {
+    const words = text.slice(0, beforeIdx).match(/[a-zà-öø-ÿ]+/g) ?? [];
+    return words.some((w) => w !== lang && ALL_LANG_KEYWORDS.has(w));
+}
+
+/**
  * Returns the negation kind when a requirement-signal match is immediately
  * qualified by optional/negation language in the surrounding ~80 characters:
  * - 'advantage': language is a nice-to-have (e.g. "not compulsory", "nice-to-have")
  * - 'none': English alone is sufficient (e.g. "or English") — not even an advantage
  * - false: no negation found
+ *
+ * `lang` (when provided) is the language the signal was built for — used to avoid
+ * attributing an advantage phrase that actually names a different language (see
+ * textNamesOtherLanguageBefore above).
  */
 function requirementNegatedByContext(
     combined: string,
     signal: string,
+    lang?: string,
 ): NegationKind {
     const idx = combined.indexOf(signal);
     if (idx === -1) return false;
@@ -838,7 +914,21 @@ function requirementNegatedByContext(
     // unrelated advantage phrase in a later clause (e.g. "Fluent English and
     // Norwegian; Danish or Finnish considered as an advantage") would wrongly
     // negate the requirement in the earlier clause.
-    if (REQUIREMENT_NEGATION_ADVANTAGE_RE.test(sameClause)) return 'advantage';
+    const sameClauseAdvMatch =
+        REQUIREMENT_NEGATION_ADVANTAGE_RE.exec(sameClause);
+    if (
+        sameClauseAdvMatch &&
+        !(
+            lang &&
+            textNamesOtherLanguageBefore(
+                sameClause,
+                lang,
+                sameClauseAdvMatch.index,
+            )
+        )
+    ) {
+        return 'advantage';
+    }
     // Check for an advantage modifier that DIRECTLY follows the signal (anchored, no gap
     // words). Uses a tighter window than the 80-char checks above to avoid false negatives
     // where the modifier belongs to a later clause about a different language.
@@ -867,6 +957,7 @@ export type SignalEntry = {
         | '2a-cross'
         | '2b'
         | '2c'
+        | '2c-none'
         | '2d-none';
     description: string;
     matched?: string; // exact phrase or character that triggered this signal
@@ -879,6 +970,57 @@ export type NativeLanguageResult = {
     preferredLanguages: string[];
     signals: SignalEntry[];
 };
+
+// Some sources (e.g. Capgemini's description_stripped field) provide the job
+// description as one giant blob with no paragraph breaks at all, so the \n-based
+// splitting below collapses to a single oversized chunk. tinyld's n-gram frequency
+// detection becomes unreliable past a few thousand characters — a single confusing
+// span (heavy English tech jargon mixed into otherwise-native text) can pull the
+// whole-text verdict to a wrong language even though every sub-window resolves
+// correctly on its own. Any chunk over this length is broken into fixed-size
+// windows before detection so one bad span can't drown out the rest.
+const MAX_DETECTION_CHUNK_LENGTH = 1500;
+const DETECTION_WINDOW_SIZE = 500;
+
+function windowOversizedChunk(chunk: string): string[] {
+    if (chunk.length <= MAX_DETECTION_CHUNK_LENGTH) return [chunk];
+    const windows: string[] = [];
+    for (let i = 0; i < chunk.length; i += DETECTION_WINDOW_SIZE) {
+        const window = chunk.slice(i, i + DETECTION_WINDOW_SIZE).trim();
+        if (window.length >= 200) windows.push(window);
+    }
+    return windows.length > 0 ? windows : [chunk];
+}
+
+/**
+ * Detects the language of `chunk`, using majority vote across its windows when
+ * it was split by windowOversizedChunk. A 500-char window is short enough that
+ * tinyld regularly misfires on ONE window even for genuinely English text (e.g.
+ * a single window scored "de" out of nine otherwise-"en" windows for a real
+ * English Capgemini ad) — accepting any single matching window turns that per-
+ * window noise into a wrong verdict for the whole (long) description. Requiring
+ * a strict majority means a lone noisy window can't flip it, while a
+ * genuinely native-language description still wins comfortably (e.g. 8 "nl" vs
+ * 3 "ber" out of 11 windows in a real Dutch ad).
+ */
+function detectChunkLanguage(chunk: string): string {
+    const windows = windowOversizedChunk(chunk);
+    if (windows.length <= 1) return detect(chunk);
+    const counts = new Map<string, number>();
+    for (const window of windows) {
+        const code = detect(window);
+        counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    let winner = '';
+    let winnerCount = 0;
+    for (const [code, count] of counts) {
+        if (count > winnerCount) {
+            winner = code;
+            winnerCount = count;
+        }
+    }
+    return winnerCount > windows.length / 2 ? winner : '';
+}
 
 /**
  * Like anyChunkInNativeLanguage but returns the matching chunk and detected
@@ -905,7 +1047,7 @@ function findNativeLanguageChunk(
         ? COUNTRY_NATIVE_CHARS[countryCode]
         : undefined;
     for (const chunk of candidates) {
-        const code = detect(chunk);
+        const code = detectChunkLanguage(chunk);
         if (!langCodes.includes(code)) continue;
         // If we have a native-char pattern for this country, require at least 2
         // such characters in the chunk. A single accented letter from one word is
@@ -988,7 +1130,7 @@ function findAnyNonEnglishChunk(
               ? [text.trim()]
               : [];
     for (const chunk of candidates) {
-        const code = detect(chunk);
+        const code = detectChunkLanguage(chunk);
         if (!code || code.length !== 2 || code === 'en') continue;
         if (!TRUSTED_LANG_CODES.has(code)) continue;
         if (
@@ -1085,22 +1227,56 @@ export function detectNativeLanguage(
                 return parts.map((p) => p + suffix).join(' ');
             },
         )
+        // Treat line breaks (paragraph/list-item boundaries from stripHtml's block-tag
+        // conversion) as sentence boundaries — otherwise requirementNegatedByContext's
+        // "same clause" window can't tell "Norwegian" apart from an advantage phrase in
+        // the next paragraph when there's no punctuation between them (e.g. "Fluent in
+        // English and Norwegian\n\nDanish or Finnish considered as an advantage").
+        .replace(/\n+/g, '. ')
         .replace(/\s+/g, ' ');
+
+    // For multi-language countries (CH, BE, LU) a requirement signal for one
+    // language (e.g. French) must win over an advantage signal for another
+    // language (e.g. German) found earlier in COUNTRY_LANGUAGE_MAP's iteration
+    // order — otherwise "Very good French skills; German is an advantage" would
+    // short-circuit on German's advantage phrase before French's requirement is
+    // ever checked. This mirrors the exact acceptance logic Phase 2a's per-lang
+    // loop uses to decide a genuine (non-negated) requirement match.
+    const languageHasGenuineRequirement = (lang: string): boolean => {
+        const langAdvRegex = buildAdvantageRegex(lang);
+        for (const signal of buildRequirementSignals(lang)) {
+            if (!combined.includes(signal)) continue;
+            if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
+            const negation = requirementNegatedByContext(
+                combined,
+                signal,
+                lang,
+            );
+            if (negation === 'none' || negation === 'advantage') continue;
+            const sigIdx = combined.indexOf(signal);
+            const advOverlap = langAdvRegex.exec(combined);
+            if (
+                advOverlap &&
+                advOverlap.index <= sigIdx &&
+                advOverlap.index + advOverlap[0].length >=
+                    sigIdx + signal.length
+            )
+                continue;
+            return true;
+        }
+        return false;
+    };
+    const anyGenuineRequirement = languages.some(languageHasGenuineRequirement);
 
     // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
     // Check for explicit "X is a plus / an advantage" phrases before running
     // tinyld. See the JSDoc above for why this ordering matters.
     for (const lang of languages) {
-        const hasRequirement = buildRequirementSignals(lang).some(
-            (s) =>
-                combined.includes(s) &&
-                !knowledgeOfSignalIsAdjective(combined, s) &&
-                requirementNegatedByContext(combined, s) !== 'none',
-        );
+        const hasRequirement = anyGenuineRequirement;
 
         for (const signal of buildAdvantageSignals(lang)) {
             if (combined.includes(signal)) {
-                if (hasRequirement) break; // requirement wins — fall through to phase 2a
+                if (hasRequirement) break; // a country language is genuinely required — fall through to phase 2a
                 return {
                     value: false,
                     local_language_advantage: true,
@@ -1267,6 +1443,29 @@ export function detectNativeLanguage(
                         phase: '1b',
                         description: 'generic local-language advantage phrase',
                         matched: genericAdvantageMatch[0],
+                    },
+                ],
+            };
+        }
+
+        // Generic "additional/other EU/European/local/regional languages is a plus" —
+        // same idea, but phrased as "additional languages" rather than "local language"
+        // (e.g. "knowledge of additional EU languages is a plus").
+        const genericAdditionalLangMatch = combined.match(
+            /\b(?:knowledge of\s+)?(?:additional|other)\s+(?:eu|european|local|regional)\s+languages?[^.]{0,40}(?:is|are|would\s+be)\s+(?:a\s+)?(?:plus|bonus|advantage|preferred|beneficial|preferable|an?\s+asset)\b/,
+        );
+        if (genericAdditionalLangMatch) {
+            return {
+                value: false,
+                local_language_advantage: true,
+                requiredLanguages: [],
+                preferredLanguages: langNames,
+                signals: [
+                    {
+                        phase: '1b',
+                        description:
+                            'generic "additional languages" advantage phrase',
+                        matched: genericAdditionalLangMatch[0],
                     },
                 ],
             };
@@ -1444,27 +1643,88 @@ export function detectNativeLanguage(
         }
     }
 
+    // "{Lang1}, {Lang2}, and {Lang3}: [preamble] proficiency is required for all
+    // N languages" — an explicit enumeration where every listed language is
+    // mandated, not just one. This doesn't fit the single-language requirement
+    // templates above (there's no "advantage"/"required" attached to any one
+    // language name directly), so it's handled as its own signal: extract the
+    // listed languages via KEYWORD_TO_CANONICAL_NAME and flag as required
+    // whenever any of them is not English — regardless of whether it happens to
+    // be this country's own language. A posting can legitimately require a
+    // language that has nothing to do with where the job is based (e.g. this
+    // exact phrase turning up on a job in a country other than NL/BE/FR), and
+    // the actual required language(s) still need to be recorded, not just the
+    // country's default. e.g. "Dutch, French, and English: Professional working
+    // proficiency is required for all three languages."
+    {
+        const ALL_LANGUAGES_REQUIRED_RE =
+            /\b((?:[a-zà-öø-ÿ]+(?:,\s*[a-zà-öø-ÿ]+)*,?\s+and\s+[a-zà-öø-ÿ]+)):\s*[a-zà-öø-ÿ ]*?(?:proficiency|fluency)\s+is\s+required\s+for\s+all\s+(?:two|three|four|five|the)\s+languages\b/;
+        const allLangsMatch = combined.match(ALL_LANGUAGES_REQUIRED_RE);
+        if (allLangsMatch) {
+            const listedWords = allLangsMatch[1]
+                .split(/,|\band\b/)
+                .map((w) => w.trim())
+                .filter(Boolean);
+            const requiredNames = [
+                ...new Set(
+                    listedWords
+                        .filter((w) => w !== 'english')
+                        .map((w) => KEYWORD_TO_CANONICAL_NAME[w])
+                        .filter((n): n is string => Boolean(n)),
+                ),
+            ];
+            if (requiredNames.length > 0) {
+                return {
+                    value: true,
+                    local_language_advantage: false,
+                    requiredLanguages: requiredNames,
+                    preferredLanguages: [],
+                    signals: [
+                        {
+                            phase: '2a',
+                            description:
+                                'enumerated "required for all N languages" phrase',
+                            matched: allLangsMatch[0],
+                        },
+                    ],
+                };
+            }
+        }
+    }
+
     for (const lang of languages) {
         const langAdvRegex = buildAdvantageRegex(lang);
         for (const signal of buildRequirementSignals(lang)) {
             if (combined.includes(signal)) {
                 if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
-                const negation = requirementNegatedByContext(combined, signal);
+                const negation = requirementNegatedByContext(
+                    combined,
+                    signal,
+                    lang,
+                );
                 if (negation === 'none') continue;
                 if (negation === 'advantage') {
-                    return {
-                        value: false,
-                        local_language_advantage: true,
-                        requiredLanguages: [],
-                        preferredLanguages: langNames,
-                        signals: [
-                            {
-                                phase: '2a',
-                                description: `"${lang}" requirement phrase negated by context`,
-                                matched: signal,
-                            },
-                        ],
-                    };
+                    // Only treat this as the final verdict if no OTHER country language is
+                    // genuinely required elsewhere in the text — otherwise a multi-language
+                    // country (CH, BE, LU) would wrongly resolve to "advantage" based on
+                    // this language's negated signal before the genuine requirement (found
+                    // later in loop order) is ever reached. See languageHasGenuineRequirement.
+                    if (!anyGenuineRequirement) {
+                        return {
+                            value: false,
+                            local_language_advantage: true,
+                            requiredLanguages: [],
+                            preferredLanguages: langNames,
+                            signals: [
+                                {
+                                    phase: '2a',
+                                    description: `"${lang}" requirement phrase negated by context`,
+                                    matched: signal,
+                                },
+                            ],
+                        };
+                    }
+                    continue;
                 }
                 // If the advantage regex fully contains the requirement signal's match position,
                 // the requirement phrase is part of a larger advantage phrase (e.g. "dutch speaking
@@ -1477,19 +1737,22 @@ export function detectNativeLanguage(
                     advOverlap.index + advOverlap[0].length >=
                         sigIdx + signal.length
                 ) {
-                    return {
-                        value: false,
-                        local_language_advantage: true,
-                        requiredLanguages: [],
-                        preferredLanguages: langNames,
-                        signals: [
-                            {
-                                phase: '2a',
-                                description: `"${lang}" requirement phrase contained in advantage phrase`,
-                                matched: advOverlap[0],
-                            },
-                        ],
-                    };
+                    if (!anyGenuineRequirement) {
+                        return {
+                            value: false,
+                            local_language_advantage: true,
+                            requiredLanguages: [],
+                            preferredLanguages: langNames,
+                            signals: [
+                                {
+                                    phase: '2a',
+                                    description: `"${lang}" requirement phrase contained in advantage phrase`,
+                                    matched: advOverlap[0],
+                                },
+                            ],
+                        };
+                    }
+                    continue;
                 }
                 return {
                     value: true,
@@ -1570,6 +1833,7 @@ export function detectNativeLanguage(
                     const negation = requirementNegatedByContext(
                         combined,
                         signal,
+                        kw,
                     );
                     if (negation === 'none') continue;
                     if (negation === 'advantage') {

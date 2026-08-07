@@ -553,16 +553,75 @@ interface CountryGroupProps {
     ) => void;
 }
 
+type LanguageFilter = 'all' | LanguageStatus;
+
+function jobLangStatus(job: ReviewJob): LanguageStatus {
+    return job.requires_native_language
+        ? 'required'
+        : job.local_language_advantage
+          ? 'advantage'
+          : 'neither';
+}
+
 function CountryGroup({ group, onJobField }: CountryGroupProps) {
+    const [sortAlpha, setSortAlpha] = useState(false);
+    const [langFilter, setLangFilter] = useState<LanguageFilter>('all');
+
+    const indexed = group.jobs.map((job, i) => ({ job, i }));
+    const filtered =
+        langFilter === 'all'
+            ? indexed
+            : indexed.filter(({ job }) => jobLangStatus(job) === langFilter);
+    const displayed = sortAlpha
+        ? [...filtered].sort((a, b) => a.job.title.localeCompare(b.job.title))
+        : filtered;
+
     return (
         <div class="border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+            <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-2">
                 <span class="font-medium text-sm text-gray-800">
                     {group.country_name}
                 </span>
                 <span class="text-xs text-gray-400">{group.country_code}</span>
+
+                <button
+                    onClick={() => setSortAlpha((v) => !v)}
+                    class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
+                        sortAlpha
+                            ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                    }`}
+                >
+                    A–Z
+                </button>
+
+                <div class="flex items-center gap-1">
+                    {(
+                        [
+                            ['all', 'All'],
+                            ['required', 'Required'],
+                            ['advantage', 'Advantage'],
+                            ['neither', 'None'],
+                        ] as [LanguageFilter, string][]
+                    ).map(([value, label]) => (
+                        <button
+                            key={value}
+                            onClick={() => setLangFilter(value)}
+                            class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
+                                langFilter === value
+                                    ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
                 <span class="text-xs text-gray-500 ml-auto">
-                    {group.jobs.length} positions
+                    {displayed.length === group.jobs.length
+                        ? `${group.jobs.length} positions`
+                        : `${displayed.length} of ${group.jobs.length} positions`}
                 </span>
             </div>
             <div class="overflow-x-auto">
@@ -581,25 +640,38 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {group.jobs.map((job, i) => (
-                            <JobRow
-                                key={i}
-                                job={job}
-                                onCategory={(v) => onJobField(i, 'category', v)}
-                                onLanguage={(status) => {
-                                    onJobField(
-                                        i,
-                                        'requires_native_language',
-                                        status === 'required',
-                                    );
-                                    onJobField(
-                                        i,
-                                        'local_language_advantage',
-                                        status === 'advantage',
-                                    );
-                                }}
-                            />
-                        ))}
+                        {displayed.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={3}
+                                    class="px-4 py-3 text-center text-xs text-gray-400"
+                                >
+                                    No positions match this filter.
+                                </td>
+                            </tr>
+                        ) : (
+                            displayed.map(({ job, i }) => (
+                                <JobRow
+                                    key={i}
+                                    job={job}
+                                    onCategory={(v) =>
+                                        onJobField(i, 'category', v)
+                                    }
+                                    onLanguage={(status) => {
+                                        onJobField(
+                                            i,
+                                            'requires_native_language',
+                                            status === 'required',
+                                        );
+                                        onJobField(
+                                            i,
+                                            'local_language_advantage',
+                                            status === 'advantage',
+                                        );
+                                    }}
+                                />
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
