@@ -22,7 +22,7 @@
         "clean": "rm -rf node_modules dist .pnpm-store .netlify"
     },
     "simple-git-hooks": {
-        "pre-commit": "pnpm exec lint-staged"
+        "pre-commit": "npx --no-install lint-staged"
     },
     "lint-staged": {
         "*.{ts,tsx,astro,js,mjs,json,yaml,yml,md}": "prettier --write",
