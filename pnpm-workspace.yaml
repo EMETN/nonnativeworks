@@ -4,16 +4,3 @@ allowBuilds:
   esbuild: true
   sharp: true
   simple-git-hooks: true
-minimumReleaseAgeExclude:
-  - '@astrojs/netlify@8.2.0'
-  - '@astrojs/node@11.1.0'
-  - '@posthog/core@1.46.9'
-  - '@posthog/types@1.402.2'
-  - '@supabase/auth-js@2.112.2'
-  - '@supabase/functions-js@2.112.2'
-  - '@supabase/postgrest-js@2.112.2'
-  - '@supabase/realtime-js@2.112.2'
-  - '@supabase/storage-js@2.112.2'
-  - '@supabase/supabase-js@2.112.2'
-  - astro@7.2.0
-  - posthog-js@1.413.3
