@@ -18,8 +18,7 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "format:py": "ruff format scraper",
-        "lint:py": "ruff check scraper",
-        "clean": "rm -rf node_modules dist .pnpm-store .netlify"
+        "lint:py": "ruff check scraper"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"
