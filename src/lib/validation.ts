@@ -3,10 +3,11 @@ import { CATEGORIES } from './categories';
 
 const VALID_CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
 
+// http(s) only — z.url() accepts javascript: and data:, and these end up in href
 const urlTransform = z
     .string()
     .transform((val) => val.replace(/^\[.*?\]\((.*?)\)$/, '$1').trim())
-    .pipe(z.url().or(z.literal('')))
+    .pipe(z.url({ protocol: /^https?$/ }).or(z.literal('')))
     .optional();
 
 export const PositionSchema = z.object({
