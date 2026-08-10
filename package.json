@@ -6,7 +6,7 @@
     "engines": {
         "node": ">=24.0.0"
     },
-    "packageManager": "pnpm@11.20.0",
+    "packageManager": "pnpm@11.21.0",
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
@@ -41,7 +41,7 @@
         "@supabase/supabase-js": "^2.112.2",
         "@tailwindcss/vite": "^4.3.3",
         "astro": "^7.2.0",
-        "posthog-js": "^1.413.3",
+        "posthog-js": "^1.414.0",
         "preact": "^10.29.8",
         "tailwindcss": "^4.3.3",
         "tinyld": "^1.3.4",
