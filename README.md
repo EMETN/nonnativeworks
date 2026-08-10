@@ -4,7 +4,7 @@ Discover companies that welcome non-native language speakers. Track open positio
 
 ## Stack
 
-- **Astro 5** — full SSR (`output: 'server'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
+- **Astro 7** — full SSR (`output: 'server'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)
@@ -54,7 +54,7 @@ Run the migration in the Supabase SQL editor:
 supabase/migrations/000_full_schema.sql
 ```
 
-This creates all tables, views, RLS policies, and seeds 5 countries + 10 categories.
+This creates all tables, views, RLS policies, and seeds the 12 job categories. Countries are created automatically on first upload.
 
 ### Start developing
 
@@ -104,10 +104,11 @@ src/
 
 ## CI / workflows
 
-| Workflow               | Trigger                                          | What it does                                                                                                                                                                                                |
-| ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`         | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
-| `scheduled-scrape.yml` | Mon–Fri at 06:00 EET (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                                                       |
+| Workflow               | Trigger                                                      | What it does                                                                                                                                                                                                |
+| ---------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quality.yml`          | Every PR and push to `main`                                  | Prettier format check, test suite, and Ruff format + lint on `scraper/` (lint advisory for now)                                                                                                             |
+| `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`                     | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
+| `scheduled-scrape.yml` | Mon–Fri at 03:00 EET / 01:00 UTC (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                                                       |
 
 ### scrape-preview.yml — manual trigger options
 
