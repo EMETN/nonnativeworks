@@ -11,8 +11,9 @@
 - Booking.com
 - Capgemini
 - CGI (local script)
+- Deel
 - Delivery Hero
-- Dept
+- DEPT
 - Edenred
 - Elekta
 - E.ON
@@ -36,7 +37,7 @@
 - Nokia
 - Nordea
 - Nordnet
-- Novo
+- Novo Nordisk
 - NXP
 - OP Financial Group
 - Orion
@@ -59,6 +60,7 @@
 - SOK
 - Solita
 - Stora Enso
+- Sweco Group
 - Telia
 - Thales
 - Tieto
@@ -84,10 +86,10 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS        | URL pattern                                         | Companies using it                                                                                                                          |
 | ---------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, Dept, Solita                                                                            |
+| Greenhouse | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita                                                                            |
 | Lever      | `jobs.lever.co/{slug}`                              | Prosus, SEB                                                                                                                                 |
 | Ashby      | `jobs.ashbyhq.com/{slug}`                           | Reaktor                                                                                                                                     |
-| Workable   | `apply.workable.com/api/v1/widget/accounts/{slug}`  | Iceye                                                                                                                                       |
+| Workable   | `apply.workable.com/api/v1/widget/accounts/{slug}`  | â€” (none currently tracked)                                                                                                                  |
 | Workday    | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
 | Recruitee  | `{slug}.recruitee.com`                              | Happeo                                                                                                                                      |
 

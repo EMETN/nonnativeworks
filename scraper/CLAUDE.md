@@ -31,26 +31,6 @@ After jobs are collected, each job's location is resolved via `lookupCountryFrom
 - **Secrets**: Only `DOPPLER_TOKEN` stored in GitHub — Doppler injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SCRAPER_SECRET`
 - **Logs**: Written to `logs/YYYY-MM-DD.log`, uploaded as GitHub Actions artifacts (90-day retention)
 
-## Key files
+## Reference
 
-| File                                                                                 | Purpose                                                                                          |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `src/pages/api/admin/scrape.ts`                                                      | Main scrape endpoint — URL aliasing, ATS detection, layer 1/1.5/2 fallback, classification       |
-| `src/lib/ats/detector.ts`                                                            | URL → ATS type + company slug detection                                                          |
-| `src/lib/ats/types.ts`                                                               | Shared TypeScript types: `RawJob`, `ScrapeResult`, `AtsType`, etc.                               |
-| `src/lib/ats/greenhouse.ts` / `lever.ts` / `ashby.ts` / `workable.ts` / `workday.ts` | Layer 1 ATS-specific fetchers                                                                    |
-| `src/lib/ats/company-apis.ts`                                                        | Layer 1.5: per-company API configs (`COMPANY_APIS`) + `CAREER_URL_ALIASES`                       |
-| `src/lib/ats/company-api-fetcher.ts`                                                 | Layer 1.5: fetcher logic (pagination, field mapping, description enrichment)                     |
-| `src/lib/ats/country-lookup.ts`                                                      | Location → country resolution, city extraction, work model extraction, company country fallbacks |
-| `src/lib/ats/title-language.ts`                                                      | Non-ASCII title detection (Phase 1a of language classification)                                  |
-| `src/lib/tracked-countries.ts`                                                       | `TRACKED_COUNTRY_CODES` set — controls which countries are scraped and shown                     |
-| `src/lib/classifier.ts`                                                              | Job classification (`category`, `requires_native_language`)                                      |
-| `src/lib/scrape-logger.ts`                                                           | Writes human-readable logs to `logs/`                                                            |
-| `scraper/main.py`                                                                    | Python/Playwright browser scraper (Layer 2 fallback)                                             |
-| `scraper/platforms/`                                                                 | Platform-specific Python scrapers (attrax, barona, njoyn, rovio, zalando)                        |
-| `scraper/app.py`                                                                     | Optional FastAPI wrapper for deploying the Python scraper on Render                              |
-| `scraper/classify.ts`                                                                | Dev CLI tool: pipes raw Python scraper JSON through the TypeScript classifier                    |
-| `scraper/companies.yaml`                                                             | Production company list for scheduled scraping                                                   |
-| `scraper/batch_run.py`                                                               | GitHub Actions runner — reads YAML, calls scrape + upload endpoints                              |
-| `scraper/SCRAPING.md`                                                                | Detailed human-readable reference: layers, country resolution, classification phases             |
-| `.github/workflows/scheduled-scrape.yml`                                             | Scheduled scrape workflow definition                                                             |
+See `scraper/SCRAPING.md` for the detailed human-readable reference: layers, country resolution, and classification phases.
