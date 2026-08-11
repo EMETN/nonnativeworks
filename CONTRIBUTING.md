@@ -127,18 +127,16 @@ fit together — worth reading before changing extraction logic.
 ## For maintainers: previewing a company added from a fork
 
 The scrape preview is skipped on pull requests from forks — GitHub withholds the
-Doppler credentials it needs, so the run would only fail. Previewing one means
-running the contributor's branch from this repo, where those credentials _are_ in
-scope.
+Doppler credentials it needs, so the run would only fail.
 
-Only do that when the diff is **nothing but `scraper/companies.yaml`**. A one-line
-YAML addition is trivially verifiable by eye, and the only code that executes is our
-own scraper pointed at their URL.
+To preview one, run the **Scrape preview** workflow manually
+(Actions → Scrape preview → Run workflow) with `company_url` set to the career page
+URL from their PR. Add the entry to `scraper/companies.yaml` on a branch here first,
+since the workflow selects from the committed list.
 
-If the PR touches anything else — `package.json`, a workflow, `scraper/` — review
-and merge it on its own merits and let the nightly scheduled scrape validate the
-company. Re-running a fork's branch from this repo to "just check it" hands that
-branch our tokens.
+Copy the entry — don't push the contributor's commits to this repo to trigger the
+preview. Their branch would run with our tokens in scope; a copied line of YAML runs
+nothing but our own scraper. Merge with `Co-authored-by:` to credit them.
 
 ## Security
 

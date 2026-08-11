@@ -139,12 +139,18 @@ src/
 
 ### scrape-preview.yml — manual trigger options
 
-| `all_companies` | `write_to_dev` | Result                                |
-| --------------- | -------------- | ------------------------------------- |
-| false           | false          | Dry-run newly added companies only    |
-| false           | true           | Write newly added companies to dev DB |
-| true            | false          | Dry-run all companies                 |
-| true            | true           | Write all companies to dev DB         |
+| `company_url` | `all_companies` | `write_to_dev` | Result                                |
+| ------------- | --------------- | -------------- | ------------------------------------- |
+| set           | —               | false          | Dry-run that one company              |
+| set           | —               | true           | Write that one company to dev DB      |
+| blank         | false           | false          | Dry-run newly added companies only    |
+| blank         | false           | true           | Write newly added companies to dev DB |
+| blank         | true            | false          | Dry-run all companies                 |
+| blank         | true            | true           | Write all companies to dev DB         |
+
+`company_url` takes precedence over `all_companies`. On a manual run with both
+blank, the base-branch diff is empty and every company counts as new — so use
+`company_url` to preview one.
 
 ## Devcontainer firewall
 
