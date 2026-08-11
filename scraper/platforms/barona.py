@@ -22,7 +22,7 @@ import json
 import re
 import sys
 
-from browser import _open_browser, _block_unnecessary_resources, _run_in_subprocess
+from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from title_language import _title_appears_non_english_excluding_cities
 
 # barona.fi WP AJAX listing endpoint

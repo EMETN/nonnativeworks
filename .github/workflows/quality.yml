@@ -26,6 +26,9 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Secret scan
+              run: pnpm lint:secrets
+
             - name: Prettier (format check)
               run: pnpm format:check
 
@@ -46,8 +49,5 @@ jobs:
             - name: Ruff (format check)
               run: ruff format --check scraper
 
-            # Advisory for now: 2 known findings (F821 undefined name, B023) are
-            # left for a follow-up. Once fixed, remove continue-on-error to enforce.
             - name: Ruff (lint)
               run: ruff check scraper
-              continue-on-error: true

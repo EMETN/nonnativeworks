@@ -22,7 +22,7 @@
 #                   hiring periods. Default: 1
 #                   Set to 0 to allow zero positions without failing — the job
 #                   will still warn and leave existing database entries untouched.
-#   is_english_company  Flag the company as English-only in the UI. Default: false
+#   is_english_company  Flag the company as English-only. Default: false
 # ──────────────────────────────────────────────────────────────────────────────
 
 companies:
