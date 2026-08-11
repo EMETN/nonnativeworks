@@ -2,14 +2,10 @@
 
 <!-- What changes, and what problem it solves. Link an issue if there is one. -->
 
-## Checks
-
-- [ ] `pnpm test` passes
-- [ ] `pnpm format` run (or the pre-commit hook did it)
-- [ ] `pnpm lint:py` passes, if `scraper/` changed
+## How you verified it
 
 <!--
-Adding a company? You can delete the checks above — the scrape preview workflow
-runs automatically and posts its results here. Just confirm the numbers look right
-once it finishes.
+Anything you checked beyond CI. For a company addition, whether the scrape preview
+numbers look right; for scraper or classifier changes, which companies you tested
+against; for UI, a before/after screenshot.
 -->
