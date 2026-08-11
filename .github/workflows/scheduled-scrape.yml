@@ -107,7 +107,7 @@ jobs:
 
             - name: Cache Astro build
               id: astro-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: dist/
                   key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'src/**', 'astro.config.*', 'tsconfig.json') }}
@@ -133,7 +133,7 @@ jobs:
 
             - name: Cache Playwright browsers
               id: playwright-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: ~/.cache/ms-playwright
                   key: playwright-chromium-${{ runner.os }}-${{ hashFiles('scraper/requirements.txt') }}
@@ -147,7 +147,7 @@ jobs:
               run: playwright install-deps chromium
 
             - name: Restore outcome cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: cache/outcomes.json
                   key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
