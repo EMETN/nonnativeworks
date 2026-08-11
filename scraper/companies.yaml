@@ -224,7 +224,7 @@ companies:
 
     - name: Sanoma
       url: https://sanoma.wd3.myworkdayjobs.com/en-GB/Sanoma_Media_Finland
-      min_positions: 1
+      min_positions: 0
 
     - name: SAP
       url: https://jobs.sap.com/search
