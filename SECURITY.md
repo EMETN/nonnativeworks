@@ -5,7 +5,7 @@
 **Please do not open a public issue for security problems.**
 
 Report privately through GitHub: go to the
-[Security tab](https://github.com/eemetnoo/nonnativeworks/security/advisories/new)
+[Security tab](https://github.com/EMETN/nonnativeworks/security/advisories/new)
 and choose **Report a vulnerability**. This creates a private advisory visible only
 to you and the maintainers.
 
