@@ -3,12 +3,14 @@ import { CATEGORIES } from './categories';
 
 const VALID_CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
 
-// http(s) only — z.url() accepts javascript: and data:, and these end up in href
+// z.url() alone accepts javascript:/data:, and these end up in href. Anything
+// outside the allowlist drops to undefined so one bad URL can't 422 a whole upload.
 const urlTransform = z
     .string()
     .transform((val) => val.replace(/^\[.*?\]\((.*?)\)$/, '$1').trim())
-    .pipe(z.url({ protocol: /^https?$/ }).or(z.literal('')))
-    .optional();
+    .pipe(z.url({ protocol: /^(https?|mailto)$/ }).or(z.literal('')))
+    .optional()
+    .catch(undefined);
 
 export const PositionSchema = z.object({
     country_code: z.string().length(2).toUpperCase().optional(),

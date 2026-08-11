@@ -449,10 +449,7 @@ def extract_njoyn_jobs(soup, base_url: str) -> list[dict]:
         if not detail_div:
             continue
 
-        # Extract tombstone values by label. Captures the loop variable `detail_div`,
-        # but is only ever called synchronously within this same iteration (never
-        # stored/deferred), so it can't observe a later h2's value.
-        def tombstone(label: str) -> str | None:  # noqa: B023
+        def tombstone(label: str, detail_div=detail_div) -> str | None:
             for row in detail_div.find_all(class_="tombstonelabel"):
                 if label.lower() in row.get_text(strip=True).lower():
                     val = row.find_next_sibling(class_="tombstonevalue")
