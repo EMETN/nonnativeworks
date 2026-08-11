@@ -1,0 +1,45 @@
+name: Feature or improvement
+description: Suggest a change to the site, the scraper, or the docs
+labels: ['enhancement']
+body:
+    - type: markdown
+      attributes:
+          value: |
+              For a company that should be tracked, use the **Add a company** form instead.
+              For something that's broken, use **Bug report**.
+
+    - type: textarea
+      id: proposal
+      attributes:
+          label: What you'd like to see
+      validations:
+          required: true
+
+    - type: textarea
+      id: problem
+      attributes:
+          label: What problem it solves
+          description: What's awkward or missing today? Helps weigh it against other work.
+      validations:
+          required: true
+
+    - type: dropdown
+      id: area
+      attributes:
+          label: Area
+          options:
+              - UI / UX
+              - Accessibility
+              - Performance
+              - Scraper coverage
+              - Classification quality (English / category detection)
+              - Admin area
+              - Documentation
+              - Other
+
+    - type: checkboxes
+      id: help
+      attributes:
+          label: Contributing
+          options:
+              - label: I'd like to work on this myself

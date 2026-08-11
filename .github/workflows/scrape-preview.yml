@@ -171,10 +171,14 @@ jobs:
             - name: Post PR comment
               if: steps.diff.outputs.count != '0'
               uses: actions/github-script@v8
+              # Company names come from the PR branch — pass via env, never
+              # interpolate an expression into the script body.
+              env:
+                  NAMES: ${{ steps.diff.outputs.names }}
               with:
                   script: |
                       const fs = require('fs');
-                      const names = `${{ steps.diff.outputs.names }}`;
+                      const names = process.env.NAMES;
                       const output = fs.readFileSync('/tmp/scrape_output.txt', 'utf8').trim();
 
                       // Surface a status header from batch_run.py's summary line so warnings/
