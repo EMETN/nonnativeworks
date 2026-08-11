@@ -85,16 +85,17 @@ pnpm dev        # Doppler route (maintainers)
 
 ## Commands
 
-| Command          | Action                                         |
-| ---------------- | ---------------------------------------------- |
-| `pnpm dev:env`   | Dev server at `localhost:4321`, reading `.env` |
-| `pnpm build:env` | Production build, reading `.env`               |
-| `pnpm dev`       | Dev server via Doppler (maintainers)           |
-| `pnpm build`     | Production build to `./dist/`                  |
-| `pnpm preview`   | Preview production build via Doppler           |
-| `pnpm test`      | Run the test suite (Vitest)                    |
-| `pnpm format`    | Format with Prettier                           |
-| `pnpm lint:py`   | Lint `scraper/` with Ruff                      |
+| Command             | Action                                         |
+| ------------------- | ---------------------------------------------- |
+| `pnpm dev:env`      | Dev server at `localhost:4321`, reading `.env` |
+| `pnpm build:env`    | Production build, reading `.env`               |
+| `pnpm dev`          | Dev server via Doppler (maintainers)           |
+| `pnpm build`        | Production build to `./dist/`                  |
+| `pnpm preview`      | Preview production build via Doppler           |
+| `pnpm test`         | Run the test suite (Vitest)                    |
+| `pnpm format`       | Format with Prettier                           |
+| `pnpm lint:py`      | Lint `scraper/` with Ruff                      |
+| `pnpm lint:secrets` | Scan the repo for credentials (Secretlint)     |
 
 ## URL structure
 
@@ -132,7 +133,7 @@ src/
 
 | Workflow               | Trigger                                                      | What it does                                                                                                                                                                                                |
 | ---------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `quality.yml`          | Every PR and push to `main`                                  | Prettier format check, test suite, and Ruff format + lint on `scraper/` (lint advisory for now)                                                                                                             |
+| `quality.yml`          | Every PR and push to `main`                                  | Secret scan (Secretlint), Prettier format check, test suite, and Ruff format + lint on `scraper/`                                                                                                           |
 | `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`                     | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
 | `scheduled-scrape.yml` | Mon–Fri at 03:00 EET / 01:00 UTC (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                                                       |
 
