@@ -28,6 +28,12 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 30
 
+        # Fork PRs get no secrets and a read-only token, so both the scrape and the
+        # comment step would fail. Maintainers run the preview manually instead.
+        if: >-
+            github.event_name == 'workflow_dispatch' ||
+            github.event.pull_request.head.repo.full_name == github.repository
+
         env:
             # Scoped to the Doppler *dev* config so scrapes hit the dev database.
             # Set this secret at: Settings → Secrets and variables → Actions → DOPPLER_TOKEN_DEV
