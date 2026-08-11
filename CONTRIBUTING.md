@@ -50,6 +50,10 @@ maintainers can see what would be imported before anything is merged. If the pre
 finds nothing, the career page probably needs a custom scraper — say so in the PR
 and we can look at it together.
 
+If you're working from a fork, the preview won't run automatically — GitHub
+withholds the credentials it needs from forked pull requests. A maintainer will run
+it and post the results on your PR. Nothing is expected of you.
+
 Companies must have a career page reachable without a login.
 
 Adding a company needs **no local setup and no credentials** — edit the YAML in
@@ -119,6 +123,22 @@ history. Rewriting history doesn't un-leak a secret that's already been pushed.
 
 `scraper/CLAUDE.md` and `scraper/SCRAPING.md` document how the three scraping layers
 fit together — worth reading before changing extraction logic.
+
+## For maintainers: previewing a company added from a fork
+
+The scrape preview is skipped on pull requests from forks — GitHub withholds the
+Doppler credentials it needs, so the run would only fail. Previewing one means
+running the contributor's branch from this repo, where those credentials _are_ in
+scope.
+
+Only do that when the diff is **nothing but `scraper/companies.yaml`**. A one-line
+YAML addition is trivially verifiable by eye, and the only code that executes is our
+own scraper pointed at their URL.
+
+If the PR touches anything else — `package.json`, a workflow, `scraper/` — review
+and merge it on its own merits and let the nightly scheduled scrape validate the
+company. Re-running a fork's branch from this repo to "just check it" hands that
+branch our tokens.
 
 ## Security
 
