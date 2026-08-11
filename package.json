@@ -10,6 +10,8 @@
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
+        "dev:env": "node --dns-result-order=ipv4first --env-file=.env node_modules/astro/bin/astro.mjs dev --host",
+        "build:env": "node --env-file=.env node_modules/astro/bin/astro.mjs build",
         "preview": "doppler run -- astro preview",
         "astro": "astro",
         "postinstall": "node scripts/patch-preact-vite.mjs && simple-git-hooks",
@@ -18,14 +20,16 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "format:py": "ruff format scraper",
-        "lint:py": "ruff check scraper"
+        "lint:py": "ruff check scraper",
+        "lint:secrets": "secretlint --secretlintignore .gitignore '**/*'"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"
     },
     "lint-staged": {
+        "*": "secretlint --maskSecrets",
         "*.{ts,tsx,astro,js,mjs,json,yaml,yml,md}": "prettier --write",
-        "scraper/**/*.py": "ruff format"
+        "scraper/**/*.py": "node scripts/ruff-format.mjs"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.10",
@@ -49,9 +53,12 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@secretlint/secretlint-rule-pattern": "^13.0.4",
+        "@secretlint/secretlint-rule-preset-recommend": "^13.0.4",
         "lint-staged": "^17.3.0",
         "prettier": "^3.9.6",
         "prettier-plugin-astro": "^0.14.1",
+        "secretlint": "^13.0.4",
         "simple-git-hooks": "^2.13.1",
         "vitest": "^4.1.10"
     }

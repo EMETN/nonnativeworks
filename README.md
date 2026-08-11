@@ -15,17 +15,37 @@ Discover companies that welcome non-native language speakers. Track open positio
 
 ### Prerequisites
 
-- A container runtime ([OrbStack](https://orbstack.dev/), [Docker Desktop](https://www.docker.com/), etc.)
-- [Doppler CLI](https://docs.doppler.com/docs/cli) access — request it from the project owner
+- Node 24+ and [pnpm](https://pnpm.io/) (or a container runtime — [OrbStack](https://orbstack.dev/), [Docker Desktop](https://www.docker.com/) — to use the devcontainer)
+- A free [Supabase](https://supabase.com/) project
+
+### Contributor setup (`.env`)
+
+You do **not** need Doppler access to work on this project.
+
+```bash
+pnpm install
+cp .env.example .env    # then fill in your Supabase URL and keys
+pnpm dev:env            # dev server at localhost:4321
+```
+
+Create a Supabase project, run `supabase/migrations/000_full_schema.sql` in its SQL
+editor, and copy the URL and keys from Settings → API into your `.env`. Only
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` are needed for the public site;
+`.env.example` documents the rest.
+
+`pnpm dev:env` and `pnpm build:env` are the `.env` equivalents of `pnpm dev` and
+`pnpm build`. They load the file via `node --env-file`, which the plain `astro`
+commands don't do — Astro only reads `.env` into `import.meta.env`, while the server
+code reads `process.env`.
 
 ### Devcontainer setup
 
 1. Open the repo in VS Code and reopen in the devcontainer (or use GitHub Codespaces).
 2. `pnpm install` runs automatically via `postCreateCommand`.
 
-### Secrets management (Doppler)
+### Secrets management (Doppler — maintainers)
 
-All environment variables (Supabase keys, git config, etc.) are managed via [Doppler](https://www.doppler.com/). The `doppler.yaml` at the repo root auto-selects the project and config.
+Maintainers manage environment variables via [Doppler](https://www.doppler.com/) rather than a local `.env`. Access is not needed to contribute — see the `.env` route above. The `doppler.yaml` at the repo root auto-selects the project and config.
 
 After the **first** devcontainer build:
 
@@ -44,7 +64,7 @@ doppler secrets set --config dev_personal GIT_USER_NAME="Your Name" GIT_USER_EMA
 
 Git config is applied automatically on container start via `postStartCommand`.
 
-All `pnpm` scripts (`dev`, `build`, `preview`) are wrapped with `doppler run --` so env vars are injected automatically.
+`pnpm dev` and `pnpm preview` are wrapped with `doppler run --` so env vars are injected automatically.
 
 ### Database setup
 
@@ -59,16 +79,22 @@ This creates all tables, views, RLS policies, and seeds the 12 job categories. C
 ### Start developing
 
 ```bash
-pnpm dev
+pnpm dev:env    # .env route
+pnpm dev        # Doppler route (maintainers)
 ```
 
 ## Commands
 
-| Command        | Action                               |
-| -------------- | ------------------------------------ |
-| `pnpm dev`     | Start dev server at `localhost:4321` |
-| `pnpm build`   | Build production site to `./dist/`   |
-| `pnpm preview` | Preview production build locally     |
+| Command          | Action                                         |
+| ---------------- | ---------------------------------------------- |
+| `pnpm dev:env`   | Dev server at `localhost:4321`, reading `.env` |
+| `pnpm build:env` | Production build, reading `.env`               |
+| `pnpm dev`       | Dev server via Doppler (maintainers)           |
+| `pnpm build`     | Production build to `./dist/`                  |
+| `pnpm preview`   | Preview production build via Doppler           |
+| `pnpm test`      | Run the test suite (Vitest)                    |
+| `pnpm format`    | Format with Prettier                           |
+| `pnpm lint:py`   | Lint `scraper/` with Ruff                      |
 
 ## URL structure
 
