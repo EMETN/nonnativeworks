@@ -170,7 +170,7 @@ jobs:
 
             - name: Post PR comment
               if: steps.diff.outputs.count != '0'
-              uses: actions/github-script@v8
+              uses: actions/github-script@v9
               # Company names come from the PR branch — pass via env, never
               # interpolate an expression into the script body.
               env:
