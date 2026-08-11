@@ -4,3 +4,23 @@ allowBuilds:
   esbuild: true
   sharp: true
   simple-git-hooks: true
+minimumReleaseAgeExclude:
+  - '@posthog/browser-common@0.5.0'
+  - '@sentry/astro@10.70.0'
+  - '@sentry/browser-utils@10.70.0'
+  - '@sentry/browser@10.70.0'
+  - '@sentry/core@10.70.0'
+  - '@sentry/feedback@10.70.0'
+  - '@sentry/node-core@10.70.0'
+  - '@sentry/node@10.70.0'
+  - '@sentry/opentelemetry@10.70.0'
+  - '@sentry/replay-canvas@10.70.0'
+  - '@sentry/replay@10.70.0'
+  - '@sentry/server-utils@10.70.0'
+  - '@supabase/auth-js@2.112.3'
+  - '@supabase/functions-js@2.112.3'
+  - '@supabase/postgrest-js@2.112.3'
+  - '@supabase/realtime-js@2.112.3'
+  - '@supabase/storage-js@2.112.3'
+  - '@supabase/supabase-js@2.112.3'
+  - posthog-js@1.415.2
