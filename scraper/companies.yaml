@@ -53,6 +53,10 @@ companies:
       url: https://jobs.arla.com
       min_positions: 10
 
+    - name: Autodesk
+      url: https://autodesk.wd1.myworkdayjobs.com/Ext?locationCountry=6a800a4736884df5826858d435650f45&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374
+      min_positions: 10
+
     - name: Bolt
       url: https://bolt.eu/en/careers/positions
       min_positions: 10
