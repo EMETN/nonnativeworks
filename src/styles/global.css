@@ -50,8 +50,14 @@
     margin: 0 0.375rem;
 }
 
-.hover-fade-item {
-    transition: opacity 0.2s ease;
+.hover-hl-item {
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hover-hl-item {
+        transition: none;
+    }
 }
 
 /* Custom dropdown chevron so the arrow keeps a comfortable margin from the edge */
@@ -66,12 +72,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .hover-fade-list:hover .hover-fade-item {
-        opacity: 0.25;
+    .hover-hl-list .hover-hl-item:hover,
+    .hover-hl-list .hover-hl-item:has(:focus-visible) {
+        background-color: rgba(15, 122, 79, 0.06);
     }
-    .hover-fade-list .hover-fade-item:hover,
-    .hover-fade-list .hover-fade-item:has(:focus-visible),
-    .hover-fade-list:has(.hover-fade-header:hover) .hover-fade-item {
-        opacity: 1;
+    .hover-hl-list .hover-hl-none:hover,
+    .hover-hl-list .hover-hl-none:has(:focus-visible) {
+        background-color: rgba(192, 57, 43, 0.06);
     }
 }
