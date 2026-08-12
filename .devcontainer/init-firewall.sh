@@ -127,6 +127,7 @@ for domain in \
     "ing.wd3.myworkdayjobs.com" \
     "nxp.wd3.myworkdayjobs.com" \
     "philips.wd3.myworkdayjobs.com" \
+    "autodesk.wd1.myworkdayjobs.com" \
     "wd3.myworkdaysite.com" \
     "barona.fi" \
     "nitor.com" \
@@ -152,6 +153,11 @@ for domain in \
     "bmwgroup.jobs" \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
+    "academicwork.se" \
+    "academicwork.no" \
+    "academicwork.dk" \
+    "academicwork.de" \
+    "academicwork.ch" \
     "happeo.recruitee.com" \
     "jobs.arla.com" \
     "jobs.ericsson.com" \
@@ -210,6 +216,14 @@ for domain in \
     "bayer.eightfold.ai" \
     "api-apply.lufthansagroup.careers" \
     "apply.lufthansagroup.careers" \
+    "careers.tekever.com" \
+    "careers.axa.com" \
+    "lvmh.com" \
+    "careers.societegenerale.com" \
+    "group.bnpparibas" \
+    "orange.jobs" \
+    "careers.loreal.com" \
+    "jobs.sanofi.com" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "playwright.azureedge.net" \
