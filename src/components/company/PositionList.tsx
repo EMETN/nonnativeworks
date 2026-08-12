@@ -72,7 +72,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
     );
 
     return (
-        <li class="border-b border-gray-100 hover-fade-item">
+        <li class="border-b border-gray-100 hover-hl-item">
             {pos.url ? (
                 <a
                     href={pos.url}
@@ -179,7 +179,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             </div>
 
             {/* Position list */}
-            <ul class="hover-fade-list">
+            <ul class="hover-hl-list">
                 {filtered.length === 0 ? (
                     <li class="py-12 text-center text-gray-500">
                         {search ? (

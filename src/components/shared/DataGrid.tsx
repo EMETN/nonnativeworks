@@ -141,13 +141,15 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
     const arrowSize = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
     const rowPy = 'py-3.5 sm:py-4';
 
+    const noPositions = item.english_positions === 0;
+
     // A company with no English-friendly positions has no meaningful detail page —
     // link straight out to its careers page (all positions) instead.
-    const noEnglish = item.english_positions === 0 && !!item.career_page_url;
+    const noEnglish = noPositions && !!item.career_page_url;
 
     return (
         <li
-            class={`border-b border-gray-100 dg-subgrid hover-fade-item${noEnglish ? ' opacity-25 hover:opacity-100' : ''}`}
+            class={`border-b border-gray-100 dg-subgrid hover-hl-item${noPositions ? ' hover-hl-none' : ''}`}
         >
             <a
                 href={noEnglish ? item.career_page_url! : item.href}
@@ -198,7 +200,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                             aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                         >
                             <span
-                                class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
+                                class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.english_positions)}
@@ -225,7 +227,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                         aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                     >
                         <span
-                            class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
+                            class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.english_positions)}
@@ -333,14 +335,14 @@ export default function DataGrid({
                 }
             `}</style>
             <ul
-                class="w-full hover-fade-list"
+                class="w-full hover-hl-list"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
                 <SizingRow items={items} compact={compact} />
 
                 {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
                 <li
-                    class="border-b border-gray-200 dg-subgrid hover-fade-header"
+                    class="border-b border-gray-200 dg-subgrid"
                     style={{ alignItems: 'center' }}
                 >
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
