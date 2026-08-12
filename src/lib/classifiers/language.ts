@@ -854,9 +854,21 @@ const REQUIREMENT_NEGATION_NONE_RE = /\bor\s+(?:in\s+)?english\b/;
 
 // Advantage prefix patterns that immediately precede a requirement signal phrase
 // (within ~80 characters), indicating the language is actually a nice-to-have.
-// e.g. "bonus points if you speak German"
-const REQUIREMENT_ADVANTAGE_PREFIX_RE =
-    /\b(?:bonus\s+points?\s+if(?:\s+you)?|bonus\s+if(?:\s+you)?|(?:it(?:'s|\s+is)\s+)?(?:a\s+)?(?:big\s+)?(?:plus|bonus|advantage|benefit)\s+if(?:\s+you)?|nice\s+to\s+have\s+(?:if\s+you\s+)?|would\s+be\s+(?:great|nice|ideal|a\s+plus|an\s+advantage|a\s+bonus|a\s+benefit)\s+if(?:\s+you)?)\s*$/;
+// e.g. "bonus points if you speak German", "it is meritorious if you have Finnish skills"
+//
+// `IF_YOU` allows one filler verb between "you" and the language mention
+// ("if you have/possess/hold Finnish skills") — without it, only phrasings
+// where the signal itself is the verb ("if you speak German") would match.
+//
+// The trailing `[:.]?` tolerates a colon (a literal list intro, e.g. "meritorious
+// if you have:") or a period — block-tag newlines from stripHtml are converted to
+// ". " earlier (see the `combined` construction), so a cue phrase immediately
+// followed by a bullet-list line break ("It is meritorious if you have\n• Finnish
+// skills") would otherwise fail to match right at the sentence boundary.
+const IF_YOU = 'if(?:\\s+you(?:\\s+\\w+)?)?';
+const REQUIREMENT_ADVANTAGE_PREFIX_RE = new RegExp(
+    `\\b(?:bonus\\s+points?\\s+${IF_YOU}|bonus\\s+${IF_YOU}|(?:it(?:'s|\\s+is)\\s+)?(?:a\\s+)?(?:big\\s+)?(?:plus|bonus|advantage|benefit|meritorious)\\s+${IF_YOU}|nice\\s+to\\s+have\\s+(?:${IF_YOU}\\s+)?|would\\s+be\\s+(?:great|nice|ideal|a\\s+plus|an\\s+advantage|a\\s+bonus|a\\s+benefit|meritorious)\\s+${IF_YOU})\\s*[:.]?\\s*$`,
+);
 
 // Advantage modifiers that appear DIRECTLY after a requirement signal (no gap words).
 // Anchored with ^ so we only match when the modifier is the immediate continuation of
@@ -1266,7 +1278,17 @@ export function detectNativeLanguage(
         }
         return false;
     };
-    const anyGenuineRequirement = languages.some(languageHasGenuineRequirement);
+    // Also true when a DIFFERENT tracked language (not one of the country's own)
+    // is genuinely required — e.g. "Fluent German and English skills, and Finnish
+    // language skills are an advantage" on a Finland job. Without this, Phase 1b/2a
+    // would short-circuit on Finnish's own (negated-to-advantage) mention before
+    // Phase 2a-cross ever gets a chance to flag German as the real requirement.
+    const anyGenuineRequirement =
+        languages.some(languageHasGenuineRequirement) ||
+        Object.keys(KEYWORD_TO_CANONICAL_NAME).some(
+            (kw) =>
+                !languages.includes(kw) && languageHasGenuineRequirement(kw),
+        );
 
     // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
     // Check for explicit "X is a plus / an advantage" phrases before running
