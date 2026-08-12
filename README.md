@@ -158,6 +158,7 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 
 ## Credits
 
+- Hosting — [Netlify](https://www.netlify.com), via their [Open Source Plan](https://www.netlify.com/legal/open-source-policy/)
 - Flag icons — [Flagpedia](https://flagpedia.net)
 
 ## License
