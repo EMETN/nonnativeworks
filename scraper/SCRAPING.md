@@ -177,15 +177,15 @@ Additional features:
 
 For career sites that need dedicated logic beyond what the generic config supports:
 
-| Platform      | File                        | Detection                                       |
-| ------------- | --------------------------- | ----------------------------------------------- |
-| Academic Work | `platforms/academicwork.py` | URL contains `academicwork.fi`                  |
-| Arla          | `platforms/arla.py`         | URL contains `jobs.arla.com`                    |
-| Attrax        | `platforms/attrax.py`       | HTML contains `attrax-vacancy-tile`             |
-| Barona        | `platforms/barona.py`       | URL contains `baronacareers.com` or `barona.fi` |
-| Njoyn         | `platforms/njoyn.py`        | URL contains `njoyn.com`                        |
-| Rovio         | `platforms/rovio.py`        | URL contains `rovio.com`                        |
-| Zalando       | `platforms/zalando.py`      | URL contains `jobs.zalando.com`                 |
+| Platform      | File                        | Detection                                          |
+| ------------- | --------------------------- | -------------------------------------------------- |
+| Academic Work | `platforms/academicwork.py` | URL contains `academicwork.fi/.se/.no/.dk/.de/.ch` |
+| Arla          | `platforms/arla.py`         | URL contains `jobs.arla.com`                       |
+| Attrax        | `platforms/attrax.py`       | HTML contains `attrax-vacancy-tile`                |
+| Barona        | `platforms/barona.py`       | URL contains `baronacareers.com` or `barona.fi`    |
+| Njoyn         | `platforms/njoyn.py`        | URL contains `njoyn.com`                           |
+| Rovio         | `platforms/rovio.py`        | URL contains `rovio.com`                           |
+| Zalando       | `platforms/zalando.py`      | URL contains `jobs.zalando.com`                    |
 
 ### URL overrides
 

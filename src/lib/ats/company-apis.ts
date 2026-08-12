@@ -1157,7 +1157,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     urlSubstring: string;
     name: string;
 }> = [
-    { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
+    { urlSubstring: 'academicwork.', name: 'Academic Work' },
     { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
     { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
     { urlSubstring: 'jobs.arla.com', name: 'Arla' },
