@@ -1490,6 +1490,26 @@ const COMPANY_COUNTRY_FALLBACKS: Array<{
         country: { name: 'Finland', code: 'FI', slug: 'finland' },
     },
     {
+        urlSubstring: 'academicwork.se',
+        country: { name: 'Sweden', code: 'SE', slug: 'sweden' },
+    },
+    {
+        urlSubstring: 'academicwork.no',
+        country: { name: 'Norway', code: 'NO', slug: 'norway' },
+    },
+    {
+        urlSubstring: 'academicwork.dk',
+        country: { name: 'Denmark', code: 'DK', slug: 'denmark' },
+    },
+    {
+        urlSubstring: 'academicwork.de',
+        country: { name: 'Germany', code: 'DE', slug: 'germany' },
+    },
+    {
+        urlSubstring: 'academicwork.ch',
+        country: { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
+    },
+    {
         urlSubstring: 'sok.wd',
         country: { name: 'Finland', code: 'FI', slug: 'finland' },
     },
