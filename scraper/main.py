@@ -23,7 +23,7 @@ import yaml
 
 from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import extract_jobs
-from platforms.academicwork import scrape_academicwork_static
+from platforms.academicwork import scrape_academicwork_static, site_for_url
 from platforms.arla import scrape_arla_static
 from platforms.attrax import (
     enrich_attrax_descriptions,
@@ -79,7 +79,7 @@ ATTRAX_COUNTRY_SITES: dict[str, str] = {
 
 def detect_platform(html: str, url: str = "") -> str | None:
     """Detect the ATS platform from page HTML or URL."""
-    if "academicwork.fi" in url:
+    if site_for_url(url) is not None:
         return PLATFORM_ACADEMICWORK
     if "jobs.arla.com" in url:
         return PLATFORM_ARLA
@@ -201,7 +201,8 @@ def main():
 
     if platform == PLATFORM_ACADEMICWORK:
         print(
-            "academicwork.fi detected — using dedicated static scraper", file=sys.stderr
+            "Academic Work site detected — using dedicated static scraper",
+            file=sys.stderr,
         )
         try:
             jobs = scrape_academicwork_static(url)
