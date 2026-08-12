@@ -195,20 +195,39 @@ function parseRetryAfterMs(header: string | null): number | null {
     return Number.isNaN(asDate) ? null : Math.max(0, asDate - Date.now());
 }
 
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+
 /**
- * fetch() wrapper that retries on 429 with exponential backoff + jitter,
- * honoring a Retry-After header when the server sends one. Workday throttles
- * bursts of concurrent detail-page requests (common for large companies like
- * Thales with hundreds of postings), and without this the batch loops below
- * would silently lose data for every job that got rate-limited.
+ * fetch() wrapper that retries on 429/502/503/504 and on thrown network errors,
+ * with exponential backoff + jitter, honoring a Retry-After header when the
+ * server sends one. Workday throttles bursts of concurrent detail-page requests
+ * (common for large companies like ABB and Thales with hundreds of postings),
+ * and without this the batch loops below would silently lose data for every job
+ * that got rate-limited or hit a transient gateway error — callers here
+ * (fetchJobLocations) treat any failure as "no location data" and quietly drop
+ * the posting into the unresolvable-location bucket instead of retrying.
  */
 async function fetchWithBackoff(
     url: string,
     init: RequestInit,
 ): Promise<Response> {
     for (let attempt = 0; ; attempt++) {
-        const res = await fetch(url, init);
-        if (res.status === 429 && attempt < MAX_BACKOFF_RETRIES) {
+        let res: Response;
+        try {
+            res = await fetch(url, init);
+        } catch (e) {
+            if (attempt < MAX_BACKOFF_RETRIES) {
+                await delay(
+                    BASE_BACKOFF_MS * 2 ** attempt + Math.random() * 250,
+                );
+                continue;
+            }
+            throw e;
+        }
+        if (
+            RETRYABLE_STATUSES.has(res.status) &&
+            attempt < MAX_BACKOFF_RETRIES
+        ) {
             const wait =
                 parseRetryAfterMs(res.headers.get('retry-after')) ??
                 BASE_BACKOFF_MS * 2 ** attempt + Math.random() * 250;
