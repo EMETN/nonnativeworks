@@ -602,15 +602,27 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'gofore.com': {
-        // WordPress REST API with Polylang (lang=en returns English-language postings).
+        // WordPress REST API with Polylang. gofore.com/tyopaikat/ (lang=fi) and
+        // gofore.com/en/careers/ (lang=en) are two separate, non-overlapping job
+        // lists — each posting exists in exactly one language (verified: no shared
+        // ids between the lang=fi and lang=en responses; each job's own
+        // `translations` field only ever contains itself). So this isn't the usual
+        // "same jobs, richer English descriptions" secondaryUrl case — it's two
+        // independent pools of postings that both need to be counted. Using
+        // secondaryUrl still does the right thing here: matching by id never
+        // succeeds (nothing to replace), so every lang=en job is simply appended
+        // as an "English-only" addition — a clean union of both sites. Finnish
+        // (lang=fi) is primary so the complete position list — including
+        // Finnish-only jobs, which correctly signal a native-language
+        // requirement — drives the stats.
         // No location field in the API response — city names are extracted from the HTML
         // of each job page and resolved to countries via the city-to-country map.
-        url: 'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=en',
+        url: 'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=fi',
         method: 'GET',
         headers: {
             accept: '*/*',
             'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,fi;q=0.7',
-            referer: 'https://gofore.com/en/careers/',
+            referer: 'https://gofore.com/tyopaikat/',
             'user-agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
         },
@@ -622,13 +634,15 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             id: 'id',
         },
         companyName: 'Gofore',
-        // content.rendered is the full English post body — use it directly for language
-        // classification instead of fetching individual job pages.
+        // content.rendered is the full post body in that request's language — use it
+        // directly for language classification instead of fetching individual job pages.
         descriptionFields: ['content.rendered'],
         // No location field in the API response — city names are extracted from the HTML
         // of each job page and resolved to countries via the city-to-country map.
         // Location lives in: <div class="locations"><h3>…</h3><p>City1, City2</p></div>
         locationFromHtml: 'class="locations"[\\s\\S]*?<p>(.*?)<\\/p>',
+        secondaryUrl:
+            'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=en',
     },
 
     'accenture.com': {
