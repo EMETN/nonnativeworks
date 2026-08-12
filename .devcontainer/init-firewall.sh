@@ -152,6 +152,12 @@ cdn_domains=(
 company_domains=(
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
+    "academicwork.fi"
+    "academicwork.se"
+    "academicwork.no"
+    "academicwork.dk"
+    "academicwork.de"
+    "academicwork.ch"
     "www.accenture.com"  # Accenture
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
@@ -161,6 +167,7 @@ company_domains=(
     "careers.amd.com"  # AMD
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
+    "autodesk.wd1.myworkdayjobs.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "bmwgroup.jobs"  # BMW
