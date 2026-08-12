@@ -1802,6 +1802,25 @@ export const CASES: FixtureCase[] = [
         requires: false,
         advantage: true,
     },
+    {
+        label: '2a advantage-prefix — "meritorious if you have" + bare "Finnish skills" after a bullet-point line break',
+        title: 'Support Engineer',
+        // The line break (from a bullet list item) becomes a sentence boundary in
+        // `combined` — the advantage-prefix cue must still reach across it to the
+        // bare "Finnish skills" signal on the next line.
+        desc: 'It is meritorious if you have\n    Finnish skills',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '2a advantage-prefix — "Working language is English, Finnish is an asset."',
+        title: 'Support Engineer',
+        desc: 'Working language is English, Finnish is an asset.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
 
     // ── Phase 2a-nordic: Group Nordic requirement phrases ─────────────────────
 
@@ -1903,6 +1922,18 @@ export const CASES: FixtureCase[] = [
         // is a generic advantage phrase — the requirement must win.
         desc: 'You must have excellent written and spoken Dutch. Additional languages is an asset.',
         country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: "2a-cross — cross-language requirement wins over the country's own (advantage-only) language",
+        title: 'Support Engineer',
+        // German is genuinely required; Finnish (Finland's own tracked language) is
+        // only ever mentioned as an advantage. Without cross-language priority,
+        // Finnish's advantage phrase would short-circuit Phase 1b/2a before
+        // Phase 2a-cross ever gets a chance to flag the German requirement.
+        desc: 'Fluent German and English skills, and Finnish language skills are an advantage.',
+        country: 'FI',
         requires: true,
         advantage: false,
     },
