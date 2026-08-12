@@ -556,20 +556,21 @@ function buildAdvantageRegex(lang: string): RegExp {
 }
 
 /**
- * Matches "{lang}[, lang2, ...] or [additional/another/other/similar] [adj] language[s]
+ * Matches "{lang}[, lang2, ...] (or|and) [additional/another/other/similar] [adj] language[s]
  * followed by an advantage phrase" — e.g.:
  *   "German, French, or other European languages are a strong advantage"
  *   "German or additional European languages are a plus"
  *   "German or another European language considered a strong advantage"
+ *   "Dutch and other European languages are highly valued"
  */
 function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const advantageOp =
         `(?:considered\\s+)?` +
         `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
-        `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|plus|asset|bonus|merit|benefit)\\b`;
+        `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|plus|asset|bonus|merit|benefit|valuable|valued|welcome|appreciated)\\b`;
     return new RegExp(
-        `\\b${escaped}(?:\\s*,\\s*(?!or\\s)[a-z]+)*(?:\\s*,)?\\s+or\\s+(?:additional|another|other|similar)\\s+[a-z]+\\s+languages?\\s+${advantageOp}`,
+        `\\b${escaped}(?:\\s*,\\s*(?!(?:or|and)\\s)[a-z]+)*(?:\\s*,)?\\s+(?:or|and)\\s+(?:additional|another|other|similar)\\s+[a-z]+\\s+languages?\\s+${advantageOp}`,
         'i',
     );
 }
@@ -870,14 +871,26 @@ const REQUIREMENT_ADVANTAGE_PREFIX_RE = new RegExp(
     `\\b(?:bonus\\s+points?\\s+${IF_YOU}|bonus\\s+${IF_YOU}|(?:it(?:'s|\\s+is)\\s+)?(?:a\\s+)?(?:big\\s+)?(?:plus|bonus|advantage|benefit|meritorious)\\s+${IF_YOU}|nice\\s+to\\s+have\\s+(?:${IF_YOU}\\s+)?|would\\s+be\\s+(?:great|nice|ideal|a\\s+plus|an\\s+advantage|a\\s+bonus|a\\s+benefit|meritorious)\\s+${IF_YOU})\\s*[:.]?\\s*$`,
 );
 
-// Advantage modifiers that appear DIRECTLY after a requirement signal (no gap words).
-// Anchored with ^ so we only match when the modifier is the immediate continuation of
-// the signal — prevents "Fluent Finnish required. Swedish is preferred." from falsely
-// downgrading the Finnish requirement (the 80-char window check would catch it otherwise).
-// Covers: "is preferred/desirable/beneficial/nice to have", "would be beneficial", and
-// the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
-const DIRECT_ADVANTAGE_SUFFIX_RE =
-    /^\s+(?:preferred\b|(?:is|are)\s+(?:preferred|preferable|desirable|beneficial|nice\s+to\s+have|considered\s+an?\s+additional\s+qualification)|would\s+be\s+(?:preferred|preferable|desirable|beneficial|nice(?:\s+to\s+have)?)|(?:is|are|would\s+be)(?:\s+(?:seen\s+as|\w+(?:\s+as)?))?\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\b|(?:is|are|would\s+be)\s+of\s+(?:\w+\s+){0,2}added\s+value\b)\b/;
+// Alternation of every recognized language keyword, used below to let the advantage-cue
+// check skip over an intervening list of other languages, e.g. "Swedish, Danish or
+// Norwegian would be beneficial" — after matching the "Swedish" signal, the ", Danish or
+// Norwegian" gap must be consumed before reaching "would be beneficial".
+const LANG_KEYWORD_ALT_SRC = [...ALL_LANG_KEYWORDS]
+    .map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+const ADVANTAGE_SUFFIX_LANG_LIST_GAP = `(?:\\s*,\\s*(?:${LANG_KEYWORD_ALT_SRC}))*(?:\\s*,?\\s+or\\s+(?:${LANG_KEYWORD_ALT_SRC}))?`;
+
+// Advantage modifiers that appear DIRECTLY after a requirement signal, optionally past a
+// trailing list of other languages (see ADVANTAGE_SUFFIX_LANG_LIST_GAP above). Anchored
+// with ^ so we only match when the modifier immediately continues the signal (plus any
+// language-list gap) — prevents "Fluent Finnish required. Swedish is preferred." from
+// falsely downgrading the Finnish requirement (the 80-char window check would catch it
+// otherwise), since "required." doesn't satisfy the gap or the cue alternation below.
+// Covers: "is preferred/desirable/beneficial/welcome/nice to have", "would be beneficial",
+// and the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
+const DIRECT_ADVANTAGE_SUFFIX_RE = new RegExp(
+    `^${ADVANTAGE_SUFFIX_LANG_LIST_GAP}\\s+(?:preferred\\b|(?:is|are)\\s+(?:preferred|preferable|desirable|beneficial|welcome|nice\\s+to\\s+have|considered\\s+an?\\s+additional\\s+qualification)|would\\s+be\\s+(?:preferred|preferable|desirable|beneficial|nice(?:\\s+to\\s+have)?)|(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b|(?:is|are|would\\s+be)\\s+of\\s+(?:\\w+\\s+){0,2}added\\s+value\\b)\\b`,
+);
 
 type NegationKind = 'advantage' | 'none' | false;
 
