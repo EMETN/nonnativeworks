@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Layer 2 scraper for NonNativeWorks.
+Layer 2 scraper for nonnativeworks!.
 
 Usage:
     python3 main.py <career-page-url>
@@ -306,7 +306,7 @@ def main():
 
         _session = _req.Session()
         _session.headers["User-Agent"] = (
-            "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+            "Mozilla/5.0 (compatible; nonnativeworks-Scraper/1.0)"
         )
         enrich_attrax_descriptions(jobs, _session)
     elif len(jobs) < MIN_JOBS_STATIC:

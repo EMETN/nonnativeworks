@@ -80,7 +80,7 @@ def scrape_attrax_static(url: str) -> list[dict]:
 
     session = requests.Session()
     session.headers["User-Agent"] = (
-        "Mozilla/5.0 (compatible; NonNativeWorks-Scraper/1.0)"
+        "Mozilla/5.0 (compatible; nonnativeworks-Scraper/1.0)"
     )
 
     jobs: list[dict] = []
