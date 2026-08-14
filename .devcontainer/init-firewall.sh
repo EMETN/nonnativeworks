@@ -130,8 +130,6 @@ for domain in \
     "gofore.com" \
     "op-careers.fi" \
     "jobs.nokia.com" \
-    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
     "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
     "www.nordea.com" \
@@ -188,7 +186,6 @@ for domain in \
     "www.metso.com" \
     "career2.successfactors.eu" \
     "proton.me" \
-    "jobs.booking.com" \
     "akqa.com" \
     "deptagency.com" \
     "cg-jobstream-api.azurewebsites.net" \
@@ -198,15 +195,11 @@ for domain in \
     "careers.telekom.com" \
     "jobs.ikea.com" \
     "www.randstad.com" \
-    "randstad.com" \
     "revolut.com" \
     "careers.wartsila.com" \
     "edenred.com" \
     "careers.thalesgroup.com" \
-    "careers.publicisgroupe.com" \
-    "careers.telekom.com" \
     "uber.com" \
-    "jobs.ikea.com" \
     "careers.deliveryhero.com" \
     "swecogroup.com" \
     "lifeatspotify.com" \
@@ -216,7 +209,6 @@ for domain in \
     "aiven.io" \
     "career.nordnetab.com" \
     "search.prod.gcw.ng.telekom.net" \
-    "ejqi.fa.ocs.oraclecloud.eu" \
     "scout24.com" \
     "asml.com" \
     "jobsapi-google.m-cloud.io" \
