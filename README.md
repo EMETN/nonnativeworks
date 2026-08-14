@@ -1,4 +1,4 @@
-# NonNativeWorks
+# nonnativeworks!
 
 Discover companies that welcome non-native language speakers. Track open positions across countries worldwide.
 
