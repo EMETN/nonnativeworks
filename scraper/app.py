@@ -83,7 +83,7 @@ except ImportError:
 SCRAPER_SECRET = os.environ.get("SCRAPER_SECRET", "")
 SCRAPER_MAIN = Path(__file__).parent / "main.py"
 
-app = FastAPI(title="NonNativeWorks scraper service", docs_url=None, redoc_url=None)
+app = FastAPI(title="nonnativeworks! scraper service", docs_url=None, redoc_url=None)
 
 
 def _verify_secret(x_scraper_secret: str | None) -> None:

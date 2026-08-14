@@ -26,8 +26,8 @@ const {
 
 const siteTitle =
     title === 'Home'
-        ? 'NonNativeWorks — Work abroad in English'
-        : `${title} — NonNativeWorks`;
+        ? 'nonnativeworks! — Work abroad in English'
+        : `${title} — nonnativeworks!`;
 
 const canonical = Astro.url.href;
 const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
@@ -67,7 +67,7 @@ const breadcrumbJsonLd =
         <meta property="og:url" content={canonical} />
         <meta property="og:title" content={siteTitle} />
         <meta property="og:description" content={description} />
-        <meta property="og:site_name" content="NonNativeWorks" />
+        <meta property="og:site_name" content="nonnativeworks!" />
         {ogImage && <meta property="og:image" content={ogImageUrl} />}
 
         <!-- Twitter Card -->
