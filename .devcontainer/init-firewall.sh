@@ -57,6 +57,33 @@ do
     ipset add allowed-domains "$cidr" -exist
 done
 
+# Vercel's shared cname.vercel-dns.com rotates across these /24s on a ~4min TTL, so an
+# init-time IP snapshot goes stale before the scraper connects (careers.uniper.energy, jobs.eon.com).
+echo "Adding Vercel IP ranges..."
+for cidr in \
+    76.76.21.0/24 \
+    66.33.60.0/24
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
+# Akamai edge (AS20940) rotates IPs across a large pool on a ~20-77s TTL, so an init-time
+# snapshot goes stale before the scraper connects (www.novonordisk.com).
+echo "Adding Akamai edge IP ranges..."
+for cidr in \
+    2.16.0.0/13 \
+    23.0.0.0/12 \
+    23.32.0.0/11 \
+    23.192.0.0/11 \
+    72.246.0.0/15 \
+    88.221.0.0/16 \
+    96.6.0.0/15 \
+    104.64.0.0/10 \
+    184.24.0.0/13
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)
@@ -107,7 +134,6 @@ for domain in \
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
     "ejqi.fa.ocs.oraclecloud.eu" \
     "careers.tieto.com" \
-    "nordea.com" \
     "www.nordea.com" \
     "careers.vaisala.com" \
     "cgi.njoyn.com" \
@@ -155,9 +181,7 @@ for domain in \
     "happeo.recruitee.com" \
     "jobs.arla.com" \
     "jobs.ericsson.com" \
-    "teliacompany.com" \
     "jobs.fortum.com" \
-    "novonordisk.com" \
     "careers.carlsberg.com" \
     "careers.orkla.com" \
     "metso.com" \
@@ -186,12 +210,10 @@ for domain in \
     "careers.deliveryhero.com" \
     "swecogroup.com" \
     "lifeatspotify.com" \
-    "futurice.com" \
     "nexigroup.com" \
     "jobs.deel.com" \
     "deel.com" \
     "aiven.io" \
-    "upcloud.teamtailor.com" \
     "career.nordnetab.com" \
     "search.prod.gcw.ng.telekom.net" \
     "ejqi.fa.ocs.oraclecloud.eu" \
@@ -202,9 +224,6 @@ for domain in \
     "careers.vestas.com" \
     "werkenbijabnamro.nl" \
     "sebgroup.com" \
-    "careers.uniper.energy" \
-    "jobs.eon.com" \
-    "careers.eon.com" \
     "careers.dhl.com" \
     "careers.munichre.com" \
     "bayer.eightfold.ai" \
@@ -212,7 +231,6 @@ for domain in \
     "apply.lufthansagroup.careers" \
     "pypi.org" \
     "files.pythonhosted.org" \
-    "playwright.azureedge.net" \
     "storage.googleapis.com" \
     "eu.i.posthog.com" \
     "eu-assets.i.posthog.com" \
@@ -241,10 +259,19 @@ done
 for cdn_domain in \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "jobs.booking.com" ; do
-    for dns_server in "8.8.8.8" "1.1.1.1"; do
-        echo "Resolving $cdn_domain via $dns_server..."
-        cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
+    "jobs.booking.com" \
+    "careers.futurice.com" \
+    "upcloud.teamtailor.com" ; do
+    # Akamai geo-routes DNS by resolver, so 8.8.8.8/1.1.1.1 return a different edge
+    # cluster than the one the container connects to; query the local resolver too.
+    for dns_server in "system" "8.8.8.8" "1.1.1.1"; do
+        if [ "$dns_server" = "system" ]; then
+            echo "Resolving $cdn_domain via system resolver..."
+            cdn_ips=$(dig +noall +answer A "$cdn_domain" | awk '$4 == "A" {print $5}')
+        else
+            echo "Resolving $cdn_domain via $dns_server..."
+            cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
+        fi
         while read -r ip; do
             if [[ -z "$ip" ]]; then continue; fi
             if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
