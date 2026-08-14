@@ -28,7 +28,7 @@
     },
     "lint-staged": {
         "*": "secretlint --maskSecrets",
-        "*.{ts,tsx,astro,js,mjs,json,yaml,yml,md}": "prettier --write",
+        "*.{ts,tsx,astro,js,mjs,json,yaml,yml,md,webmanifest}": "prettier --write",
         "scraper/**/*.py": "node scripts/ruff-format.mjs"
     },
     "dependencies": {

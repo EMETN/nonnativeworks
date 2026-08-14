@@ -1,4 +1,4 @@
--- NonNativeWorks: Initial Schema
+-- nonnativeworks!: Initial Schema
 -- Run this in your Supabase SQL editor
 
 -- Enable UUID generation

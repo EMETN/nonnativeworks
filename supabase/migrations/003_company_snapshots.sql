@@ -1,4 +1,4 @@
--- NonNativeWorks: Company snapshots for trend tracking
+-- nonnativeworks!: Company snapshots for trend tracking
 -- Records a daily snapshot of position counts per (company, country) on each upload.
 -- Old positions are replaced on update; snapshots persist indefinitely.
 
