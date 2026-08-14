@@ -57,6 +57,33 @@ do
     ipset add allowed-domains "$cidr" -exist
 done
 
+# Vercel's shared cname.vercel-dns.com rotates across these /24s on a ~4min TTL, so an
+# init-time IP snapshot goes stale before the scraper connects (careers.uniper.energy, jobs.eon.com).
+echo "Adding Vercel IP ranges..."
+for cidr in \
+    76.76.21.0/24 \
+    66.33.60.0/24
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
+# Akamai edge (AS20940) rotates IPs across a large pool on a ~20-77s TTL, so an init-time
+# snapshot goes stale before the scraper connects (www.novonordisk.com).
+echo "Adding Akamai edge IP ranges..."
+for cidr in \
+    2.16.0.0/13 \
+    23.0.0.0/12 \
+    23.32.0.0/11 \
+    23.192.0.0/11 \
+    72.246.0.0/15 \
+    88.221.0.0/16 \
+    96.6.0.0/15 \
+    104.64.0.0/10 \
+    184.24.0.0/13
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)
@@ -80,145 +107,143 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.com" \
-    "marketplace.visualstudio.com" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com" \
-    "movbttbpcfrwrgshffef.supabase.co" \
-    "aws-0-eu-central-1.pooler.supabase.com" \
-    "api.doppler.com" \
-    "cli.doppler.com" \
-    "packages.doppler.com" \
-    "boards-api.greenhouse.io" \
-    "api.lever.co" \
-    "api.eu.lever.co" \
-    "jobs.volvogroup.com" \
-    "api.ashbyhq.com" \
-    "apply.workable.com" \
-    "gofore.com" \
-    "op-careers.fi" \
-    "jobs.nokia.com" \
-    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "ejqi.fa.ocs.oraclecloud.eu" \
-    "careers.tieto.com" \
-    "nordea.com" \
-    "www.nordea.com" \
-    "careers.vaisala.com" \
-    "cgi.njoyn.com" \
-    "www.accenture.com" \
-    "posti.wd3.myworkdayjobs.com" \
-    "sok.wd502.myworkdayjobs.com" \
-    "ag.wd3.myworkdayjobs.com" \
-    "if.wd3.myworkdayjobs.com" \
-    "equinor.wd3.myworkdayjobs.com" \
-    "storaenso.wd502.myworkdayjobs.com" \
-    "kone.wd3.myworkdayjobs.com" \
-    "finnair.wd103.myworkdayjobs.com" \
-    "maersk.wd3.myworkdayjobs.com" \
-    "sanoma.wd3.myworkdayjobs.com" \
-    "fiskars.wd3.myworkdayjobs.com" \
-    "thales.wd3.myworkdayjobs.com" \
-    "ing.wd3.myworkdayjobs.com" \
-    "nxp.wd3.myworkdayjobs.com" \
-    "philips.wd3.myworkdayjobs.com" \
-    "wd3.myworkdaysite.com" \
-    "barona.fi" \
-    "nitor.com" \
-    "alpha-sense.com" \
-    "rovio.com" \
-    "yousician.com" \
-    "careers.microsoft.com" \
-    "apply.careers.microsoft.com" \
-    "s-pankki.fi" \
-    "careers.amd.com" \
-    "careers.wolt.com" \
-    "jobs.zalando.com" \
-    "bolt.eu" \
-    "jobs.sap.com" \
-    "jobs.siemens-healthineers.com" \
-    "jobs.siemens.com" \
-    "solita.fi" \
-    "careers.hiab.com" \
-    "jobs.neste.com" \
-    "kesko.fi" \
-    "konecranes.careers" \
-    "careers.allianz.com" \
-    "bmwgroup.jobs" \
-    "jobs.volkswagen-group.com" \
-    "academicwork.fi" \
-    "happeo.recruitee.com" \
-    "jobs.arla.com" \
-    "jobs.ericsson.com" \
-    "teliacompany.com" \
-    "jobs.fortum.com" \
-    "novonordisk.com" \
-    "careers.carlsberg.com" \
-    "careers.orkla.com" \
-    "metso.com" \
-    "www.metso.com" \
-    "career2.successfactors.eu" \
-    "proton.me" \
-    "jobs.booking.com" \
-    "akqa.com" \
-    "deptagency.com" \
-    "cg-jobstream-api.azurewebsites.net" \
-    "capgemini.com" \
-    "careers.publicisgroupe.com" \
-    "careers.stellantis.com" \
-    "careers.telekom.com" \
-    "jobs.ikea.com" \
-    "www.randstad.com" \
-    "randstad.com" \
-    "revolut.com" \
-    "careers.wartsila.com" \
-    "edenred.com" \
-    "careers.thalesgroup.com" \
-    "careers.publicisgroupe.com" \
-    "careers.telekom.com" \
-    "uber.com" \
-    "jobs.ikea.com" \
-    "careers.deliveryhero.com" \
-    "swecogroup.com" \
-    "lifeatspotify.com" \
-    "futurice.com" \
-    "nexigroup.com" \
-    "jobs.deel.com" \
-    "deel.com" \
-    "aiven.io" \
-    "upcloud.teamtailor.com" \
-    "career.nordnetab.com" \
-    "search.prod.gcw.ng.telekom.net" \
-    "ejqi.fa.ocs.oraclecloud.eu" \
-    "scout24.com" \
-    "asml.com" \
-    "jobsapi-google.m-cloud.io" \
-    "careers.theheinekencompany.com" \
-    "careers.vestas.com" \
-    "werkenbijabnamro.nl" \
-    "sebgroup.com" \
-    "careers.uniper.energy" \
-    "jobs.eon.com" \
-    "careers.eon.com" \
-    "careers.dhl.com" \
-    "careers.munichre.com" \
-    "bayer.eightfold.ai" \
-    "api-apply.lufthansagroup.careers" \
-    "apply.lufthansagroup.careers" \
-    "pypi.org" \
-    "files.pythonhosted.org" \
-    "playwright.azureedge.net" \
-    "storage.googleapis.com" \
-    "eu.i.posthog.com" \
-    "eu-assets.i.posthog.com" \
-    "eu.posthog.com" \
-    "o4511162204225536.ingest.de.sentry.io" \
-    "host.docker.internal" ; do
+# Resolve and add other allowed domains, split into dev/service infrastructure,
+# ATS/recruiting platforms, and the company career sites we scrape (each alphabetical).
+tool_domains=(
+    "api.anthropic.com"  # Anthropic
+    "host.docker.internal"  # Docker host
+    "api.doppler.com"  # Doppler
+    "cli.doppler.com"  # Doppler
+    "packages.doppler.com"  # Doppler
+    "storage.googleapis.com"  # Google Cloud Storage
+    "registry.npmjs.org"  # npm
+    "eu-assets.i.posthog.com"  # PostHog
+    "eu.i.posthog.com"  # PostHog
+    "eu.posthog.com"  # PostHog
+    "files.pythonhosted.org"  # PyPI
+    "pypi.org"  # PyPI
+    "o4511162204225536.ingest.de.sentry.io"  # Sentry
+    "sentry.io"  # Sentry
+    "statsig.com"  # Statsig
+    "aws-0-eu-central-1.pooler.supabase.com"  # Supabase
+    "movbttbpcfrwrgshffef.supabase.co"  # Supabase
+    "marketplace.visualstudio.com"  # VS Code
+    "update.code.visualstudio.com"  # VS Code
+    "vscode.blob.core.windows.net"  # VS Code
+)
+ats_domains=(
+    "api.ashbyhq.com"  # Ashby
+    "boards-api.greenhouse.io"  # Greenhouse
+    "api.eu.lever.co"  # Lever
+    "api.lever.co"  # Lever
+    "career2.successfactors.eu"  # SuccessFactors
+    "apply.workable.com"  # Workable
+    "wd3.myworkdaysite.com"  # Workday
+)
+# CDN/multi-node hosts — each edge answers with a different slice of the IP pool, so these
+# are resolved separately below via several DNS resolvers (not the single-resolver loop).
+cdn_domains=(
+    "jobs.booking.com"  # Booking.com
+    "careers.futurice.com"  # Futurice
+    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
+    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Orkla, Nokia)
+    "upcloud.teamtailor.com"  # UpCloud
+)
+company_domains=(
+    "werkenbijabnamro.nl"  # ABN AMRO
+    "academicwork.fi"  # Academic Work
+    "www.accenture.com"  # Accenture
+    "ag.wd3.myworkdayjobs.com"  # Airbus
+    "aiven.io"  # Aiven
+    "akqa.com"  # AKQA
+    "careers.allianz.com"  # Allianz
+    "alpha-sense.com"  # AlphaSense
+    "careers.amd.com"  # AMD
+    "jobs.arla.com"  # Arla
+    "asml.com"  # ASML
+    "barona.fi"  # Barona
+    "bayer.eightfold.ai"  # Bayer
+    "bmwgroup.jobs"  # BMW
+    "bolt.eu"  # Bolt
+    "capgemini.com"  # Capgemini
+    "cg-jobstream-api.azurewebsites.net"  # Capgemini
+    "careers.carlsberg.com"  # Carlsberg
+    "cgi.njoyn.com"  # CGI
+    "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
+    "deel.com"  # Deel
+    "careers.deliveryhero.com"  # Delivery Hero
+    "deptagency.com"  # DEPT
+    "careers.telekom.com"  # Deutsche Telekom
+    "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
+    "careers.dhl.com"  # DHL
+    "edenred.com"  # Edenred
+    "equinor.wd3.myworkdayjobs.com"  # Equinor
+    "jobs.ericsson.com"  # Ericsson
+    "finnair.wd103.myworkdayjobs.com"  # Finnair
+    "fiskars.wd3.myworkdayjobs.com"  # Fiskars
+    "jobs.fortum.com"  # Fortum
+    "gofore.com"  # Gofore
+    "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
+    "happeo.recruitee.com"  # Happeo
+    "careers.theheinekencompany.com"  # Heineken
+    "careers.hiab.com"  # Hiab
+    "if.wd3.myworkdayjobs.com"  # If
+    "jobs.ikea.com"  # IKEA
+    "ing.wd3.myworkdayjobs.com"  # ING
+    "kesko.fi"  # Kesko
+    "kone.wd3.myworkdayjobs.com"  # KONE
+    "konecranes.careers"  # Konecranes
+    "api-apply.lufthansagroup.careers"  # Lufthansa
+    "apply.lufthansagroup.careers"  # Lufthansa
+    "maersk.wd3.myworkdayjobs.com"  # Maersk
+    "metso.com"  # Metso
+    "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
+    "apply.careers.microsoft.com"  # Microsoft
+    "careers.microsoft.com"  # Microsoft
+    "careers.munichre.com"  # Munich Re
+    "jobs.neste.com"  # Neste
+    "nexigroup.com"  # Nexi
+    "nitor.com"  # Nitor
+    "jobs.nokia.com"  # Nokia
+    "www.nordea.com"  # Nordea
+    "career.nordnetab.com"  # Nordnet
+    "nxp.wd3.myworkdayjobs.com"  # NXP
+    "op-careers.fi"  # OP Financial Group
+    "careers.orkla.com"  # Orkla
+    "philips.wd3.myworkdayjobs.com"  # Philips
+    "posti.wd3.myworkdayjobs.com"  # Posti
+    "proton.me"  # Proton
+    "careers.publicisgroupe.com"  # Publicis Groupe
+    "www.randstad.com"  # Randstad
+    "revolut.com"  # Revolut
+    "rovio.com"  # Rovio
+    "s-pankki.fi"  # S-Pankki
+    "sanoma.wd3.myworkdayjobs.com"  # Sanoma
+    "jobs.sap.com"  # SAP
+    "scout24.com"  # Scout24
+    "sebgroup.com"  # SEB
+    "jobs.siemens.com"  # Siemens
+    "jobs.siemens-healthineers.com"  # Siemens Healthineers
+    "sok.wd502.myworkdayjobs.com"  # SOK
+    "solita.fi"  # Solita
+    "lifeatspotify.com"  # Spotify
+    "careers.stellantis.com"  # Stellantis
+    "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
+    "swecogroup.com"  # Sweco
+    "careers.thalesgroup.com"  # Thales
+    "thales.wd3.myworkdayjobs.com"  # Thales
+    "careers.tieto.com"  # Tietoevry
+    "uber.com"  # Uber
+    "careers.vaisala.com"  # Vaisala
+    "careers.vestas.com"  # Vestas
+    "jobs.volkswagen-group.com"  # Volkswagen
+    "jobs.volvogroup.com"  # Volvo Group
+    "careers.wartsila.com"  # Wärtsilä
+    "careers.wolt.com"  # Wolt
+    "yousician.com"  # Yousician
+    "jobs.zalando.com"  # Zalando
+)
+for domain in "${tool_domains[@]}" "${ats_domains[@]}" "${company_domains[@]}"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
@@ -238,13 +263,17 @@ done
 
 # CDN-backed domains resolve to different IPs depending on which Akamai/CDN node responds.
 # Query from multiple public DNS servers to capture more of the IP pool.
-for cdn_domain in \
-    "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "jobs.booking.com" ; do
-    for dns_server in "8.8.8.8" "1.1.1.1"; do
-        echo "Resolving $cdn_domain via $dns_server..."
-        cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
+for cdn_domain in "${cdn_domains[@]}"; do
+    # Akamai geo-routes DNS by resolver, so 8.8.8.8/1.1.1.1 return a different edge
+    # cluster than the one the container connects to; query the local resolver too.
+    for dns_server in "system" "8.8.8.8" "1.1.1.1"; do
+        if [ "$dns_server" = "system" ]; then
+            echo "Resolving $cdn_domain via system resolver..."
+            cdn_ips=$(dig +noall +answer A "$cdn_domain" | awk '$4 == "A" {print $5}')
+        else
+            echo "Resolving $cdn_domain via $dns_server..."
+            cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
+        fi
         while read -r ip; do
             if [[ -z "$ip" ]]; then continue; fi
             if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then

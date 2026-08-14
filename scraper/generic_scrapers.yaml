@@ -263,58 +263,6 @@ scrapers:
       description_selector: '.jobdescription'
       job_function_selector: "[data-careersite-propertyid='department']"
 
-    # ── Sweco Group ──────────────────────────────────────────────────────────────────
-    # description_selector is required here: without it, the fallback selector chain
-    # (_DESCRIPTION_SELECTOR_FALLBACKS) hits "[class*='description']" on the localized
-    # detail pages (e.g. sweco.fi) before reaching "main" — but the FIRST element in
-    # document order with a class containing "description" is a Gravity Forms
-    # application-form field list (class="... description_below ..."), entirely in the
-    # site's local language (e.g. Finnish), not the actual job description. That
-    # Finnish form-field text was tripping the native-character-count language signal
-    # even on English-language postings (e.g. "Finance Systems Specialist to Sweco IT
-    # Helsinki").
-    #
-    # Different Sweco country sites use different page templates for the actual
-    # description content: sweco.fi puts the whole body in a single "section.cb";
-    # sweco.nl splits it across "section.recruitee-vacancy-desc" (the main
-    # role/company intro paragraph — this is where the Dutch-language signal lives)
-    # PLUS separate "section.cb" blocks for "what you bring"/"what we offer". Both
-    # classes are listed so all matches get concatenated (see _fetch_detail_page) —
-    # using only "section.cb" on sweco.nl silently dropped the intro paragraph and
-    # caused genuinely Dutch-language postings to be misclassified as English.
-    - match: 'swecogroup.com/careers/vacancies'
-      name: Sweco Group
-      description_selector: 'section.recruitee-vacancy-desc, section.cb'
-      country_filter_param: country
-      countries:
-          - SE
-          - DK
-          - NL
-          - FI
-          - DE
-          - 'NO'
-          - LT
-          - EE
-      country_values:
-          SE: '3'
-          DK: '4'
-          NL: '5'
-          FI: '7'
-          DE: '8'
-          'NO': '13'
-          LT: '16'
-          EE: '21'
-      pagination:
-          type: page
-          param: vacancy-page
-          page_size: 10
-      extra_params:
-          scroll-to: vacancies-top
-      card_selector: 'tr.vacancy--list'
-      title_selector: 'h3.vacancy__title'
-      location_selector: 'em.vacancy__location'
-      url_selector: 'a.js-vacancy-link'
-
     # ── Hiab ──────────────────────────────────────────────────────────────────
     - match: 'careers.hiab.com/search'
       name: Hiab
@@ -364,11 +312,16 @@ scrapers:
       job_function_selector: 'td.colFacility jobFacility'
 
     # ── Sweco Group ──────────────────────────────────────────────────────────────────
+    # description_selector is required: the fallback chain otherwise grabs a
+    # local-language application form field and misclassifies English postings as
+    # non-English. Both classes are listed because sweco.nl splits the language-bearing
+    # intro paragraph (recruitee-vacancy-desc) from the body (cb).
     - match: 'swecogroup.com/careers/vacancies'
       name: Sweco Group
+      description_selector: 'section.recruitee-vacancy-desc, section.cb'
       country_filter_param: country
-      # Countries + their opaque facet IDs are read live from the page's country
-      # <select> so a newly-added Sweco country is scraped without a code change.
+      # Facet IDs are read live off the page's country <select>, so an added Sweco
+      # country is scraped and facet-ID drift self-heals without a code change.
       country_from_select:
           selector: 'select[name=country]'
           strip_prefix: 'Sweco '
