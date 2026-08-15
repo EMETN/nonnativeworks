@@ -169,7 +169,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                     alt=""
                                     loading="lazy"
                                     decoding="async"
-                                    class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
+                                    class="w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
                                 />
                             </span>
                         )}
