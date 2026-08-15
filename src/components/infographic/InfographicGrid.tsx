@@ -31,5 +31,5 @@ export default function InfographicGrid({ countries, companyCounts }: Props) {
         company_count: companyCounts[c.country_id] ?? 0,
     }));
 
-    return <DataGrid items={items} compact />;
+    return <DataGrid items={items} compact entityName="country" />;
 }
