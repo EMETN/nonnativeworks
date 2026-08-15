@@ -159,9 +159,9 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                 class="no-underline rounded-lg dg-subgrid"
             >
                 <div
-                    class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
+                    class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 min-w-0`}
                 >
-                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0">
+                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
                         {item.flag && (
                             <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] md:w-[1.6875rem] lg:w-[2.25rem]">
                                 <img
