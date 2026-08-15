@@ -511,33 +511,39 @@ function ReviewPanel({
                         </p>
                     )}
                 </div>
-                <div class="flex items-end pb-2">
-                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                        <input
-                            type="checkbox"
-                            checked={data.is_english_company}
-                            onChange={(e) =>
-                                onIsEnglishCompany(
-                                    (e.target as HTMLInputElement).checked,
-                                )
-                            }
-                        />
-                        English company (US/UK-headquartered)
-                    </label>
+                <div>
+                    {/* Spacer matching the Company name label so this row
+                        lines up with the input beside it */}
+                    <span
+                        class="hidden sm:block text-xs font-medium mb-1"
+                        aria-hidden="true"
+                    >
+                        &nbsp;
+                    </span>
+                    <div class="flex items-center gap-3 min-h-[2.375rem]">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={data.is_english_company}
+                                onChange={(e) =>
+                                    onIsEnglishCompany(
+                                        (e.target as HTMLInputElement).checked,
+                                    )
+                                }
+                            />
+                            English company (US/UK-headquartered)
+                        </label>
+                        {multiCountry && (
+                            <button
+                                onClick={allCollapsed ? expandAll : collapseAll}
+                                class="ml-auto text-xs text-gray-500 hover:text-gray-700 font-medium underline whitespace-nowrap"
+                            >
+                                {allCollapsed ? 'Expand all' : 'Collapse all'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
-
-            {/* Collapse / expand all */}
-            {multiCountry && (
-                <div class="flex justify-end">
-                    <button
-                        onClick={allCollapsed ? expandAll : collapseAll}
-                        class="text-xs text-gray-500 hover:text-gray-700 font-medium underline"
-                    >
-                        {allCollapsed ? 'Expand all' : 'Collapse all'}
-                    </button>
-                </div>
-            )}
 
             {/* Country groups */}
             {data.countries.map((group) => (
