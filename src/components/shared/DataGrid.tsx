@@ -498,7 +498,7 @@ export default function DataGrid({
                         No {entityLabel} found matching "{inputValue}"
                     </p>
                     <p class="text-sm text-gray-500">
-                        {compact
+                        {entityLabel === 'country'
                             ? "This country hasn't been added yet — we're expanding regularly."
                             : "This company isn't tracked here yet. Check back soon."}
                     </p>
