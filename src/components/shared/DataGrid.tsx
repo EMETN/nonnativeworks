@@ -493,7 +493,7 @@ export default function DataGrid({
 
             {/* Empty state — outside grid, never affects columns */}
             {!hasResults && (
-                <div class="py-20 text-center text-gray-500">
+                <div class="py-10 text-center text-gray-500">
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                         No {entityLabel} found matching "{inputValue}"
                     </p>
