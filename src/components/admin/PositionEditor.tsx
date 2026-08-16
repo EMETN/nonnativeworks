@@ -318,7 +318,7 @@ export default function PositionEditor() {
 
     if (loadingCompanies) {
         return (
-            <div class="text-sm text-gray-400 py-1.5 border border-transparent">
+            <div class="text-sm text-gray-500 py-1.5 border border-transparent">
                 Loading…
             </div>
         );
@@ -384,11 +384,11 @@ export default function PositionEditor() {
             {selectedId && (
                 <div>
                     {loadingPositions ? (
-                        <div class="text-sm text-gray-400 py-4">
+                        <div class="text-sm text-gray-500 py-4">
                             Loading positions…
                         </div>
                     ) : positions.length === 0 ? (
-                        <div class="text-sm text-gray-400 py-4">
+                        <div class="text-sm text-gray-500 py-4">
                             {showCompanyColumn
                                 ? 'No positions found.'
                                 : 'No positions found for this company.'}
@@ -485,7 +485,7 @@ export default function PositionEditor() {
                                                         </span>
                                                         {pos.company
                                                             ?.country_name && (
-                                                            <span class="text-gray-400">
+                                                            <span class="text-gray-500">
                                                                 {' '}
                                                                 ·{' '}
                                                                 {
@@ -638,17 +638,17 @@ export default function PositionEditor() {
                                                 {/* Save indicator */}
                                                 <td class="px-4 py-2.5 text-center">
                                                     {state === 'saving' && (
-                                                        <span class="text-xs text-gray-400">
+                                                        <span class="text-xs text-gray-500">
                                                             Saving…
                                                         </span>
                                                     )}
                                                     {state === 'saved' && (
-                                                        <span class="text-xs text-green-600">
+                                                        <span class="text-xs text-green-700">
                                                             Saved
                                                         </span>
                                                     )}
                                                     {state === 'error' && (
-                                                        <span class="text-xs text-red-500">
+                                                        <span class="text-xs text-red-600">
                                                             Error
                                                         </span>
                                                     )}
