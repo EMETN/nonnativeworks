@@ -14,6 +14,7 @@ interface Props {
     ogImage?: string;
     noindex?: boolean;
     breadcrumbs?: BreadcrumbItem[];
+    hideNavActive?: boolean;
 }
 
 const {
@@ -22,6 +23,7 @@ const {
     ogImage,
     noindex = false,
     breadcrumbs,
+    hideNavActive = false,
 } = Astro.props;
 
 const siteTitle =
@@ -149,7 +151,7 @@ const breadcrumbJsonLd =
                     (document.activeElement as HTMLElement)?.blur();
             });
         </script>
-        <Header />
+        <Header hideActive={hideNavActive} />
         <main id="main-content" class="flex-1 flex flex-col">
             <slot />
         </main>
