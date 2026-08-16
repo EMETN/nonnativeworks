@@ -35,6 +35,7 @@ const englishPositions = stats?.english_positions ?? 0;
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
+        data-list-page
     >
         <Breadcrumb
             items={[{ label: 'Home', href: '/' }, { label: 'Companies' }]}
@@ -96,7 +97,7 @@ const englishPositions = stats?.english_positions ?? 0;
                         the local language(s).
                     </StatsDescription>
                     <AllCompaniesGrid companies={companies} client:idle />
-                    <div class="mt-6 text-center">
+                    <div class="mt-6 text-center suggest-cta">
                         <a
                             href="https://tally.so/r/xXb80y"
                             target="_blank"
