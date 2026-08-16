@@ -295,7 +295,7 @@ export default function Scraper() {
                         </button>
                     </div>
                     {urlError && (
-                        <p class="text-xs text-red-500 mt-1">{urlError}</p>
+                        <p class="text-xs text-red-600 mt-1">{urlError}</p>
                     )}
                 </div>
             )}
@@ -506,7 +506,7 @@ function ReviewPanel({
                         class={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] ${!data.company_name.trim() ? 'border-red-300' : 'border-gray-300'}`}
                     />
                     {!data.company_name.trim() && (
-                        <p class="text-xs text-red-500 mt-1">
+                        <p class="text-xs text-red-600 mt-1">
                             Required before uploading
                         </p>
                     )}
@@ -632,7 +632,7 @@ function CountryGroup({
             >
                 <button
                     onClick={onToggleExpanded}
-                    class="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    class="flex items-center gap-2 text-gray-500 hover:text-gray-600 transition-colors"
                     aria-label={
                         expanded ? 'Collapse country' : 'Expand country'
                     }
@@ -653,7 +653,7 @@ function CountryGroup({
                     <span class="font-medium text-sm text-gray-800">
                         {group.country_name}
                     </span>
-                    <span class="text-xs text-gray-400">
+                    <span class="text-xs text-gray-500">
                         {group.country_code}
                     </span>
                 </button>
@@ -722,7 +722,7 @@ function CountryGroup({
                             <tr>
                                 <td
                                     colSpan={3}
-                                    class="px-4 py-3 text-center text-xs text-gray-400"
+                                    class="px-4 py-3 text-center text-xs text-gray-500"
                                 >
                                     No positions match this filter.
                                 </td>

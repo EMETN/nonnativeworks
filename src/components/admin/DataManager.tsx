@@ -126,7 +126,7 @@ export default function DataManager() {
         window.location.href = '/admin/scrape';
     }
 
-    if (loading) return <div class="text-sm text-gray-400 py-4">Loading…</div>;
+    if (loading) return <div class="text-sm text-gray-500 py-4">Loading…</div>;
 
     if (error) {
         return (
@@ -143,7 +143,7 @@ export default function DataManager() {
 
     if (groups.length === 0) {
         return (
-            <div class="text-sm text-gray-400 py-4">
+            <div class="text-sm text-gray-500 py-4">
                 No companies yet. Upload some data above.
             </div>
         );
@@ -184,7 +184,7 @@ export default function DataManager() {
                                             ? () => toggleExpanded(group.name)
                                             : undefined
                                     }
-                                    class={`w-4 h-4 flex-shrink-0 transition-transform ${multi ? 'text-gray-400 hover:text-gray-600 cursor-pointer' : 'cursor-default text-transparent pointer-events-none'}`}
+                                    class={`w-4 h-4 flex-shrink-0 transition-transform ${multi ? 'text-gray-500 hover:text-gray-600 cursor-pointer' : 'cursor-default text-transparent pointer-events-none'}`}
                                     tabIndex={multi ? 0 : -1}
                                     aria-label={
                                         isExpanded
@@ -212,7 +212,7 @@ export default function DataManager() {
                                     <span class="font-medium text-gray-900 text-sm">
                                         {group.name}
                                     </span>
-                                    <span class="ml-2 text-xs text-gray-400">
+                                    <span class="ml-2 text-xs text-gray-500">
                                         {multi
                                             ? `${group.countries.length} countries`
                                             : group.countries[0].country_name}
@@ -228,7 +228,7 @@ export default function DataManager() {
                                 </span>
 
                                 {/* Updated date */}
-                                <span class="text-xs text-gray-400 whitespace-nowrap hidden sm:block">
+                                <span class="text-xs text-gray-500 whitespace-nowrap hidden sm:block">
                                     {fmt(group.updated_at)}
                                 </span>
 
@@ -267,7 +267,7 @@ export default function DataManager() {
                                                 onClick={() =>
                                                     setConfirmName(null)
                                                 }
-                                                class="text-xs text-gray-400 hover:underline"
+                                                class="text-xs text-gray-500 hover:underline"
                                             >
                                                 Cancel
                                             </button>
@@ -278,7 +278,7 @@ export default function DataManager() {
                                                 setConfirmName(group.name)
                                             }
                                             disabled={isDeleting}
-                                            class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
+                                            class="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
                                         >
                                             {isDeleting
                                                 ? 'Deleting…'
@@ -305,7 +305,7 @@ export default function DataManager() {
                                                     ? 'position'
                                                     : 'positions'}
                                             </span>
-                                            <span class="text-xs text-gray-400 whitespace-nowrap hidden sm:block w-[7.5rem] text-right">
+                                            <span class="text-xs text-gray-500 whitespace-nowrap hidden sm:block w-[7.5rem] text-right">
                                                 {fmt(row.updated_at)}
                                             </span>
                                             {/* Spacer aligns with the action column above */}
