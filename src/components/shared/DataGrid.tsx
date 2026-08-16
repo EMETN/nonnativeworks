@@ -101,7 +101,7 @@ function SizingRow({
                             {formatNumber(widest.english_positions)}
                         </span>
                         <span
-                            class={`${ss} font-light text-gray-400`}
+                            class={`${ss} font-light text-gray-500`}
                             style={numFont}
                         >
                             /
@@ -117,7 +117,7 @@ function SizingRow({
                         {formatNumber(widest.english_positions)}
                     </span>
                     <span
-                        class={`${ss} font-light text-gray-400`}
+                        class={`${ss} font-light text-gray-500`}
                         style={numFont}
                     >
                         /
@@ -252,7 +252,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                     class={`flex items-center justify-end ${rowPy} pl-1 sm:pl-3 md:pl-6 xl:pl-10`}
                 >
                     <svg
-                        class={`${arrowSize} text-gray-400`}
+                        class={`${arrowSize} text-gray-500`}
                         width="12"
                         height="12"
                         fill="none"
@@ -348,7 +348,7 @@ export default function DataGrid({
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
-                                class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 pointer-events-none"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
                                 width="16"
                                 height="16"
                                 fill="none"
@@ -390,7 +390,7 @@ export default function DataGrid({
                                         setSearch('');
                                         clearTimeout(debounceRef.current);
                                     }}
-                                    class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                    class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
                                     aria-label="Clear search"
                                 >
                                     <svg

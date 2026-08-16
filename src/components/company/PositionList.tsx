@@ -53,7 +53,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
                     {pos.category_name}
                 </span>
                 <svg
-                    class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 text-gray-400"
+                    class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 text-gray-500"
                     width="16"
                     height="16"
                     fill="none"
@@ -117,7 +117,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
             <div class="w-full border-b border-gray-200 pb-2 mb-2">
                 <div class="relative w-full sm:w-56 md:w-64">
                     <svg
-                        class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 pointer-events-none"
+                        class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
                         width="16"
                         height="16"
                         fill="none"
@@ -155,7 +155,7 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                                 setSearch('');
                                 clearTimeout(debounceRef.current);
                             }}
-                            class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
                             aria-label="Clear search"
                         >
                             <svg
