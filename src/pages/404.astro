@@ -6,50 +6,45 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div
         class="flex flex-col items-center justify-center flex-1 px-4 sm:px-6 lg:px-8"
     >
-        <!-- 404 number in the style of the country stats -->
-        <div class="flex items-end gap-2 sm:gap-4 mb-6 opacity-20">
-            <div class="flex flex-col items-end">
+        <!-- "0 / 0 pages" stat, styled like the country/company grid (0 positions renders red) -->
+        <div class="flex items-end mb-6">
+            <div class="flex flex-col items-end pr-2.5 sm:pr-3 md:pr-4">
                 <span
-                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-[#0F7A4F] mb-0.5"
-                >
-                    Page
-                </span>
-                <span
-                    class="text-4xl sm:text-7xl font-bold text-[#0F7A4F] leading-none"
-                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
-                >
-                    0
-                </span>
-            </div>
-            <span
-                class="text-4xl sm:text-7xl font-light text-gray-500 leading-none"
-                >/</span
-            >
-            <div class="flex flex-col">
-                <span
-                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5"
-                >
-                    Found
-                </span>
-                <span
-                    class="text-4xl sm:text-7xl font-bold text-gray-900 leading-none"
-                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
-                >
-                    0
-                </span>
-            </div>
-            <div class="flex flex-col items-end ml-4 sm:ml-8">
-                <span
-                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-900 mb-0.5"
+                    class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-500 mb-0.5"
                 >
                     Error
                 </span>
                 <span
-                    class="text-4xl sm:text-7xl font-black text-gray-800 leading-none"
+                    class="text-4xl sm:text-7xl font-bold text-gray-900 leading-none tabular-nums"
                     style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
                 >
                     404
                 </span>
+            </div>
+            <div class="flex items-end gap-0.5 sm:gap-1 pl-2 sm:pl-4 md:pl-6">
+                <span
+                    class="text-4xl sm:text-7xl font-bold text-[#C0392B] leading-none tabular-nums"
+                    style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+                >
+                    0
+                </span>
+                <span
+                    class="text-4xl sm:text-7xl font-light text-gray-500 leading-none"
+                    aria-hidden="true">/</span
+                >
+                <div class="flex flex-col items-end">
+                    <span
+                        class="text-[0.45rem] sm:text-xs font-semibold tracking-wider uppercase text-gray-500 mb-0.5"
+                    >
+                        Pages
+                    </span>
+                    <span
+                        class="text-4xl sm:text-7xl text-gray-500 leading-none tabular-nums"
+                        style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+                    >
+                        0
+                    </span>
+                </div>
             </div>
         </div>
 
