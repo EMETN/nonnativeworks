@@ -1038,13 +1038,16 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'werkenbijabnamro.nl': {
-        url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?filters[Country][]=Netherlands&sort=created&sortDir=DESC',
+        // Unfiltered listing covers both countries ABN AMRO posts in (Netherlands
+        // and Belgium) — the earlier Netherlands-only filter silently dropped the
+        // Belgium postings. City-based country resolution (fields.location: 'city')
+        // handles both without needing an explicit country field.
+        url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?sort=created&sortDir=DESC',
         headers: {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
             Accept: 'application/json',
-            Referer:
-                'https://www.werkenbijabnamro.nl/en/vacancies/country/netherlands',
+            Referer: 'https://www.werkenbijabnamro.nl/en/vacancies',
         },
         pagination: {
             type: 'page',
