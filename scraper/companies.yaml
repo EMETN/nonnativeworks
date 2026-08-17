@@ -30,6 +30,10 @@ companies:
       url: https://careers.abb/global/en/search-results
       min_positions: 10
 
+    - name: ABN AMRO
+      url: https://www.werkenbijabnamro.nl/en/vacancies
+      min_positions: 10
+
     # Scraping any one academicwork.* URL fans out to all six country sites
     # (FI/SE/NO/DK/DE/CH) in a single run — see scraper/platforms/academicwork.py.
     # min_positions is the combined floor across all of them.

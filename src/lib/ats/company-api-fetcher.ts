@@ -301,13 +301,36 @@ async function fetchPage(
             init.body = JSON.stringify(body ?? {});
         }
     }
-    const res = await fetch(url, init);
-    // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns 400
-    // with rest_post_invalid_page_number instead of an empty array). Treat as graceful end.
-    if (res.status === 400) return null;
-    if (!res.ok)
-        throw new Error(`Company API returned ${res.status} for ${url}`);
-    return res.json();
+    let lastStatus = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await sleep(1000 * attempt);
+        const res = await fetch(url, init);
+        // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns
+        // 400 with rest_post_invalid_page_number instead of an empty array). Treat as
+        // graceful end — never retried.
+        if (res.status === 400) return null;
+        // A 404 whose body is HTML rather than JSON means the app's own router served its
+        // generic error page instead of the API — observed on ABN AMRO, whose vacancy
+        // search backend hard-caps at 40 results (5 pages of 8) regardless of the
+        // `meta.num_total_hits` figure it reports on page 1. Confirmed against their own
+        // site: /en/vacancies/page/6 renders client-side from this same endpoint, so real
+        // visitors hit the identical 404 — this is a limit of their backend, not something
+        // retrying fixes. Treat it the same as 400: graceful end, no retry.
+        if (
+            res.status === 404 &&
+            !(res.headers.get('content-type') ?? '').includes('json')
+        ) {
+            return null;
+        }
+        if (res.ok) return res.json();
+        lastStatus = res.status;
+        console.warn(
+            `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
+        );
+    }
+    // Retries cover genuine transient failures (5xx, or a JSON-formatted error from the
+    // API itself) — those are worth a couple of attempts with backoff before giving up.
+    throw new Error(`Company API returned ${lastStatus} for ${url}`);
 }
 
 const GONE_SENTINEL = '\x00GONE';
@@ -409,6 +432,14 @@ export async function enrichDescriptions(
                 }
             }),
         );
+        // Firing dozens of job-page fetches back-to-back with no pacing at all can trip
+        // rate limiting on stricter sites (e.g. ABN AMRO's WAF started returning 404 for
+        // every request, including pagination, after an unthrottled ~70-job burst).
+        // A short pause between batches keeps sustained throughput low without adding
+        // much wall-clock time to the scrape.
+        if (i + DESCRIPTION_BATCH < targets.length) {
+            await sleep(randomDelay(300, 700));
+        }
     }
 
     if (goneCount) {
