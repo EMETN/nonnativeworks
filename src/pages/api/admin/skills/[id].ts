@@ -5,6 +5,8 @@ import type {
     TablesUpdate,
 } from '../../../../lib/database.types';
 
+export const prerender = false;
+
 const VALID_CATEGORIES = [
     'language',
     'framework',

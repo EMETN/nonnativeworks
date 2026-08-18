@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 import type { TablesUpdate } from '../../../../lib/database.types';
 
+export const prerender = false;
+
 const PatchSchema = z
     .object({
         category_slug: z.string().min(1).optional(),

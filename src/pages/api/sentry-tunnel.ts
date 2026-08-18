@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+export const prerender = false;
+
 function parseDsn(dsn: string) {
     const url = new URL(dsn);
     return {

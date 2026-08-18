@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import { createSupabaseClient } from '../../lib/supabase';
 const supabase = createSupabaseClient(Astro.request, Astro.cookies);
 const {

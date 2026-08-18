@@ -65,6 +65,8 @@ import {
     CLASSIFIER_VERSION,
 } from '../../../lib/outcome-cache';
 
+export const prerender = false;
+
 // Must exceed Python's internal NJOYN_SUBPROCESS_TIMEOUT (3600s) so Python can handle
 // its own cleanup and exit cleanly. SIGKILL ensures the process cannot ignore the signal
 // (Python's multiprocessing.Queue.get blocks SIGTERM, causing Node to wait indefinitely).

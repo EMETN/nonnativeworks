@@ -7,6 +7,8 @@ import { UploadSchema, normaliseUpload } from '../../../lib/validation';
 import type { CompanyEntry } from '../../../lib/validation';
 import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
 
+export const prerender = false;
+
 const MAX_BODY_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export const POST: APIRoute = async ({ request }) => {

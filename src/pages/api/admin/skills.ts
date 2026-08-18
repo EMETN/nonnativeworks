@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 import type { SkillCategory } from '../../../lib/database.types';
 
+export const prerender = false;
+
 const VALID_CATEGORIES = [
     'language',
     'framework',
