@@ -70,5 +70,10 @@ export default defineConfig({
                 },
             },
         },
+        define: {
+            // Stamped at build time so the admin can tell how old the live site is,
+            // and whether a triggered build has landed yet.
+            __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+        },
     },
 });
