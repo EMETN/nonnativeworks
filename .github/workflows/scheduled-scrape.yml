@@ -181,12 +181,31 @@ jobs:
             # ── Run ───────────────────────────────────────────────────────────────
 
             - name: Run batch scrape
+              id: batch
               env:
                   DOPPLER_TOKEN: ${{ inputs.use_dev_db == true && secrets.DOPPLER_TOKEN_DEV || secrets.DOPPLER_TOKEN }}
               run: |
                   doppler run -- python scraper/batch_run.py \
                     --api-url http://localhost:4321 \
                     ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+            # Rebuild the public site only when the scrape actually uploaded something.
+            # Skipped for dry runs and dev-database runs, which must never touch production.
+            - name: Trigger site rebuild
+              if: >-
+                  success()
+                  && steps.batch.outputs.uploaded == 'true'
+                  && inputs.dry_run != true
+                  && inputs.use_dev_db != true
+              env:
+                  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+              run: |
+                  doppler run -- sh -c '
+                    curl --fail --silent --show-error \
+                      -X POST "http://localhost:4321/api/admin/publish" \
+                      -H "X-Scraper-Secret: $SCRAPER_SECRET" \
+                      -H "Content-Type: application/json"
+                  '
 
             - name: Dump Astro server log
               if: failure()
