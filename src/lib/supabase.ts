@@ -8,14 +8,16 @@ export type TypedSupabaseClient = ReturnType<
 
 // Server-only secrets use process.env (read at runtime, never inlined into build output).
 // PUBLIC_* vars use import.meta.env (inlined by Vite at build time — safe for client exposure).
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-        'Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables',
-    );
+//
+// These are read lazily rather than at module load: once public pages prerender,
+// this module is imported during the build, and a module-level throw would fire
+// before Astro could report which page or query triggered it.
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing ${name} environment variable`);
+    }
+    return value;
 }
 
 /**
@@ -23,23 +25,27 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Accepts the request (for reading cookies) and cookies (for setting cookies).
  */
 export function createSupabaseClient(request: Request, cookies: AstroCookies) {
-    return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-            getAll() {
-                return parseCookieHeader(
-                    request.headers.get('Cookie') ?? '',
-                ).map(({ name, value }) => ({
-                    name,
-                    value: value ?? '',
-                }));
-            },
-            setAll(cookiesToSet) {
-                cookiesToSet.forEach(({ name, value, options }) => {
-                    cookies.set(name, value, options);
-                });
+    return createServerClient<Database>(
+        requireEnv('SUPABASE_URL'),
+        requireEnv('SUPABASE_ANON_KEY'),
+        {
+            cookies: {
+                getAll() {
+                    return parseCookieHeader(
+                        request.headers.get('Cookie') ?? '',
+                    ).map(({ name, value }) => ({
+                        name,
+                        value: value ?? '',
+                    }));
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        cookies.set(name, value, options);
+                    });
+                },
             },
         },
-    });
+    );
 }
 
 /**
@@ -47,21 +53,51 @@ export function createSupabaseClient(request: Request, cookies: AstroCookies) {
  * Use only in trusted server-side contexts (API routes for admin operations).
  */
 export function createSupabaseServiceClient() {
-    if (!supabaseServiceKey) {
-        throw new Error(
-            'Missing SUPABASE_SERVICE_ROLE_KEY environment variable',
+    return createServerClient<Database>(
+        requireEnv('SUPABASE_URL'),
+        requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+        {
+            cookies: {
+                getAll() {
+                    return [];
+                },
+                setAll() {},
+            },
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            },
+        },
+    );
+}
+
+let publicClient: ReturnType<typeof createSupabaseServiceClient> | null = null;
+
+/**
+ * Anon-key client for build-time reads (getStaticPaths). Holds no cookies and
+ * refreshes no session, so it is safe to share across a whole build.
+ *
+ * Memoised rather than module-level: constructing at import time would read env
+ * vars before the build environment is ready.
+ */
+export function createPublicClient() {
+    if (!publicClient) {
+        publicClient = createServerClient<Database>(
+            requireEnv('SUPABASE_URL'),
+            requireEnv('SUPABASE_ANON_KEY'),
+            {
+                cookies: {
+                    getAll() {
+                        return [];
+                    },
+                    setAll() {},
+                },
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false,
+                },
+            },
         );
     }
-    return createServerClient<Database>(supabaseUrl, supabaseServiceKey, {
-        cookies: {
-            getAll() {
-                return [];
-            },
-            setAll() {},
-        },
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-        },
-    });
+    return publicClient;
 }
