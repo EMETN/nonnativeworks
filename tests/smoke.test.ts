@@ -55,3 +55,12 @@ test('an unknown country slug does not return 200', async () => {
 
     expect(response.status).toBe(404);
 });
+
+test('the publish endpoint rejects unauthenticated callers', async () => {
+    const response = await fetch(`${server.baseUrl}/api/admin/publish`, {
+        method: 'POST',
+        headers: { Origin: server.baseUrl },
+    });
+
+    expect(response.status).toBe(401);
+});
