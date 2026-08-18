@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
-import { createSupabaseServiceClient } from '../lib/supabase';
+import { createPublicClient } from '../lib/supabase';
 import { nameToSlug } from '../lib/country-flags';
 
 export const GET: APIRoute = async ({ url }) => {
     const base = url.origin;
-    const supabase = createSupabaseServiceClient();
+    const supabase = createPublicClient();
 
     const { data: countries } = await supabase
         .from('countries')

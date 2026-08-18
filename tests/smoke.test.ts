@@ -11,12 +11,17 @@ afterAll(async () => {
     await server?.stop();
 });
 
+// Security headers on static public pages are applied at the CDN layer
+// (netlify.toml) and are verified on the Netlify deploy preview — the local
+// node adapter does not read netlify.toml. On-demand routes still receive the
+// headers from middleware, so we assert them here (a single value proves the
+// header is not duplicated).
 test.each([
     ['x-content-type-options', 'nosniff'],
     ['x-frame-options', 'DENY'],
     ['referrer-policy', 'strict-origin-when-cross-origin'],
-])('a public page sets %s exactly once', async (header, value) => {
-    const response = await fetch(`${server.baseUrl}/countries`);
+])('an on-demand route sets %s exactly once', async (header, value) => {
+    const response = await fetch(`${server.baseUrl}/admin/login`);
 
     expect(response.headers.get(header)).toBe(value);
 });
