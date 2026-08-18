@@ -6,3 +6,13 @@
   to = "https://eu.i.posthog.com/:splat"
   status = 200
   force = true
+
+# Set at the CDN layer rather than only in middleware: prerendered pages never
+# invoke middleware at request time, so these would otherwise disappear from every
+# public page once the site is built ahead of requests.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
