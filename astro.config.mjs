@@ -12,6 +12,16 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 
 // https://astro.build/config
 export default defineConfig({
+    // Required for correct canonical/OG/JSON-LD URLs once pages are built ahead of
+    // a request — without it, Astro.url resolves to localhost in production HTML.
+    site: 'https://nonnativeworks.com',
+
+    // Pin the existing URL shape. Astro's static default (build.format 'directory')
+    // would serve /countries as /countries/, 301-ing every indexed URL on the site.
+    trailingSlash: 'never',
+    build: {
+        format: 'file',
+    },
     output: 'server',
     adapter,
     prefetch: {
