@@ -41,6 +41,7 @@ const englishPositions = stats?.english_positions ?? 0;
 >
     <div
         class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
+        data-list-page
     >
         <Breadcrumb
             items={[{ label: 'Home', href: '/' }, { label: 'Countries' }]}
@@ -106,6 +107,16 @@ const englishPositions = stats?.english_positions ?? 0;
                         companyCounts={companyCounts}
                         client:idle
                     />
+                    <div class="mt-6 text-center suggest-cta">
+                        <a
+                            href="https://tally.so/r/xXb80o"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-block text-sm sm:text-base font-medium text-gray-500 border border-gray-500 hover:text-[#0F7A4F] hover:border-[#0F7A4F] px-5 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+                        >
+                            Suggest a country
+                        </a>
+                    </div>
                 </>
             )
         }
