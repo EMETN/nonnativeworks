@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createSupabaseServiceClient } from '../../../lib/supabase';
+import {
+    createSupabaseServiceClient,
+    type TypedSupabaseClient,
+} from '../../../lib/supabase';
 import { UploadSchema, normaliseUpload } from '../../../lib/validation';
 import type { CompanyEntry } from '../../../lib/validation';
 import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
@@ -54,22 +56,12 @@ export const POST: APIRoute = async ({ request }) => {
         return json({ error: 'Could not load reference data' }, 500);
     }
 
-    const countryMap = new Map(
-        countryRows.map((c: { slug: string; id: string }) => [c.slug, c.id]),
-    );
-    const categoryMap = new Map(
-        categoryRows.map((c: { slug: string; id: string }) => [c.slug, c.id]),
-    );
+    const countryMap = new Map(countryRows.map((c) => [c.slug, c.id]));
+    const categoryMap = new Map(categoryRows.map((c) => [c.slug, c.id]));
     const skillIdMap = new Map(
-        (skillRows ?? []).map((s: { canonical_name: string; id: string }) => [
-            s.canonical_name,
-            s.id,
-        ]),
+        (skillRows ?? []).map((s) => [s.canonical_name, s.id]),
     );
-    const maxSortOrder = Math.max(
-        0,
-        ...countryRows.map((c: { sort_order: number }) => c.sort_order),
-    );
+    const maxSortOrder = Math.max(0, ...countryRows.map((c) => c.sort_order));
 
     const results: {
         company: string;
@@ -121,7 +113,7 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 async function ensureCountry(
-    supabase: SupabaseClient,
+    supabase: TypedSupabaseClient,
     entry: CompanyEntry,
     sortOrder: number,
 ): Promise<string> {
@@ -148,7 +140,7 @@ async function ensureCountry(
 }
 
 async function upsertEntry(
-    supabase: SupabaseClient,
+    supabase: TypedSupabaseClient,
     entry: CompanyEntry,
     countryMap: Map<string, string>,
     categoryMap: Map<string, string>,
@@ -185,13 +177,18 @@ async function upsertEntry(
 
     await supabase.from('positions').delete().eq('company_id', companyRow.id);
 
+    const fallbackCategoryId = categoryMap.get('other');
+    if (!fallbackCategoryId) {
+        throw new Error("Missing seed category 'other' for category fallback");
+    }
+
     const positionRows = positions.map((p) => ({
         company_id: companyRow.id,
         title: p.title,
         url: p.url || null,
         city: p.city ?? null,
         work_model: p.work_model ?? null,
-        category_id: categoryMap.get(p.category) ?? categoryMap.get('other'),
+        category_id: categoryMap.get(p.category) ?? fallbackCategoryId,
         requires_native_language: p.requires_native_language,
         local_language_advantage: p.local_language_advantage ?? false,
         required_languages: p.required_languages ?? [],
@@ -222,7 +219,7 @@ async function upsertEntry(
 }
 
 async function takeSnapshotIfNeeded(
-    supabase: SupabaseClient,
+    supabase: TypedSupabaseClient,
     companyName: string,
     countryId: string,
     positions: CompanyEntry['positions'],
@@ -255,7 +252,7 @@ async function takeSnapshotIfNeeded(
 }
 
 async function takeSkillSnapshotIfNeeded(
-    supabase: SupabaseClient,
+    supabase: TypedSupabaseClient,
     companyId: string,
     countryId: string,
     positions: CompanyEntry['positions'],
