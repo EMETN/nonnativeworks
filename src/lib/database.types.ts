@@ -292,6 +292,24 @@ export type Database = {
                     },
                 ];
             };
+            site_publishes: {
+                Row: {
+                    id: string;
+                    triggered_at: string;
+                    triggered_by: string;
+                };
+                Insert: {
+                    id?: string;
+                    triggered_at?: string;
+                    triggered_by: string;
+                };
+                Update: {
+                    id?: string;
+                    triggered_at?: string;
+                    triggered_by?: string;
+                };
+                Relationships: [];
+            };
         };
         Views: {
             country_stats: {
