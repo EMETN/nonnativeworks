@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
+import type { SkillCategory } from '../../../lib/database.types';
 
 const VALID_CATEGORIES = [
     'language',
@@ -13,14 +14,16 @@ const VALID_CATEGORIES = [
     'platform',
 ] as const;
 
+function isSkillCategory(value: unknown): value is SkillCategory {
+    return (
+        typeof value === 'string' &&
+        (VALID_CATEGORIES as readonly string[]).includes(value)
+    );
+}
+
 export const GET: APIRoute = async ({ url }) => {
     const category = url.searchParams.get('category');
-    if (
-        category &&
-        !VALID_CATEGORIES.includes(
-            category as (typeof VALID_CATEGORIES)[number],
-        )
-    ) {
+    if (category && !isSkillCategory(category)) {
         return json(
             {
                 error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}`,
@@ -35,7 +38,7 @@ export const GET: APIRoute = async ({ url }) => {
         .select('id, canonical_name, category, aliases, is_legacy')
         .order('canonical_name');
 
-    if (category) {
+    if (isSkillCategory(category)) {
         query = query.eq('category', category);
     }
 
@@ -64,12 +67,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (typeof canonical_name !== 'string' || !canonical_name.trim()) {
         return json({ error: 'canonical_name is required' }, 400);
     }
-    if (
-        typeof category !== 'string' ||
-        !VALID_CATEGORIES.includes(
-            category as (typeof VALID_CATEGORIES)[number],
-        )
-    ) {
+    if (!isSkillCategory(category)) {
         return json(
             {
                 error: `category must be one of: ${VALID_CATEGORIES.join(', ')}`,

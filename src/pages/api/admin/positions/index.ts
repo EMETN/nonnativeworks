@@ -48,15 +48,23 @@ export const GET: APIRoute = async ({ url }) => {
     const { data, error } = await query;
     if (error) return json({ error: error.message }, 500);
 
-    const rows = (data ?? []).map((p: Record<string, any>) => ({
-        ...p,
-        company: p.company
-            ? {
-                  name: p.company.name,
-                  country_name: p.company.country?.name ?? '—',
-              }
-            : null,
-    }));
+    const rows = (data ?? []).map((p) => {
+        const company = Array.isArray(p.company) ? p.company[0] : p.company;
+        const country = company
+            ? Array.isArray(company.country)
+                ? company.country[0]
+                : company.country
+            : null;
+        return {
+            ...p,
+            company: company
+                ? {
+                      name: company.name,
+                      country_name: country?.name ?? '—',
+                  }
+                : null,
+        };
+    });
 
     rows.sort((a, b) => {
         const byCompany = (a.company?.name ?? '').localeCompare(
