@@ -1,44 +1,12 @@
-// TypeScript types matching the database schema
+// Types that mirror a table/view are derived from the Database type so they
+// can't drift from the schema; the rest are UI projections.
+import type { Tables, Views } from './database.types';
 
-export interface Country {
-    id: string;
-    name: string;
-    slug: string;
-    code: string;
-    flag_colors: string[];
-    sort_order: number;
-    created_at: string;
-}
-
-export interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    sort_order: number;
-}
-
-export interface Company {
-    id: string;
-    name: string;
-    country_id: string;
-    career_page_url: string | null;
-    is_english_company: boolean;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface Position {
-    id: string;
-    company_id: string;
-    title: string;
-    url: string | null;
-    category_id: string;
-    requires_native_language: boolean;
-    local_language_advantage: boolean;
-    extracted_at: string;
-    city: string[] | null;
-    work_model: 'remote' | 'hybrid' | 'on-site' | null;
-}
+export type Country = Tables<'countries'>;
+export type Category = Tables<'categories'>;
+export type Company = Tables<'companies'>;
+export type CountryStats = Views<'country_stats'>;
+export type CompanyStats = Views<'company_stats'>;
 
 export interface PositionDetail {
     id: string;
@@ -50,34 +18,6 @@ export interface PositionDetail {
     local_language_advantage: boolean;
     city: string[] | null;
     work_model: 'remote' | 'hybrid' | 'on-site' | null;
-}
-
-// View types
-
-export interface CountryStats {
-    country_id: string;
-    name: string;
-    slug: string;
-    code: string;
-    flag_colors: string[];
-    sort_order: number;
-    total_positions: number;
-    english_positions: number;
-    english_percentage: number;
-    last_updated: string | null;
-}
-
-export interface CompanyStats {
-    company_id: string;
-    name: string;
-    country_id: string;
-    career_page_url: string | null;
-    is_english_company: boolean;
-    updated_at: string;
-    total_positions: number;
-    english_positions: number;
-    english_percentage: number;
-    categories: string[] | null;
 }
 
 export interface GlobalStats {
