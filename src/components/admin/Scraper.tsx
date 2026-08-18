@@ -2,44 +2,15 @@ import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
 import { atsLabel } from '../../lib/ats/detector';
 import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
-
-// ---------------------------------------------------------------------------
-// Types mirroring ScrapeResult from the API
-// ---------------------------------------------------------------------------
-
-interface ReviewJob {
-    title: string;
-    url?: string;
-    city?: string[];
-    work_model?: 'remote' | 'hybrid' | 'on-site';
-    category: string;
-    requires_native_language: boolean;
-    local_language_advantage: boolean;
-    requiredLanguages: string[];
-    preferredLanguages: string[];
-}
-
-interface ReviewCountryGroup {
-    country: string;
-    country_name: string;
-    country_code: string;
-    jobs: ReviewJob[];
-}
-
-interface ReviewData {
-    ats: string | null;
-    company_name: string;
-    career_page_url: string;
-    skipped_unknown_location: number;
-    skipped_untracked_country: number;
-    is_english_company: boolean;
-    countries: ReviewCountryGroup[];
-}
-
-interface UploadResult {
-    results: { company: string; country: string; positions: number }[];
-    errors: { company: string; country: string; error: string }[];
-}
+import {
+    ScrapeResponseSchema,
+    UploadResultSchema,
+    ErrorResponseSchema,
+    type ReviewJob,
+    type ReviewCountryGroup,
+    type ReviewData,
+    type UploadResult,
+} from '../../lib/admin-schemas';
 
 type Phase =
     | { kind: 'idle' }
@@ -106,14 +77,16 @@ export default function Scraper() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: trimmed }),
             });
-            const data = await res.json();
+            const raw = await res.json();
             if (!res.ok) {
                 setPhase({
                     kind: 'error',
-                    message: data.error ?? 'Scrape failed',
+                    message:
+                        ErrorResponseSchema.parse(raw).error ?? 'Scrape failed',
                 });
                 return;
             }
+            const data = ScrapeResponseSchema.parse(raw);
             const countries = data.countries ?? [];
             if (countries.length === 0) {
                 setPhase({
@@ -127,7 +100,7 @@ export default function Scraper() {
             setPhase({
                 kind: 'review',
                 data: {
-                    ats: data.ats,
+                    ats: data.ats ?? null,
                     company_name: data.company_name ?? '',
                     career_page_url: data.career_page_url ?? trimmed,
                     skipped_unknown_location:
@@ -135,7 +108,7 @@ export default function Scraper() {
                     skipped_untracked_country:
                         data.skipped_untracked_country ?? 0,
                     is_english_company: false,
-                    countries: data.countries ?? [],
+                    countries,
                 },
             });
         } catch {
@@ -228,14 +201,18 @@ export default function Scraper() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            const result = await res.json();
+            const raw = await res.json();
             if (!res.ok && res.status !== 207) {
                 setPhase({
                     kind: 'error',
-                    message: result.error ?? 'Upload failed',
+                    message:
+                        ErrorResponseSchema.parse(raw).error ?? 'Upload failed',
                 });
             } else {
-                setPhase({ kind: 'done', uploadResult: result });
+                setPhase({
+                    kind: 'done',
+                    uploadResult: UploadResultSchema.parse(raw),
+                });
                 setUrl('');
                 invalidateCache('companies');
                 invalidateCachePrefix('positions:');
