@@ -81,3 +81,9 @@
         background-color: rgba(192, 57, 43, 0.06);
     }
 }
+
+/* Grid search returned nothing: drop the gap above the "suggest" CTA,
+   since the empty state already carries its own vertical padding. */
+[data-list-page]:has([data-empty]) .suggest-cta {
+    margin-top: 0;
+}

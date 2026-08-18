@@ -36,6 +36,12 @@ const positions = await getPositionsByCompany(
     cookies,
     company.company_id,
 );
+
+// Query params prefill matching hidden fields in the Tally report form.
+const reportUrl =
+    `https://tally.so/r/MeZWEl?company=${encodeURIComponent(company.name)}` +
+    `&country=${encodeURIComponent(country.name)}` +
+    `&url=${encodeURIComponent(Astro.url.href)}`;
 ---
 
 <BaseLayout
@@ -128,6 +134,7 @@ const positions = await getPositionsByCompany(
                     <PositionList
                         positions={positions}
                         careerPageUrl={company.career_page_url}
+                        reportUrl={reportUrl}
                         client:idle
                     />
                     <p

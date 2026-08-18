@@ -295,7 +295,7 @@ export default function Scraper() {
                         </button>
                     </div>
                     {urlError && (
-                        <p class="text-xs text-red-500 mt-1">{urlError}</p>
+                        <p class="text-xs text-red-600 mt-1">{urlError}</p>
                     )}
                 </div>
             )}
@@ -440,6 +440,28 @@ function ReviewPanel({
     const hasSkipped = data.skipped_unknown_location > 0;
     const hasUntracked = data.skipped_untracked_country > 0;
 
+    // Track collapsed countries by code (empty = all expanded)
+    const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+    const multiCountry = data.countries.length > 1;
+    const allCollapsed = collapsed.size === data.countries.length;
+
+    function toggleCountry(code: string) {
+        setCollapsed((prev) => {
+            const next = new Set(prev);
+            if (next.has(code)) next.delete(code);
+            else next.add(code);
+            return next;
+        });
+    }
+
+    function expandAll() {
+        setCollapsed(new Set());
+    }
+
+    function collapseAll() {
+        setCollapsed(new Set(data.countries.map((g) => g.country_code)));
+    }
+
     return (
         <div class="space-y-5">
             {/* Summary bar */}
@@ -484,24 +506,42 @@ function ReviewPanel({
                         class={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] ${!data.company_name.trim() ? 'border-red-300' : 'border-gray-300'}`}
                     />
                     {!data.company_name.trim() && (
-                        <p class="text-xs text-red-500 mt-1">
+                        <p class="text-xs text-red-600 mt-1">
                             Required before uploading
                         </p>
                     )}
                 </div>
-                <div class="flex items-end pb-2">
-                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                        <input
-                            type="checkbox"
-                            checked={data.is_english_company}
-                            onChange={(e) =>
-                                onIsEnglishCompany(
-                                    (e.target as HTMLInputElement).checked,
-                                )
-                            }
-                        />
-                        English company (US/UK-headquartered)
-                    </label>
+                <div>
+                    {/* Spacer matching the Company name label so this row
+                        lines up with the input beside it */}
+                    <span
+                        class="hidden sm:block text-xs font-medium mb-1"
+                        aria-hidden="true"
+                    >
+                        &nbsp;
+                    </span>
+                    <div class="flex items-center gap-3 min-h-[2.375rem]">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={data.is_english_company}
+                                onChange={(e) =>
+                                    onIsEnglishCompany(
+                                        (e.target as HTMLInputElement).checked,
+                                    )
+                                }
+                            />
+                            English company (US/UK-headquartered)
+                        </label>
+                        {multiCountry && (
+                            <button
+                                onClick={allCollapsed ? expandAll : collapseAll}
+                                class="ml-auto text-xs text-gray-500 hover:text-gray-700 font-medium underline whitespace-nowrap"
+                            >
+                                {allCollapsed ? 'Expand all' : 'Collapse all'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -510,6 +550,8 @@ function ReviewPanel({
                 <CountryGroup
                     key={group.country_code}
                     group={group}
+                    expanded={!collapsed.has(group.country_code)}
+                    onToggleExpanded={() => toggleCountry(group.country_code)}
                     onJobField={(jobIndex, field, value) =>
                         onJobField(group.country_code, jobIndex, field, value)
                     }
@@ -543,6 +585,8 @@ function ReviewPanel({
 
 interface CountryGroupProps {
     group: ReviewCountryGroup;
+    expanded: boolean;
+    onToggleExpanded: () => void;
     onJobField: (
         jobIndex: number,
         field:
@@ -563,7 +607,12 @@ function jobLangStatus(job: ReviewJob): LanguageStatus {
           : 'neither';
 }
 
-function CountryGroup({ group, onJobField }: CountryGroupProps) {
+function CountryGroup({
+    group,
+    expanded,
+    onToggleExpanded,
+    onJobField,
+}: CountryGroupProps) {
     const [sortAlpha, setSortAlpha] = useState(false);
     const [langFilter, setLangFilter] = useState<LanguageFilter>('all');
 
@@ -578,45 +627,74 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
 
     return (
         <div class="border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-2">
-                <span class="font-medium text-sm text-gray-800">
-                    {group.country_name}
-                </span>
-                <span class="text-xs text-gray-400">{group.country_code}</span>
-
+            <div
+                class={`bg-gray-50 px-4 py-2 flex flex-wrap items-center gap-2 ${expanded ? 'border-b border-gray-200' : ''}`}
+            >
                 <button
-                    onClick={() => setSortAlpha((v) => !v)}
-                    class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
-                        sortAlpha
-                            ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
-                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
-                    }`}
+                    onClick={onToggleExpanded}
+                    class="flex items-center gap-2 text-gray-500 hover:text-gray-600 transition-colors"
+                    aria-label={
+                        expanded ? 'Collapse country' : 'Expand country'
+                    }
                 >
-                    A–Z
+                    <svg
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class={`w-4 h-4 flex-shrink-0 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 5l7 7-7 7"
+                        />
+                    </svg>
+                    <span class="font-medium text-sm text-gray-800">
+                        {group.country_name}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        {group.country_code}
+                    </span>
                 </button>
 
-                <div class="flex items-center gap-1">
-                    {(
-                        [
-                            ['all', 'All'],
-                            ['required', 'Required'],
-                            ['advantage', 'Advantage'],
-                            ['neither', 'None'],
-                        ] as [LanguageFilter, string][]
-                    ).map(([value, label]) => (
+                {expanded && (
+                    <>
                         <button
-                            key={value}
-                            onClick={() => setLangFilter(value)}
+                            onClick={() => setSortAlpha((v) => !v)}
                             class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
-                                langFilter === value
+                                sortAlpha
                                     ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
                                     : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
                             }`}
                         >
-                            {label}
+                            A–Z
                         </button>
-                    ))}
-                </div>
+
+                        <div class="flex items-center gap-1">
+                            {(
+                                [
+                                    ['all', 'All'],
+                                    ['required', 'Required'],
+                                    ['advantage', 'Advantage'],
+                                    ['neither', 'None'],
+                                ] as [LanguageFilter, string][]
+                            ).map(([value, label]) => (
+                                <button
+                                    key={value}
+                                    onClick={() => setLangFilter(value)}
+                                    class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
+                                        langFilter === value
+                                            ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
 
                 <span class="text-xs text-gray-500 ml-auto">
                     {displayed.length === group.jobs.length
@@ -624,7 +702,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                         : `${displayed.length} of ${group.jobs.length} positions`}
                 </span>
             </div>
-            <div class="overflow-x-auto">
+            <div class={`overflow-x-auto ${expanded ? '' : 'hidden'}`}>
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-gray-100 bg-white">
@@ -644,7 +722,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                             <tr>
                                 <td
                                     colSpan={3}
-                                    class="px-4 py-3 text-center text-xs text-gray-400"
+                                    class="px-4 py-3 text-center text-xs text-gray-500"
                                 >
                                     No positions match this filter.
                                 </td>

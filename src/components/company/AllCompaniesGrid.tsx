@@ -19,5 +19,12 @@ export default function AllCompaniesGrid({ companies }: Props) {
         career_page_url: c.career_page_url,
     }));
 
-    return <DataGrid items={items} compact compactLabel="Countries" />;
+    return (
+        <DataGrid
+            items={items}
+            compact
+            compactLabel="Countries"
+            entityName="company"
+        />
+    );
 }

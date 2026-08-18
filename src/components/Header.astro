@@ -1,4 +1,10 @@
 ---
+interface Props {
+    // Set by pages (e.g. 404) that must not trigger the catch-all isCountries below.
+    hideActive?: boolean;
+}
+const { hideActive = false } = Astro.props;
+
 const pathname = Astro.url.pathname;
 const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
 const isHome = pathname === '/';
@@ -7,11 +13,12 @@ const isCountryCompany =
     segments.length >= 2 &&
     segments[0] !== 'companies' &&
     segments[0] !== 'admin';
-const isCompanies =
-    pathname === '/companies' ||
-    pathname.startsWith('/companies/') ||
-    isCountryCompany;
-const isCountries = !isHome && !isCompanies && !isAdmin;
+const isCompanies = hideActive
+    ? false
+    : pathname === '/companies' ||
+      pathname.startsWith('/companies/') ||
+      isCountryCompany;
+const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
 ---
 
 <header

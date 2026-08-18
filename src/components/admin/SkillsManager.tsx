@@ -251,7 +251,7 @@ export default function SkillsManager() {
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">
                                 Aliases{' '}
-                                <span class="font-normal text-gray-400">
+                                <span class="font-normal text-gray-500">
                                     (comma-separated, lowercase)
                                 </span>
                             </label>
@@ -329,7 +329,7 @@ export default function SkillsManager() {
 
             {/* Empty state */}
             {!selectedCategory && !showAddForm && (
-                <p class="text-sm text-gray-400 py-6 text-center">
+                <p class="text-sm text-gray-500 py-6 text-center">
                     Select a category above to view and manage skills.
                 </p>
             )}
@@ -338,11 +338,11 @@ export default function SkillsManager() {
             {error && <p class="text-sm text-red-600">{error}</p>}
 
             {/* Loading */}
-            {loading && <p class="text-sm text-gray-400 py-4">Loading…</p>}
+            {loading && <p class="text-sm text-gray-500 py-4">Loading…</p>}
 
             {/* Skills table */}
             {selectedCategory && !loading && skills.length === 0 && !error && (
-                <p class="text-sm text-gray-400 py-4">
+                <p class="text-sm text-gray-500 py-4">
                     No skills in this category yet.{' '}
                     <button
                         onClick={() => setShowAddForm(true)}
@@ -422,7 +422,7 @@ export default function SkillsManager() {
                                                         <div>
                                                             <label class="block text-xs font-medium text-gray-600 mb-1">
                                                                 Aliases{' '}
-                                                                <span class="font-normal text-gray-400">
+                                                                <span class="font-normal text-gray-500">
                                                                     (comma-separated,
                                                                     lowercase)
                                                                 </span>
@@ -561,7 +561,7 @@ export default function SkillsManager() {
                                                     0 ? (
                                                         skill.aliases.join(', ')
                                                     ) : (
-                                                        <span class="text-gray-300 italic">
+                                                        <span class="text-gray-500 italic">
                                                             none
                                                         </span>
                                                     )}
@@ -602,7 +602,7 @@ export default function SkillsManager() {
                                                                             null,
                                                                         )
                                                                     }
-                                                                    class="text-xs text-gray-400 hover:underline"
+                                                                    class="text-xs text-gray-500 hover:underline"
                                                                 >
                                                                     Cancel
                                                                 </button>
@@ -617,7 +617,7 @@ export default function SkillsManager() {
                                                                 disabled={
                                                                     isDeleting
                                                                 }
-                                                                class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
+                                                                class="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
                                                             >
                                                                 Delete
                                                             </button>
