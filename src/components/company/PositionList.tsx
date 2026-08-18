@@ -4,6 +4,7 @@ import type { PositionDetail } from '../../lib/types';
 interface Props {
     positions: PositionDetail[];
     careerPageUrl: string | null;
+    reportUrl?: string;
 }
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
@@ -89,7 +90,11 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
     );
 }
 
-export default function PositionList({ positions, careerPageUrl }: Props) {
+export default function PositionList({
+    positions,
+    careerPageUrl,
+    reportUrl,
+}: Props) {
     const [inputValue, setInputValue] = useState('');
     const [search, setSearch] = useState('');
     const debounceRef = useRef(0);
@@ -114,8 +119,8 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
     return (
         <div>
             {/* Search */}
-            <div class="w-full border-b border-gray-200 pb-2 mb-2">
-                <div class="relative w-full sm:w-56 md:w-64">
+            <div class="w-full border-b border-gray-200 pb-2 mb-2 flex items-center justify-between gap-3">
+                <div class="relative flex-1 min-w-0 sm:flex-none sm:w-56 md:w-64">
                     <svg
                         class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
                         width="16"
@@ -176,6 +181,16 @@ export default function PositionList({ positions, careerPageUrl }: Props) {
                         </button>
                     )}
                 </div>
+                {reportUrl && (
+                    <a
+                        href={reportUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="shrink-0 text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
+                    >
+                        Report an issue
+                    </a>
+                )}
             </div>
 
             {/* Position list */}
