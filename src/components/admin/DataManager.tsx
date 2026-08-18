@@ -4,16 +4,10 @@ import {
     writeCache,
     invalidateCachePrefix,
 } from '../../lib/admin-cache';
-
-interface CompanyRow {
-    company_id: string;
-    name: string;
-    country_id: string;
-    country_name: string;
-    career_page_url: string | null;
-    total_positions: number;
-    updated_at: string;
-}
+import {
+    AdminCompanyListSchema,
+    type AdminCompany as CompanyRow,
+} from '../../lib/admin-schemas';
 
 interface CompanyGroup {
     name: string;
@@ -76,7 +70,7 @@ export default function DataManager() {
         try {
             const res = await fetch('/api/admin/companies');
             if (!res.ok) throw new Error('Failed to load');
-            const data: CompanyRow[] = await res.json();
+            const data = AdminCompanyListSchema.parse(await res.json());
             setCompanies(data);
             writeCache('companies', data);
         } catch {
