@@ -14,6 +14,7 @@
         "build:env": "node --env-file=.env node_modules/astro/bin/astro.mjs build",
         "preview": "doppler run -- astro preview",
         "astro": "astro",
+        "typecheck": "astro sync && tsc --noEmit",
         "postinstall": "node scripts/patch-preact-vite.mjs && simple-git-hooks",
         "test": "vitest run",
         "test:watch": "vitest",
