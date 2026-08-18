@@ -14,8 +14,8 @@ let loadError = false;
 
 try {
     const [allCompanies, globalStats] = await Promise.all([
-        getTopCompanies(Astro.request, Astro.cookies, 0),
-        getGlobalStats(Astro.request, Astro.cookies),
+        getTopCompanies(undefined, undefined, 0),
+        getGlobalStats(undefined, undefined),
     ]);
     companies = allCompanies;
     stats = globalStats;

@@ -22,7 +22,11 @@ export default defineConfig({
     build: {
         format: 'file',
     },
-    output: 'server',
+    // Static by default, with prerender = false opting /admin and /api back into
+    // on-demand rendering. The default is inverted deliberately: a public page that
+    // forgets the directive becomes static (loud, cheap) rather than SSR (a silent,
+    // recurring function invocation and database round trip on every cache miss).
+    output: 'static',
     adapter,
     prefetch: {
         defaultStrategy: 'hover',

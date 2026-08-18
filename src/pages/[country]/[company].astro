@@ -4,44 +4,66 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import PositionList from '../../components/company/PositionList.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
+import { getCountryStats } from '../../lib/queries';
 import {
-    getCountryBySlug,
-    getCompanyBySlugInCountry,
-    getPositionsByCompany,
-} from '../../lib/queries';
+    fetchAllCompanyStats,
+    fetchAllPositions,
+    groupBy,
+} from '../../lib/build-queries';
+import { nameToSlug } from '../../lib/country-flags';
 import { timeAgo } from '../../lib/time';
+import { cleanPathname } from '../../lib/url-path';
+import type {
+    CountryStats,
+    CompanyStats,
+    PositionDetail,
+} from '../../lib/types';
 
+export async function getStaticPaths() {
+    const [countries, allCompanyStats, allPositions] = await Promise.all([
+        getCountryStats(undefined, undefined),
+        fetchAllCompanyStats(),
+        fetchAllPositions(),
+    ]);
+
+    const countriesById = new Map(countries.map((c) => [c.country_id, c]));
+    const positionsByCompany = groupBy(allPositions, (row) => row.company_id);
+
+    return allCompanyStats.flatMap((company) => {
+        const country = countriesById.get(company.country_id);
+        if (!country) return [];
+
+        return [
+            {
+                params: {
+                    country: country.slug,
+                    company: nameToSlug(company.name),
+                },
+                props: {
+                    country,
+                    company,
+                    positions: positionsByCompany.get(company.company_id) ?? [],
+                },
+            },
+        ];
+    });
+}
+
+interface Props {
+    country: CountryStats;
+    company: CompanyStats;
+    positions: PositionDetail[];
+}
+
+const { country, company, positions } = Astro.props as Props;
 const { country: countrySlug, company: companySlug } = Astro.params;
-const { request, cookies } = Astro;
-
-const country = await getCountryBySlug(request, cookies, countrySlug!);
-
-if (!country) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
-}
-
-const company = await getCompanyBySlugInCountry(
-    request,
-    cookies,
-    country.country_id,
-    companySlug!,
-);
-
-if (!company) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
-}
-
-const positions = await getPositionsByCompany(
-    request,
-    cookies,
-    company.company_id,
-);
 
 // Query params prefill matching hidden fields in the Tally report form.
+const cleanUrl = new URL(cleanPathname(Astro.url), Astro.url).href;
 const reportUrl =
     `https://tally.so/r/MeZWEl?company=${encodeURIComponent(company.name)}` +
     `&country=${encodeURIComponent(country.name)}` +
-    `&url=${encodeURIComponent(Astro.url.href)}`;
+    `&url=${encodeURIComponent(cleanUrl)}`;
 ---
 
 <BaseLayout
