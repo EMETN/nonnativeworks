@@ -64,3 +64,15 @@ test('the publish endpoint rejects unauthenticated callers', async () => {
 
     expect(response.status).toBe(401);
 });
+
+test('a wrong scraper secret is rejected like no secret at all', async () => {
+    const response = await fetch(`${server.baseUrl}/api/admin/publish`, {
+        method: 'POST',
+        headers: {
+            'X-Scraper-Secret': 'definitely-not-the-secret',
+            Origin: server.baseUrl,
+        },
+    });
+
+    expect(response.status).toBe(401);
+});

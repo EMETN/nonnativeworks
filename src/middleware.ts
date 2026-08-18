@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { createSupabaseClient } from './lib/supabase';
+import { timingSafeEqual } from 'node:crypto';
 
 const PROTECTED_PREFIXES = ['/admin', '/api/admin'];
 
@@ -10,7 +11,18 @@ const SCRAPER_SECRET = process.env.SCRAPER_SECRET;
 
 function hasValidScraperSecret(request: Request): boolean {
     if (!SCRAPER_SECRET) return false;
-    return request.headers.get('x-scraper-secret') === SCRAPER_SECRET;
+
+    const provided = request.headers.get('x-scraper-secret') ?? '';
+
+    // timingSafeEqual throws on length mismatch, so the lengths are compared first.
+    // This still leaks the secret's length, which is not sensitive; what matters is
+    // that a correct prefix is not detectable through response timing.
+    const providedBuffer = Buffer.from(provided, 'utf8');
+    const expectedBuffer = Buffer.from(SCRAPER_SECRET, 'utf8');
+
+    if (providedBuffer.length !== expectedBuffer.length) return false;
+
+    return timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
 function isProtectedRoute(pathname: string): boolean {
