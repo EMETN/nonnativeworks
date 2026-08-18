@@ -24,31 +24,17 @@ export const GET: APIRoute = async () => {
         .from('countries')
         .select('id, name');
 
-    const countryMap = new Map(
-        (countries ?? []).map((c: { id: string; name: string }) => [
-            c.id,
-            c.name,
-        ]),
-    );
+    const countryMap = new Map((countries ?? []).map((c) => [c.id, c.name]));
 
-    const rows = (data ?? []).map(
-        (co: {
-            company_id: string;
-            name: string;
-            country_id: string;
-            career_page_url: string | null;
-            total_positions: number;
-            updated_at: string;
-        }) => ({
-            company_id: co.company_id,
-            name: co.name,
-            country_id: co.country_id,
-            country_name: countryMap.get(co.country_id) ?? '—',
-            career_page_url: co.career_page_url ?? null,
-            total_positions: co.total_positions,
-            updated_at: co.updated_at,
-        }),
-    );
+    const rows = (data ?? []).map((co) => ({
+        company_id: co.company_id,
+        name: co.name,
+        country_id: co.country_id,
+        country_name: countryMap.get(co.country_id) ?? '—',
+        career_page_url: co.career_page_url ?? null,
+        total_positions: co.total_positions,
+        updated_at: co.updated_at,
+    }));
 
     return json(rows, 200);
 };

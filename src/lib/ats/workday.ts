@@ -243,9 +243,9 @@ async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
             },
         });
         if (apiRes.ok) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data: any = await apiRes.json();
-            const info = data.jobPostingInfo ?? data.jobPosting ?? data;
+            const data = (await apiRes.json()) as WorkdayJobDetailResponse;
+            const info: WorkdayJobDetailInfo =
+                data.jobPostingInfo ?? data.jobPosting ?? data;
             if (
                 typeof info.jobDescription === 'string' &&
                 info.jobDescription
@@ -425,6 +425,20 @@ interface WorkdayResponse {
     jobPostings?: WorkdayJobPosting[];
 }
 
+// Job-detail endpoint. Untrusted external JSON, so leaf fields are `unknown`
+// (narrowed at each use); the payload may be the posting itself or wrap it.
+interface WorkdayJobDetailInfo {
+    jobDescription?: unknown;
+    location?: unknown;
+    additionalLocations?: unknown;
+    country?: { descriptor?: unknown };
+}
+
+interface WorkdayJobDetailResponse extends WorkdayJobDetailInfo {
+    jobPostingInfo?: WorkdayJobDetailInfo;
+    jobPosting?: WorkdayJobDetailInfo;
+}
+
 const PAGE_SIZE = 20; // Workday rejects limit > 20
 const EXPAND_BATCH = 5;
 const MULTI_LOC_RE = /^\d+ locations?$|^multiple locations?$/i;
@@ -505,9 +519,9 @@ async function fetchJobLocations(
             );
             return { locations: [] };
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data: any = await res.json();
-        const info = data.jobPostingInfo ?? data.jobPosting ?? data;
+        const data = (await res.json()) as WorkdayJobDetailResponse;
+        const info: WorkdayJobDetailInfo =
+            data.jobPostingInfo ?? data.jobPosting ?? data;
         const primary =
             typeof info.location === 'string' ? info.location : undefined;
         const additional: string[] = Array.isArray(info.additionalLocations)

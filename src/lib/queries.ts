@@ -35,7 +35,7 @@ export async function getCountryStats(
         console.error('getCountryStats:', error.message);
         throw new Error('Failed to load country stats');
     }
-    return (data ?? []) as CountryStats[];
+    return data ?? [];
 }
 
 export async function getCompanyCountsByCountry(
@@ -105,7 +105,7 @@ export async function getGlobalStats(
         english_percentage:
             total > 0 ? Math.round((english / total) * 1000) / 10 : 0,
         total_countries: countryCount ?? 0,
-        total_companies: (companyCountData as number | null) ?? 0,
+        total_companies: companyCountData ?? 0,
     };
 }
 
@@ -135,7 +135,7 @@ export async function getTopCompanies(
         throw new Error('Failed to load top companies');
     }
 
-    return ((data ?? []) as TopCompany[]).map((r) => ({
+    return (data ?? []).map((r) => ({
         name: r.name,
         total_positions: Number(r.total_positions),
         english_positions: Number(r.english_positions),
@@ -162,7 +162,7 @@ export async function getCountryBySlug(
         .single();
 
     if (error) return null;
-    return data as CountryStats;
+    return data;
 }
 
 export async function getAllCountries(
@@ -179,7 +179,7 @@ export async function getAllCountries(
         console.error('getAllCountries:', error.message);
         throw new Error('Failed to load countries');
     }
-    return (data ?? []) as Country[];
+    return data ?? [];
 }
 
 export async function getCompanyStatsByCountry(
@@ -198,7 +198,7 @@ export async function getCompanyStatsByCountry(
         console.error('getCompanyStatsByCountry:', error.message);
         throw new Error('Failed to load company stats');
     }
-    return (data ?? []) as CompanyStats[];
+    return data ?? [];
 }
 
 export async function getCategoryBreakdown(
@@ -236,12 +236,8 @@ export async function getCategoryBreakdown(
     >();
 
     for (const row of data ?? []) {
-        const cat = row.category as unknown as {
-            id: string;
-            name: string;
-            slug: string;
-        } | null;
-        if (!cat || Array.isArray(cat)) continue;
+        const cat = row.category;
+        if (!cat) continue;
         const entry = map.get(cat.id) ?? {
             id: cat.id,
             name: cat.name,
@@ -297,7 +293,7 @@ export async function getPositionsByCountry(
         throw new Error('Failed to load positions');
     }
 
-    return (data ?? []).map((row: any) => ({
+    return (data ?? []).map((row) => ({
         id: row.id,
         company_id: row.company_id,
         title: row.title,
@@ -324,7 +320,7 @@ export async function getAllCategories(
         console.error('getAllCategories:', error.message);
         throw new Error('Failed to load categories');
     }
-    return (data ?? []) as Category[];
+    return data ?? [];
 }
 
 export async function getCompanyBySlugInCountry(
@@ -345,10 +341,8 @@ export async function getCompanyBySlugInCountry(
         console.error('getCompanyBySlugInCountry:', error.message);
         return null;
     }
-    const match = (data ?? []).find(
-        (c: any) => nameToSlug(c.name) === companySlug,
-    );
-    return (match as CompanyStats) ?? null;
+    const match = (data ?? []).find((c) => nameToSlug(c.name) === companySlug);
+    return match ?? null;
 }
 
 export async function getPositionsByCompany(
@@ -379,7 +373,7 @@ export async function getPositionsByCompany(
         throw new Error('Failed to load positions');
     }
 
-    return (data ?? []).map((row: any) => ({
+    return (data ?? []).map((row) => ({
         id: row.id,
         company_id: row.company_id,
         title: row.title,
@@ -426,12 +420,8 @@ export async function getCategoryBreakdownByCompany(
     >();
 
     for (const row of data ?? []) {
-        const cat = row.category as unknown as {
-            id: string;
-            name: string;
-            slug: string;
-        } | null;
-        if (!cat || Array.isArray(cat)) continue;
+        const cat = row.category;
+        if (!cat) continue;
         const entry = map.get(cat.id) ?? {
             id: cat.id,
             name: cat.name,
@@ -494,9 +484,7 @@ export async function getGlobalCompanyBySlug(
         return null;
     }
 
-    const uniqueNames = [
-        ...new Set((nameRows ?? []).map((r: any) => r.name as string)),
-    ];
+    const uniqueNames = [...new Set((nameRows ?? []).map((r) => r.name))];
     const matchedName = uniqueNames.find((n) => nameToSlug(n) === companySlug);
     if (!matchedName) return null;
 
@@ -509,7 +497,7 @@ export async function getGlobalCompanyBySlug(
         return null;
     }
 
-    const matches = (statsData ?? []) as CompanyStats[];
+    const matches = statsData ?? [];
     if (matches.length === 0) return null;
 
     const countryIds = [...new Set(matches.map((m) => m.country_id))];
@@ -532,23 +520,22 @@ export async function getGlobalCompanyBySlug(
             .in('company_id', companyIds),
     ]);
 
-    const countryMap = new Map((countryData ?? []).map((c: any) => [c.id, c]));
+    const countryMap = new Map((countryData ?? []).map((c) => [c.id, c]));
     const positionsByCompany = new Map<string, PositionDetail[]>();
     for (const row of posData ?? []) {
-        const r = row as any;
-        const list = positionsByCompany.get(r.company_id) ?? [];
+        const list = positionsByCompany.get(row.company_id) ?? [];
         list.push({
-            id: r.id,
-            company_id: r.company_id,
-            title: r.title,
-            url: r.url ?? null,
-            city: r.city ?? null,
-            work_model: r.work_model ?? null,
-            category_name: r.category?.name ?? 'Other',
-            requires_native_language: r.requires_native_language,
-            local_language_advantage: r.local_language_advantage ?? false,
+            id: row.id,
+            company_id: row.company_id,
+            title: row.title,
+            url: row.url ?? null,
+            city: row.city ?? null,
+            work_model: row.work_model ?? null,
+            category_name: row.category?.name ?? 'Other',
+            requires_native_language: row.requires_native_language,
+            local_language_advantage: row.local_language_advantage ?? false,
         });
-        positionsByCompany.set(r.company_id, list);
+        positionsByCompany.set(row.company_id, list);
     }
 
     const first = matches[0];

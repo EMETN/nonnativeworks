@@ -6,31 +6,12 @@ import {
     invalidateCache,
     invalidateCachePrefix,
 } from '../../lib/admin-cache';
-
-interface CompanyOption {
-    company_id: string;
-    name: string;
-    country_id: string;
-    country_name: string;
-    total_positions: number;
-}
-
-interface CategoryInfo {
-    id: string;
-    name: string;
-    slug: string;
-}
-
-interface PositionRow {
-    id: string;
-    title: string;
-    url: string | null;
-    requires_native_language: boolean;
-    local_language_advantage: boolean;
-    required_education: string | null;
-    category: CategoryInfo | null;
-    company?: { name: string; country_name: string } | null;
-}
+import {
+    AdminCompanyListSchema,
+    AdminPositionListSchema,
+    type AdminCompany as CompanyOption,
+    type AdminPosition as PositionRow,
+} from '../../lib/admin-schemas';
 
 const ALL = '__all__';
 const COUNTRY_PREFIX = '__country__:';
@@ -127,7 +108,8 @@ export default function PositionEditor() {
         setLoadingCompanies(true);
         fetch('/api/admin/companies')
             .then((r) => r.json())
-            .then((rows: CompanyOption[]) => {
+            .then((raw) => {
+                const rows = AdminCompanyListSchema.parse(raw);
                 setCompanies(rows);
                 writeCache('companies', rows);
             })
@@ -168,7 +150,8 @@ export default function PositionEditor() {
         }
         fetch(`/api/admin/positions${query}`)
             .then((r) => r.json())
-            .then((rows: PositionRow[]) => {
+            .then((raw) => {
+                const rows = AdminPositionListSchema.parse(raw);
                 setPositions(rows);
                 writeCache(cacheKey, rows);
             })
