@@ -54,3 +54,6 @@ __pycache__/
 !.vscode/*.code-snippets
 
 cookies.txt
+
+# Migration instrument — regenerated on demand, never committed
+.html-baseline/
