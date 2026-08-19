@@ -10,6 +10,7 @@
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
+        "build:local": "doppler run -- astro build",
         "dev:env": "node --dns-result-order=ipv4first --env-file=.env node_modules/astro/bin/astro.mjs dev --host",
         "build:env": "node --env-file=.env node_modules/astro/bin/astro.mjs build",
         "preview": "doppler run -- astro preview",
