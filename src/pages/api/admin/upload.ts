@@ -6,12 +6,13 @@ import {
 import { UploadSchema, normaliseUpload } from '../../../lib/validation';
 import type { CompanyEntry } from '../../../lib/validation';
 import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
+import { recordChange, changedBy } from '../../../lib/admin-changes';
 
 export const prerender = false;
 
 const MAX_BODY_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
     // Check content length before parsing
     const contentLength = parseInt(
         request.headers.get('content-length') ?? '0',
@@ -42,6 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const entries = normaliseUpload(parsed.data);
     const supabase = createSupabaseServiceClient();
+    const attribution = changedBy(locals, request);
 
     // Pre-load lookup tables
     const { data: countryRows } = await supabase
@@ -95,6 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
                 countryMap,
                 categoryMap,
                 skillIdMap,
+                attribution,
             );
             results.push(result);
         } catch (err) {
@@ -147,6 +150,7 @@ async function upsertEntry(
     countryMap: Map<string, string>,
     categoryMap: Map<string, string>,
     skillIdMap: Map<string, string>,
+    changedByArg: string,
 ) {
     const {
         company_name,
@@ -157,6 +161,13 @@ async function upsertEntry(
     } = entry;
 
     const countryId = countryMap.get(country)!;
+
+    const { data: existingCompany } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('name', company_name)
+        .eq('country_id', countryId)
+        .maybeSingle();
 
     const { data: companyRow, error: companyErr } = await supabase
         .from('companies')
@@ -205,6 +216,13 @@ async function upsertEntry(
         .insert(positionRows);
     if (insertErr)
         throw new Error(`Could not insert positions: ${insertErr.message}`);
+
+    await recordChange(supabase, {
+        entity_type: 'company',
+        action: existingCompany ? 'updated' : 'created',
+        label: company_name,
+        changed_by: changedByArg,
+    });
 
     // Daily snapshots — one record per (company, country) per calendar day
     await takeSnapshotIfNeeded(supabase, company_name, countryId, positions);

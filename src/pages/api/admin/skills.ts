@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 import type { SkillCategory } from '../../../lib/database.types';
+import { recordChange, changedBy } from '../../../lib/admin-changes';
 
 export const prerender = false;
 
@@ -53,7 +54,7 @@ export const GET: APIRoute = async ({ url }) => {
     return json(data ?? [], 200);
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
     let body: unknown;
     try {
         body = await request.json();
@@ -110,6 +111,13 @@ export const POST: APIRoute = async ({ request }) => {
         console.error('POST /api/admin/skills:', error.message);
         return json({ error: 'Failed to create skill' }, 500);
     }
+
+    await recordChange(supabase, {
+        entity_type: 'skill',
+        action: 'created',
+        label: data.canonical_name,
+        changed_by: changedBy(locals, request),
+    });
 
     return json(data, 201);
 };

@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 import type { TablesUpdate } from '../../../../lib/database.types';
+import { recordChange, changedBy } from '../../../../lib/admin-changes';
 
 export const prerender = false;
 
@@ -23,7 +24,7 @@ const PatchSchema = z
  *  Updates category and/or language flags on a stored position.
  *  Used by the admin Position Editor when correcting scraped data post-upload.
  */
-export const PATCH: APIRoute = async ({ params, request }) => {
+export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { id } = params;
     if (!id) return json({ error: 'Missing id' }, 400);
 
@@ -63,12 +64,25 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         update.category_id = cat.id;
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
         .from('positions')
         .update(update)
-        .eq('id', id);
+        .eq('id', id)
+        .select('title')
+        .maybeSingle();
 
     if (error) return json({ error: error.message }, 500);
+
+    // `updated` is null when the id matched no row — don't log a phantom change.
+    if (updated) {
+        await recordChange(supabase, {
+            entity_type: 'position',
+            action: 'updated',
+            label: updated.title,
+            changed_by: changedBy(locals, request),
+        });
+    }
+
     return json({ ok: true }, 200);
 };
 
