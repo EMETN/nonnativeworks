@@ -101,7 +101,7 @@ function SizingRow({
                             {formatNumber(widest.english_positions)}
                         </span>
                         <span
-                            class={`${ss} font-light text-gray-400`}
+                            class={`${ss} font-light text-gray-500`}
                             style={numFont}
                         >
                             /
@@ -117,7 +117,7 @@ function SizingRow({
                         {formatNumber(widest.english_positions)}
                     </span>
                     <span
-                        class={`${ss} font-light text-gray-400`}
+                        class={`${ss} font-light text-gray-500`}
                         style={numFont}
                     >
                         /
@@ -141,13 +141,15 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
     const arrowSize = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
     const rowPy = 'py-3.5 sm:py-4';
 
+    const noPositions = item.english_positions === 0;
+
     // A company with no English-friendly positions has no meaningful detail page —
     // link straight out to its careers page (all positions) instead.
-    const noEnglish = item.english_positions === 0 && !!item.career_page_url;
+    const noEnglish = noPositions && !!item.career_page_url;
 
     return (
         <li
-            class={`border-b border-gray-100 dg-subgrid hover-fade-item${noEnglish ? ' opacity-25 hover:opacity-100' : ''}`}
+            class={`border-b border-gray-100 dg-subgrid hover-hl-item${noPositions ? ' hover-hl-none' : ''}`}
         >
             <a
                 href={noEnglish ? item.career_page_url! : item.href}
@@ -157,9 +159,9 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                 class="no-underline rounded-lg dg-subgrid"
             >
                 <div
-                    class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 overflow-hidden min-w-0`}
+                    class={`flex items-center ${rowPy} pr-2 sm:pr-4 md:pr-8 xl:pr-12 min-w-0`}
                 >
-                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-hidden min-w-0">
+                    <div class="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
                         {item.flag && (
                             <span class="inline-flex items-center justify-center shrink-0 w-[1.875rem] md:w-[1.6875rem] lg:w-[2.25rem]">
                                 <img
@@ -167,7 +169,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                     alt=""
                                     loading="lazy"
                                     decoding="async"
-                                    class="w-auto shadow-[0_1px_3px_rgba(0,0,0,0.15)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
+                                    class="w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"
                                 />
                             </span>
                         )}
@@ -198,7 +200,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                             aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                         >
                             <span
-                                class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
+                                class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                                 style={numFont}
                             >
                                 {formatNumber(item.english_positions)}
@@ -225,7 +227,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                         aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
                     >
                         <span
-                            class={`${textSize} font-bold ${item.english_positions === 0 ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
+                            class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                             style={numFont}
                         >
                             {formatNumber(item.english_positions)}
@@ -250,7 +252,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                     class={`flex items-center justify-end ${rowPy} pl-1 sm:pl-3 md:pl-6 xl:pl-10`}
                 >
                     <svg
-                        class={`${arrowSize} text-gray-400`}
+                        class={`${arrowSize} text-gray-500`}
                         width="12"
                         height="12"
                         fill="none"
@@ -333,20 +335,20 @@ export default function DataGrid({
                 }
             `}</style>
             <ul
-                class="w-full hover-fade-list"
+                class="w-full hover-hl-list"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
             >
                 <SizingRow items={items} compact={compact} />
 
                 {/* Header — subgrid row; label cells use absolute positioning so they don't inflate column widths */}
                 <li
-                    class="border-b border-gray-200 dg-subgrid hover-fade-header"
+                    class="border-b border-gray-200 dg-subgrid"
                     style={{ alignItems: 'center' }}
                 >
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
                         <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
                             <svg
-                                class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 pointer-events-none"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
                                 width="16"
                                 height="16"
                                 fill="none"
@@ -388,7 +390,7 @@ export default function DataGrid({
                                         setSearch('');
                                         clearTimeout(debounceRef.current);
                                     }}
-                                    class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                    class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
                                     aria-label="Clear search"
                                 >
                                     <svg
@@ -491,14 +493,12 @@ export default function DataGrid({
 
             {/* Empty state — outside grid, never affects columns */}
             {!hasResults && (
-                <div class="py-20 text-center text-gray-500">
+                <div class="py-10 text-center text-gray-500" data-empty>
                     <p class="text-base sm:text-lg mb-1.5" style={numFont}>
                         No {entityLabel} found matching "{inputValue}"
                     </p>
                     <p class="text-sm text-gray-500">
-                        {compact
-                            ? "This country hasn't been added yet — we're expanding regularly."
-                            : "This company isn't tracked here yet. Check back soon."}
+                        Know one we should add? Suggest it below.
                     </p>
                 </div>
             )}

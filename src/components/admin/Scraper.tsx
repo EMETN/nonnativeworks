@@ -2,44 +2,15 @@ import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
 import { atsLabel } from '../../lib/ats/detector';
 import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
-
-// ---------------------------------------------------------------------------
-// Types mirroring ScrapeResult from the API
-// ---------------------------------------------------------------------------
-
-interface ReviewJob {
-    title: string;
-    url?: string;
-    city?: string[];
-    work_model?: 'remote' | 'hybrid' | 'on-site';
-    category: string;
-    requires_native_language: boolean;
-    local_language_advantage: boolean;
-    requiredLanguages: string[];
-    preferredLanguages: string[];
-}
-
-interface ReviewCountryGroup {
-    country: string;
-    country_name: string;
-    country_code: string;
-    jobs: ReviewJob[];
-}
-
-interface ReviewData {
-    ats: string | null;
-    company_name: string;
-    career_page_url: string;
-    skipped_unknown_location: number;
-    skipped_untracked_country: number;
-    is_english_company: boolean;
-    countries: ReviewCountryGroup[];
-}
-
-interface UploadResult {
-    results: { company: string; country: string; positions: number }[];
-    errors: { company: string; country: string; error: string }[];
-}
+import {
+    ScrapeResponseSchema,
+    UploadResultSchema,
+    ErrorResponseSchema,
+    type ReviewJob,
+    type ReviewCountryGroup,
+    type ReviewData,
+    type UploadResult,
+} from '../../lib/admin-schemas';
 
 type Phase =
     | { kind: 'idle' }
@@ -106,14 +77,16 @@ export default function Scraper() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: trimmed }),
             });
-            const data = await res.json();
+            const raw = await res.json();
             if (!res.ok) {
                 setPhase({
                     kind: 'error',
-                    message: data.error ?? 'Scrape failed',
+                    message:
+                        ErrorResponseSchema.parse(raw).error ?? 'Scrape failed',
                 });
                 return;
             }
+            const data = ScrapeResponseSchema.parse(raw);
             const countries = data.countries ?? [];
             if (countries.length === 0) {
                 setPhase({
@@ -127,7 +100,7 @@ export default function Scraper() {
             setPhase({
                 kind: 'review',
                 data: {
-                    ats: data.ats,
+                    ats: data.ats ?? null,
                     company_name: data.company_name ?? '',
                     career_page_url: data.career_page_url ?? trimmed,
                     skipped_unknown_location:
@@ -135,7 +108,7 @@ export default function Scraper() {
                     skipped_untracked_country:
                         data.skipped_untracked_country ?? 0,
                     is_english_company: false,
-                    countries: data.countries ?? [],
+                    countries,
                 },
             });
         } catch {
@@ -228,14 +201,18 @@ export default function Scraper() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            const result = await res.json();
+            const raw = await res.json();
             if (!res.ok && res.status !== 207) {
                 setPhase({
                     kind: 'error',
-                    message: result.error ?? 'Upload failed',
+                    message:
+                        ErrorResponseSchema.parse(raw).error ?? 'Upload failed',
                 });
             } else {
-                setPhase({ kind: 'done', uploadResult: result });
+                setPhase({
+                    kind: 'done',
+                    uploadResult: UploadResultSchema.parse(raw),
+                });
                 setUrl('');
                 invalidateCache('companies');
                 invalidateCachePrefix('positions:');
@@ -295,7 +272,7 @@ export default function Scraper() {
                         </button>
                     </div>
                     {urlError && (
-                        <p class="text-xs text-red-500 mt-1">{urlError}</p>
+                        <p class="text-xs text-red-600 mt-1">{urlError}</p>
                     )}
                 </div>
             )}
@@ -440,6 +417,28 @@ function ReviewPanel({
     const hasSkipped = data.skipped_unknown_location > 0;
     const hasUntracked = data.skipped_untracked_country > 0;
 
+    // Track collapsed countries by code (empty = all expanded)
+    const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+    const multiCountry = data.countries.length > 1;
+    const allCollapsed = collapsed.size === data.countries.length;
+
+    function toggleCountry(code: string) {
+        setCollapsed((prev) => {
+            const next = new Set(prev);
+            if (next.has(code)) next.delete(code);
+            else next.add(code);
+            return next;
+        });
+    }
+
+    function expandAll() {
+        setCollapsed(new Set());
+    }
+
+    function collapseAll() {
+        setCollapsed(new Set(data.countries.map((g) => g.country_code)));
+    }
+
     return (
         <div class="space-y-5">
             {/* Summary bar */}
@@ -484,24 +483,42 @@ function ReviewPanel({
                         class={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#12956B] ${!data.company_name.trim() ? 'border-red-300' : 'border-gray-300'}`}
                     />
                     {!data.company_name.trim() && (
-                        <p class="text-xs text-red-500 mt-1">
+                        <p class="text-xs text-red-600 mt-1">
                             Required before uploading
                         </p>
                     )}
                 </div>
-                <div class="flex items-end pb-2">
-                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                        <input
-                            type="checkbox"
-                            checked={data.is_english_company}
-                            onChange={(e) =>
-                                onIsEnglishCompany(
-                                    (e.target as HTMLInputElement).checked,
-                                )
-                            }
-                        />
-                        English company (US/UK-headquartered)
-                    </label>
+                <div>
+                    {/* Spacer matching the Company name label so this row
+                        lines up with the input beside it */}
+                    <span
+                        class="hidden sm:block text-xs font-medium mb-1"
+                        aria-hidden="true"
+                    >
+                        &nbsp;
+                    </span>
+                    <div class="flex items-center gap-3 min-h-[2.375rem]">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={data.is_english_company}
+                                onChange={(e) =>
+                                    onIsEnglishCompany(
+                                        (e.target as HTMLInputElement).checked,
+                                    )
+                                }
+                            />
+                            English company (US/UK-headquartered)
+                        </label>
+                        {multiCountry && (
+                            <button
+                                onClick={allCollapsed ? expandAll : collapseAll}
+                                class="ml-auto text-xs text-gray-500 hover:text-gray-700 font-medium underline whitespace-nowrap"
+                            >
+                                {allCollapsed ? 'Expand all' : 'Collapse all'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -510,6 +527,8 @@ function ReviewPanel({
                 <CountryGroup
                     key={group.country_code}
                     group={group}
+                    expanded={!collapsed.has(group.country_code)}
+                    onToggleExpanded={() => toggleCountry(group.country_code)}
                     onJobField={(jobIndex, field, value) =>
                         onJobField(group.country_code, jobIndex, field, value)
                     }
@@ -543,6 +562,8 @@ function ReviewPanel({
 
 interface CountryGroupProps {
     group: ReviewCountryGroup;
+    expanded: boolean;
+    onToggleExpanded: () => void;
     onJobField: (
         jobIndex: number,
         field:
@@ -563,7 +584,12 @@ function jobLangStatus(job: ReviewJob): LanguageStatus {
           : 'neither';
 }
 
-function CountryGroup({ group, onJobField }: CountryGroupProps) {
+function CountryGroup({
+    group,
+    expanded,
+    onToggleExpanded,
+    onJobField,
+}: CountryGroupProps) {
     const [sortAlpha, setSortAlpha] = useState(false);
     const [langFilter, setLangFilter] = useState<LanguageFilter>('all');
 
@@ -578,45 +604,74 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
 
     return (
         <div class="border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-2">
-                <span class="font-medium text-sm text-gray-800">
-                    {group.country_name}
-                </span>
-                <span class="text-xs text-gray-400">{group.country_code}</span>
-
+            <div
+                class={`bg-gray-50 px-4 py-2 flex flex-wrap items-center gap-2 ${expanded ? 'border-b border-gray-200' : ''}`}
+            >
                 <button
-                    onClick={() => setSortAlpha((v) => !v)}
-                    class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
-                        sortAlpha
-                            ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
-                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
-                    }`}
+                    onClick={onToggleExpanded}
+                    class="flex items-center gap-2 text-gray-500 hover:text-gray-600 transition-colors"
+                    aria-label={
+                        expanded ? 'Collapse country' : 'Expand country'
+                    }
                 >
-                    A–Z
+                    <svg
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class={`w-4 h-4 flex-shrink-0 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 5l7 7-7 7"
+                        />
+                    </svg>
+                    <span class="font-medium text-sm text-gray-800">
+                        {group.country_name}
+                    </span>
+                    <span class="text-xs text-gray-500">
+                        {group.country_code}
+                    </span>
                 </button>
 
-                <div class="flex items-center gap-1">
-                    {(
-                        [
-                            ['all', 'All'],
-                            ['required', 'Required'],
-                            ['advantage', 'Advantage'],
-                            ['neither', 'None'],
-                        ] as [LanguageFilter, string][]
-                    ).map(([value, label]) => (
+                {expanded && (
+                    <>
                         <button
-                            key={value}
-                            onClick={() => setLangFilter(value)}
+                            onClick={() => setSortAlpha((v) => !v)}
                             class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
-                                langFilter === value
+                                sortAlpha
                                     ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
                                     : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
                             }`}
                         >
-                            {label}
+                            A–Z
                         </button>
-                    ))}
-                </div>
+
+                        <div class="flex items-center gap-1">
+                            {(
+                                [
+                                    ['all', 'All'],
+                                    ['required', 'Required'],
+                                    ['advantage', 'Advantage'],
+                                    ['neither', 'None'],
+                                ] as [LanguageFilter, string][]
+                            ).map(([value, label]) => (
+                                <button
+                                    key={value}
+                                    onClick={() => setLangFilter(value)}
+                                    class={`text-xs rounded-full px-2.5 py-0.5 font-medium border transition-colors ${
+                                        langFilter === value
+                                            ? 'bg-[#0F7A4F] text-white border-[#0F7A4F]'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
 
                 <span class="text-xs text-gray-500 ml-auto">
                     {displayed.length === group.jobs.length
@@ -624,7 +679,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                         : `${displayed.length} of ${group.jobs.length} positions`}
                 </span>
             </div>
-            <div class="overflow-x-auto">
+            <div class={`overflow-x-auto ${expanded ? '' : 'hidden'}`}>
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-gray-100 bg-white">
@@ -644,7 +699,7 @@ function CountryGroup({ group, onJobField }: CountryGroupProps) {
                             <tr>
                                 <td
                                     colSpan={3}
-                                    class="px-4 py-3 text-center text-xs text-gray-400"
+                                    class="px-4 py-3 text-center text-xs text-gray-500"
                                 >
                                     No positions match this filter.
                                 </td>

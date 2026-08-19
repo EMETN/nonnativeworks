@@ -1,0 +1,41 @@
+name: Add a company
+description: Suggest a company whose job listings should be tracked
+title: 'Add company: '
+labels: ['company']
+body:
+    - type: markdown
+      attributes:
+          value: |
+              If you're comfortable opening a PR, adding the entry to `scraper/companies.yaml`
+              yourself is faster — see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md).
+              The scrape preview runs automatically on the PR.
+
+    - type: input
+      id: name
+      attributes:
+          label: Company name
+      validations:
+          required: true
+
+    - type: input
+      id: url
+      attributes:
+          label: Career page URL
+          description: Must be reachable without logging in.
+          placeholder: https://careers.example.com
+      validations:
+          required: true
+
+    - type: input
+      id: countries
+      attributes:
+          label: Countries
+          description: Which tracked countries do they hire in?
+          placeholder: Finland, Sweden
+
+    - type: checkboxes
+      id: english
+      attributes:
+          label: English-only company
+          options:
+              - label: Their working language is English across the board

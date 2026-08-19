@@ -6,31 +6,12 @@ import {
     invalidateCache,
     invalidateCachePrefix,
 } from '../../lib/admin-cache';
-
-interface CompanyOption {
-    company_id: string;
-    name: string;
-    country_id: string;
-    country_name: string;
-    total_positions: number;
-}
-
-interface CategoryInfo {
-    id: string;
-    name: string;
-    slug: string;
-}
-
-interface PositionRow {
-    id: string;
-    title: string;
-    url: string | null;
-    requires_native_language: boolean;
-    local_language_advantage: boolean;
-    required_education: string | null;
-    category: CategoryInfo | null;
-    company?: { name: string; country_name: string } | null;
-}
+import {
+    AdminCompanyListSchema,
+    AdminPositionListSchema,
+    type AdminCompany as CompanyOption,
+    type AdminPosition as PositionRow,
+} from '../../lib/admin-schemas';
 
 const ALL = '__all__';
 const COUNTRY_PREFIX = '__country__:';
@@ -127,7 +108,8 @@ export default function PositionEditor() {
         setLoadingCompanies(true);
         fetch('/api/admin/companies')
             .then((r) => r.json())
-            .then((rows: CompanyOption[]) => {
+            .then((raw) => {
+                const rows = AdminCompanyListSchema.parse(raw);
                 setCompanies(rows);
                 writeCache('companies', rows);
             })
@@ -168,7 +150,8 @@ export default function PositionEditor() {
         }
         fetch(`/api/admin/positions${query}`)
             .then((r) => r.json())
-            .then((rows: PositionRow[]) => {
+            .then((raw) => {
+                const rows = AdminPositionListSchema.parse(raw);
                 setPositions(rows);
                 writeCache(cacheKey, rows);
             })
@@ -318,7 +301,7 @@ export default function PositionEditor() {
 
     if (loadingCompanies) {
         return (
-            <div class="text-sm text-gray-400 py-1.5 border border-transparent">
+            <div class="text-sm text-gray-500 py-1.5 border border-transparent">
                 Loading…
             </div>
         );
@@ -384,11 +367,11 @@ export default function PositionEditor() {
             {selectedId && (
                 <div>
                     {loadingPositions ? (
-                        <div class="text-sm text-gray-400 py-4">
+                        <div class="text-sm text-gray-500 py-4">
                             Loading positions…
                         </div>
                     ) : positions.length === 0 ? (
-                        <div class="text-sm text-gray-400 py-4">
+                        <div class="text-sm text-gray-500 py-4">
                             {showCompanyColumn
                                 ? 'No positions found.'
                                 : 'No positions found for this company.'}
@@ -485,7 +468,7 @@ export default function PositionEditor() {
                                                         </span>
                                                         {pos.company
                                                             ?.country_name && (
-                                                            <span class="text-gray-400">
+                                                            <span class="text-gray-500">
                                                                 {' '}
                                                                 ·{' '}
                                                                 {
@@ -638,17 +621,17 @@ export default function PositionEditor() {
                                                 {/* Save indicator */}
                                                 <td class="px-4 py-2.5 text-center">
                                                     {state === 'saving' && (
-                                                        <span class="text-xs text-gray-400">
+                                                        <span class="text-xs text-gray-500">
                                                             Saving…
                                                         </span>
                                                     )}
                                                     {state === 'saved' && (
-                                                        <span class="text-xs text-green-600">
+                                                        <span class="text-xs text-green-700">
                                                             Saved
                                                         </span>
                                                     )}
                                                     {state === 'error' && (
-                                                        <span class="text-xs text-red-500">
+                                                        <span class="text-xs text-red-600">
                                                             Error
                                                         </span>
                                                     )}

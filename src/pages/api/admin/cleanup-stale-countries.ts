@@ -42,9 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
         return json({ error: lookupErr.message }, 500);
     }
 
-    const keepIdSet = new Set(
-        (keepRows ?? []).map((r: { id: string }) => r.id),
-    );
+    const keepIdSet = new Set((keepRows ?? []).map((r) => r.id));
     if (keepIdSet.size === 0) {
         console.error(
             'cleanup-stale-countries: no countries matched slugs',
@@ -70,8 +68,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const staleIds = (existingRows ?? [])
-        .filter((r: { country_id: string }) => !keepIdSet.has(r.country_id))
-        .map((r: { id: string }) => r.id);
+        .filter((r) => !keepIdSet.has(r.country_id))
+        .map((r) => r.id);
 
     if (staleIds.length === 0) {
         return json({ ok: true, deleted: 0 }, 200);

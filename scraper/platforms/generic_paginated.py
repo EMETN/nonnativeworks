@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import build_job, job_key, LOCATION_CLASS_PATTERNS
+from extract import LOCATION_CLASS_PATTERNS, build_job, job_key
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 

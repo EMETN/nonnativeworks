@@ -1,4 +1,10 @@
 ---
+interface Props {
+    // Set by pages (e.g. 404) that must not trigger the catch-all isCountries below.
+    hideActive?: boolean;
+}
+const { hideActive = false } = Astro.props;
+
 const pathname = Astro.url.pathname;
 const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
 const isHome = pathname === '/';
@@ -7,11 +13,12 @@ const isCountryCompany =
     segments.length >= 2 &&
     segments[0] !== 'companies' &&
     segments[0] !== 'admin';
-const isCompanies =
-    pathname === '/companies' ||
-    pathname.startsWith('/companies/') ||
-    isCountryCompany;
-const isCountries = !isHome && !isCompanies && !isAdmin;
+const isCompanies = hideActive
+    ? false
+    : pathname === '/companies' ||
+      pathname.startsWith('/companies/') ||
+      isCountryCompany;
+const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
 ---
 
 <header
@@ -22,12 +29,16 @@ const isCountries = !isHome && !isCompanies && !isAdmin;
         <div class="flex items-center justify-between h-16">
             <a
                 href="/"
-                class="flex items-center gap-2"
-                aria-label="NonNativeWorks — home"
+                class="flex items-center"
+                aria-label="nonnativeworks! — home"
             >
-                <span class="text-xl font-bold text-gray-900" aria-hidden="true"
-                    >NonNativeWorks</span
-                >
+                <img
+                    src="/nonnativeworks_logo.svg"
+                    alt=""
+                    class="h-8 w-auto"
+                    width="408"
+                    height="64"
+                />
             </a>
 
             <!-- Desktop nav -->

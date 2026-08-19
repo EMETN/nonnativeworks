@@ -11,14 +11,14 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v7
 
             # ── Node / Prettier / tests ──────────────────────────────────────
             - name: Setup pnpm
               uses: pnpm/action-setup@v5
 
             - name: Setup Node
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v7
               with:
                   node-version-file: '.node-version'
                   cache: 'pnpm'
@@ -26,15 +26,21 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Secret scan
+              run: pnpm lint:secrets
+
             - name: Prettier (format check)
               run: pnpm format:check
+
+            - name: Typecheck
+              run: pnpm typecheck
 
             - name: Tests
               run: pnpm test
 
             # ── Python / Ruff ────────────────────────────────────────────────
             - name: Setup Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: '3.12'
 
@@ -46,8 +52,5 @@ jobs:
             - name: Ruff (format check)
               run: ruff format --check scraper
 
-            # Advisory for now: 2 known findings (F821 undefined name, B023) are
-            # left for a follow-up. Once fixed, remove continue-on-error to enforce.
             - name: Ruff (lint)
               run: ruff check scraper
-              continue-on-error: true

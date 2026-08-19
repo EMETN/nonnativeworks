@@ -22,7 +22,7 @@ import re
 import sys
 from urllib.parse import urljoin
 
-from extract import build_job, SKIP_LOCATION_PATTERNS
+from extract import SKIP_LOCATION_PATTERNS, build_job
 from title_language import _title_appears_non_english_excluding_cities
 
 _ROVIO_HEADERS = {
