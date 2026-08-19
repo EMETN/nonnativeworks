@@ -490,7 +490,11 @@ scrapers:
     # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no
     # browser needed. startrow doesn't return an empty page past the last one —
     # it wraps back to page 1 — so termination relies on the last real page
-    # returning fewer than page_size tiles (84 jobs / 9 pages as of 2026-08).
+    # returning fewer than page_size tiles.
+    # Each locale serves a distinct, non-overlapping slice of jobs across many
+    # countries (not a per-country filter) — locale_param/locales fetches and
+    # merges all of them, deduped by job key. Locale list is every option in the
+    # site's language switcher as of 2026-08.
     - match: 'careers.carlsberg.com'
       name: Carlsberg
       list_url: https://careers.carlsberg.com/search/
@@ -498,6 +502,17 @@ scrapers:
           createNewAlert: false
           q: ''
           locationsearch: ''
+      locale_param: locale
+      locales:
+          - en_GB
+          - da_DK
+          - de_DE
+          - fi_FI
+          - fr_FR
+          - it_IT
+          - nb_NO
+          - pl_PL
+          - sv_SE
       pagination:
           type: offset
           param: startrow

@@ -826,6 +826,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     country_filter_param: str | None = cfg.get("country_filter_param")
     countries: list[str] = cfg.get("countries", [])
     country_values: dict[str, str] = cfg.get("country_values", {})
+    locale_param: str | None = cfg.get("locale_param")
+    locales: list[str] = cfg.get("locales", [])
 
     session = requests.Session()
 
@@ -857,22 +859,36 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
 
     # ── Phase 1: listing ──────────────────────────────────────────────────────
     # When country_filter_param + countries are set, iterate one paginated fetch
-    # per country and merge results. Otherwise, a single fetch set runs as before.
-    # country_values maps ISO codes to site-specific filter values (e.g. SE → "3").
+    # per country and merge results, tagging each job with its country (the filter
+    # guarantees every result belongs to that country). Otherwise, a single fetch
+    # set runs as before. country_values maps ISO codes to site-specific filter
+    # values (e.g. SE → "3").
+    #
+    # locale_param + locales is a similar iterate-and-merge fetch, but for sites
+    # (e.g. Carlsberg's SuccessFactors instance) where each locale returns a
+    # different, non-overlapping slice of jobs across many countries rather than
+    # a single-country filter — so results are merged without country tagging,
+    # leaving per-job location text to resolve the country as usual.
     all_jobs: list[dict] = []
     seen_keys: set[str] = set()
 
-    param_sets: list[tuple[dict, str | None]] = (
-        [
+    if country_filter_param and countries:
+        param_sets: list[tuple[dict, str | None]] = [
             ({**extra_params, country_filter_param: country_values.get(cc, cc)}, cc)
             for cc in countries
         ]
-        if country_filter_param and countries
-        else [(dict(extra_params), None)]
-    )
+    elif locale_param and locales:
+        param_sets = [({**extra_params, locale_param: loc}, None) for loc in locales]
+    else:
+        param_sets = [(dict(extra_params), None)]
 
     for base_params, country_code in param_sets:
-        label = country_code or ""
+        if country_code:
+            label = country_code
+        elif locale_param:
+            label = base_params.get(locale_param, "")
+        else:
+            label = ""
         prefix = f"generic [{name}]{f' ({label})' if label else ''}"
 
         if ptype == "none":
