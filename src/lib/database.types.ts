@@ -310,6 +310,57 @@ export type Database = {
                 };
                 Relationships: [];
             };
+            admin_changes: {
+                Row: {
+                    id: string;
+                    entity_type: 'company' | 'position' | 'skill';
+                    action: 'created' | 'updated' | 'deleted';
+                    label: string;
+                    changed_by: string;
+                    changed_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    entity_type: 'company' | 'position' | 'skill';
+                    action: 'created' | 'updated' | 'deleted';
+                    label: string;
+                    changed_by: string;
+                    changed_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    entity_type?: 'company' | 'position' | 'skill';
+                    action?: 'created' | 'updated' | 'deleted';
+                    label?: string;
+                    changed_by?: string;
+                    changed_at?: string;
+                };
+                Relationships: [];
+            };
+            site_builds: {
+                Row: {
+                    deploy_id: string;
+                    state: string;
+                    started_at: string | null;
+                    finished_at: string | null;
+                    created_at: string;
+                };
+                Insert: {
+                    deploy_id: string;
+                    state: string;
+                    started_at?: string | null;
+                    finished_at?: string | null;
+                    created_at?: string;
+                };
+                Update: {
+                    deploy_id?: string;
+                    state?: string;
+                    started_at?: string | null;
+                    finished_at?: string | null;
+                    created_at?: string;
+                };
+                Relationships: [];
+            };
         };
         Views: {
             country_stats: {
@@ -365,6 +416,14 @@ export type Database = {
                     country_count: number;
                     primary_country_slug: string;
                     career_page_url: string | null;
+                }[];
+            };
+            admin_change_summary: {
+                Args: { since: string };
+                Returns: {
+                    entity_type: string;
+                    action: string;
+                    count: number;
                 }[];
             };
         };
