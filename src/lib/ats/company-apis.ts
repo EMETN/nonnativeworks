@@ -278,16 +278,30 @@ export interface CompanyApiConfig {
      */
     secondaryUrlTemplate?: string;
     /**
-     * When set, handles multi-location job postings. Three modes:
+     * When set, handles multi-location job postings. Four modes:
      *
-     * Country mode (countryName set): each job is duplicated for every additional
-     * country found in the nested array. Use when a single posting covers multiple
-     * countries (e.g. Nokia). Each duplicate gets the secondary country as its
-     * location so the classifier assigns it to the correct country.
+     * Country mode (countryName set, no countryCodeField): each job is duplicated for
+     * every additional country found in the nested array. Use when a single posting
+     * covers multiple countries and secondary entries don't carry an explicit country
+     * code to group by. Each duplicate gets the secondary country as its location so
+     * the classifier assigns it to the correct country. NOTE: if secondary entries can
+     * repeat the same country under different cities (e.g. one posting open across many
+     * cities within one country), this mode creates one duplicate per city — prefer
+     * grouped-city mode below when a country code is available per entry.
      *
-     * City mode (cityField set): secondary entries are treated as additional cities
-     * within the same country. Their names are collected into job.cities alongside
-     * the primary city — no duplicate jobs are created.
+     * City mode (cityField set, no countryCodeField): secondary entries are treated as
+     * additional cities within the same country. Their names are collected into
+     * job.cities alongside the primary city — no duplicate jobs are created. Only use
+     * when every secondary entry is known to share the primary job's country.
+     *
+     * Grouped-city mode (cityField AND countryCodeField set): secondary entries are
+     * grouped by their own country code. Entries matching the primary job's country
+     * (fields.country must be set) are merged into job.cities — one entry per country,
+     * not per city. Entries for a genuinely different country produce exactly one extra
+     * job per distinct other country, with that country's own cities collected together.
+     * Use this whenever the API exposes both a city name and a country code per secondary
+     * location (e.g. Oracle HCM's secondaryLocations, which mixes same-country multi-city
+     * postings with genuinely cross-country ones).
      *
      * Parallel mode (parallelCitiesPath set): path points to a flat string array of
      * country names; parallelCitiesPath points to a comma-separated city string whose
@@ -297,13 +311,15 @@ export interface CompanyApiConfig {
      *
      * path               — dot-path from each job item to the countries array
      * countryName        — dot-path within each element to the country name string (country mode)
-     * cityField          — dot-path within each element to the city name string (city mode)
+     * cityField          — dot-path within each element to the city name string (city / grouped-city mode)
+     * countryCodeField   — dot-path within each element to an ISO alpha-2 country code (grouped-city mode)
      * parallelCitiesPath — dot-path to a comma-separated city string (parallel mode)
      */
     expandSecondaryLocations?: {
         path: string;
         countryName?: string;
         cityField?: string;
+        countryCodeField?: string;
         parallelCitiesPath?: string;
     };
     /**
@@ -598,6 +614,59 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         expandSecondaryLocations: {
             path: 'secondaryLocations',
             cityField: 'Name',
+        },
+    },
+
+    'ejqi.fa.ocs.oraclecloud.eu': {
+        // Oracle HCM Recruiting Cloud endpoint for Danske Bank. Same structure as
+        // Nokia/Orion — EU-region Oracle Cloud instance, site number CX_1001.
+        url: 'https://ejqi.fa.ocs.oraclecloud.eu/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+        method: 'GET',
+        headers: {
+            accept: '*/*',
+            'accept-language': 'en',
+            'content-type':
+                'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+            'ora-irc-language': 'en',
+            origin: 'https://ejqi.fa.ocs.oraclecloud.eu',
+            referer:
+                'https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001',
+            'user-agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        },
+        pagination: { type: 'finder-offset', pageSize: 200 },
+        itemsPath: 'items.0.requisitionList',
+        fields: {
+            title: 'Title',
+            location: 'PrimaryLocation',
+            id: 'Id',
+            country: 'PrimaryLocationCountry',
+        },
+        urlTemplate:
+            'https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001/job/{Id}',
+        companyName: 'Danske Bank',
+        descriptionApiUrl:
+            'https://ejqi.fa.ocs.oraclecloud.eu/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1001',
+        // Unlike Nokia, Danske Bank's requisitions don't populate
+        // ExternalQualificationsStr/ExternalResponsibilitiesStr — the full body
+        // (often in the local language) lives in ExternalDescriptionStr, same as
+        // Orion. Using the empty Nokia fields silently starved the classifier of
+        // any text, so every job fell back to "no signal — English assumed".
+        descriptionApiFields: ['ExternalDescriptionStr'],
+        descriptionApiLocationField: 'workLocation.0.TownOrCity',
+        descriptionApiJobFunctionField: 'JobFunction',
+        descriptionApiWorkModelField: 'WorkplaceType',
+        // Danske Bank postings mix same-country multi-city listings (e.g. a role
+        // open across 25 Danish cities) with genuinely cross-country ones (e.g. one
+        // role open in Denmark, Sweden, Norway, Finland and Lithuania at once).
+        // secondaryLocations carries an explicit CountryCode per entry, so group by
+        // that instead of treating every secondary location as a separate country —
+        // the old countryName mode created one duplicate row per city, even when all
+        // 25 were in Denmark.
+        expandSecondaryLocations: {
+            path: 'secondaryLocations',
+            cityField: 'Name',
+            countryCodeField: 'CountryCode',
         },
     },
 
