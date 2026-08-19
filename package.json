@@ -6,7 +6,7 @@
     "engines": {
         "node": ">=24.0.0"
     },
-    "packageManager": "pnpm@11.21.0",
+    "packageManager": "pnpm@11.22.0",
     "scripts": {
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
