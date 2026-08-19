@@ -160,6 +160,19 @@ function mapItem(
 }
 
 /**
+ * True when `city` is not really a city name but the display name of the country
+ * itself (e.g. "Denmark" for cc "DK") — some APIs give country-level secondary
+ * locations for cross-country postings instead of a specific city.
+ */
+function cityNameIsBareCountryName(city: string, cc: string): boolean {
+    const countryInfo = lookupCountryFromLocation(cc)[0];
+    return (
+        !!countryInfo &&
+        city.trim().toLowerCase() === countryInfo.name.toLowerCase()
+    );
+}
+
+/**
  * If expandSecondaryLocations is configured, handles multi-location job postings.
  *
  * Country mode (countryName set): returns additional RawJob copies for each secondary
@@ -168,6 +181,12 @@ function mapItem(
  *
  * City mode (cityField set): collects secondary city names into primaryJob.cities so
  * they appear as one consolidated posting. Returns [] (no duplicate jobs created).
+ *
+ * Grouped-city mode (cityField AND countryCodeField set): like city mode, but secondary
+ * entries are first grouped by their own country code — only same-country entries are
+ * merged into primaryJob.cities. Entries for a different country produce one extra job
+ * per distinct other country (not one per city). See expandSecondaryLocations' JSDoc in
+ * company-apis.ts for the full mode rundown.
  */
 function expandJobToSecondaryLocations(
     primaryJob: RawJob,
@@ -210,6 +229,54 @@ function expandJobToSecondaryLocations(
                     : undefined,
                 descriptionApiId:
                     primaryJob.descriptionApiId ?? primaryJob.sourceId,
+            });
+        }
+        return extras;
+    }
+
+    if (expand.cityField && expand.countryCodeField) {
+        // Grouped-city mode: group secondary locations by their own country code.
+        // Same-country entries are merged into primaryJob.cities (one entry, many
+        // cities); entries for a genuinely different country become exactly one
+        // extra job per distinct other country (not one per city).
+        const primaryCountry = primaryJob.country_code?.toUpperCase();
+        const byCountry = new Map<string, string[]>();
+        for (const sec of secondaries) {
+            const city = getString(sec, expand.cityField);
+            if (!city) continue;
+            const cc =
+                getString(sec, expand.countryCodeField)?.toUpperCase() ?? '';
+            if (!byCountry.has(cc)) byCountry.set(cc, []);
+            // Some APIs (e.g. Oracle HCM) give country-level secondary locations
+            // for genuinely cross-country postings — the "city" field is just the
+            // country's own name (e.g. Name: "Denmark", CountryCode: "DK") rather
+            // than an actual city. Pushing that would show a fake city named after
+            // the country, so skip it — the country still gets its extra job entry
+            // (via byCountry.set above), just with no specific city.
+            if (cc && cityNameIsBareCountryName(city, cc)) continue;
+            byCountry.get(cc)!.push(city);
+        }
+        const extras: RawJob[] = [];
+        for (const [cc, cities] of byCountry) {
+            // No country code on the secondary entry, or it matches the primary
+            // job's own country: fold into the primary job's city list.
+            if (!cc || cc === primaryCountry) {
+                if (cities.length > 0) {
+                    primaryJob.cities = [
+                        ...(primaryJob.cities ?? []),
+                        ...cities,
+                    ];
+                }
+                continue;
+            }
+            extras.push({
+                ...primaryJob,
+                country_code: cc,
+                cities: cities.length > 0 ? cities : undefined,
+                city: undefined,
+                sourceId: primaryJob.sourceId
+                    ? `${primaryJob.sourceId}-${cc}`
+                    : undefined,
             });
         }
         return extras;
