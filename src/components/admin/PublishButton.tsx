@@ -44,6 +44,7 @@ export default function PublishButton() {
     const modalRef = useRef<HTMLDivElement>(null);
     const publishNowRef = useRef<HTMLButtonElement>(null);
     const lastFocusedRef = useRef<HTMLElement | null>(null);
+    const bypassGuardRef = useRef(false);
 
     const changeCount = status?.changeCount ?? 0;
     const pending = changeCount > 0;
@@ -100,6 +101,7 @@ export default function PublishButton() {
         if (!guardActive) return;
 
         function handleBeforeUnload(event: BeforeUnloadEvent) {
+            if (bypassGuardRef.current) return;
             event.preventDefault();
             event.returnValue = '';
         }
@@ -198,11 +200,17 @@ export default function PublishButton() {
 
     async function publishAndLeave() {
         const ok = await publish();
-        if (ok && pendingNav) window.location.assign(pendingNav);
+        if (ok && pendingNav) {
+            bypassGuardRef.current = true;
+            window.location.assign(pendingNav);
+        }
     }
 
     function leaveWithoutPublishing() {
-        if (pendingNav) window.location.assign(pendingNav);
+        if (pendingNav) {
+            bypassGuardRef.current = true;
+            window.location.assign(pendingNav);
+        }
     }
 
     const disabled =
