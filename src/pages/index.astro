@@ -6,31 +6,20 @@ import {
     getGlobalStats,
     getTopCompanies,
 } from '../lib/queries';
-import type { CountryStats, GlobalStats } from '../lib/types';
-import type { TopCompany } from '../lib/queries';
+import type { CountryStats } from '../lib/types';
 
-let countries: CountryStats[] = [];
-let topCompanies: TopCompany[] = [];
-let stats: GlobalStats | null = null;
-let loadError = false;
+const [allCountries, stats, topCompanies] = await Promise.all([
+    getCountryStats(undefined, undefined),
+    getGlobalStats(undefined, undefined),
+    getTopCompanies(undefined, undefined, 5),
+]);
+const countries: CountryStats[] = allCountries.filter(
+    (c) => c.total_positions > 0,
+);
 
-try {
-    const [allCountries, globalStats, tc] = await Promise.all([
-        getCountryStats(undefined, undefined),
-        getGlobalStats(undefined, undefined),
-        getTopCompanies(undefined, undefined, 5),
-    ]);
-    countries = allCountries.filter((c) => c.total_positions > 0);
-    stats = globalStats;
-    topCompanies = tc;
-} catch (err) {
-    console.error('Homepage data load error:', err);
-    loadError = true;
-}
-
-const totalPositions = stats?.total_positions ?? 0;
-const englishPositions = stats?.english_positions ?? 0;
-const totalCompanies = stats?.total_companies ?? 0;
+const totalPositions = stats.total_positions;
+const englishPositions = stats.english_positions;
+const totalCompanies = stats.total_companies;
 
 const topCountries = [...countries]
     .sort((a, b) => b.english_positions - a.english_positions)
@@ -78,7 +67,7 @@ const companyItems = topCompanies.map((c) => ({
         </div>
 
         {
-            !loadError && countries.length > 0 && (
+            countries.length > 0 && (
                 <div class="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8 sm:mb-16">
                     <p class="text-base sm:text-lg text-gray-500 md:flex-1 text-center md:text-left">
                         Discover companies that welcome non-native language
@@ -128,7 +117,7 @@ const companyItems = topCompanies.map((c) => ({
         }
 
         {
-            (loadError || countries.length === 0) && (
+            countries.length === 0 && (
                 <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
                     <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
                         Discover companies that welcome non-native language
@@ -143,14 +132,7 @@ const companyItems = topCompanies.map((c) => ({
     <!-- Top lists -->
     <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         {
-            loadError ? (
-                <div class="text-center py-8 text-gray-500">
-                    <p class="text-lg mb-2">
-                        Something went wrong loading the data.
-                    </p>
-                    <p class="text-sm">Please try again later.</p>
-                </div>
-            ) : countries.length === 0 ? (
+            countries.length === 0 ? (
                 <div class="text-center py-8 text-gray-500">
                     <p class="text-lg mb-2">No positions tracked yet.</p>
                     <p class="text-sm">
