@@ -32,9 +32,7 @@ const siteTitle =
         ? 'nonnativeworks! — Work abroad in English'
         : `${title} — nonnativeworks!`;
 
-// Under static `build.format: 'file'` Astro.url carries the physical file path
-// (e.g. /countries.html, /index.html). Strip it so the canonical matches the URL
-// the site is actually served at. A no-op under SSR/dev, where pathname is clean.
+// Strip the built .html path so canonical matches the served URL — see url-path.ts.
 const canonical = new URL(cleanPathname(Astro.url), Astro.url).href;
 const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
 

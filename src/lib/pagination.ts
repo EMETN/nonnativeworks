@@ -1,7 +1,6 @@
+/** Inclusive row bounds, matching Supabase `.range(from, to)`. */
 export interface PageRange {
-    /** Inclusive lower bound, matching Supabase `.range()`. */
     from: number;
-    /** Inclusive upper bound, matching Supabase `.range()`. */
     to: number;
 }
 

@@ -12,12 +12,8 @@ import type {
 import { nameToSlug } from './country-flags';
 
 /**
- * Selects the Supabase client for a query.
- *
- * Exported for tests. The dual-mode behaviour is a load-bearing invariant: it is
- * what makes converting a route between prerendered and on-demand a ten-line
- * change rather than a data-layer rewrite. See the "Scalability" section of the
- * SSG design spec.
+ * Selects the Supabase client for a query (exported for tests). Dual-mode so a route
+ * can switch between prerendered and on-demand without a data-layer rewrite.
  */
 export function resolveClient(
     request: Request | undefined,

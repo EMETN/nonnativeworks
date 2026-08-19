@@ -1,9 +1,5 @@
--- Records every request to rebuild the public site.
---
--- Serves three purposes: rate limiting (serverless has no shared memory, so a
--- disabled button is otherwise the only guard against queuing redundant builds),
--- in-flight detection (a triggered_at newer than the running deploy's build time
--- means a build is running), and an audit trail.
+-- Records every request to rebuild the public site: backs rate limiting (serverless has
+-- no shared memory), in-flight detection, and an audit trail.
 
 CREATE TABLE site_publishes (
   id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),

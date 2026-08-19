@@ -9,9 +9,8 @@ export type TypedSupabaseClient = ReturnType<
 // Server-only secrets use process.env (read at runtime, never inlined into build output).
 // PUBLIC_* vars use import.meta.env (inlined by Vite at build time — safe for client exposure).
 //
-// These are read lazily rather than at module load: once public pages prerender,
-// this module is imported during the build, and a module-level throw would fire
-// before Astro could report which page or query triggered it.
+// Read lazily: a module-level throw would fire during the build, before Astro can report
+// which page or query triggered it.
 function requireEnv(name: string): string {
     const value = process.env[name];
     if (!value) {
@@ -74,11 +73,8 @@ export function createSupabaseServiceClient() {
 let publicClient: ReturnType<typeof createSupabaseServiceClient> | null = null;
 
 /**
- * Anon-key client for build-time reads (getStaticPaths). Holds no cookies and
- * refreshes no session, so it is safe to share across a whole build.
- *
- * Memoised rather than module-level: constructing at import time would read env
- * vars before the build environment is ready.
+ * Anon-key client for build-time reads (getStaticPaths), safe to share across a whole build.
+ * Memoised, not module-level: constructing at import time would read env vars too early.
  */
 export function createPublicClient() {
     if (!publicClient) {

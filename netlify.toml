@@ -7,9 +7,7 @@
   status = 200
   force = true
 
-# Set at the CDN layer rather than only in middleware: prerendered pages never
-# invoke middleware at request time, so these would otherwise disappear from every
-# public page once the site is built ahead of requests.
+# Set at the CDN layer, not middleware: prerendered pages never invoke middleware at request time.
 [[headers]]
   for = "/*"
   [headers.values]

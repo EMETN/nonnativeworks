@@ -11,11 +11,8 @@ afterAll(async () => {
     await server?.stop();
 });
 
-// Security headers on static public pages are applied at the CDN layer
-// (netlify.toml) and are verified on the Netlify deploy preview — the local
-// node adapter does not read netlify.toml. On-demand routes still receive the
-// headers from middleware, so we assert them here (a single value proves the
-// header is not duplicated).
+// Static pages get these headers from netlify.toml, verified on the deploy preview instead
+// (the local node adapter doesn't read it). On-demand routes get them from middleware.
 test.each([
     ['x-content-type-options', 'nosniff'],
     ['x-frame-options', 'DENY'],

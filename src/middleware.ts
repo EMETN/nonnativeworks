@@ -14,9 +14,8 @@ function hasValidScraperSecret(request: Request): boolean {
 
     const provided = request.headers.get('x-scraper-secret') ?? '';
 
-    // timingSafeEqual throws on length mismatch, so the lengths are compared first.
-    // This still leaks the secret's length, which is not sensitive; what matters is
-    // that a correct prefix is not detectable through response timing.
+    // Constant-time compare; length checked first because
+    // timingSafeEqual throws on length mismatch.
     const providedBuffer = Buffer.from(provided, 'utf8');
     const expectedBuffer = Buffer.from(SCRAPER_SECRET, 'utf8');
 
