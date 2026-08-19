@@ -150,7 +150,6 @@ for domain in \
     "kesko.fi" \
     "konecranes.careers" \
     "careers.allianz.com" \
-    "bmwgroup.jobs" \
     "jobs.volkswagen-group.com" \
     "academicwork.fi" \
     "academicwork.se" \
@@ -257,7 +256,8 @@ done
 for cdn_domain in \
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com" \
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com" \
-    "jobs.booking.com" ; do
+    "jobs.booking.com" \
+    "www.bmwgroup.jobs" ; do
     for dns_server in "8.8.8.8" "1.1.1.1"; do
         echo "Resolving $cdn_domain via $dns_server..."
         cdn_ips=$(dig +noall +answer A "@$dns_server" "$cdn_domain" | awk '$4 == "A" {print $5}')
