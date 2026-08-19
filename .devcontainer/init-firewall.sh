@@ -172,6 +172,8 @@ for domain in \
     "proton.me" \
     "jobs.booking.com" \
     "akqa.com" \
+    "www.akqa.com" \
+    "ze58z02210-dsn.algolia.net" \
     "deptagency.com" \
     "cg-jobstream-api.azurewebsites.net" \
     "capgemini.com" \

@@ -57,6 +57,10 @@ companies:
       url: https://www.alpha-sense.com/careers
       min_positions: 1
 
+    - name: AMD
+      url: https://careers.amd.com/careers-home/jobs
+      min_positions: 15
+
     - name: Arla
       url: https://jobs.arla.com
       min_positions: 10
