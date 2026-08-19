@@ -899,6 +899,22 @@ export const CASES: FixtureCase[] = [
         requires: false,
         advantage: false,
     },
+    {
+        label: '2a negation-none — "English and/or Dutch" (English first) → no signal',
+        title: 'System Qualification Test Engineer',
+        desc: 'Ability to speak and understand English and/or Dutch.',
+        country: 'NL',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '2a negation-none — "Dutch and/or English" (local language first) → no signal',
+        title: 'Test Engineer',
+        desc: 'Ability to speak and understand Dutch and/or English.',
+        country: 'NL',
+        requires: false,
+        advantage: false,
+    },
 
     // ── Phase 2a: Negation — "not required / nice-to-have" downgrades to advantage
 

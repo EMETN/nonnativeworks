@@ -880,6 +880,21 @@ const LANG_KEYWORD_ALT_SRC = [...ALL_LANG_KEYWORDS]
     .join('|');
 const ADVANTAGE_SUFFIX_LANG_LIST_GAP = `(?:\\s*,\\s*(?:${LANG_KEYWORD_ALT_SRC}))*(?:\\s*,?\\s+or\\s+(?:${LANG_KEYWORD_ALT_SRC}))?`;
 
+// "English and/or {lang}" / "{lang} and/or english" is explicit either-or phrasing —
+// English alone always satisfies it, no matter which side English is on. Matched and
+// collapsed to bare "english" BEFORE the generic and/or→slash conversion below, which
+// would otherwise turn it into the ambiguous "english/{lang}" (or "{lang}/english")
+// signal — a phrase pattern designed for genuine both-required phrasing like "Dutch/
+// English fluency required" — and wrongly read it as a requirement for {lang}.
+const ENGLISH_AND_OR_LANG_RE = new RegExp(
+    `\\benglish\\s+and\\/or\\s+(?:${LANG_KEYWORD_ALT_SRC})\\b`,
+    'g',
+);
+const LANG_AND_OR_ENGLISH_RE = new RegExp(
+    `\\b(?:${LANG_KEYWORD_ALT_SRC})\\s+and\\/or\\s+english\\b`,
+    'g',
+);
+
 // Advantage modifiers that appear DIRECTLY after a requirement signal, optionally past a
 // trailing list of other languages (see ADVANTAGE_SUFFIX_LANG_LIST_GAP above). Anchored
 // with ^ so we only match when the modifier immediately continues the signal (plus any
@@ -1236,6 +1251,11 @@ export function detectNativeLanguage(
         .replace(/[–—]/g, ' – ')
         .replace(/&/g, 'and')
         .replace(/\s\+\s/g, ' and ')
+        // "English and/or Dutch" / "Dutch and/or English" → English alone suffices;
+        // strip to bare "english" before the generic and/or→slash conversion (see
+        // ENGLISH_AND_OR_LANG_RE above).
+        .replace(ENGLISH_AND_OR_LANG_RE, 'english')
+        .replace(LANG_AND_OR_ENGLISH_RE, 'english')
         // Normalise "and/or" to "/" so the slash expansion below handles it:
         // "Finnish and/or Swedish skills" → "Finnish/Swedish skills" → "Finnish skills Swedish skills"
         .replace(/\s*\band\/or\b\s*/g, '/')
