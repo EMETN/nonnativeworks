@@ -1170,6 +1170,12 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
         'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=1c026f3b1b8640d8bdfcb95466663e4d&locationCountry=328b82f597514643a7683a78fc67c3f1',
     // maersk.com is Maersk's branded career site; jobs live on Workday.
     'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
+    // asml.com/careers/find-your-job is a Sitecore/Next.js front end with no
+    // combined listing JSON of its own (each job detail page embeds its own
+    // job JSON, but there's no bulk endpoint) — however job detail pages
+    // (e.g. .../find-your-job/euv-...-j00278404) reveal applyUrl pointing at
+    // Workday, so the real source of truth is the standard Workday API.
+    'asml.com': 'https://asml.wd3.myworkdayjobs.com/ASMLEXT1',
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
     'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
@@ -1201,6 +1207,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
+    { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },
