@@ -24,6 +24,7 @@ import yaml
 from browser import _block_unnecessary_resources, _open_browser, _run_in_subprocess
 from extract import extract_jobs
 from platforms.academicwork import scrape_academicwork_static, site_for_url
+from platforms.aiven import scrape_aiven_static
 from platforms.arla import scrape_arla_static
 from platforms.attrax import (
     enrich_attrax_descriptions,
@@ -62,6 +63,7 @@ def _match_generic_config(url: str) -> dict | None:
 MIN_JOBS_STATIC = 3  # If static scrape finds fewer than this, try Playwright
 
 PLATFORM_ACADEMICWORK = "academicwork"
+PLATFORM_AIVEN = "aiven"
 PLATFORM_ARLA = "arla"
 PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
@@ -81,6 +83,8 @@ def detect_platform(html: str, url: str = "") -> str | None:
     """Detect the ATS platform from page HTML or URL."""
     if site_for_url(url) is not None:
         return PLATFORM_ACADEMICWORK
+    if "aiven.io" in url:
+        return PLATFORM_AIVEN
     if "jobs.arla.com" in url:
         return PLATFORM_ARLA
     if "attrax-vacancy-tile" in html:
@@ -209,6 +213,16 @@ def main():
             print(f"Academic Work static found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Academic Work static failed: {e}", file=sys.stderr)
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
+    if platform == PLATFORM_AIVEN:
+        print("aiven.io detected — using dedicated static scraper", file=sys.stderr)
+        try:
+            jobs = scrape_aiven_static(url)
+            print(f"Aiven static found {len(jobs)} jobs", file=sys.stderr)
+        except Exception as e:
+            print(f"Aiven static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 

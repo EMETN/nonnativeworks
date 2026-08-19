@@ -49,6 +49,10 @@ companies:
       url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8
       min_positions: 10
 
+    - name: Aiven
+      url: https://aiven.io/careers/job
+      min_positions: 10
+
     - name: AlphaSense
       url: https://www.alpha-sense.com/careers
       min_positions: 1
