@@ -1019,6 +1019,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             title: 'jobTitle',
             location: 'jobLocationLabel',
             department: 'jobSubCategory.label',
+            id: 'jobId', // without it, dedup keys on title+location and drops distinct same-title openings
         },
         urlTemplate:
             'https://www.novonordisk.com/careers/find-a-job/job-ad.{jobId}.html',

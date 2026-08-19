@@ -18,6 +18,10 @@ on:
                 description: 'Run all companies in companies.yaml, not just newly added ones'
                 type: boolean
                 default: false
+            company_url:
+                description: 'Preview one company by career page URL (blank = use the PR diff)'
+                type: string
+                default: ''
 
 permissions:
     contents: read
@@ -28,13 +32,19 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 30
 
+        # Fork PRs get no secrets and a read-only token, so both the scrape and the
+        # comment step would fail. Maintainers run the preview manually instead.
+        if: >-
+            github.event_name == 'workflow_dispatch' ||
+            github.event.pull_request.head.repo.full_name == github.repository
+
         env:
             # Scoped to the Doppler *dev* config so scrapes hit the dev database.
             # Set this secret at: Settings → Secrets and variables → Actions → DOPPLER_TOKEN_DEV
             DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_DEV }}
 
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v7
               with:
                   fetch-depth: 0 # needed to read the base-branch version of companies.yaml
 
@@ -46,20 +56,29 @@ jobs:
 
             - name: Find new companies
               id: diff
+              env:
+                  BASE_REF: ${{ github.base_ref }}
+                  ALL_COMPANIES: ${{ inputs.all_companies }}
+                  COMPANY_URL: ${{ inputs.company_url }}
               run: |
-                  git show origin/${{ github.base_ref }}:scraper/companies.yaml > /tmp/base.yaml 2>/dev/null \
+                  git show "origin/$BASE_REF:scraper/companies.yaml" > /tmp/base.yaml 2>/dev/null \
                     || echo "companies: []" > /tmp/base.yaml
 
                   python3 - <<'EOF'
                   import yaml, os
 
-                  all_companies = "${{ inputs.all_companies }}" == "true"
+                  all_companies = os.environ.get("ALL_COMPANIES") == "true"
+                  company_url = (os.environ.get("COMPANY_URL") or "").strip()
 
                   with open("scraper/companies.yaml") as f:
                       head = yaml.safe_load(f) or {}
                   all_list = head.get("companies") or []
 
-                  if all_companies:
+                  if company_url:
+                      selected = [c for c in all_list if c["url"] == company_url]
+                      if not selected:
+                          raise SystemExit(f"No company in companies.yaml with url {company_url}")
+                  elif all_companies:
                       selected = all_list
                   else:
                       with open("/tmp/base.yaml") as f:
@@ -75,7 +94,7 @@ jobs:
                       out.write(f"count={len(selected)}\n")
                       out.write(f"names={names}\n")
 
-                  label = "all" if all_companies else "new"
+                  label = "requested" if company_url else ("all" if all_companies else "new")
                   print(f"Selected {label} companies ({len(selected)}): {names}")
                   EOF
 
@@ -91,7 +110,7 @@ jobs:
 
             - name: Setup Node
               if: steps.diff.outputs.count != '0'
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v7
               with:
                   node-version-file: '.node-version'
                   cache: 'pnpm'
@@ -108,7 +127,7 @@ jobs:
 
             - name: Setup Python
               if: steps.diff.outputs.count != '0'
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: '3.12'
                   cache: 'pip'
@@ -170,11 +189,15 @@ jobs:
 
             - name: Post PR comment
               if: steps.diff.outputs.count != '0'
-              uses: actions/github-script@v8
+              uses: actions/github-script@v9
+              # Company names come from the PR branch — pass via env, never
+              # interpolate an expression into the script body.
+              env:
+                  NAMES: ${{ steps.diff.outputs.names }}
               with:
                   script: |
                       const fs = require('fs');
-                      const names = `${{ steps.diff.outputs.names }}`;
+                      const names = process.env.NAMES;
                       const output = fs.readFileSync('/tmp/scrape_output.txt', 'utf8').trim();
 
                       // Surface a status header from batch_run.py's summary line so warnings/

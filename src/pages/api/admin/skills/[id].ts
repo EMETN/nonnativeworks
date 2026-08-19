@@ -1,5 +1,9 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
+import type {
+    SkillCategory,
+    TablesUpdate,
+} from '../../../../lib/database.types';
 
 const VALID_CATEGORIES = [
     'language',
@@ -12,6 +16,13 @@ const VALID_CATEGORIES = [
     'certification',
     'platform',
 ] as const;
+
+function isSkillCategory(value: unknown): value is SkillCategory {
+    return (
+        typeof value === 'string' &&
+        (VALID_CATEGORIES as readonly string[]).includes(value)
+    );
+}
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -28,7 +39,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         return json({ error: 'Invalid JSON body' }, 400);
     }
 
-    const patch: Record<string, unknown> = {};
+    const patch: TablesUpdate<'skills'> = {};
     const { canonical_name, category, aliases, is_legacy } = body as Record<
         string,
         unknown
@@ -45,12 +56,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     if (category !== undefined) {
-        if (
-            typeof category !== 'string' ||
-            !VALID_CATEGORIES.includes(
-                category as (typeof VALID_CATEGORIES)[number],
-            )
-        ) {
+        if (!isSkillCategory(category)) {
             return json(
                 {
                     error: `category must be one of: ${VALID_CATEGORIES.join(', ')}`,

@@ -1,5 +1,10 @@
 import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import type { AstroCookies } from 'astro';
+import type { Database } from './database.types';
+
+export type TypedSupabaseClient = ReturnType<
+    typeof createSupabaseServiceClient
+>;
 
 // Server-only secrets use process.env (read at runtime, never inlined into build output).
 // PUBLIC_* vars use import.meta.env (inlined by Vite at build time — safe for client exposure).
@@ -18,7 +23,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Accepts the request (for reading cookies) and cookies (for setting cookies).
  */
 export function createSupabaseClient(request: Request, cookies: AstroCookies) {
-    return createServerClient(supabaseUrl, supabaseAnonKey, {
+    return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
         cookies: {
             getAll() {
                 return parseCookieHeader(
@@ -47,7 +52,7 @@ export function createSupabaseServiceClient() {
             'Missing SUPABASE_SERVICE_ROLE_KEY environment variable',
         );
     }
-    return createServerClient(supabaseUrl, supabaseServiceKey, {
+    return createServerClient<Database>(supabaseUrl, supabaseServiceKey, {
         cookies: {
             getAll() {
                 return [];

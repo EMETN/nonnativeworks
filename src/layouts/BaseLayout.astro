@@ -14,6 +14,7 @@ interface Props {
     ogImage?: string;
     noindex?: boolean;
     breadcrumbs?: BreadcrumbItem[];
+    hideNavActive?: boolean;
 }
 
 const {
@@ -22,15 +23,34 @@ const {
     ogImage,
     noindex = false,
     breadcrumbs,
+    hideNavActive = false,
 } = Astro.props;
 
 const siteTitle =
     title === 'Home'
-        ? 'NonNativeWorks — Work abroad in English'
-        : `${title} — NonNativeWorks`;
+        ? 'nonnativeworks! — Work abroad in English'
+        : `${title} — nonnativeworks!`;
 
 const canonical = Astro.url.href;
 const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
+
+// set:html does not escape and JSON.stringify leaves `<` intact, so a DB-sourced
+// name containing a closing script tag would break out of the ld+json block.
+const breadcrumbJsonLd =
+    breadcrumbs && breadcrumbs.length > 0
+        ? JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: breadcrumbs.map((item, i) => ({
+                  '@type': 'ListItem',
+                  position: i + 1,
+                  name: item.name,
+                  ...(item.href
+                      ? { item: new URL(item.href, Astro.url.origin).href }
+                      : {}),
+              })),
+          }).replace(/</g, '\\u003c')
+        : null;
 ---
 
 <!doctype html>
@@ -49,7 +69,7 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         <meta property="og:url" content={canonical} />
         <meta property="og:title" content={siteTitle} />
         <meta property="og:description" content={description} />
-        <meta property="og:site_name" content="NonNativeWorks" />
+        <meta property="og:site_name" content="nonnativeworks!" />
         {ogImage && <meta property="og:image" content={ogImageUrl} />}
 
         <!-- Twitter Card -->
@@ -58,28 +78,27 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
         <meta name="twitter:description" content={description} />
 
         <!-- Favicon -->
+        <link
+            rel="icon"
+            type="image/png"
+            href="/favicon-96x96.png"
+            sizes="96x96"
+        />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/apple-touch-icon.png"
+        />
+        <link rel="manifest" href="/site.webmanifest" />
 
         {
-            breadcrumbs && breadcrumbs.length > 0 && (
+            breadcrumbJsonLd && (
                 <script
                     is:inline
                     type="application/ld+json"
-                    set:html={JSON.stringify({
-                        '@context': 'https://schema.org',
-                        '@type': 'BreadcrumbList',
-                        itemListElement: breadcrumbs.map((item, i) => ({
-                            '@type': 'ListItem',
-                            position: i + 1,
-                            name: item.name,
-                            ...(item.href
-                                ? {
-                                      item: new URL(item.href, Astro.url.origin)
-                                          .href,
-                                  }
-                                : {}),
-                        })),
-                    })}
+                    set:html={breadcrumbJsonLd}
                 />
             )
         }
@@ -132,7 +151,7 @@ const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
                     (document.activeElement as HTMLElement)?.blur();
             });
         </script>
-        <Header />
+        <Header hideActive={hideNavActive} />
         <main id="main-content" class="flex-1 flex flex-col">
             <slot />
         </main>

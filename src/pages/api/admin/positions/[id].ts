@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
+import type { TablesUpdate } from '../../../../lib/database.types';
 
 const PatchSchema = z
     .object({
@@ -40,7 +41,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     const { category_slug, ...rest } = parsed.data;
-    const update: Record<string, unknown> = { ...rest };
+    const update: TablesUpdate<'positions'> = { ...rest };
 
     const supabase = createSupabaseServiceClient();
 

@@ -1,4 +1,4 @@
-# NonNativeWorks — Project Context
+# nonnativeworks! — Project Context
 
 ## What this is
 
@@ -50,6 +50,11 @@ Run the migration in the Supabase SQL editor:
 - `positions` are always fully replaced on upload (delete + re-insert per company)
 - `country_stats` and `company_stats` are SQL views used by public pages
 - Auto-country creation: upload API creates unknown countries using `country_name` + `country_code` from the uploaded payload
+
+### Type-checking
+
+- `src/lib/database.types.ts` is a hand-maintained `Database` type (no `supabase gen types` in CI) — update it when a migration changes a table/view/RPC. `src/lib/types.ts` and the admin Zod schemas (`admin-schemas.ts`) build on it.
+- `pnpm typecheck` (`astro sync && tsc --noEmit`) is the gate, enforced in CI. `astro check` is unused — it can't run under TypeScript 7 yet.
 
 ## Scraping system
 

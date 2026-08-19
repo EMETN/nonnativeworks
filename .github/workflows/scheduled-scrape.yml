@@ -31,9 +31,9 @@ jobs:
     #   outputs:
     #     matrix: ${{ steps.matrix.outputs.matrix }}
     #   steps:
-    #     - uses: actions/checkout@v5
+    #     - uses: actions/checkout@v7
     #
-    #     - uses: actions/setup-python@v6
+    #     - uses: actions/setup-python@v7
     #       with:
     #         python-version: '3.12'
     #
@@ -77,7 +77,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@v7
 
             - name: Install Doppler CLI
               uses: dopplerhq/cli-action@v4
@@ -97,7 +97,7 @@ jobs:
               uses: pnpm/action-setup@v5
 
             - name: Setup Node
-              uses: actions/setup-node@v5
+              uses: actions/setup-node@v7
               with:
                   node-version-file: '.node-version'
                   cache: 'pnpm'
@@ -107,7 +107,7 @@ jobs:
 
             - name: Cache Astro build
               id: astro-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: dist/
                   key: astro-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'src/**', 'astro.config.*', 'tsconfig.json') }}
@@ -122,7 +122,7 @@ jobs:
             # (The server spawns python3 when the scrape API falls through to Layer 2.)
 
             - name: Setup Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: '3.12'
                   cache: 'pip'
@@ -133,7 +133,7 @@ jobs:
 
             - name: Cache Playwright browsers
               id: playwright-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: ~/.cache/ms-playwright
                   key: playwright-chromium-${{ runner.os }}-${{ hashFiles('scraper/requirements.txt') }}
@@ -147,7 +147,7 @@ jobs:
               run: playwright install-deps chromium
 
             - name: Restore outcome cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: cache/outcomes.json
                   key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
