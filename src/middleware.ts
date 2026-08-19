@@ -50,6 +50,20 @@ function checkOrigin(request: Request): boolean {
     }
 }
 
+// On-demand responses only; static pages get these from netlify.toml at the CDN.
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+} as const;
+
+function withSecurityHeaders(response: Response): Response {
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+        response.headers.set(name, value);
+    }
+    return response;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
     const { pathname } = context.url;
     const { request } = context;
@@ -57,16 +71,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Machine-to-machine bypass: skip CSRF + auth for requests with the scraper secret.
     // Used by the GitHub Actions batch job (scraper/batch_run.py).
     if (isProtectedRoute(pathname) && hasValidScraperSecret(request)) {
-        return next();
+        return withSecurityHeaders(await next());
     }
 
     // CSRF: verify origin on state-changing requests to protected routes
     if (isProtectedRoute(pathname) && isStateChangingRequest(request.method)) {
         if (!checkOrigin(request)) {
-            return new Response(JSON.stringify({ error: 'Forbidden' }), {
-                status: 403,
-                headers: { 'Content-Type': 'application/json' },
-            });
+            return withSecurityHeaders(
+                new Response(JSON.stringify({ error: 'Forbidden' }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            );
         }
     }
 
@@ -80,22 +96,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
         if (!user) {
             // API routes get 401, UI routes redirect to login
             if (pathname.startsWith('/api/')) {
-                return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-                    status: 401,
-                    headers: { 'Content-Type': 'application/json' },
-                });
+                return withSecurityHeaders(
+                    new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                        status: 401,
+                        headers: { 'Content-Type': 'application/json' },
+                    }),
+                );
             }
-            return context.redirect('/admin/login');
+            return withSecurityHeaders(context.redirect('/admin/login'));
         }
 
         context.locals.user = user;
     }
 
-    // Security headers
     const response = await next();
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    withSecurityHeaders(response);
 
     // CDN caching for public GET pages. Data refreshes every ~2 days (scheduled scrape),
     // so a short fresh window plus long stale-while-revalidate gives near-instant repeat
