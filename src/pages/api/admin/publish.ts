@@ -1,10 +1,17 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
+import {
+    summariseChanges,
+    deriveBuildInFlight,
+} from '../../../lib/publish-status';
 
 export const prerender = false;
 
 /** Long enough to absorb a double-click, short enough not to block a genuine follow-up publish. */
 const RATE_LIMIT_SECONDS = 120;
+
+/** A 'building' row older than this is treated as stale (missed completion webhook). */
+const BUILD_STALE_MINUTES = 25;
 
 function json(data: unknown, status: number) {
     return new Response(JSON.stringify(data), {
@@ -15,64 +22,55 @@ function json(data: unknown, status: number) {
 
 export const GET: APIRoute = async () => {
     const supabase = createSupabaseServiceClient();
+    const buildTime = __BUILD_TIME__;
 
-    const { data: lastPublish, error: lastPublishError } = await supabase
-        .from('site_publishes')
-        .select('triggered_at')
-        .order('triggered_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-    if (lastPublishError) {
-        console.error(
-            'publish GET (site_publishes):',
-            lastPublishError.message,
-        );
-    }
-
-    const [
-        { data: newestCompany, error: companyError },
-        { data: newestPosition, error: positionError },
-    ] = await Promise.all([
+    const [summaryRes, buildsRes, lastPublishRes] = await Promise.all([
+        supabase.rpc('admin_change_summary', { since: buildTime }),
         supabase
-            .from('companies')
-            .select('updated_at')
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+            .from('site_builds')
+            .select('state, started_at, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5),
         supabase
-            .from('positions')
-            .select('extracted_at')
-            .order('extracted_at', { ascending: false })
+            .from('site_publishes')
+            .select('triggered_at')
+            .order('triggered_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
     ]);
-    if (companyError) {
-        console.error('publish GET (companies):', companyError.message);
-    }
-    if (positionError) {
-        console.error('publish GET (positions):', positionError.message);
-    }
 
-    const buildTime = __BUILD_TIME__;
-    const buildMs = Date.parse(buildTime);
-    const newestData = [newestCompany?.updated_at, newestPosition?.extracted_at]
-        .filter((value): value is string => Boolean(value))
-        .sort()
-        .at(-1);
+    if (summaryRes.error)
+        console.error('publish GET (summary):', summaryRes.error.message);
+    if (buildsRes.error)
+        console.error('publish GET (site_builds):', buildsRes.error.message);
+    if (lastPublishRes.error)
+        console.error(
+            'publish GET (site_publishes):',
+            lastPublishRes.error.message,
+        );
+
+    const { changeCount, changes } = summariseChanges(
+        (summaryRes.data ?? []).map((r) => ({
+            entity_type: r.entity_type,
+            action: r.action,
+            count: Number(r.count),
+        })),
+    );
+
+    const buildInFlight = deriveBuildInFlight(
+        buildsRes.data ?? [],
+        Date.now(),
+        BUILD_STALE_MINUTES,
+    );
 
     return json(
         {
             buildTime,
-            lastTriggeredAt: lastPublish?.triggered_at ?? null,
-            // Derived rather than polled (no Netlify API token needed): a
-            // trigger newer than the build time means a build is in flight.
-            buildInFlight: Boolean(
-                lastPublish?.triggered_at &&
-                Date.parse(lastPublish.triggered_at) > buildMs,
-            ),
-            hasUnpublishedChanges: Boolean(
-                newestData && Date.parse(newestData) > buildMs,
-            ),
+            lastTriggeredAt: lastPublishRes.data?.triggered_at ?? null,
+            buildInFlight,
+            hasUnpublishedChanges: changeCount > 0,
+            changeCount,
+            changes,
         },
         200,
     );
@@ -85,6 +83,18 @@ export const POST: APIRoute = async ({ locals, request }) => {
     }
 
     const supabase = createSupabaseServiceClient();
+
+    const { data: recentBuilds } = await supabase
+        .from('site_builds')
+        .select('state, started_at, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+    if (
+        deriveBuildInFlight(recentBuilds ?? [], Date.now(), BUILD_STALE_MINUTES)
+    ) {
+        return json({ error: 'A build is already in progress' }, 409);
+    }
 
     const { data: lastPublish, error: lastPublishError } = await supabase
         .from('site_publishes')
