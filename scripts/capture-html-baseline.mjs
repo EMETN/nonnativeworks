@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// Snapshots every public route's HTML so the SSR output can be diffed against the
-// static output after the rendering flip.
-//
-// Committing ~300 HTML files would be noise, so .html-baseline/ is gitignored and
-// regenerated on demand. Run once on main, once on the migration branch, then diff.
+// Snapshots every public route's HTML so SSR output can be diffed against static
+// output after the rendering flip. .html-baseline/ is gitignored; regenerate on demand.
 //
 // Usage: node scripts/capture-html-baseline.mjs <label> [baseUrl]
 //   node scripts/capture-html-baseline.mjs before

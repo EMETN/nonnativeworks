@@ -1,10 +1,5 @@
 #!/usr/bin/env node
-// Fails CI when the build outgrows its budget.
-//
-// This is the cheapest scalability instrument available: it turns a silent future
-// cliff (builds slowly creeping toward Netlify's timeout, or memory exhaustion
-// during grouping) into a loud signal months before it bites. Thresholds are
-// reviewed whenever an escalation trigger in the SSG design spec fires.
+// Fails CI when build wall-time or page count exceeds the budget.
 
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';

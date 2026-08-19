@@ -3,8 +3,7 @@ import { createSupabaseServiceClient } from '../../../lib/supabase';
 
 export const prerender = false;
 
-/** Shorter than a typical build, so a genuine follow-up publish is never blocked
- *  for long, but long enough to absorb an impatient double-click. */
+/** Long enough to absorb a double-click, short enough not to block a genuine follow-up publish. */
 const RATE_LIMIT_SECONDS = 120;
 
 function json(data: unknown, status: number) {
@@ -65,8 +64,8 @@ export const GET: APIRoute = async () => {
         {
             buildTime,
             lastTriggeredAt: lastPublish?.triggered_at ?? null,
-            // A trigger newer than the running deploy's build time means a build is
-            // in flight — derived, so no Netlify API token is needed.
+            // Derived rather than polled (no Netlify API token needed): a
+            // trigger newer than the build time means a build is in flight.
             buildInFlight: Boolean(
                 lastPublish?.triggered_at &&
                 Date.parse(lastPublish.triggered_at) > buildMs,

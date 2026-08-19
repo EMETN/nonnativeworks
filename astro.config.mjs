@@ -12,20 +12,16 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 
 // https://astro.build/config
 export default defineConfig({
-    // Required for correct canonical/OG/JSON-LD URLs once pages are built ahead of
-    // a request — without it, Astro.url resolves to localhost in production HTML.
+    // Without a site, Astro.url resolves to localhost in the built HTML (canonical/OG/JSON-LD).
     site: 'https://nonnativeworks.com',
 
-    // Pin the existing URL shape. Astro's static default (build.format 'directory')
-    // would serve /countries as /countries/, 301-ing every indexed URL on the site.
+    // Pin the existing URL shape — the static default (build.format
+    // 'directory') would 301 /countries to /countries/.
     trailingSlash: 'never',
     build: {
         format: 'file',
     },
-    // Static by default, with prerender = false opting /admin and /api back into
-    // on-demand rendering. The default is inverted deliberately: a public page that
-    // forgets the directive becomes static (loud, cheap) rather than SSR (a silent,
-    // recurring function invocation and database round trip on every cache miss).
+    // Static by default; prerender = false opts /admin and /api into on-demand rendering.
     output: 'static',
     adapter,
     prefetch: {
@@ -71,8 +67,7 @@ export default defineConfig({
             },
         },
         define: {
-            // Stamped at build time so the admin can tell how old the live site is,
-            // and whether a triggered build has landed yet.
+            // Stamped at build time so admin can tell how old the live site is.
             __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
         },
     },

@@ -470,8 +470,7 @@ def main() -> int:
 
     _write_github_summary(summary_entries)
 
-    # Signal to CI whether anything actually reached the database. A scrape that
-    # found nothing new should not spend build minutes rebuilding identical HTML.
+    # Signal to CI whether anything reached the database, so an empty scrape skips a rebuild.
     uploaded = not args.dry_run and any(
         entry["status"] == "success" and entry["total_positions"] > 0
         for entry in summary_entries

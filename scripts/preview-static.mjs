@@ -1,16 +1,8 @@
 #!/usr/bin/env node
-// Local static preview that mimics Netlify's clean-URL resolution for the
-// `output: 'static'` + `trailingSlash: 'never'` + `build.format: 'file'` build.
-//
-// The @astrojs/node adapter's own static server 404s "bare" routes (e.g.
-// /belgium) that collide with a same-named directory of sub-pages — a
-// local-only quirk that Netlify's CDN does not have. This server resolves
-// /belgium -> belgium.html the way production does, so the full public site
-// (including bare country pages) previews correctly offline. It serves the
-// static output only; the on-demand /admin and /api routes are not available
-// here — use `pnpm preview` (the Node adapter) for those.
-//
-// Usage: node scripts/preview-static.mjs   (PORT env optional, default 4321)
+// Serves dist/client with Netlify-style clean URLs (/belgium -> belgium.html),
+// which @astrojs/node's own preview mishandles locally. Static pages only —
+// use `pnpm preview` for /admin and /api.
+// Usage: node scripts/preview-static.mjs   (PORT env, default 4321)
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';

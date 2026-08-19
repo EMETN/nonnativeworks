@@ -2,8 +2,10 @@ import { createPublicClient } from './supabase';
 import { computeRanges, mapWithConcurrency } from './pagination';
 import type { CompanyStats, PositionDetail } from './types';
 
-/** PostgREST's default cap. Raising it in the Supabase dashboard does not remove
- *  the need to page — a dashboard setting is invisible to this repository. */
+/**
+ * PostgREST's default cap; a dashboard override wouldn't be visible here,
+ * so keep paging regardless.
+ */
 const PAGE_SIZE = 1000;
 
 /** Bounded so a large build does not open one connection per page. */
@@ -37,10 +39,8 @@ const POSITION_COLUMNS = `
 `;
 
 /**
- * Reads every position in one pass, paged and in parallel.
- *
- * Mirrors the row shape of getPositionsByCompany so pages render identically
- * whether their data came from here or from a per-request query.
+ * Reads every position in one pass, paged and in parallel;
+ * mirrors getPositionsByCompany's row shape.
  */
 export async function fetchAllPositions(): Promise<PositionDetail[]> {
     const supabase = createPublicClient();
@@ -87,7 +87,6 @@ export async function fetchAllPositions(): Promise<PositionDetail[]> {
     }));
 }
 
-/** Reads the whole company_stats view, paged and in parallel. */
 export async function fetchAllCompanyStats(): Promise<CompanyStats[]> {
     const supabase = createPublicClient();
 

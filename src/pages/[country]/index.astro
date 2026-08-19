@@ -9,8 +9,8 @@ import { fetchAllCompanyStats, groupBy } from '../../lib/build-queries';
 import type { CountryStats, CompanyStats } from '../../lib/types';
 
 export async function getStaticPaths() {
-    // One read of each view for the whole route, grouped in memory, rather than a
-    // query per country.
+    // One read of each view for the whole route, grouped in memory,
+    // rather than a query per country.
     const [countries, allCompanyStats] = await Promise.all([
         getCountryStats(undefined, undefined),
         fetchAllCompanyStats(),
