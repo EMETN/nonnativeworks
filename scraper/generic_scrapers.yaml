@@ -485,3 +485,24 @@ scrapers:
       title_selector: 'a.search-results-list__job-link'
       location_selector: 'li.job-list-01-list__job-info--location span'
       job_function_selector: 'li.job-list-01-list__job-info--category span'
+
+    # ── Carlsberg ──────────────────────────────────────────────────────────────
+    # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no
+    # browser needed. startrow doesn't return an empty page past the last one —
+    # it wraps back to page 1 — so termination relies on the last real page
+    # returning fewer than page_size tiles (84 jobs / 9 pages as of 2026-08).
+    - match: 'careers.carlsberg.com'
+      name: Carlsberg
+      list_url: https://careers.carlsberg.com/search/
+      extra_params:
+          createNewAlert: false
+          q: ''
+          locationsearch: ''
+      pagination:
+          type: offset
+          param: startrow
+          page_size: 10
+      card_selector: 'li.job-tile'
+      title_selector: 'a.jobTitle-link'
+      location_selector: 'div[id$="-desktop-section-location-value"]'
+      description_selector: '.jobdescription'

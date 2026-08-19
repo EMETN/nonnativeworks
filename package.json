@@ -12,7 +12,7 @@
         "build": "astro build",
         "preview": "doppler run -- astro preview",
         "astro": "astro",
-        "postinstall": "node scripts/patch-preact-vite.mjs && simple-git-hooks",
+        "postinstall": "simple-git-hooks",
         "test": "vitest run",
         "test:watch": "vitest",
         "format": "prettier --write .",

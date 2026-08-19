@@ -85,6 +85,10 @@ companies:
       url: https://careers.capgemini.com
       min_positions: 10
 
+    - name: Carlsberg
+      url: https://careers.carlsberg.com/search/?createNewAlert=false&q=&locationsearch=&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield3=&optionsFacetsDD_customfield2=
+      min_positions: 10
+
     - name: Deel
       url: https://www.deel.com/careers
       min_positions: 10
