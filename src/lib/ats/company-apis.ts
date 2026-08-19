@@ -1144,6 +1144,37 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
         companyName: 'E.ON',
     },
+
+    // iCIMS/Jibe "Search 4" widget — the careers page itself is a client-hydrated
+    // shell with no SSR job data, but the widget's own XHR endpoint is a plain
+    // JSON API. limit above 100 returns 422 (Jibe's server-side cap).
+    'careers.amd.com': {
+        url: 'https://careers.amd.com/api/jobs?sortBy=relevance&descending=false&internal=false&limit=100',
+        headers: {
+            Accept: 'application/json, text/plain, */*',
+        },
+        pagination: {
+            type: 'page',
+            param: 'page',
+            startPage: 1,
+            totalCountPath: 'totalCount',
+        },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'data.title',
+            location: 'data.full_location',
+            country: 'data.country_code',
+            jobFunction: 'data.category',
+            id: 'data.req_id',
+        },
+        // data.apply_url points at the ATS login/apply page (global-external-amd.icims.com),
+        // not the public job posting — build the public careers.amd.com URL instead.
+        urlTemplate:
+            'https://careers.amd.com/careers-home/jobs/{data.req_id}?lang=en-us',
+        keepQueryParams: true,
+        descriptionFields: ['data.description'],
+        companyName: 'AMD',
+    },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
