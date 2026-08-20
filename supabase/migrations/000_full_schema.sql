@@ -573,8 +573,15 @@ CREATE TABLE admin_changes (
   entity_type TEXT        NOT NULL CHECK (entity_type IN ('company','position','skill')),
   action      TEXT        NOT NULL CHECK (action IN ('created','updated','deleted')),
   label       TEXT        NOT NULL,
-  changed_by  TEXT        NOT NULL,
-  changed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  -- Stable entity identity (position/skill UUID, or company name) so repeated
+  -- edits of one entity collapse to a single net change in the summary below.
+  entity_id    TEXT,
+  -- Content fingerprints so an edit that returns to the published value nets to
+  -- zero. NULL before = entity did not exist; NULL after = entity was deleted.
+  before_state TEXT,
+  after_state  TEXT,
+  changed_by   TEXT        NOT NULL,
+  changed_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX admin_changes_changed_at_idx ON admin_changes (changed_at DESC);
 
@@ -582,14 +589,38 @@ ALTER TABLE admin_changes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Auth read admin changes"   ON admin_changes FOR SELECT USING     (auth.role() = 'authenticated');
 CREATE POLICY "Auth insert admin changes" ON admin_changes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
--- Grouped counts of unpublished changes; grouping in SQL avoids PostgREST's
--- silent 1000-row cap on a bulk row fetch.
+-- Net-state summary of unpublished changes: per distinct entity, compare the
+-- baseline (before_state of the earliest change = the published value) against
+-- the current state (after_state of the latest change). Equal nets to nothing,
+-- so an edit reverted to the published value, or an identical re-scrape, does
+-- not count. Grouping in SQL also avoids PostgREST's silent 1000-row cap.
 CREATE FUNCTION admin_change_summary(since timestamptz)
 RETURNS TABLE(entity_type text, action text, count bigint)
 LANGUAGE sql STABLE AS $$
+  WITH per_entity AS (
+    SELECT
+      entity_type,
+      entity_id,
+      (array_agg(before_state ORDER BY changed_at ASC,  id ASC))[1]  AS baseline,
+      (array_agg(after_state  ORDER BY changed_at DESC, id DESC))[1] AS current_state
+    FROM admin_changes
+    WHERE changed_at > since
+    GROUP BY entity_type, entity_id
+  ),
+  net AS (
+    SELECT
+      entity_type,
+      CASE
+        WHEN baseline IS NOT DISTINCT FROM current_state THEN NULL
+        WHEN baseline IS NULL                            THEN 'created'
+        WHEN current_state IS NULL                       THEN 'deleted'
+        ELSE                                                  'updated'
+      END AS action
+    FROM per_entity
+  )
   SELECT entity_type, action, count(*)::bigint
-  FROM admin_changes
-  WHERE changed_at > since
+  FROM net
+  WHERE action IS NOT NULL
   GROUP BY entity_type, action;
 $$;
 

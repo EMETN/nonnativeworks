@@ -1,7 +1,23 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
 import type { SkillCategory } from '../../../lib/database.types';
-import { recordChange, changedBy } from '../../../lib/admin-changes';
+import { recordChange, changedBy, hashState } from '../../../lib/admin-changes';
+
+/** Canonical fingerprint of a skill's editable fields. */
+function skillState(s: {
+    canonical_name: string;
+    category: string;
+    aliases: string[];
+    is_legacy: boolean;
+}): string {
+    return hashState([
+        s.canonical_name,
+        s.category,
+        [...s.aliases].sort(),
+        s.is_legacy,
+    ]);
+}
+export { skillState };
 
 export const prerender = false;
 
@@ -116,6 +132,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         entity_type: 'skill',
         action: 'created',
         label: data.canonical_name,
+        entity_id: data.id,
+        before_state: null,
+        after_state: skillState(data),
         changed_by: changedBy(locals, request),
     });
 

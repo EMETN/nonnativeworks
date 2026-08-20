@@ -316,6 +316,9 @@ export type Database = {
                     entity_type: 'company' | 'position' | 'skill';
                     action: 'created' | 'updated' | 'deleted';
                     label: string;
+                    entity_id: string | null;
+                    before_state: string | null;
+                    after_state: string | null;
                     changed_by: string;
                     changed_at: string;
                 };
@@ -324,6 +327,9 @@ export type Database = {
                     entity_type: 'company' | 'position' | 'skill';
                     action: 'created' | 'updated' | 'deleted';
                     label: string;
+                    entity_id?: string | null;
+                    before_state?: string | null;
+                    after_state?: string | null;
                     changed_by: string;
                     changed_at?: string;
                 };
@@ -332,6 +338,9 @@ export type Database = {
                     entity_type?: 'company' | 'position' | 'skill';
                     action?: 'created' | 'updated' | 'deleted';
                     label?: string;
+                    entity_id?: string | null;
+                    before_state?: string | null;
+                    after_state?: string | null;
                     changed_by?: string;
                     changed_at?: string;
                 };

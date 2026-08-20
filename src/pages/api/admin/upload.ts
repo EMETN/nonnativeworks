@@ -6,7 +6,50 @@ import {
 import { UploadSchema, normaliseUpload } from '../../../lib/validation';
 import type { CompanyEntry } from '../../../lib/validation';
 import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
-import { recordChange, changedBy } from '../../../lib/admin-changes';
+import { recordChange, changedBy, hashState } from '../../../lib/admin-changes';
+
+/** Order-independent canonical form of a company's positions, so a re-scrape
+ *  that returns identical data (in any order) hashes the same. */
+interface CanonPos {
+    title: string;
+    url: string | null;
+    city: string[] | null;
+    work_model: string | null;
+    category_id: string;
+    requires_native_language: boolean;
+    local_language_advantage: boolean;
+    required_languages: string[];
+    preferred_languages: string[];
+    skills: string[];
+    required_education: string | null;
+}
+const POSITION_STATE_COLS =
+    'title, url, city, work_model, category_id, requires_native_language, local_language_advantage, required_languages, preferred_languages, skills, required_education';
+function companyStateHash(
+    fields: { career_page_url: string | null; is_english_company: boolean },
+    rows: CanonPos[],
+): string {
+    const positions = rows
+        .map((r) => [
+            r.title,
+            r.url,
+            r.city ? [...r.city].sort() : null,
+            r.work_model,
+            r.category_id,
+            r.requires_native_language,
+            r.local_language_advantage,
+            [...r.required_languages].sort(),
+            [...r.preferred_languages].sort(),
+            [...r.skills].sort(),
+            r.required_education,
+        ])
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    return hashState([
+        fields.career_page_url,
+        fields.is_english_company,
+        positions,
+    ]);
+}
 
 export const prerender = false;
 
@@ -164,10 +207,27 @@ async function upsertEntry(
 
     const { data: existingCompany } = await supabase
         .from('companies')
-        .select('id')
+        .select('id, career_page_url, is_english_company')
         .eq('name', company_name)
         .eq('country_id', countryId)
         .maybeSingle();
+
+    // Fingerprint the current state before we replace it, so a re-upload of
+    // identical data nets to no change (and never triggers a needless deploy).
+    let beforeState: string | null = null;
+    if (existingCompany) {
+        const { data: currentPositions } = await supabase
+            .from('positions')
+            .select(POSITION_STATE_COLS)
+            .eq('company_id', existingCompany.id);
+        beforeState = companyStateHash(
+            {
+                career_page_url: existingCompany.career_page_url,
+                is_english_company: existingCompany.is_english_company,
+            },
+            currentPositions ?? [],
+        );
+    }
 
     const { data: companyRow, error: companyErr } = await supabase
         .from('companies')
@@ -217,10 +277,18 @@ async function upsertEntry(
     if (insertErr)
         throw new Error(`Could not insert positions: ${insertErr.message}`);
 
+    const afterState = companyStateHash(
+        { career_page_url: career_page_url || null, is_english_company },
+        positionRows,
+    );
+
     await recordChange(supabase, {
         entity_type: 'company',
         action: existingCompany ? 'updated' : 'created',
         label: company_name,
+        entity_id: company_name,
+        before_state: beforeState,
+        after_state: afterState,
         changed_by: changedByArg,
     });
 

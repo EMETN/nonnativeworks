@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
-import { recordChange, changedBy } from '../../../lib/admin-changes';
+import { recordChange, changedBy, EXISTED } from '../../../lib/admin-changes';
 
 export const prerender = false;
 
@@ -65,6 +65,9 @@ export const DELETE: APIRoute = async ({ url, locals, request }) => {
             entity_type: 'company',
             action: 'deleted',
             label: name,
+            entity_id: name,
+            before_state: EXISTED,
+            after_state: null,
             changed_by: changedBy(locals, request),
         });
 
@@ -94,6 +97,9 @@ export const DELETE: APIRoute = async ({ url, locals, request }) => {
         entity_type: 'company',
         action: 'deleted',
         label: existing?.name ?? id,
+        entity_id: existing?.name ?? id,
+        before_state: EXISTED,
+        after_state: null,
         changed_by: changedBy(locals, request),
     });
 

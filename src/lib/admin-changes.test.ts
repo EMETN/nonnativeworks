@@ -25,12 +25,18 @@ test('recordChange inserts the change row', async () => {
         entity_type: 'skill',
         action: 'deleted',
         label: 'Python',
+        entity_id: 'skill-1',
+        before_state: 'existed',
+        after_state: null,
         changed_by: 'a@b.c',
     });
     expect(insert).toHaveBeenCalledWith({
         entity_type: 'skill',
         action: 'deleted',
         label: 'Python',
+        entity_id: 'skill-1',
+        before_state: 'existed',
+        after_state: null,
         changed_by: 'a@b.c',
     });
 });
@@ -43,6 +49,9 @@ test('recordChange swallows a Supabase error instead of throwing', async () => {
             entity_type: 'company',
             action: 'updated',
             label: 'Acme',
+            entity_id: 'Acme',
+            before_state: 'a',
+            after_state: 'b',
             changed_by: 'scraper',
         }),
     ).resolves.toBeUndefined();

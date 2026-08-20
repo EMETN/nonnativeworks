@@ -4,7 +4,12 @@ import type {
     SkillCategory,
     TablesUpdate,
 } from '../../../../lib/database.types';
-import { recordChange, changedBy } from '../../../../lib/admin-changes';
+import {
+    recordChange,
+    changedBy,
+    EXISTED,
+} from '../../../../lib/admin-changes';
+import { skillState } from '../skills';
 
 export const prerender = false;
 
@@ -94,6 +99,12 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     const supabase = createSupabaseServiceClient();
+    const { data: before } = await supabase
+        .from('skills')
+        .select('canonical_name, category, aliases, is_legacy')
+        .eq('id', id)
+        .maybeSingle();
+
     const { data, error } = await supabase
         .from('skills')
         .update(patch)
@@ -119,6 +130,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         entity_type: 'skill',
         action: 'updated',
         label: data?.canonical_name ?? id,
+        entity_id: id,
+        before_state: before ? skillState(before) : null,
+        after_state: skillState(data),
         changed_by: changedBy(locals, request),
     });
 
@@ -150,6 +164,9 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
         entity_type: 'skill',
         action: 'deleted',
         label: existing?.canonical_name ?? id,
+        entity_id: id,
+        before_state: EXISTED,
+        after_state: null,
         changed_by: changedBy(locals, request),
     });
 
