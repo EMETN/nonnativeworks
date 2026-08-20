@@ -156,6 +156,7 @@ export default function PublishButton() {
 
     const disabled =
         devDisabled ||
+        !pending ||
         phase === 'loading' ||
         phase === 'publishing' ||
         buildInFlight;
