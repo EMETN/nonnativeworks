@@ -8,6 +8,7 @@ import {
 interface PublishStatus {
     buildTime: string;
     lastTriggeredAt: string | null;
+    lastDeployedAt: string | null;
     buildInFlight: boolean;
     hasUnpublishedChanges: boolean;
     changeCount: number;
@@ -39,13 +40,11 @@ export default function PublishButton() {
     const [phase, setPhase] = useState<Phase>('loading');
     const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
-    const [pendingNav, setPendingNav] = useState<string | null>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
-    const modalRef = useRef<HTMLDivElement>(null);
-    const publishNowRef = useRef<HTMLButtonElement>(null);
-    const lastFocusedRef = useRef<HTMLElement | null>(null);
-    const bypassGuardRef = useRef(false);
 
+    // Publishing triggers a real production deploy, so it is disabled under
+    // `astro dev`. The server enforces this too; this just reflects it in the UI.
+    const devDisabled = import.meta.env.DEV;
     const changeCount = status?.changeCount ?? 0;
     const pending = changeCount > 0;
     const buildInFlight = status?.buildInFlight ?? false;
@@ -57,6 +56,22 @@ export default function PublishButton() {
             setStatus(data);
             setPhase('idle');
         });
+    }, []);
+
+    // Refresh the count/breakdown when an admin edit lands elsewhere on the page
+    // (editors dispatch `admin:data-changed`) or when the tab regains focus.
+    useEffect(() => {
+        function refresh() {
+            fetchStatus().then((data) => {
+                if (data) setStatus(data);
+            });
+        }
+        window.addEventListener('admin:data-changed', refresh);
+        window.addEventListener('focus', refresh);
+        return () => {
+            window.removeEventListener('admin:data-changed', refresh);
+            window.removeEventListener('focus', refresh);
+        };
     }, []);
 
     // Poll while a build is running so the button re-enables once it finishes.
@@ -96,12 +111,13 @@ export default function PublishButton() {
         };
     }, [open]);
 
-    // Backstop for tab close / full reload: browsers show only their own generic prompt.
+    // Warn only when the operator actually leaves: closing the tab, reloading, or
+    // navigating away from the site. In-app admin navigation is not interrupted.
+    // The browser shows its own generic prompt here; custom copy is not possible.
     useEffect(() => {
         if (!guardActive) return;
 
         function handleBeforeUnload(event: BeforeUnloadEvent) {
-            if (bypassGuardRef.current) return;
             event.preventDefault();
             event.returnValue = '';
         }
@@ -110,66 +126,6 @@ export default function PublishButton() {
         return () =>
             window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [guardActive]);
-
-    // Intercept Astro's client-router navigation so we can offer to publish first.
-    useEffect(() => {
-        if (!guardActive) return;
-
-        function handleBeforePreparation(
-            event: DocumentEventMap['astro:before-preparation'],
-        ) {
-            event.preventDefault();
-            setPendingNav(event.to.href);
-        }
-
-        document.addEventListener(
-            'astro:before-preparation',
-            handleBeforePreparation,
-        );
-        return () =>
-            document.removeEventListener(
-                'astro:before-preparation',
-                handleBeforePreparation,
-            );
-    }, [guardActive]);
-
-    // Focus trap for the confirmation modal: move focus in, cycle Tab within it, restore on close.
-    useEffect(() => {
-        if (!pendingNav) return;
-
-        lastFocusedRef.current = document.activeElement as HTMLElement | null;
-        publishNowRef.current?.focus();
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                setPendingNav(null);
-                return;
-            }
-            if (event.key !== 'Tab' || !modalRef.current) return;
-
-            const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            );
-            if (focusable.length === 0) return;
-            const first = focusable[0];
-            const last = focusable[focusable.length - 1];
-
-            if (event.shiftKey && document.activeElement === first) {
-                event.preventDefault();
-                last.focus();
-            } else if (!event.shiftKey && document.activeElement === last) {
-                event.preventDefault();
-                first.focus();
-            }
-        }
-
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-            lastFocusedRef.current?.focus();
-        };
-    }, [pendingNav]);
 
     async function publish(): Promise<boolean> {
         setPhase('publishing');
@@ -198,87 +154,86 @@ export default function PublishButton() {
         }
     }
 
-    async function publishAndLeave() {
-        const ok = await publish();
-        if (ok && pendingNav) {
-            bypassGuardRef.current = true;
-            window.location.assign(pendingNav);
-        }
-    }
-
-    function leaveWithoutPublishing() {
-        if (pendingNav) {
-            bypassGuardRef.current = true;
-            window.location.assign(pendingNav);
-        }
-    }
-
     const disabled =
-        phase === 'loading' || phase === 'publishing' || buildInFlight;
+        devDisabled ||
+        phase === 'loading' ||
+        phase === 'publishing' ||
+        buildInFlight;
 
     return (
-        <>
-            <div class="flex items-center gap-3">
-                <span class="text-xs text-gray-500">
-                    {phase === 'publishing'
-                        ? 'Publishing — live in a few minutes'
-                        : status
-                          ? `Published ${relativeTime(status.buildTime)}`
-                          : ''}
-                </span>
-                {pending && (
-                    <div class="relative" ref={popoverRef}>
-                        <button
-                            type="button"
-                            onClick={() => setOpen((value) => !value)}
-                            onPointerEnter={(event) => {
-                                if (event.pointerType === 'mouse')
-                                    setOpen(true);
-                            }}
-                            onPointerLeave={(event) => {
-                                if (event.pointerType === 'mouse')
-                                    setOpen(false);
-                            }}
-                            aria-expanded={open}
-                            aria-controls="publish-breakdown"
-                            aria-label="Show unpublished changes breakdown"
-                            class="flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B]"
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500">
+                {phase === 'publishing'
+                    ? 'Publishing, live in a few minutes'
+                    : status?.lastDeployedAt
+                      ? `Published ${relativeTime(status.lastDeployedAt)}`
+                      : status
+                        ? 'Not published yet'
+                        : ''}
+            </span>
+            {pending && (
+                <div class="relative" ref={popoverRef}>
+                    <button
+                        type="button"
+                        onClick={() => setOpen((value) => !value)}
+                        onPointerEnter={(event) => {
+                            if (event.pointerType === 'mouse') setOpen(true);
+                        }}
+                        onPointerLeave={(event) => {
+                            if (event.pointerType === 'mouse') setOpen(false);
+                        }}
+                        aria-expanded={open}
+                        aria-controls="publish-breakdown"
+                        aria-label="Show unpublished changes breakdown"
+                        class="flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B]"
+                    >
+                        ⓘ
+                    </button>
+                    {open && (
+                        <div
+                            id="publish-breakdown"
+                            role="group"
+                            aria-label="Unpublished changes"
+                            class="absolute right-0 top-full z-10 mt-1 w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg"
                         >
-                            ⓘ
-                        </button>
-                        {open && (
-                            <div
-                                id="publish-breakdown"
-                                role="group"
-                                aria-label="Unpublished changes"
-                                class="absolute right-0 top-full z-10 mt-1 w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg"
-                            >
-                                <ul class="space-y-0.5">
-                                    {status?.changes.map((group) => (
-                                        <li
-                                            key={`${group.entity_type}-${group.action}`}
-                                        >
-                                            {changeLineText(group)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            <ul class="space-y-0.5">
+                                {status?.changes.map((group) => (
+                                    <li
+                                        key={`${group.entity_type}-${group.action}`}
+                                    >
+                                        {changeLineText(group)}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
+            {/* Custom tooltip: native `title` is suppressed on a disabled button
+                and its delay is not controllable. The button gets
+                pointer-events:none so hover reaches this group wrapper. */}
+            <span
+                class={
+                    devDisabled
+                        ? 'group relative inline-flex cursor-not-allowed'
+                        : 'inline-flex'
+                }
+            >
                 <button
                     type="button"
                     onClick={publish}
                     disabled={disabled}
-                    class={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B] disabled:opacity-50 disabled:cursor-not-allowed ${
+                    class={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none ${
                         pending
                             ? 'bg-[#0B5E3C] text-white hover:bg-[#12956B]'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                     aria-label={
-                        pending
-                            ? 'Publish unpublished changes to the live site'
-                            : 'Publish to live site'
+                        devDisabled
+                            ? 'Publishing disabled in local development'
+                            : pending
+                              ? 'Publish unpublished changes to the live site'
+                              : 'Publish to live site'
                     }
                 >
                     {phase === 'publishing'
@@ -287,66 +242,20 @@ export default function PublishButton() {
                           ? 'Build in progress…'
                           : buildPublishLabel(changeCount)}
                 </button>
-                {error && (
-                    <span class="text-xs text-red-600" role="alert">
-                        {error}
+                {devDisabled && (
+                    <span
+                        role="tooltip"
+                        class="pointer-events-none absolute right-0 top-full z-50 mt-1 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+                    >
+                        Publishing disabled in dev
                     </span>
                 )}
-            </div>
-            {pendingNav && (
-                <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div
-                        class="absolute inset-0 bg-black/40"
-                        aria-hidden="true"
-                        onClick={() => setPendingNav(null)}
-                    />
-                    <div
-                        ref={modalRef}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="nav-guard-heading"
-                        class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
-                    >
-                        <h2
-                            id="nav-guard-heading"
-                            class="text-base font-semibold text-gray-900"
-                        >
-                            Unpublished changes
-                        </h2>
-                        <p class="mt-2 text-sm text-gray-600">
-                            You have {changeCount}{' '}
-                            {changeCount === 1
-                                ? 'unpublished change'
-                                : 'unpublished changes'}
-                            . They are saved to the database but are not yet
-                            live on the public site. Publish now to make them
-                            visible, or leave to keep them pending.
-                        </p>
-                        {error && (
-                            <p class="mt-3 text-sm text-red-600" role="alert">
-                                {error}
-                            </p>
-                        )}
-                        <div class="mt-6 flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={leaveWithoutPublishing}
-                                class="text-sm px-3 py-1.5 rounded-lg font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B]"
-                            >
-                                Leave without publishing
-                            </button>
-                            <button
-                                type="button"
-                                ref={publishNowRef}
-                                onClick={publishAndLeave}
-                                class="text-sm px-3 py-1.5 rounded-lg font-medium bg-[#0B5E3C] text-white hover:bg-[#12956B] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#12956B]"
-                            >
-                                Publish now
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            </span>
+            {error && (
+                <span class="text-xs text-red-600" role="alert">
+                    {error}
+                </span>
             )}
-        </>
+        </div>
     );
 }

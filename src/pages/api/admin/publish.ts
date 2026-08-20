@@ -24,20 +24,30 @@ export const GET: APIRoute = async () => {
     const supabase = createSupabaseServiceClient();
     const buildTime = __BUILD_TIME__;
 
-    const [summaryRes, buildsRes, lastPublishRes] = await Promise.all([
-        supabase.rpc('admin_change_summary', { since: buildTime }),
-        supabase
-            .from('site_builds')
-            .select('state, started_at, created_at')
-            .order('created_at', { ascending: false })
-            .limit(5),
-        supabase
-            .from('site_publishes')
-            .select('triggered_at')
-            .order('triggered_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-    ]);
+    const [summaryRes, buildsRes, lastPublishRes, lastDeployRes] =
+        await Promise.all([
+            supabase.rpc('admin_change_summary', { since: buildTime }),
+            supabase
+                .from('site_builds')
+                .select('state, started_at, created_at')
+                .order('created_at', { ascending: false })
+                .limit(5),
+            supabase
+                .from('site_publishes')
+                .select('triggered_at')
+                .order('triggered_at', { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+            // Last successful deploy from Netlify's webhook — any trigger, and the
+            // same value in dev and prod (both read the shared database).
+            supabase
+                .from('site_builds')
+                .select('finished_at')
+                .eq('state', 'ready')
+                .order('finished_at', { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+        ]);
 
     if (summaryRes.error)
         console.error('publish GET (summary):', summaryRes.error.message);
@@ -47,6 +57,11 @@ export const GET: APIRoute = async () => {
         console.error(
             'publish GET (site_publishes):',
             lastPublishRes.error.message,
+        );
+    if (lastDeployRes.error)
+        console.error(
+            'publish GET (last deploy):',
+            lastDeployRes.error.message,
         );
 
     const { changeCount, changes } = summariseChanges(
@@ -67,6 +82,7 @@ export const GET: APIRoute = async () => {
         {
             buildTime,
             lastTriggeredAt: lastPublishRes.data?.triggered_at ?? null,
+            lastDeployedAt: lastDeployRes.data?.finished_at ?? null,
             buildInFlight,
             hasUnpublishedChanges: changeCount > 0,
             changeCount,
@@ -77,6 +93,16 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ locals, request }) => {
+    // Hard block: never let a local dev server trigger a production deploy, even
+    // if a build-hook URL is present in the environment. DEV is true only under
+    // `astro dev`; the built server used in CI and on Netlify has it false.
+    if (import.meta.env.DEV) {
+        return json(
+            { error: 'Publishing is disabled in local development' },
+            403,
+        );
+    }
+
     const hookUrl = process.env.NETLIFY_BUILD_HOOK_URL;
     if (!hookUrl) {
         return json({ error: 'NETLIFY_BUILD_HOOK_URL is not configured' }, 503);
