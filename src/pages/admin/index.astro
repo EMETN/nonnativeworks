@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 const scraperEnabled = import.meta.env.NETLIFY !== 'true';
 return Astro.redirect(scraperEnabled ? '/admin/scrape' : '/admin/companies');
 ---

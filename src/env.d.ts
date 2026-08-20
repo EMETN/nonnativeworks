@@ -6,3 +6,5 @@ declare namespace App {
         user?: import('@supabase/supabase-js').User;
     }
 }
+
+declare const __BUILD_TIME__: string;

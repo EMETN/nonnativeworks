@@ -12,7 +12,17 @@ const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 
 // https://astro.build/config
 export default defineConfig({
-    output: 'server',
+    // Without a site, Astro.url resolves to localhost in the built HTML (canonical/OG/JSON-LD).
+    site: 'https://nonnativeworks.com',
+
+    // Pin the existing URL shape — the static default (build.format
+    // 'directory') would 301 /countries to /countries/.
+    trailingSlash: 'never',
+    build: {
+        format: 'file',
+    },
+    // Static by default; prerender = false opts /admin and /api into on-demand rendering.
+    output: 'static',
     adapter,
     prefetch: {
         defaultStrategy: 'hover',
@@ -55,6 +65,10 @@ export default defineConfig({
                     rewrite: (path) => path.replace(/^\/t/, ''),
                 },
             },
+        },
+        define: {
+            // Stamped at build time so admin can tell how old the live site is.
+            __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
         },
     },
 });

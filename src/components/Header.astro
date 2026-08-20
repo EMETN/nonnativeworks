@@ -1,11 +1,13 @@
 ---
+import { cleanPathname } from '../lib/url-path';
+
 interface Props {
     // Set by pages (e.g. 404) that must not trigger the catch-all isCountries below.
     hideActive?: boolean;
 }
 const { hideActive = false } = Astro.props;
 
-const pathname = Astro.url.pathname;
+const pathname = cleanPathname(Astro.url);
 const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
 const isHome = pathname === '/';
 const isAdmin = pathname.startsWith('/admin');

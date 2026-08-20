@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 
+export const prerender = false;
+
 const ENRICHED_SELECT =
     'id, title, url, requires_native_language, local_language_advantage, required_education, category:categories(id, name, slug), company:companies(name, country:countries(name))';
 

@@ -1,5 +1,5 @@
 import type { AstroCookies } from 'astro';
-import { createSupabaseClient } from './supabase';
+import { createSupabaseClient, createPublicClient } from './supabase';
 import type {
     CountryStats,
     CompanyStats,
@@ -10,9 +10,20 @@ import type {
     PositionDetail,
 } from './types';
 import { nameToSlug } from './country-flags';
+import { fetchAllCompanies } from './build-queries';
 
-function client(request: Request, cookies: AstroCookies) {
-    return createSupabaseClient(request, cookies);
+/**
+ * Selects the Supabase client for a query (exported for tests). Dual-mode so a route
+ * can switch between prerendered and on-demand without a data-layer rewrite.
+ */
+export function resolveClient(
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
+) {
+    if (request && cookies) {
+        return createSupabaseClient(request, cookies);
+    }
+    return createPublicClient();
 }
 
 const VALID_SLUG = /^[a-z0-9-]+$/;
@@ -22,10 +33,10 @@ function isValidSlug(slug: string): boolean {
 }
 
 export async function getCountryStats(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
 ): Promise<CountryStats[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('country_stats')
         .select('*')
@@ -39,30 +50,26 @@ export async function getCountryStats(
 }
 
 export async function getCompanyCountsByCountry(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
 ): Promise<Record<string, number>> {
-    const supabase = client(request, cookies);
-    const { data, error } = await supabase
-        .from('companies')
-        .select('country_id');
-
-    if (error) {
-        console.error('getCompanyCountsByCountry:', error.message);
-        throw new Error('Failed to load company counts');
-    }
+    const supabase = resolveClient(request, cookies);
+    const rows = await fetchAllCompanies<{ country_id: string }>(
+        'country_id',
+        supabase,
+    );
     const counts: Record<string, number> = {};
-    for (const row of data ?? []) {
+    for (const row of rows) {
         counts[row.country_id] = (counts[row.country_id] || 0) + 1;
     }
     return counts;
 }
 
 export async function getGlobalStats(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
 ): Promise<GlobalStats> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
 
     const [
         { count: totalCount, error: posErr },
@@ -121,11 +128,11 @@ export interface TopCompany {
 }
 
 export async function getTopCompanies(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     limit = 5,
 ): Promise<TopCompany[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase.rpc('top_companies_by_english', {
         lim: limit,
     });
@@ -148,13 +155,13 @@ export async function getTopCompanies(
 }
 
 export async function getCountryBySlug(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     slug: string,
 ): Promise<CountryStats | null> {
     if (!isValidSlug(slug)) return null;
 
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('country_stats')
         .select('*')
@@ -166,10 +173,10 @@ export async function getCountryBySlug(
 }
 
 export async function getAllCountries(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
 ): Promise<Country[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('countries')
         .select('*')
@@ -183,11 +190,11 @@ export async function getAllCountries(
 }
 
 export async function getCompanyStatsByCountry(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     countryId: string,
 ): Promise<CompanyStats[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('company_stats')
         .select('*')
@@ -202,11 +209,11 @@ export async function getCompanyStatsByCountry(
 }
 
 export async function getCategoryBreakdown(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     countryId: string,
 ): Promise<CategoryBreakdown[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
 
     const { data, error } = await supabase
         .from('positions')
@@ -264,11 +271,11 @@ export async function getCategoryBreakdown(
 }
 
 export async function getPositionsByCountry(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     countryId: string,
 ): Promise<PositionDetail[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('positions')
         .select(
@@ -307,10 +314,10 @@ export async function getPositionsByCountry(
 }
 
 export async function getAllCategories(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
 ): Promise<Category[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -324,14 +331,14 @@ export async function getAllCategories(
 }
 
 export async function getCompanyBySlugInCountry(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     countryId: string,
     companySlug: string,
 ): Promise<CompanyStats | null> {
     if (!isValidSlug(companySlug)) return null;
 
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('company_stats')
         .select('*')
@@ -346,11 +353,11 @@ export async function getCompanyBySlugInCountry(
 }
 
 export async function getPositionsByCompany(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     companyId: string,
 ): Promise<PositionDetail[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
     const { data, error } = await supabase
         .from('positions')
         .select(
@@ -387,11 +394,11 @@ export async function getPositionsByCompany(
 }
 
 export async function getCategoryBreakdownByCompany(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     companyId: string,
 ): Promise<CategoryBreakdown[]> {
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
 
     const { data, error } = await supabase
         .from('positions')
@@ -468,23 +475,23 @@ export interface GlobalCompanyData {
 }
 
 export async function getGlobalCompanyBySlug(
-    request: Request,
-    cookies: AstroCookies,
+    request: Request | undefined,
+    cookies: AstroCookies | undefined,
     companySlug: string,
 ): Promise<GlobalCompanyData | null> {
     if (!isValidSlug(companySlug)) return null;
 
-    const supabase = client(request, cookies);
+    const supabase = resolveClient(request, cookies);
 
-    const { data: nameRows, error: nameErr } = await supabase
-        .from('companies')
-        .select('name');
-    if (nameErr) {
-        console.error('getGlobalCompanyBySlug names:', nameErr.message);
+    let nameRows: { name: string }[];
+    try {
+        nameRows = await fetchAllCompanies<{ name: string }>('name', supabase);
+    } catch (err) {
+        console.error('getGlobalCompanyBySlug names:', err);
         return null;
     }
 
-    const uniqueNames = [...new Set((nameRows ?? []).map((r) => r.name))];
+    const uniqueNames = [...new Set(nameRows.map((r) => r.name))];
     const matchedName = uniqueNames.find((n) => nameToSlug(n) === companySlug);
     if (!matchedName) return null;
 

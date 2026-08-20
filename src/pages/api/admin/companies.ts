@@ -1,5 +1,8 @@
 import type { APIRoute } from 'astro';
 import { createSupabaseServiceClient } from '../../../lib/supabase';
+import { recordChange, changedBy, EXISTED } from '../../../lib/admin-changes';
+
+export const prerender = false;
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,7 +42,7 @@ export const GET: APIRoute = async () => {
     return json(rows, 200);
 };
 
-export const DELETE: APIRoute = async ({ url }) => {
+export const DELETE: APIRoute = async ({ url, locals, request }) => {
     const supabase = createSupabaseServiceClient();
 
     // ?name=<company name> — delete all countries for a company in one go
@@ -58,6 +61,16 @@ export const DELETE: APIRoute = async ({ url }) => {
             return json({ error: 'Failed to delete company' }, 500);
         }
 
+        await recordChange(supabase, {
+            entity_type: 'company',
+            action: 'deleted',
+            label: name,
+            entity_id: name,
+            before_state: EXISTED,
+            after_state: null,
+            changed_by: changedBy(locals, request),
+        });
+
         return json({ ok: true }, 200);
     }
 
@@ -67,12 +80,28 @@ export const DELETE: APIRoute = async ({ url }) => {
         return json({ error: 'Provide either ?name= or a valid ?id=' }, 400);
     }
 
+    const { data: existing } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', id)
+        .maybeSingle();
+
     const { error } = await supabase.from('companies').delete().eq('id', id);
 
     if (error) {
         console.error('DELETE /api/admin/companies (by id):', error.message);
         return json({ error: 'Failed to delete company' }, 500);
     }
+
+    await recordChange(supabase, {
+        entity_type: 'company',
+        action: 'deleted',
+        label: existing?.name ?? id,
+        entity_id: existing?.name ?? id,
+        before_state: EXISTED,
+        after_state: null,
+        changed_by: changedBy(locals, request),
+    });
 
     return json({ ok: true }, 200);
 };

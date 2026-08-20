@@ -238,6 +238,7 @@ export default function PositionEditor() {
             );
             if (!res.ok) throw new Error(await res.text());
             setSave(id, 'saved');
+            window.dispatchEvent(new CustomEvent('admin:data-changed'));
             setTimeout(() => setSave(id, 'idle'), 2000);
         } catch {
             setSave(id, 'error');

@@ -3,6 +3,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import { cleanPathname } from '../lib/url-path';
 interface BreadcrumbItem {
     name: string;
     href?: string;
@@ -31,7 +32,8 @@ const siteTitle =
         ? 'nonnativeworks! — Work abroad in English'
         : `${title} — nonnativeworks!`;
 
-const canonical = Astro.url.href;
+// Strip the built .html path so canonical matches the served URL — see url-path.ts.
+const canonical = new URL(cleanPathname(Astro.url), Astro.url).href;
 const ogImageUrl = ogImage ?? `${Astro.url.origin}/og-default.png`;
 
 // set:html does not escape and JSON.stringify leaves `<` intact, so a DB-sourced
