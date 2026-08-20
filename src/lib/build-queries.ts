@@ -26,6 +26,50 @@ export function groupBy<T, K>(rows: T[], key: (row: T) => K): Map<K, T[]> {
     return grouped;
 }
 
+/**
+ * Reads every company row in one pass, paged and in parallel, so build-time
+ * callers clear PostgREST's 1000-row cap. `columns` is a raw PostgREST select
+ * (joins allowed); paging is ordered by `id` for a stable, total sort. Pass a
+ * request-scoped client to preserve caller semantics, else the public client.
+ */
+export async function fetchAllCompanies<T>(
+    columns: string,
+    client?: ReturnType<typeof createPublicClient>,
+): Promise<T[]> {
+    const supabase = client ?? createPublicClient();
+
+    const { count, error: countError } = await supabase
+        .from('companies')
+        .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+        console.error('fetchAllCompanies (count):', countError.message);
+        throw new Error('Failed to count companies');
+    }
+
+    const ranges = computeRanges(count ?? 0, PAGE_SIZE);
+
+    const pages = await mapWithConcurrency(
+        ranges,
+        CONCURRENCY,
+        async (range) => {
+            const { data, error } = await supabase
+                .from('companies')
+                .select(columns)
+                .order('id')
+                .range(range.from, range.to);
+
+            if (error) {
+                console.error('fetchAllCompanies (page):', error.message);
+                throw new Error('Failed to load companies');
+            }
+            return (data ?? []) as T[];
+        },
+    );
+
+    return pages.flat();
+}
+
 const POSITION_COLUMNS = `
     id,
     company_id,

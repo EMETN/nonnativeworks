@@ -10,6 +10,7 @@ import type {
     PositionDetail,
 } from './types';
 import { nameToSlug } from './country-flags';
+import { fetchAllCompanies } from './build-queries';
 
 /**
  * Selects the Supabase client for a query (exported for tests). Dual-mode so a route
@@ -53,16 +54,12 @@ export async function getCompanyCountsByCountry(
     cookies: AstroCookies | undefined,
 ): Promise<Record<string, number>> {
     const supabase = resolveClient(request, cookies);
-    const { data, error } = await supabase
-        .from('companies')
-        .select('country_id');
-
-    if (error) {
-        console.error('getCompanyCountsByCountry:', error.message);
-        throw new Error('Failed to load company counts');
-    }
+    const rows = await fetchAllCompanies<{ country_id: string }>(
+        'country_id',
+        supabase,
+    );
     const counts: Record<string, number> = {};
-    for (const row of data ?? []) {
+    for (const row of rows) {
         counts[row.country_id] = (counts[row.country_id] || 0) + 1;
     }
     return counts;
@@ -486,15 +483,15 @@ export async function getGlobalCompanyBySlug(
 
     const supabase = resolveClient(request, cookies);
 
-    const { data: nameRows, error: nameErr } = await supabase
-        .from('companies')
-        .select('name');
-    if (nameErr) {
-        console.error('getGlobalCompanyBySlug names:', nameErr.message);
+    let nameRows: { name: string }[];
+    try {
+        nameRows = await fetchAllCompanies<{ name: string }>('name', supabase);
+    } catch (err) {
+        console.error('getGlobalCompanyBySlug names:', err);
         return null;
     }
 
-    const uniqueNames = [...new Set((nameRows ?? []).map((r) => r.name))];
+    const uniqueNames = [...new Set(nameRows.map((r) => r.name))];
     const matchedName = uniqueNames.find((n) => nameToSlug(n) === companySlug);
     if (!matchedName) return null;
 
