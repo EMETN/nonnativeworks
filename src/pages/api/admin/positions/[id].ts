@@ -2,7 +2,11 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createSupabaseServiceClient } from '../../../../lib/supabase';
 import type { TablesUpdate } from '../../../../lib/database.types';
-import { recordChange, changedBy } from '../../../../lib/admin-changes';
+import {
+    recordChange,
+    changedBy,
+    hashState,
+} from '../../../../lib/admin-changes';
 
 export const prerender = false;
 
@@ -64,11 +68,32 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         update.category_id = cat.id;
     }
 
+    const STATE_COLS =
+        'title, category_id, requires_native_language, local_language_advantage, required_education';
+    const positionState = (r: {
+        category_id: string;
+        requires_native_language: boolean;
+        local_language_advantage: boolean;
+        required_education: string | null;
+    }) =>
+        hashState([
+            r.category_id,
+            r.requires_native_language,
+            r.local_language_advantage,
+            r.required_education,
+        ]);
+
+    const { data: before } = await supabase
+        .from('positions')
+        .select(STATE_COLS)
+        .eq('id', id)
+        .maybeSingle();
+
     const { data: updated, error } = await supabase
         .from('positions')
         .update(update)
         .eq('id', id)
-        .select('title')
+        .select(STATE_COLS)
         .maybeSingle();
 
     if (error) return json({ error: error.message }, 500);
@@ -79,6 +104,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
             entity_type: 'position',
             action: 'updated',
             label: updated.title,
+            entity_id: id,
+            before_state: before ? positionState(before) : null,
+            after_state: positionState(updated),
             changed_by: changedBy(locals, request),
         });
     }
