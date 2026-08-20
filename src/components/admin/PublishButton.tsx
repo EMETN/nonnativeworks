@@ -17,7 +17,9 @@ interface PublishStatus {
 
 type Phase = 'loading' | 'idle' | 'publishing' | 'failed';
 
-const POLL_INTERVAL_MS = 20_000;
+const POLL_INTERVAL_MS = 15_000;
+/** Give up waiting on a deploy after this long (matches the server staleness cutoff). */
+const DEPLOY_TIMEOUT_MS = 25 * 60_000;
 
 function relativeTime(iso: string): string {
     const seconds = Math.floor((Date.now() - Date.parse(iso)) / 1000);
@@ -40,7 +42,12 @@ export default function PublishButton() {
     const [phase, setPhase] = useState<Phase>('loading');
     const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
+    // Set when we trigger a publish, until the resulting deploy is observed live.
+    // Bridges the gap before Netlify's "building" webhook lands (buildInFlight is
+    // false in that window, so we cannot rely on it alone to keep polling).
+    const [awaitingDeploy, setAwaitingDeploy] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
+    const publishedAtRef = useRef<number | null>(null);
 
     // Publishing triggers a real production deploy, so it is disabled under
     // `astro dev`. The server enforces this too; this just reflects it in the UI.
@@ -48,8 +55,8 @@ export default function PublishButton() {
     const changeCount = status?.changeCount ?? 0;
     const pending = changeCount > 0;
     const buildInFlight = status?.buildInFlight ?? false;
-    const guardActive =
-        changeCount > 0 && !buildInFlight && phase !== 'publishing';
+    const deploying = buildInFlight || awaitingDeploy;
+    const guardActive = changeCount > 0 && !deploying && phase !== 'publishing';
 
     useEffect(() => {
         fetchStatus().then((data) => {
@@ -74,18 +81,35 @@ export default function PublishButton() {
         };
     }, []);
 
-    // Poll while a build is running so the button re-enables once it finishes.
+    // Poll while a deploy is in progress (either observed via the webhook, or just
+    // triggered by us) so the button stays disabled and updates once it finishes.
     useEffect(() => {
-        if (!status?.buildInFlight) return;
+        if (!deploying) return;
 
         const interval = setInterval(() => {
             fetchStatus().then((data) => {
-                if (data) setStatus(data);
+                if (!data) return;
+                setStatus(data);
+
+                const publishedAt = publishedAtRef.current;
+                if (publishedAt === null) return;
+                const deployedAt = data.lastDeployedAt
+                    ? Date.parse(data.lastDeployedAt)
+                    : 0;
+                // Our deploy is live once a newer deploy is recorded, or give up
+                // after the timeout so a missed webhook cannot wedge the button.
+                if (
+                    deployedAt > publishedAt ||
+                    Date.now() - publishedAt > DEPLOY_TIMEOUT_MS
+                ) {
+                    publishedAtRef.current = null;
+                    setAwaitingDeploy(false);
+                }
             });
         }, POLL_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [status?.buildInFlight]);
+    }, [deploying]);
 
     // Close the breakdown popover on Escape or a click/tap outside it.
     useEffect(() => {
@@ -143,6 +167,8 @@ export default function PublishButton() {
                 return false;
             } else {
                 setPhase('idle');
+                publishedAtRef.current = Date.now();
+                setAwaitingDeploy(true);
                 const data = await fetchStatus();
                 if (data) setStatus(data);
                 return true;
@@ -159,7 +185,7 @@ export default function PublishButton() {
         !pending ||
         phase === 'loading' ||
         phase === 'publishing' ||
-        buildInFlight;
+        deploying;
 
     return (
         <div class="flex items-center gap-3">
@@ -239,7 +265,7 @@ export default function PublishButton() {
                 >
                     {phase === 'publishing'
                         ? 'Publishing…'
-                        : buildInFlight
+                        : deploying
                           ? 'Build in progress…'
                           : buildPublishLabel(changeCount)}
                 </button>
