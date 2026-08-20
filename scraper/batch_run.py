@@ -470,6 +470,17 @@ def main() -> int:
 
     _write_github_summary(summary_entries)
 
+    # Signal to CI whether anything reached the database, so an empty scrape skips a rebuild.
+    uploaded = not args.dry_run and any(
+        entry["status"] == "success" and entry["total_positions"] > 0
+        for entry in summary_entries
+    )
+
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as out:
+            out.write(f"uploaded={'true' if uploaded else 'false'}\n")
+
     return 1 if failures else 0  # warnings don't fail the run
 
 

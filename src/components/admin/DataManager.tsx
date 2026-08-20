@@ -108,6 +108,7 @@ export default function DataManager() {
                 return next;
             });
             invalidateCachePrefix('positions:');
+            window.dispatchEvent(new CustomEvent('admin:data-changed'));
         } catch {
             setError('Delete failed — please try again.');
         } finally {

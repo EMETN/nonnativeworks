@@ -1,20 +1,28 @@
 import type { APIRoute } from 'astro';
-import { createSupabaseServiceClient } from '../lib/supabase';
+import { createPublicClient } from '../lib/supabase';
+import { fetchAllCompanies } from '../lib/build-queries';
 import { nameToSlug } from '../lib/country-flags';
+
+interface SitemapCompany {
+    name: string;
+    updated_at: string | null;
+    country: { slug: string } | null;
+}
 
 export const GET: APIRoute = async ({ url }) => {
     const base = url.origin;
-    const supabase = createSupabaseServiceClient();
+    const supabase = createPublicClient();
 
     const { data: countries } = await supabase
         .from('countries')
         .select('slug, created_at')
         .order('sort_order');
 
-    const { data: companies } = await supabase
-        .from('companies')
-        .select('name, updated_at, country:countries!inner(slug)')
-        .order('name');
+    // Paged so the sitemap stays complete past PostgREST's 1000-row cap.
+    const companies = await fetchAllCompanies<SitemapCompany>(
+        'name, updated_at, country:countries!inner(slug)',
+        supabase,
+    );
 
     interface SitemapPage {
         loc: string;

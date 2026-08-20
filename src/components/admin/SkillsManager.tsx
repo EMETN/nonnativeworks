@@ -106,6 +106,7 @@ export default function SkillsManager() {
             }
             setAddDraft({ ...EMPTY_DRAFT, category: addDraft.category });
             setShowAddForm(false);
+            window.dispatchEvent(new CustomEvent('admin:data-changed'));
         } catch {
             setAddError('Request failed — please try again.');
         } finally {
@@ -165,6 +166,7 @@ export default function SkillsManager() {
                 );
             }
             setEditingId(null);
+            window.dispatchEvent(new CustomEvent('admin:data-changed'));
         } catch {
             setEditError('Request failed — please try again.');
         } finally {
@@ -186,6 +188,7 @@ export default function SkillsManager() {
                 return;
             }
             setSkills((prev) => prev.filter((s) => s.id !== id));
+            window.dispatchEvent(new CustomEvent('admin:data-changed'));
         } catch {
             setError('Delete failed — please try again.');
         } finally {

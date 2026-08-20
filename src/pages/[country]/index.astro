@@ -4,22 +4,37 @@ import CompanyGrid from '../../components/country/CompanyGrid.tsx';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
-import { getCountryBySlug, getCompanyStatsByCountry } from '../../lib/queries';
+import { getCountryStats } from '../../lib/queries';
+import { fetchAllCompanyStats, groupBy } from '../../lib/build-queries';
+import type { CountryStats, CompanyStats } from '../../lib/types';
 
-const { country: slug } = Astro.params;
-const { request, cookies } = Astro;
+export async function getStaticPaths() {
+    // One read of each view for the whole route, grouped in memory,
+    // rather than a query per country.
+    const [countries, allCompanyStats] = await Promise.all([
+        getCountryStats(undefined, undefined),
+        fetchAllCompanyStats(),
+    ]);
 
-const country = await getCountryBySlug(request, cookies, slug!);
+    const byCountry = groupBy(allCompanyStats, (row) => row.country_id);
 
-if (!country) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    return countries
+        .filter((country) => country.total_positions > 0)
+        .map((country) => ({
+            params: { country: country.slug },
+            props: {
+                country,
+                companies: byCountry.get(country.country_id) ?? [],
+            },
+        }));
 }
 
-const companies = await getCompanyStatsByCountry(
-    request,
-    cookies,
-    country.country_id,
-);
+interface Props {
+    country: CountryStats;
+    companies: CompanyStats[];
+}
+
+const { country, companies } = Astro.props as Props;
 ---
 
 <BaseLayout
