@@ -24,33 +24,32 @@ export const GET: APIRoute = async () => {
     const supabase = createSupabaseServiceClient();
     const buildTime = __BUILD_TIME__;
 
-    const [summaryRes, buildsRes, lastPublishRes, lastDeployRes] =
-        await Promise.all([
-            supabase.rpc('admin_change_summary', { since: buildTime }),
-            supabase
-                .from('site_builds')
-                .select('state, started_at, created_at')
-                .order('created_at', { ascending: false })
-                .limit(5),
-            supabase
-                .from('site_publishes')
-                .select('triggered_at')
-                .order('triggered_at', { ascending: false })
-                .limit(1)
-                .maybeSingle(),
-            // Last successful deploy from Netlify's webhook — any trigger, and the
-            // same value in dev and prod (both read the shared database).
-            supabase
-                .from('site_builds')
-                .select('finished_at')
-                .eq('state', 'ready')
-                .order('finished_at', { ascending: false })
-                .limit(1)
-                .maybeSingle(),
-        ]);
+    const [buildsRes, lastPublishRes, lastDeployRes] = await Promise.all([
+        supabase
+            .from('site_builds')
+            .select('state, started_at, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5),
+        supabase
+            .from('site_publishes')
+            .select('triggered_at')
+            .order('triggered_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        // Last successful production deploy from Netlify's webhook — the same value
+        // in every environment (all read the shared database), so it is the true
+        // "published" baseline even in a deploy preview, whose own __BUILD_TIME__
+        // never advances. created_at is when that build started (conservative
+        // watermark); finished_at is when it went live (shown to the operator).
+        supabase
+            .from('site_builds')
+            .select('created_at, finished_at')
+            .eq('state', 'ready')
+            .order('finished_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+    ]);
 
-    if (summaryRes.error)
-        console.error('publish GET (summary):', summaryRes.error.message);
     if (buildsRes.error)
         console.error('publish GET (site_builds):', buildsRes.error.message);
     if (lastPublishRes.error)
@@ -63,6 +62,15 @@ export const GET: APIRoute = async () => {
             'publish GET (last deploy):',
             lastDeployRes.error.message,
         );
+
+    // Count changes since the last production deploy STARTED, not since this
+    // build. Falls back to this build's time only before any deploy is recorded.
+    const lastDeployedAt = lastDeployRes.data?.finished_at ?? null;
+    const since = lastDeployRes.data?.created_at ?? buildTime;
+
+    const summaryRes = await supabase.rpc('admin_change_summary', { since });
+    if (summaryRes.error)
+        console.error('publish GET (summary):', summaryRes.error.message);
 
     const { changeCount, changes } = summariseChanges(
         (summaryRes.data ?? []).map((r) => ({
@@ -82,7 +90,7 @@ export const GET: APIRoute = async () => {
         {
             buildTime,
             lastTriggeredAt: lastPublishRes.data?.triggered_at ?? null,
-            lastDeployedAt: lastDeployRes.data?.finished_at ?? null,
+            lastDeployedAt,
             buildInFlight,
             hasUnpublishedChanges: changeCount > 0,
             changeCount,

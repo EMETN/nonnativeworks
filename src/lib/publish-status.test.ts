@@ -109,6 +109,32 @@ test('mapDeployNotification maps Netlify states', () => {
     expect(mapDeployNotification({ id: 'd1', state: 'weird' })).toBeNull();
 });
 
+test('mapDeployNotification ignores non-production contexts', () => {
+    expect(
+        mapDeployNotification({
+            id: 'd1',
+            state: 'ready',
+            context: 'production',
+        }),
+    ).not.toBeNull();
+    expect(
+        mapDeployNotification({
+            id: 'd1',
+            state: 'ready',
+            context: 'deploy-preview',
+        }),
+    ).toBeNull();
+    expect(
+        mapDeployNotification({
+            id: 'd1',
+            state: 'ready',
+            context: 'branch-deploy',
+        }),
+    ).toBeNull();
+    // Absent context is treated as production.
+    expect(mapDeployNotification({ id: 'd1', state: 'ready' })).not.toBeNull();
+});
+
 test('mapDeployNotification sets started_at only when building, finished_at otherwise', () => {
     const building = mapDeployNotification({ id: 'd1', state: 'building' })!;
     expect(building.started_at).not.toBeNull();

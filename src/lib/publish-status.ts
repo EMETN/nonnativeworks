@@ -59,6 +59,7 @@ export function deriveBuildInFlight(
 export function mapDeployNotification(payload: {
     id?: string;
     state?: string;
+    context?: string;
 }): {
     deploy_id: string;
     state: DeployEvent;
@@ -66,6 +67,10 @@ export function mapDeployNotification(payload: {
     finished_at: string | null;
 } | null {
     if (!payload.id) return null;
+    // Only production deploys are the "live" site. Ignore deploy-preview and
+    // branch-deploy builds so they never move the published baseline. Absent
+    // context is treated as production for backward compatibility.
+    if (payload.context && payload.context !== 'production') return null;
     const now = new Date().toISOString();
     switch (payload.state) {
         case 'building':

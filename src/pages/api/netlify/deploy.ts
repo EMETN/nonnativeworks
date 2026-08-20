@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, url }) => {
         return new Response('Unauthorized', { status: 401 });
     }
 
-    let payload: { id?: string; state?: string };
+    let payload: { id?: string; state?: string; context?: string };
     try {
         payload = await request.json();
     } catch {
