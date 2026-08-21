@@ -169,10 +169,13 @@ GROUP BY co.id;
 
 -- Returns the count of distinct company names across all countries.
 -- Avoids double-counting companies that operate in multiple countries.
+-- SECURITY INVOKER: companies has public-read RLS, so the caller's own
+-- privileges are enough. Definer rights would needlessly expose the RPC with
+-- escalated permissions to the anon/authenticated roles.
 CREATE OR REPLACE FUNCTION count_distinct_companies()
 RETURNS bigint
 LANGUAGE sql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = ''
 AS $$
   SELECT COUNT(DISTINCT name) FROM public.companies;
