@@ -194,8 +194,11 @@ jobs:
             # Rebuild the public site only when the scrape actually uploaded something.
             # Skipped for dry runs and dev-database runs, which must never touch production.
             - name: Trigger site rebuild
+              # !cancelled() (not success()): a scrape where some companies fail
+              # still exits non-zero, but the data that DID upload must publish.
+              # `uploaded == 'true'` still guards against publishing nothing.
               if: >-
-                  success()
+                  !cancelled()
                   && steps.batch.outputs.uploaded == 'true'
                   && inputs.dry_run != true
                   && inputs.use_dev_db != true
