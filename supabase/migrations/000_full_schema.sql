@@ -109,7 +109,8 @@ CREATE INDEX skill_snapshots_company      ON skill_snapshots(company_id, capture
 -- ============================================================
 
 -- Aggregated stats per country (used on homepage)
-CREATE VIEW country_stats AS
+-- security_invoker: enforce the querying role's RLS, not the view owner's.
+CREATE VIEW country_stats WITH (security_invoker = true) AS
 SELECT
   c.id AS country_id,
   c.name,
@@ -136,7 +137,8 @@ GROUP BY c.id
 ORDER BY c.sort_order;
 
 -- Aggregated stats per company (used on country pages)
-CREATE VIEW company_stats AS
+-- security_invoker: enforce the querying role's RLS, not the view owner's.
+CREATE VIEW company_stats WITH (security_invoker = true) AS
 SELECT
   co.id AS company_id,
   co.name,
