@@ -170,18 +170,25 @@ GROUP BY co.id;
 -- Returns the count of distinct company names across all countries.
 -- Avoids double-counting companies that operate in multiple countries.
 CREATE OR REPLACE FUNCTION count_distinct_companies()
-RETURNS bigint AS $$
-  SELECT COUNT(DISTINCT name) FROM companies;
-$$ LANGUAGE sql SECURITY DEFINER;
+RETURNS bigint
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT COUNT(DISTINCT name) FROM public.companies;
+$$;
 
 -- Trigger function: keep updated_at current on companies
 CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER companies_updated_at
   BEFORE UPDATE ON companies
@@ -598,14 +605,16 @@ CREATE POLICY "Auth insert admin changes" ON admin_changes FOR INSERT WITH CHECK
 -- not count. Grouping in SQL also avoids PostgREST's silent 1000-row cap.
 CREATE FUNCTION admin_change_summary(since timestamptz)
 RETURNS TABLE(entity_type text, action text, count bigint)
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql STABLE
+SET search_path = ''
+AS $$
   WITH per_entity AS (
     SELECT
       entity_type,
       entity_id,
       (array_agg(before_state ORDER BY changed_at ASC,  id ASC))[1]  AS baseline,
       (array_agg(after_state  ORDER BY changed_at DESC, id DESC))[1] AS current_state
-    FROM admin_changes
+    FROM public.admin_changes
     WHERE changed_at > since
     GROUP BY entity_type, entity_id
   ),
