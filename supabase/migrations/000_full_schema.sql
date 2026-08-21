@@ -3,18 +3,15 @@
 -- Run this file in the Supabase SQL editor on a brand-new project instead of
 -- running the individual migration files one by one.
 
--- ============================================================
--- EXTENSIONS
--- ============================================================
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- No extensions required: id columns default to the built-in gen_random_uuid()
+-- (pg_catalog, PG13+), so uuid-ossp is not installed.
 
 -- ============================================================
 -- TABLES
 -- ============================================================
 
 CREATE TABLE countries (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT        NOT NULL UNIQUE,
   slug       TEXT        NOT NULL UNIQUE,
   code       CHAR(2)     NOT NULL UNIQUE,   -- ISO 3166-1 alpha-2
@@ -24,14 +21,14 @@ CREATE TABLE countries (
 );
 
 CREATE TABLE categories (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT NOT NULL UNIQUE,
   slug       TEXT NOT NULL UNIQUE,
   sort_order INT  NOT NULL DEFAULT 0
 );
 
 CREATE TABLE companies (
-  id               UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name             TEXT        NOT NULL,
   country_id       UUID        NOT NULL REFERENCES countries(id) ON DELETE CASCADE,
   career_page_url  TEXT,
@@ -42,7 +39,7 @@ CREATE TABLE companies (
 );
 
 CREATE TABLE positions (
-  id                       UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id               UUID        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   title                    TEXT        NOT NULL,
   category_id              UUID        NOT NULL REFERENCES categories(id),
@@ -59,7 +56,7 @@ CREATE TABLE positions (
 );
 
 CREATE TABLE company_snapshots (
-  id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   -- Denormalised name (not company_id) so snapshots survive company row deletions/re-creations
   company_name      TEXT        NOT NULL,
   country_id        UUID        NOT NULL REFERENCES countries(id) ON DELETE CASCADE,
@@ -69,7 +66,7 @@ CREATE TABLE company_snapshots (
 );
 
 CREATE TABLE skills (
-  id             UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   canonical_name TEXT    NOT NULL UNIQUE,
   category       TEXT    NOT NULL CHECK (category IN (
                            'language', 'framework', 'database',
@@ -80,7 +77,7 @@ CREATE TABLE skills (
 );
 
 CREATE TABLE skill_snapshots (
-  id             UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   captured_at    DATE    NOT NULL,
   company_id     UUID    NOT NULL REFERENCES companies(id)   ON DELETE CASCADE,
   country_id     UUID    NOT NULL REFERENCES countries(id)   ON DELETE CASCADE,
@@ -103,13 +100,18 @@ CREATE INDEX idx_snapshots_lookup         ON company_snapshots(company_name, cou
 CREATE INDEX positions_skills_gin         ON positions USING GIN (skills);
 CREATE INDEX skill_snapshots_skill_date   ON skill_snapshots(skill_id, captured_at DESC);
 CREATE INDEX skill_snapshots_company      ON skill_snapshots(company_id, captured_at DESC);
+-- Covering indexes for the remaining foreign keys (parent-delete + join perf).
+CREATE INDEX idx_snapshots_country        ON company_snapshots(country_id);
+CREATE INDEX idx_skill_snapshots_country  ON skill_snapshots(country_id);
+CREATE INDEX idx_skill_snapshots_category ON skill_snapshots(category_id);
 
 -- ============================================================
 -- VIEWS
 -- ============================================================
 
 -- Aggregated stats per country (used on homepage)
-CREATE VIEW country_stats AS
+-- security_invoker: enforce the querying role's RLS, not the view owner's.
+CREATE VIEW country_stats WITH (security_invoker = true) AS
 SELECT
   c.id AS country_id,
   c.name,
@@ -136,7 +138,8 @@ GROUP BY c.id
 ORDER BY c.sort_order;
 
 -- Aggregated stats per company (used on country pages)
-CREATE VIEW company_stats AS
+-- security_invoker: enforce the querying role's RLS, not the view owner's.
+CREATE VIEW company_stats WITH (security_invoker = true) AS
 SELECT
   co.id AS company_id,
   co.name,
@@ -167,19 +170,96 @@ GROUP BY co.id;
 
 -- Returns the count of distinct company names across all countries.
 -- Avoids double-counting companies that operate in multiple countries.
+-- SECURITY INVOKER: companies has public-read RLS, so the caller's own
+-- privileges are enough. Definer rights would needlessly expose the RPC with
+-- escalated permissions to the anon/authenticated roles.
 CREATE OR REPLACE FUNCTION count_distinct_companies()
-RETURNS bigint AS $$
-  SELECT COUNT(DISTINCT name) FROM companies;
-$$ LANGUAGE sql SECURITY DEFINER;
+RETURNS bigint
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+  SELECT COUNT(DISTINCT name) FROM public.companies;
+$$;
+
+-- Top companies by English-friendly positions, aggregated across countries.
+-- Feeds the /companies grid; career_page_url comes from the company's primary
+-- country row so companies with no English positions still link out to careers.
+CREATE OR REPLACE FUNCTION top_companies_by_english(lim int DEFAULT 5)
+RETURNS TABLE (
+  name             text,
+  total_positions  bigint,
+  english_positions bigint,
+  english_percentage numeric,
+  country_count    bigint,
+  primary_country_slug text,
+  career_page_url  text
+)
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+  WITH per_company_country AS (
+    SELECT
+      co.name,
+      co.country_id,
+      c.slug AS country_slug,
+      co.career_page_url,
+      COUNT(p.id) AS total,
+      COUNT(p.id) FILTER (WHERE p.requires_native_language = false) AS english
+    FROM public.companies co
+    JOIN public.countries c ON c.id = co.country_id
+    LEFT JOIN public.positions p ON p.company_id = co.id
+    GROUP BY co.name, co.country_id, c.slug, co.career_page_url
+  ),
+  grouped AS (
+    SELECT
+      pcc.name,
+      SUM(pcc.total)   AS total_positions,
+      SUM(pcc.english)  AS english_positions,
+      CASE
+        WHEN SUM(pcc.total) > 0 THEN ROUND(SUM(pcc.english)::numeric / SUM(pcc.total) * 100)
+        ELSE 0
+      END AS english_percentage,
+      COUNT(*)          AS country_count
+    FROM per_company_country pcc
+    GROUP BY pcc.name
+    ORDER BY english_positions DESC
+    LIMIT CASE WHEN lim > 0 THEN lim ELSE NULL END
+  ),
+  best_country AS (
+    SELECT DISTINCT ON (pcc.name)
+      pcc.name,
+      pcc.country_slug,
+      pcc.career_page_url
+    FROM per_company_country pcc
+    JOIN grouped g ON g.name = pcc.name
+    ORDER BY pcc.name, pcc.english DESC
+  )
+  SELECT
+    g.name,
+    g.total_positions,
+    g.english_positions,
+    g.english_percentage,
+    g.country_count,
+    bc.country_slug AS primary_country_slug,
+    bc.career_page_url
+  FROM grouped g
+  JOIN best_country bc ON bc.name = g.name
+  ORDER BY g.english_positions DESC;
+$$;
 
 -- Trigger function: keep updated_at current on companies
 CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER companies_updated_at
   BEFORE UPDATE ON companies
@@ -197,32 +277,22 @@ ALTER TABLE company_snapshots  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skills             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skill_snapshots    ENABLE ROW LEVEL SECURITY;
 
--- Public read
+-- Public read: consumed by the public site via the anon key.
 CREATE POLICY "Public read countries"         ON countries         FOR SELECT USING (true);
 CREATE POLICY "Public read categories"        ON categories        FOR SELECT USING (true);
 CREATE POLICY "Public read companies"         ON companies         FOR SELECT USING (true);
 CREATE POLICY "Public read positions"         ON positions         FOR SELECT USING (true);
 CREATE POLICY "Public read snapshots"         ON company_snapshots FOR SELECT USING (true);
+CREATE POLICY "Public read skills"            ON skills            FOR SELECT USING (true);
 
--- Authenticated write (admin only)
-CREATE POLICY "Auth insert companies"  ON companies  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update companies"  ON companies  FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete companies"  ON companies  FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth insert positions"  ON positions  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update positions"  ON positions  FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete positions"  ON positions  FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth insert snapshots"  ON company_snapshots FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete snapshots"  ON company_snapshots FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Public read skills"          ON skills          FOR SELECT USING (true);
-CREATE POLICY "Auth insert skills"          ON skills          FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update skills"          ON skills          FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete skills"          ON skills          FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth read snapshots"         ON skill_snapshots FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert skill snapshots" ON skill_snapshots FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- No anon/authenticated write policies by design. Every admin mutation goes
+-- through the service-role client (src/lib/supabase.ts), which bypasses RLS;
+-- route access is gated by the auth middleware. Leaving these tables RLS-enabled
+-- with no write policy denies all direct Data-API writes (/rest/v1) to anon and
+-- authenticated, without exposing a permissive "always true" policy.
+--
+-- skill_snapshots is admin-only with no public read, so it intentionally has no
+-- policy at all: RLS-enabled + no policy = reachable only via the service role.
 
 -- ============================================================
 -- SEED: CATEGORIES
@@ -552,7 +622,7 @@ WHERE canonical_name IN (
 -- Records every request to rebuild the public site: backs rate limiting (serverless has
 -- no shared memory), in-flight detection, and an audit trail.
 CREATE TABLE site_publishes (
-  id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   triggered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   triggered_by TEXT        NOT NULL
 );
@@ -561,15 +631,13 @@ CREATE INDEX site_publishes_triggered_at_idx
   ON site_publishes (triggered_at DESC);
 
 ALTER TABLE site_publishes ENABLE ROW LEVEL SECURITY;
-
--- Operational data: no public read policy.
-CREATE POLICY "Auth read site publishes"   ON site_publishes FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert site publishes" ON site_publishes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 
 -- Application-level change log powering the admin Publish button's unpublished
 -- count + breakdown. One semantic row per admin mutation (see the endpoints).
 CREATE TABLE admin_changes (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type TEXT        NOT NULL CHECK (entity_type IN ('company','position','skill')),
   action      TEXT        NOT NULL CHECK (action IN ('created','updated','deleted')),
   label       TEXT        NOT NULL,
@@ -586,8 +654,8 @@ CREATE TABLE admin_changes (
 CREATE INDEX admin_changes_changed_at_idx ON admin_changes (changed_at DESC);
 
 ALTER TABLE admin_changes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth read admin changes"   ON admin_changes FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert admin changes" ON admin_changes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 
 -- Net-state summary of unpublished changes: per distinct entity, compare the
 -- baseline (before_state of the earliest change = the published value) against
@@ -596,14 +664,16 @@ CREATE POLICY "Auth insert admin changes" ON admin_changes FOR INSERT WITH CHECK
 -- not count. Grouping in SQL also avoids PostgREST's silent 1000-row cap.
 CREATE FUNCTION admin_change_summary(since timestamptz)
 RETURNS TABLE(entity_type text, action text, count bigint)
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql STABLE
+SET search_path = ''
+AS $$
   WITH per_entity AS (
     SELECT
       entity_type,
       entity_id,
       (array_agg(before_state ORDER BY changed_at ASC,  id ASC))[1]  AS baseline,
       (array_agg(after_state  ORDER BY changed_at DESC, id DESC))[1] AS current_state
-    FROM admin_changes
+    FROM public.admin_changes
     WHERE changed_at > since
     GROUP BY entity_type, entity_id
   ),
@@ -637,5 +707,6 @@ CREATE TABLE site_builds (
 CREATE INDEX site_builds_created_at_idx ON site_builds (created_at DESC);
 
 ALTER TABLE site_builds ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth read site builds" ON site_builds FOR SELECT USING (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 -- Only the service client (webhook endpoint) writes; no insert/update policy.
