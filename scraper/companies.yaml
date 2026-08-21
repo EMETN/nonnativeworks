@@ -138,6 +138,10 @@ companies:
       url: https://www.maersk.com/careers
       min_positions: 5
 
+    - name: Mapbox
+      url: https://www.mapbox.com/careers
+      min_positions: 5
+
     - name: Metso
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1

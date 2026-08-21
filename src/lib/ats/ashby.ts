@@ -1,4 +1,5 @@
 import type { RawJob } from './types';
+import { lookupCountryFromLocation } from './country-lookup';
 
 interface AshbyAddress {
     postalAddress?: {
@@ -75,7 +76,7 @@ function isRegionLabel(s: string): boolean {
     return REGION_LABELS.has(s.toLowerCase().trim());
 }
 
-function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
+export function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
     const workPlace = posting.workPlaceType?.toLowerCase();
     const workModel: RawJob['work_model'] =
         workPlace === 'remote' || posting.isRemote
@@ -111,22 +112,45 @@ function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
     }
 
     // Multi-location: group secondary locations by country, merging cities within
-    // the same country into one RawJob entry. The top-level location/address is
-    // a summary and may duplicate a secondary entry — use secondaries only.
+    // the same country into one RawJob entry.
     const byCountry = new Map<string, string[]>();
     const unstructured: string[] = [];
 
-    for (const sec of secondaries) {
-        const country = sec.address?.postalAddress?.addressCountry;
-        const locString =
-            sec.location ?? sec.address?.postalAddress?.addressLocality;
-
+    const addLocation = (
+        country: string | undefined,
+        locString: string | undefined,
+    ) => {
         if (country) {
             if (!byCountry.has(country)) byCountry.set(country, []);
             if (locString) byCountry.get(country)!.push(locString);
         } else if (locString && !isRegionLabel(locString)) {
             unstructured.push(locString);
         }
+    };
+
+    for (const sec of secondaries) {
+        addLocation(
+            sec.address?.postalAddress?.addressCountry,
+            sec.location ?? sec.address?.postalAddress?.addressLocality,
+        );
+    }
+
+    // Ashby's primary is usually a summary duplicating a secondary, but not always
+    // (Mapbox lists a distinct country as primary). Add it only when it resolves to a
+    // country the secondaries miss — avoids both dropping it and double-counting.
+    const primaryCountry = posting.address?.postalAddress?.addressCountry;
+    const primaryLoc =
+        posting.location ?? posting.address?.postalAddress?.addressLocality;
+    const secondaryCodes = new Set(
+        [...byCountry.keys(), ...unstructured].flatMap((s) =>
+            lookupCountryFromLocation(s).map((c) => c.code),
+        ),
+    );
+    const primaryCodes = lookupCountryFromLocation(
+        primaryCountry ?? primaryLoc ?? '',
+    ).map((c) => c.code);
+    if (primaryCodes.some((code) => !secondaryCodes.has(code))) {
+        addLocation(primaryCountry, primaryLoc);
     }
 
     const jobs: RawJob[] = Array.from(byCountry.entries()).map(

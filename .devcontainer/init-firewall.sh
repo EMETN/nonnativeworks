@@ -196,6 +196,7 @@ company_domains=(
     "api-apply.lufthansagroup.careers"  # Lufthansa
     "apply.lufthansagroup.careers"  # Lufthansa
     "maersk.wd3.myworkdayjobs.com"  # Maersk
+    "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
     "apply.careers.microsoft.com"  # Microsoft
