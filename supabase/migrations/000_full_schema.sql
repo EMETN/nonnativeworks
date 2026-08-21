@@ -3,18 +3,15 @@
 -- Run this file in the Supabase SQL editor on a brand-new project instead of
 -- running the individual migration files one by one.
 
--- ============================================================
--- EXTENSIONS
--- ============================================================
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- No extensions required: id columns default to the built-in gen_random_uuid()
+-- (pg_catalog, PG13+), so uuid-ossp is not installed.
 
 -- ============================================================
 -- TABLES
 -- ============================================================
 
 CREATE TABLE countries (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT        NOT NULL UNIQUE,
   slug       TEXT        NOT NULL UNIQUE,
   code       CHAR(2)     NOT NULL UNIQUE,   -- ISO 3166-1 alpha-2
@@ -24,14 +21,14 @@ CREATE TABLE countries (
 );
 
 CREATE TABLE categories (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT NOT NULL UNIQUE,
   slug       TEXT NOT NULL UNIQUE,
   sort_order INT  NOT NULL DEFAULT 0
 );
 
 CREATE TABLE companies (
-  id               UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name             TEXT        NOT NULL,
   country_id       UUID        NOT NULL REFERENCES countries(id) ON DELETE CASCADE,
   career_page_url  TEXT,
@@ -42,7 +39,7 @@ CREATE TABLE companies (
 );
 
 CREATE TABLE positions (
-  id                       UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id               UUID        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   title                    TEXT        NOT NULL,
   category_id              UUID        NOT NULL REFERENCES categories(id),
@@ -59,7 +56,7 @@ CREATE TABLE positions (
 );
 
 CREATE TABLE company_snapshots (
-  id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   -- Denormalised name (not company_id) so snapshots survive company row deletions/re-creations
   company_name      TEXT        NOT NULL,
   country_id        UUID        NOT NULL REFERENCES countries(id) ON DELETE CASCADE,
@@ -69,7 +66,7 @@ CREATE TABLE company_snapshots (
 );
 
 CREATE TABLE skills (
-  id             UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   canonical_name TEXT    NOT NULL UNIQUE,
   category       TEXT    NOT NULL CHECK (category IN (
                            'language', 'framework', 'database',
@@ -80,7 +77,7 @@ CREATE TABLE skills (
 );
 
 CREATE TABLE skill_snapshots (
-  id             UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   captured_at    DATE    NOT NULL,
   company_id     UUID    NOT NULL REFERENCES companies(id)   ON DELETE CASCADE,
   country_id     UUID    NOT NULL REFERENCES countries(id)   ON DELETE CASCADE,
@@ -103,6 +100,10 @@ CREATE INDEX idx_snapshots_lookup         ON company_snapshots(company_name, cou
 CREATE INDEX positions_skills_gin         ON positions USING GIN (skills);
 CREATE INDEX skill_snapshots_skill_date   ON skill_snapshots(skill_id, captured_at DESC);
 CREATE INDEX skill_snapshots_company      ON skill_snapshots(company_id, captured_at DESC);
+-- Covering indexes for the remaining foreign keys (parent-delete + join perf).
+CREATE INDEX idx_snapshots_country        ON company_snapshots(country_id);
+CREATE INDEX idx_skill_snapshots_country  ON skill_snapshots(country_id);
+CREATE INDEX idx_skill_snapshots_category ON skill_snapshots(category_id);
 
 -- ============================================================
 -- VIEWS
@@ -621,7 +622,7 @@ WHERE canonical_name IN (
 -- Records every request to rebuild the public site: backs rate limiting (serverless has
 -- no shared memory), in-flight detection, and an audit trail.
 CREATE TABLE site_publishes (
-  id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   triggered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   triggered_by TEXT        NOT NULL
 );
@@ -636,7 +637,7 @@ ALTER TABLE site_publishes ENABLE ROW LEVEL SECURITY;
 -- Application-level change log powering the admin Publish button's unpublished
 -- count + breakdown. One semantic row per admin mutation (see the endpoints).
 CREATE TABLE admin_changes (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type TEXT        NOT NULL CHECK (entity_type IN ('company','position','skill')),
   action      TEXT        NOT NULL CHECK (action IN ('created','updated','deleted')),
   label       TEXT        NOT NULL,
