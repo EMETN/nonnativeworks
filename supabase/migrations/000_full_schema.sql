@@ -276,32 +276,22 @@ ALTER TABLE company_snapshots  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skills             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skill_snapshots    ENABLE ROW LEVEL SECURITY;
 
--- Public read
+-- Public read: consumed by the public site via the anon key.
 CREATE POLICY "Public read countries"         ON countries         FOR SELECT USING (true);
 CREATE POLICY "Public read categories"        ON categories        FOR SELECT USING (true);
 CREATE POLICY "Public read companies"         ON companies         FOR SELECT USING (true);
 CREATE POLICY "Public read positions"         ON positions         FOR SELECT USING (true);
 CREATE POLICY "Public read snapshots"         ON company_snapshots FOR SELECT USING (true);
+CREATE POLICY "Public read skills"            ON skills            FOR SELECT USING (true);
 
--- Authenticated write (admin only)
-CREATE POLICY "Auth insert companies"  ON companies  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update companies"  ON companies  FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete companies"  ON companies  FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth insert positions"  ON positions  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update positions"  ON positions  FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete positions"  ON positions  FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth insert snapshots"  ON company_snapshots FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete snapshots"  ON company_snapshots FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Public read skills"          ON skills          FOR SELECT USING (true);
-CREATE POLICY "Auth insert skills"          ON skills          FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update skills"          ON skills          FOR UPDATE USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete skills"          ON skills          FOR DELETE USING     (auth.role() = 'authenticated');
-
-CREATE POLICY "Auth read snapshots"         ON skill_snapshots FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert skill snapshots" ON skill_snapshots FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- No anon/authenticated write policies by design. Every admin mutation goes
+-- through the service-role client (src/lib/supabase.ts), which bypasses RLS;
+-- route access is gated by the auth middleware. Leaving these tables RLS-enabled
+-- with no write policy denies all direct Data-API writes (/rest/v1) to anon and
+-- authenticated, without exposing a permissive "always true" policy.
+--
+-- skill_snapshots is admin-only with no public read, so it intentionally has no
+-- policy at all: RLS-enabled + no policy = reachable only via the service role.
 
 -- ============================================================
 -- SEED: CATEGORIES
@@ -640,10 +630,8 @@ CREATE INDEX site_publishes_triggered_at_idx
   ON site_publishes (triggered_at DESC);
 
 ALTER TABLE site_publishes ENABLE ROW LEVEL SECURITY;
-
--- Operational data: no public read policy.
-CREATE POLICY "Auth read site publishes"   ON site_publishes FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert site publishes" ON site_publishes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 
 -- Application-level change log powering the admin Publish button's unpublished
 -- count + breakdown. One semantic row per admin mutation (see the endpoints).
@@ -665,8 +653,8 @@ CREATE TABLE admin_changes (
 CREATE INDEX admin_changes_changed_at_idx ON admin_changes (changed_at DESC);
 
 ALTER TABLE admin_changes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth read admin changes"   ON admin_changes FOR SELECT USING     (auth.role() = 'authenticated');
-CREATE POLICY "Auth insert admin changes" ON admin_changes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 
 -- Net-state summary of unpublished changes: per distinct entity, compare the
 -- baseline (before_state of the earliest change = the published value) against
@@ -718,5 +706,6 @@ CREATE TABLE site_builds (
 CREATE INDEX site_builds_created_at_idx ON site_builds (created_at DESC);
 
 ALTER TABLE site_builds ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth read site builds" ON site_builds FOR SELECT USING (auth.role() = 'authenticated');
+-- Operational data, service-role only: RLS enabled with no policy denies all
+-- anon/authenticated Data-API access. Accessed exclusively via the service role.
 -- Only the service client (webhook endpoint) writes; no insert/update policy.
