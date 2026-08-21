@@ -114,7 +114,9 @@ jobs:
 
             - name: Build Astro
               if: steps.astro-cache.outputs.cache-hit != 'true'
-              run: pnpm build
+              # doppler run: the SSG build prerenders public pages, which needs
+              # SUPABASE_URL at build time (getStaticPaths reads the database).
+              run: doppler run -- pnpm build
 
             # ── Python / scraper ───────────────────────────────────────────────────
             # Set up Python before starting the Astro server so that the server
