@@ -30,6 +30,7 @@
 - Kone
 - Konecranes
 - Maersk
+- Mapbox
 - Metso
 - Munich Re
 - Neste
