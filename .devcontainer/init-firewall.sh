@@ -231,6 +231,7 @@ company_domains=(
     "lifeatspotify.com"  # Spotify
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
+    "supercell.com"  # Supercell
     "swecogroup.com"  # Sweco
     "careers.tekever.com"  # Tekever
     "careers.thalesgroup.com"  # Thales

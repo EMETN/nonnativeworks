@@ -266,6 +266,10 @@ companies:
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
 
+    - name: Supercell
+      url: https://supercell.com/en/careers/
+      min_positions: 10
+
     - name: Sweco Group
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1

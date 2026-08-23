@@ -62,6 +62,7 @@
 - SOK
 - Solita
 - Stora Enso
+- Supercell
 - Sweco Group
 - Tekever
 - Telia
