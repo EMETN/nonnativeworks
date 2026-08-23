@@ -12,6 +12,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'ouraring.com': { ats: 'greenhouse', slug: 'oura' },
     'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
     'deptagency.com': { ats: 'greenhouse', slug: 'dept' },
+    'thoughtworks.com': { ats: 'greenhouse', slug: 'thoughtworks' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
