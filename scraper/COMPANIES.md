@@ -22,6 +22,7 @@
 - Fiskars
 - Fortum
 - Futurice
+- GetYourGuide
 - Gofore
 - Happeo
 - Hiab
@@ -30,6 +31,7 @@
 - Kone
 - Konecranes
 - Maersk
+- Mapbox
 - Metso
 - Munich Re
 - Neste
@@ -60,9 +62,12 @@
 - SOK
 - Solita
 - Stora Enso
+- Supercell
 - Sweco Group
+- Tekever
 - Telia
 - Thales
+- Thoughtworks
 - Tieto
 - Uniper
 - UpCloud
@@ -86,7 +91,7 @@ Detected automatically from the career page URL. No per-company config needed �
 
 | ATS        | URL pattern                                         | Companies using it                                                                                                                          |
 | ---------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita                                                                            |
+| Greenhouse | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                              |
 | Lever      | `jobs.lever.co/{slug}`                              | Prosus, SEB                                                                                                                                 |
 | Ashby      | `jobs.ashbyhq.com/{slug}`                           | Reaktor                                                                                                                                     |
 | Workable   | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                  |
@@ -155,6 +160,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | UpCloud              | `upcloud.teamtailor.com/jobs`                               | teamtailor                  |                                                                                         |
 | Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                         |
 | Nordnet              | `career.nordnetab.com/jobs`                                 | teamtailor                  |
+| Tekever              | `careers.tekever.com/jobs`                                  | teamtailor                  |
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                           |
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                           |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                           |
