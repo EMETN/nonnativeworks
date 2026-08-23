@@ -182,6 +182,7 @@ company_domains=(
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
+    "www.getyourguide.careers"  # GetYourGuide
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo
@@ -196,6 +197,7 @@ company_domains=(
     "api-apply.lufthansagroup.careers"  # Lufthansa
     "apply.lufthansagroup.careers"  # Lufthansa
     "maersk.wd3.myworkdayjobs.com"  # Maersk
+    "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
     "apply.careers.microsoft.com"  # Microsoft
@@ -229,9 +231,12 @@ company_domains=(
     "lifeatspotify.com"  # Spotify
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
+    "supercell.com"  # Supercell
     "swecogroup.com"  # Sweco
+    "careers.tekever.com"  # Tekever
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
+    "www.thoughtworks.com"  # Thoughtworks — on Greenhouse (boards-api.greenhouse.io does the scraping); page host for Python fallback
     "careers.tieto.com"  # Tietoevry
     "uber.com"  # Uber
     "careers.vaisala.com"  # Vaisala

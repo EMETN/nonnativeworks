@@ -1744,5 +1744,26 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         if (codeInfo) return [codeInfo];
     }
 
+    // Last resort for space-delimited strings with no other delimiter, e.g. Ashby's
+    // "Mapbox Germany" (org name prefixing the country, no structured address). The
+    // length >= 4 guard keeps short ISO keys ("in", "no", "uk", "usa") from matching
+    // a stray word.
+    const words = fullKey.split(' ').filter(Boolean);
+    const ngramResults: CountryInfo[] = [];
+    const ngramSeen = new Set<string>();
+    for (let i = 0; i < words.length; i++) {
+        for (let n = 3; n >= 1; n--) {
+            if (i + n > words.length) continue;
+            const key = words.slice(i, i + n).join(' ');
+            if (key.length < 4) continue;
+            const info = COUNTRY_MAP[key];
+            if (info && !ngramSeen.has(info.code)) {
+                ngramSeen.add(info.code);
+                ngramResults.push(info);
+            }
+        }
+    }
+    if (ngramResults.length > 0) return ngramResults;
+
     return [];
 }
