@@ -22,6 +22,7 @@
 - Fiskars
 - Fortum
 - Futurice
+- GetYourGuide
 - Gofore
 - Happeo
 - Hiab
