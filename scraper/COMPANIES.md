@@ -62,6 +62,7 @@
 - Solita
 - Stora Enso
 - Sweco Group
+- Tekever
 - Telia
 - Thales
 - Tieto
@@ -156,6 +157,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | UpCloud              | `upcloud.teamtailor.com/jobs`                               | teamtailor                  |                                                                                         |
 | Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                         |
 | Nordnet              | `career.nordnetab.com/jobs`                                 | teamtailor                  |
+| Tekever              | `careers.tekever.com/jobs`                                  | teamtailor                  |
 | Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                           |
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                           |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                           |
