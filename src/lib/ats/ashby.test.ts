@@ -207,3 +207,126 @@ describe('fetchAshbyJobsAndCompanyName — custom-domain job URLs', () => {
         expect(jobs[0].url).toBe('https://jobs.ashbyhq.com/supercell/z');
     });
 });
+
+// The isListed filter and primary-location merge run for every Ashby company, not just
+// the two this branch added — these pin an ordinary board (e.g. Reaktor) as unchanged.
+describe('regression — other Ashby companies stay intact', () => {
+    const listed = (id: string, extra: Record<string, unknown> = {}) => ({
+        id,
+        title: `Role ${id}`,
+        jobUrl: `https://jobs.ashbyhq.com/reaktor/${id}`,
+        location: 'Helsinki',
+        isListed: true,
+        ...extra,
+    });
+
+    test('a fully-listed board returns every posting (filter drops nothing)', async () => {
+        mockAshby([listed('a'), listed('b'), listed('c')]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('reaktor');
+        expect(jobs.map((j) => j.title)).toEqual([
+            'Role a',
+            'Role b',
+            'Role c',
+        ]);
+    });
+
+    test('a board whose postings omit isListed returns every posting', async () => {
+        const noFlag = (id: string) => {
+            const p = listed(id);
+            delete (p as { isListed?: boolean }).isListed;
+            return p;
+        };
+        mockAshby([noFlag('a'), noFlag('b')]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('reaktor');
+        expect(jobs).toHaveLength(2);
+    });
+
+    test('a non-Supercell company keeps its jobs.ashbyhq.com URL untouched', async () => {
+        mockAshby([listed('a')]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('reaktor');
+        expect(jobs[0].url).toBe('https://jobs.ashbyhq.com/reaktor/a');
+    });
+
+    test('a structured single-location posting resolves to its country and city', () => {
+        const posting = {
+            ...base,
+            location: 'Helsinki',
+            address: {
+                postalAddress: {
+                    addressCountry: 'Finland',
+                    addressLocality: 'Helsinki',
+                },
+            },
+        };
+        const jobs = mapAshbyPosting(posting);
+        expect(jobs).toHaveLength(1);
+        expect(jobs[0].location).toBe('Finland');
+        expect(jobs[0].city).toBe('Helsinki');
+    });
+
+    test('secondaries in one country merge their cities into a single entry', () => {
+        const posting = {
+            ...base,
+            secondaryLocations: [
+                {
+                    location: 'Helsinki',
+                    address: {
+                        postalAddress: {
+                            addressCountry: 'Finland',
+                            addressLocality: 'Helsinki',
+                        },
+                    },
+                },
+                {
+                    location: 'Tampere',
+                    address: {
+                        postalAddress: {
+                            addressCountry: 'Finland',
+                            addressLocality: 'Tampere',
+                        },
+                    },
+                },
+            ],
+        };
+        const jobs = mapAshbyPosting(posting);
+        expect(jobs).toHaveLength(1);
+        expect(jobs[0].location).toBe('Finland');
+        expect(jobs[0].cities).toEqual(['Helsinki', 'Tampere']);
+    });
+
+    test('a primary summarising a secondary produces no duplicate country', () => {
+        const posting = {
+            ...base,
+            location: 'Berlin',
+            address: { postalAddress: { addressCountry: 'Germany' } },
+            secondaryLocations: [
+                {
+                    address: {
+                        postalAddress: {
+                            addressCountry: 'Germany',
+                            addressLocality: 'Berlin',
+                        },
+                    },
+                },
+                {
+                    address: {
+                        postalAddress: {
+                            addressCountry: 'Netherlands',
+                            addressLocality: 'Amsterdam',
+                        },
+                    },
+                },
+                {
+                    address: {
+                        postalAddress: {
+                            addressCountry: 'Finland',
+                            addressLocality: 'Helsinki',
+                        },
+                    },
+                },
+            ],
+        };
+        expect(mapAshbyPosting(posting)).toHaveLength(3);
+        expect(resolvedCodes(posting)).toEqual(['DE', 'FI', 'NL']);
+    });
+});

@@ -44,3 +44,31 @@ describe('lookupCountryFromLocation — existing behaviour still holds', () => {
         expect(codes('Helsinki')).toEqual(['FI']);
     });
 });
+
+// This function runs for every company on every ATS, so the n-gram fallback the branch
+// appended must stay a last resort: never changing the "City, Country" and remote/aggregate
+// shapes other companies already produce.
+describe('lookupCountryFromLocation — n-gram fallback does not disturb other companies', () => {
+    test('structured "City, Country" strings resolve unchanged', () => {
+        expect(codes('Berlin, Germany')).toEqual(['DE']);
+        expect(codes('Stockholm, Sweden')).toEqual(['SE']);
+        expect(codes('Amsterdam, Netherlands')).toEqual(['NL']);
+        expect(codes('Paris, France')).toEqual(['FR']);
+        expect(codes('London, United Kingdom')).toEqual(['GB']);
+    });
+
+    test('common non-country location labels still resolve to nothing', () => {
+        for (const label of [
+            'Remote',
+            'Multiple Locations',
+            'EMEA',
+            'Various',
+            'Hybrid',
+            'Remote - Europe',
+            'Anywhere',
+            'Global',
+        ]) {
+            expect(codes(label)).toEqual([]);
+        }
+    });
+});
