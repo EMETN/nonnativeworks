@@ -266,6 +266,10 @@ companies:
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1
 
+    - name: Tekever
+      url: https://careers.tekever.com/jobs
+      min_positions: 5
+
     - name: Telia
       url: https://www.teliacompany.com/en/careers/open-positions
       min_positions: 5

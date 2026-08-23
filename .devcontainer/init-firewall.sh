@@ -231,6 +231,7 @@ company_domains=(
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "swecogroup.com"  # Sweco
+    "careers.tekever.com"  # Tekever
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
     "careers.tieto.com"  # Tietoevry
