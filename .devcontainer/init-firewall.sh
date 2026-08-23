@@ -182,6 +182,7 @@ company_domains=(
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
+    "www.getyourguide.careers"  # GetYourGuide
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo

@@ -106,6 +106,10 @@ companies:
       url: https://careers.futurice.com/en-GB/jobs
       min_positions: 1
 
+    - name: GetYourGuide
+      url: https://www.getyourguide.careers/open-roles
+      min_positions: 10
+
     - name: Gofore
       url: https://gofore.com/en/careers
       min_positions: 0
