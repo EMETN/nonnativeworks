@@ -28,11 +28,34 @@ interface AshbyJobPosting {
     jobUrl: string;
     descriptionHtml?: string;
     isRemote?: boolean | null;
+    isListed?: boolean;
 }
 
 interface AshbyResponse {
     apiVersion?: string;
     jobs: AshbyJobPosting[];
+}
+
+// Some Ashby customers host the board only on their own domain and disable the
+// jobs.ashbyhq.com page, so posting.jobUrl 404s. Map slug to a builder for the
+// working public URL.
+const CUSTOM_JOB_URL_BUILDERS: Record<
+    string,
+    (posting: AshbyJobPosting) => string
+> = {
+    supercell: (p) =>
+        `https://supercell.com/en/careers/${titleSlug(p.title)}/${p.id}/`,
+};
+
+function titleSlug(title: string): string {
+    // Drop punctuation first so "R.I.S.E" becomes "rise", not "r-i-s-e"; only then
+    // turn whitespace runs into hyphens. Matches Ashby's own slug generation.
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/[\s-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 }
 
 export async function fetchAshbyJobsAndCompanyName(
@@ -52,10 +75,15 @@ export async function fetchAshbyJobsAndCompanyName(
             `Ashby API returned unexpected format for company "${slug}"`,
         );
     }
+    const buildUrl = CUSTOM_JOB_URL_BUILDERS[slug.toLowerCase()];
     return {
         // Ashby doesn't return a company name in this endpoint — derive from slug
         companyName: formatSlug(slug),
-        jobs: data.jobs.flatMap((posting) => mapAshbyPosting(posting)),
+        // Skip unlisted postings; they 404 on the public board. Keep any that omit
+        // the field so a future API change can't silently drop every job.
+        jobs: data.jobs
+            .filter((posting) => posting.isListed !== false)
+            .flatMap((posting) => mapAshbyPosting(posting, buildUrl)),
     };
 }
 
@@ -76,7 +104,10 @@ function isRegionLabel(s: string): boolean {
     return REGION_LABELS.has(s.toLowerCase().trim());
 }
 
-export function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
+export function mapAshbyPosting(
+    posting: AshbyJobPosting,
+    buildUrl?: (posting: AshbyJobPosting) => string,
+): RawJob[] {
     const workPlace = posting.workPlaceType?.toLowerCase();
     const workModel: RawJob['work_model'] =
         workPlace === 'remote' || posting.isRemote
@@ -90,7 +121,7 @@ export function mapAshbyPosting(posting: AshbyJobPosting): RawJob[] {
     const base = {
         title: posting.title,
         descriptionHtml: posting.descriptionHtml,
-        url: posting.jobUrl,
+        url: buildUrl ? buildUrl(posting) : posting.jobUrl,
         jobFunction: posting.team ?? posting.department,
         work_model: workModel,
     };

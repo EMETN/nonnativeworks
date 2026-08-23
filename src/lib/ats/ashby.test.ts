@@ -1,8 +1,8 @@
 // Run once:  pnpm test
 // Watch mode: pnpm test:watch
 
-import { test, expect, describe } from 'vitest';
-import { mapAshbyPosting } from './ashby';
+import { test, expect, describe, vi, afterEach } from 'vitest';
+import { fetchAshbyJobsAndCompanyName, mapAshbyPosting } from './ashby';
 import { lookupCountryFromLocation } from './country-lookup';
 
 // Resolve the RawJobs a posting maps to into the set of country codes they land in,
@@ -19,6 +19,18 @@ const resolvedCodes = (posting: Parameters<typeof mapAshbyPosting>[0]) =>
     ].sort();
 
 const base = { id: 'x', title: 'Engineer', jobUrl: 'https://example.com/x' };
+
+const mockAshby = (jobs: unknown[]) =>
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => ({
+            ok: true,
+            status: 200,
+            json: async () => ({ apiVersion: '1', jobs }),
+        })),
+    );
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('mapAshbyPosting — multi-country primary attribution', () => {
     // Mapbox lists Germany as the primary location (no structured addressCountry) with
@@ -96,5 +108,102 @@ describe('mapAshbyPosting — single location still works', () => {
     test('remote primary with no secondaries resolves to its country', () => {
         const posting = { ...base, location: 'Mapbox Germany' };
         expect(resolvedCodes(posting)).toEqual(['DE']);
+    });
+});
+
+describe('fetchAshbyJobsAndCompanyName — excludes unlisted postings', () => {
+    // Ashby's job-board endpoint returns unlisted postings (isListed: false) alongside
+    // listed ones. These 404 on the public board (e.g. Supercell's "Unlisted TEST job")
+    // so they must never reach our data.
+    const listed = {
+        id: 'a',
+        title: 'Listed role',
+        jobUrl: 'https://jobs.ashbyhq.com/x/a',
+        location: 'Helsinki',
+        isListed: true,
+    };
+    const unlisted = {
+        id: 'b',
+        title: 'Unlisted TEST job - do not delete',
+        jobUrl: 'https://jobs.ashbyhq.com/x/b',
+        location: 'Helsinki',
+        isListed: false,
+    };
+    const noFlag = {
+        id: 'c',
+        title: 'Role with no isListed field',
+        jobUrl: 'https://jobs.ashbyhq.com/x/c',
+        location: 'Helsinki',
+    };
+
+    test('drops postings flagged isListed: false', async () => {
+        mockAshby([listed, unlisted]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('x');
+        expect(jobs.map((j) => j.title)).toEqual(['Listed role']);
+    });
+
+    test('keeps postings that omit isListed (defensive default)', async () => {
+        mockAshby([noFlag, unlisted]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('x');
+        expect(jobs.map((j) => j.title)).toEqual([
+            'Role with no isListed field',
+        ]);
+    });
+});
+
+describe('fetchAshbyJobsAndCompanyName — custom-domain job URLs', () => {
+    // Supercell hosts its board only on supercell.com and disables the
+    // jobs.ashbyhq.com page, so posting.jobUrl 404s. We rebuild it as
+    // {base}/{title-slug}/{id}/ (the slug format is confirmed against a live URL).
+    const posting = (id: string, title: string) => ({
+        id,
+        title,
+        jobUrl: `https://jobs.ashbyhq.com/supercell/${id}`,
+        location: 'Helsinki',
+        isListed: true,
+    });
+
+    test('rewrites Supercell URLs to the supercell.com pattern', async () => {
+        mockAshby([
+            posting(
+                'b6b6d432-e4dc-41de-a814-7dee7f1d0adc',
+                'Competitive Experience Manager, Clash Royale',
+            ),
+        ]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('supercell');
+        expect(jobs[0].url).toBe(
+            'https://supercell.com/en/careers/competitive-experience-manager-clash-royale/b6b6d432-e4dc-41de-a814-7dee7f1d0adc/',
+        );
+    });
+
+    // Ground-truth slugs from live supercell.com URLs. Punctuation is dropped, not
+    // hyphenated: "R.I.S.E" becomes "rise" and "&" vanishes (its spaces collapse to
+    // one hyphen). A naive "every non-alphanumeric to a hyphen" rule gets these wrong.
+    test.each([
+        ['Product Lead, Project R.I.S.E', 'product-lead-project-rise'],
+        [
+            'Senior Product Manager, Live Ops & Monetization, Hay Day',
+            'senior-product-manager-live-ops-monetization-hay-day',
+        ],
+        [
+            'Senior Product Manager, LiveOps & Monetization, Clash Royale',
+            'senior-product-manager-liveops-monetization-clash-royale',
+        ],
+        [
+            'Gameplay Capture & Video Artist, Creative Studio',
+            'gameplay-capture-video-artist-creative-studio',
+        ],
+    ])('slugifies %j to match the live URL', async (title, slug) => {
+        mockAshby([posting('id1', title)]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('supercell');
+        expect(jobs[0].url).toBe(
+            `https://supercell.com/en/careers/${slug}/id1/`,
+        );
+    });
+
+    test('leaves other companies on their jobs.ashbyhq.com URL', async () => {
+        mockAshby([posting('z', 'Engineer')]);
+        const { jobs } = await fetchAshbyJobsAndCompanyName('someotherco');
+        expect(jobs[0].url).toBe('https://jobs.ashbyhq.com/supercell/z');
     });
 });
