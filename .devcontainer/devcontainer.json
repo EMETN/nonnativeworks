@@ -12,7 +12,8 @@
     "runArgs": [
         "--cap-add=NET_ADMIN",
         "--cap-add=NET_RAW",
-        "--name=nonnativeworks"
+        "--name=nonnativeworks",
+        "--add-host=host.docker.internal:host-gateway"
     ],
     "customizations": {
         "vscode": {
@@ -29,7 +30,7 @@
                 "editor.codeActionsOnSave": {
                     "source.fixAll.eslint": "explicit"
                 },
-                "terminal.integrated.defaultProfile.linux": "zsh",
+                "terminal.integrated.defaultProfile.linux": "sh",
                 "terminal.integrated.profiles.linux": {
                     "bash": {
                         "path": "bash",
