@@ -111,7 +111,7 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # ATS/recruiting platforms, and the company career sites we scrape (each alphabetical).
 tool_domains=(
     "api.anthropic.com"  # Anthropic
-    "host.docker.internal"  # Docker host
+    #"host.docker.internal"  # Docker host
     "api.doppler.com"  # Doppler
     "cli.doppler.com"  # Doppler
     "packages.doppler.com"  # Doppler
@@ -152,11 +152,6 @@ cdn_domains=(
 company_domains=(
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
-    "academicwork.se"
-    "academicwork.no"
-    "academicwork.dk"
-    "academicwork.de"
-    "academicwork.ch"
     "www.accenture.com"  # Accenture
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
@@ -166,12 +161,9 @@ company_domains=(
     "careers.amd.com"  # AMD
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
-    "autodesk.wd1.myworkdayjobs.com" # Autodesk
-    "careers.axa.com" # AXA
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "bmwgroup.jobs"  # BMW
-    "group.bnpparibas"  # BNP Paribas
     "bolt.eu"  # Bolt
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
@@ -185,8 +177,6 @@ company_domains=(
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
     "careers.dhl.com"  # DHL
     "edenred.com"  # Edenred
-    "jobs.eon.com"  # EON
-    "careers.eon.com"  # EON
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "finnair.wd103.myworkdayjobs.com"  # Finnair
@@ -203,10 +193,8 @@ company_domains=(
     "kesko.fi"  # Kesko
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
-    "careers.loreal.com"  # L'oreal
     "api-apply.lufthansagroup.careers"  # Lufthansa
     "apply.lufthansagroup.careers"  # Lufthansa
-    "lvmh.com"  # LVMH
     "maersk.wd3.myworkdayjobs.com"  # Maersk
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
@@ -219,10 +207,8 @@ company_domains=(
     "jobs.nokia.com"  # Nokia
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
-    "novonordisk.com"  # NovoNordisk
     "nxp.wd3.myworkdayjobs.com"  # NXP
     "op-careers.fi"  # OP Financial Group
-    "orange.jobs"  # Orange
     "careers.orkla.com"  # Orkla
     "philips.wd3.myworkdayjobs.com"  # Philips
     "posti.wd3.myworkdayjobs.com"  # Posti
@@ -232,27 +218,22 @@ company_domains=(
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
     "s-pankki.fi"  # S-Pankki
-    "jobs.sanofi.com"  # Sanofi
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
     "jobs.sap.com"  # SAP
     "scout24.com"  # Scout24
     "sebgroup.com"  # SEB
     "jobs.siemens.com"  # Siemens
     "jobs.siemens-healthineers.com"  # Siemens Healthineers
-    "careers.societegenerale.com"  # Societe Generale
     "sok.wd502.myworkdayjobs.com"  # SOK
     "solita.fi"  # Solita
     "lifeatspotify.com"  # Spotify
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "swecogroup.com"  # Sweco
-    "careers.tekever.com"  # Tekever
-    "teliacompany.com"  # Telia
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
     "careers.tieto.com"  # Tietoevry
     "uber.com"  # Uber
-    "careers.uniper.energy"  # Uniper
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
     "jobs.volkswagen-group.com"  # Volkswagen
@@ -334,7 +315,7 @@ iptables -A OUTPUT -p tcp --dport 443 -m set --match-set allowed-domains dst -j 
 # Allow CDP (Chrome DevTools Protocol) to the Windows host for Playwright dev use.
 # Port 9222 is plain HTTP — it's only needed on host.docker.internal so we target
 # the resolved IP directly rather than opening port 9222 to all allowed domains.
-CDP_HOST_IP=$(dig +noall +answer A "host.docker.internal" | awk '$4 == "A" {print $5}' | head -1)
+CDP_HOST_IP=$(getent ahostsv4 host.docker.internal | awk 'NR==1 {print $1}')
 if [ -n "$CDP_HOST_IP" ]; then
     echo "Adding CDP rule for host.docker.internal ($CDP_HOST_IP:9222)"
     iptables -A OUTPUT -p tcp --dport 9222 -d "$CDP_HOST_IP" -j ACCEPT
