@@ -346,7 +346,7 @@ export default function DataGrid({
                     style={{ alignItems: 'center' }}
                 >
                     <div class="flex items-center pr-2 sm:pr-4 md:pr-8 xl:pr-12 py-1.5">
-                        <div class="relative flex-1 max-w-40 sm:max-w-48 md:max-w-56 mr-3 sm:mr-4 shrink-0">
+                        <div class="relative flex-1 max-w-32 sm:max-w-48 md:max-w-56 mr-8 sm:mr-4 shrink-0">
                             <svg
                                 class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
                                 width="16"
@@ -390,7 +390,7 @@ export default function DataGrid({
                                         setSearch('');
                                         clearTimeout(debounceRef.current);
                                     }}
-                                    class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
+                                    class="absolute right-0.5 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
                                     aria-label="Clear search"
                                 >
                                     <svg
