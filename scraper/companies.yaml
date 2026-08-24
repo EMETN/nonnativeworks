@@ -117,6 +117,10 @@ companies:
       url: https://jobs.eon.com
       min_positions: 10
 
+    - name: Equinor
+      url: https://equinor.wd3.myworkdayjobs.com/EQNR
+      min_positions: 5
+
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
       min_positions: 10
