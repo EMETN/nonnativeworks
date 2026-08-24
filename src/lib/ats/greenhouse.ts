@@ -13,6 +13,16 @@ interface GreenhouseBoard {
     name: string;
 }
 
+/**
+ * Some companies' Greenhouse boards serve an apply-only page at absolute_url —
+ * no job description, just the application form (e.g. GetYourGuide). They have
+ * their own branded career site that renders the description around the same
+ * embedded form, at the same job id path. Prefer that URL when known.
+ */
+const DESCRIPTION_PAGE_DOMAINS: Record<string, string> = {
+    getyourguide: 'www.getyourguide.careers',
+};
+
 export async function fetchGreenhouseCompanyName(
     slug: string,
 ): Promise<string> {
@@ -39,11 +49,14 @@ export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
         );
     }
     const data: { jobs: GreenhouseJob[] } = await res.json();
+    const descriptionDomain = DESCRIPTION_PAGE_DOMAINS[slug];
     return (data.jobs ?? []).map((job) => ({
         title: job.title,
         descriptionHtml: job.content,
         location: job.location?.name,
-        url: job.absolute_url,
+        url: descriptionDomain
+            ? `https://${descriptionDomain}/jobs/${job.id}`
+            : job.absolute_url,
         department: job.departments?.[0]?.name,
         jobFunction: job.departments?.[0]?.name,
     }));

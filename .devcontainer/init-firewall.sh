@@ -111,7 +111,7 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # ATS/recruiting platforms, and the company career sites we scrape (each alphabetical).
 tool_domains=(
     "api.anthropic.com"  # Anthropic
-    "host.docker.internal"  # Docker host
+    #"host.docker.internal"  # Docker host
     "api.doppler.com"  # Doppler
     "cli.doppler.com"  # Doppler
     "packages.doppler.com"  # Doppler
@@ -152,6 +152,11 @@ cdn_domains=(
 company_domains=(
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
+    "academicwork.se"
+    "academicwork.no"
+    "academicwork.dk"
+    "academicwork.de"
+    "academicwork.ch"
     "www.accenture.com"  # Accenture
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
@@ -161,6 +166,7 @@ company_domains=(
     "careers.amd.com"  # AMD
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
+    "autodesk.wd1.myworkdayjobs.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "bmwgroup.jobs"  # BMW
@@ -320,7 +326,7 @@ iptables -A OUTPUT -p tcp --dport 443 -m set --match-set allowed-domains dst -j 
 # Allow CDP (Chrome DevTools Protocol) to the Windows host for Playwright dev use.
 # Port 9222 is plain HTTP — it's only needed on host.docker.internal so we target
 # the resolved IP directly rather than opening port 9222 to all allowed domains.
-CDP_HOST_IP=$(dig +noall +answer A "host.docker.internal" | awk '$4 == "A" {print $5}' | head -1)
+CDP_HOST_IP=$(getent ahostsv4 host.docker.internal | awk 'NR==1 {print $1}')
 if [ -n "$CDP_HOST_IP" ]; then
     echo "Adding CDP rule for host.docker.internal ($CDP_HOST_IP:9222)"
     iptables -A OUTPUT -p tcp --dport 9222 -d "$CDP_HOST_IP" -j ACCEPT

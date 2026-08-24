@@ -278,16 +278,30 @@ export interface CompanyApiConfig {
      */
     secondaryUrlTemplate?: string;
     /**
-     * When set, handles multi-location job postings. Three modes:
+     * When set, handles multi-location job postings. Four modes:
      *
-     * Country mode (countryName set): each job is duplicated for every additional
-     * country found in the nested array. Use when a single posting covers multiple
-     * countries (e.g. Nokia). Each duplicate gets the secondary country as its
-     * location so the classifier assigns it to the correct country.
+     * Country mode (countryName set, no countryCodeField): each job is duplicated for
+     * every additional country found in the nested array. Use when a single posting
+     * covers multiple countries and secondary entries don't carry an explicit country
+     * code to group by. Each duplicate gets the secondary country as its location so
+     * the classifier assigns it to the correct country. NOTE: if secondary entries can
+     * repeat the same country under different cities (e.g. one posting open across many
+     * cities within one country), this mode creates one duplicate per city — prefer
+     * grouped-city mode below when a country code is available per entry.
      *
-     * City mode (cityField set): secondary entries are treated as additional cities
-     * within the same country. Their names are collected into job.cities alongside
-     * the primary city — no duplicate jobs are created.
+     * City mode (cityField set, no countryCodeField): secondary entries are treated as
+     * additional cities within the same country. Their names are collected into
+     * job.cities alongside the primary city — no duplicate jobs are created. Only use
+     * when every secondary entry is known to share the primary job's country.
+     *
+     * Grouped-city mode (cityField AND countryCodeField set): secondary entries are
+     * grouped by their own country code. Entries matching the primary job's country
+     * (fields.country must be set) are merged into job.cities — one entry per country,
+     * not per city. Entries for a genuinely different country produce exactly one extra
+     * job per distinct other country, with that country's own cities collected together.
+     * Use this whenever the API exposes both a city name and a country code per secondary
+     * location (e.g. Oracle HCM's secondaryLocations, which mixes same-country multi-city
+     * postings with genuinely cross-country ones).
      *
      * Parallel mode (parallelCitiesPath set): path points to a flat string array of
      * country names; parallelCitiesPath points to a comma-separated city string whose
@@ -297,13 +311,15 @@ export interface CompanyApiConfig {
      *
      * path               — dot-path from each job item to the countries array
      * countryName        — dot-path within each element to the country name string (country mode)
-     * cityField          — dot-path within each element to the city name string (city mode)
+     * cityField          — dot-path within each element to the city name string (city / grouped-city mode)
+     * countryCodeField   — dot-path within each element to an ISO alpha-2 country code (grouped-city mode)
      * parallelCitiesPath — dot-path to a comma-separated city string (parallel mode)
      */
     expandSecondaryLocations?: {
         path: string;
         countryName?: string;
         cityField?: string;
+        countryCodeField?: string;
         parallelCitiesPath?: string;
     };
     /**
@@ -601,16 +617,81 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
     },
 
+    'ejqi.fa.ocs.oraclecloud.eu': {
+        // Oracle HCM Recruiting Cloud endpoint for Danske Bank. Same structure as
+        // Nokia/Orion — EU-region Oracle Cloud instance, site number CX_1001.
+        url: 'https://ejqi.fa.ocs.oraclecloud.eu/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=CX_1001,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+        method: 'GET',
+        headers: {
+            accept: '*/*',
+            'accept-language': 'en',
+            'content-type':
+                'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+            'ora-irc-language': 'en',
+            origin: 'https://ejqi.fa.ocs.oraclecloud.eu',
+            referer:
+                'https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001',
+            'user-agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        },
+        pagination: { type: 'finder-offset', pageSize: 200 },
+        itemsPath: 'items.0.requisitionList',
+        fields: {
+            title: 'Title',
+            location: 'PrimaryLocation',
+            id: 'Id',
+            country: 'PrimaryLocationCountry',
+        },
+        urlTemplate:
+            'https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001/job/{Id}',
+        companyName: 'Danske Bank',
+        descriptionApiUrl:
+            'https://ejqi.fa.ocs.oraclecloud.eu/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=CX_1001',
+        // Unlike Nokia, Danske Bank's requisitions don't populate
+        // ExternalQualificationsStr/ExternalResponsibilitiesStr — the full body
+        // (often in the local language) lives in ExternalDescriptionStr, same as
+        // Orion. Using the empty Nokia fields silently starved the classifier of
+        // any text, so every job fell back to "no signal — English assumed".
+        descriptionApiFields: ['ExternalDescriptionStr'],
+        descriptionApiLocationField: 'workLocation.0.TownOrCity',
+        descriptionApiJobFunctionField: 'JobFunction',
+        descriptionApiWorkModelField: 'WorkplaceType',
+        // Danske Bank postings mix same-country multi-city listings (e.g. a role
+        // open across 25 Danish cities) with genuinely cross-country ones (e.g. one
+        // role open in Denmark, Sweden, Norway, Finland and Lithuania at once).
+        // secondaryLocations carries an explicit CountryCode per entry, so group by
+        // that instead of treating every secondary location as a separate country —
+        // the old countryName mode created one duplicate row per city, even when all
+        // 25 were in Denmark.
+        expandSecondaryLocations: {
+            path: 'secondaryLocations',
+            cityField: 'Name',
+            countryCodeField: 'CountryCode',
+        },
+    },
+
     'gofore.com': {
-        // WordPress REST API with Polylang (lang=en returns English-language postings).
+        // WordPress REST API with Polylang. gofore.com/tyopaikat/ (lang=fi) and
+        // gofore.com/en/careers/ (lang=en) are two separate, non-overlapping job
+        // lists — each posting exists in exactly one language (verified: no shared
+        // ids between the lang=fi and lang=en responses; each job's own
+        // `translations` field only ever contains itself). So this isn't the usual
+        // "same jobs, richer English descriptions" secondaryUrl case — it's two
+        // independent pools of postings that both need to be counted. Using
+        // secondaryUrl still does the right thing here: matching by id never
+        // succeeds (nothing to replace), so every lang=en job is simply appended
+        // as an "English-only" addition — a clean union of both sites. Finnish
+        // (lang=fi) is primary so the complete position list — including
+        // Finnish-only jobs, which correctly signal a native-language
+        // requirement — drives the stats.
         // No location field in the API response — city names are extracted from the HTML
         // of each job page and resolved to countries via the city-to-country map.
-        url: 'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=en',
+        url: 'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=fi',
         method: 'GET',
         headers: {
             accept: '*/*',
             'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,fi;q=0.7',
-            referer: 'https://gofore.com/en/careers/',
+            referer: 'https://gofore.com/tyopaikat/',
             'user-agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
         },
@@ -622,13 +703,15 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             id: 'id',
         },
         companyName: 'Gofore',
-        // content.rendered is the full English post body — use it directly for language
-        // classification instead of fetching individual job pages.
+        // content.rendered is the full post body in that request's language — use it
+        // directly for language classification instead of fetching individual job pages.
         descriptionFields: ['content.rendered'],
         // No location field in the API response — city names are extracted from the HTML
         // of each job page and resolved to countries via the city-to-country map.
         // Location lives in: <div class="locations"><h3>…</h3><p>City1, City2</p></div>
         locationFromHtml: 'class="locations"[\\s\\S]*?<p>(.*?)<\\/p>',
+        secondaryUrl:
+            'https://gofore.com/wp-json/wp/v2/job?per_page=100&lang=en',
     },
 
     'accenture.com': {
@@ -1025,13 +1108,16 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'werkenbijabnamro.nl': {
-        url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?filters[Country][]=Netherlands&sort=created&sortDir=DESC',
+        // Unfiltered listing covers both countries ABN AMRO posts in (Netherlands
+        // and Belgium) — the earlier Netherlands-only filter silently dropped the
+        // Belgium postings. City-based country resolution (fields.location: 'city')
+        // handles both without needing an explicit country field.
+        url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?sort=created&sortDir=DESC',
         headers: {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
             Accept: 'application/json',
-            Referer:
-                'https://www.werkenbijabnamro.nl/en/vacancies/country/netherlands',
+            Referer: 'https://www.werkenbijabnamro.nl/en/vacancies',
         },
         pagination: {
             type: 'page',
@@ -1128,6 +1214,37 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
         companyName: 'E.ON',
     },
+
+    // iCIMS/Jibe "Search 4" widget — the careers page itself is a client-hydrated
+    // shell with no SSR job data, but the widget's own XHR endpoint is a plain
+    // JSON API. limit above 100 returns 422 (Jibe's server-side cap).
+    'careers.amd.com': {
+        url: 'https://careers.amd.com/api/jobs?sortBy=relevance&descending=false&internal=false&limit=100',
+        headers: {
+            Accept: 'application/json, text/plain, */*',
+        },
+        pagination: {
+            type: 'page',
+            param: 'page',
+            startPage: 1,
+            totalCountPath: 'totalCount',
+        },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'data.title',
+            location: 'data.full_location',
+            country: 'data.country_code',
+            jobFunction: 'data.category',
+            id: 'data.req_id',
+        },
+        // data.apply_url points at the ATS login/apply page (global-external-amd.icims.com),
+        // not the public job posting — build the public careers.amd.com URL instead.
+        urlTemplate:
+            'https://careers.amd.com/careers-home/jobs/{data.req_id}?lang=en-us',
+        keepQueryParams: true,
+        descriptionFields: ['data.description'],
+        companyName: 'AMD',
+    },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────
@@ -1139,11 +1256,27 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
 
 export const CAREER_URL_ALIASES: Record<string, string> = {
     // careers.abb is ABB's branded career site; the actual jobs live on Workday.
-    // The locationCountry params pre-filter to tracked countries only.
+    // ABB is a huge multinational (~2000 global postings), so the locationCountry
+    // params pre-filter server-side to tracked countries only — cheaper than fetching
+    // everything and filtering client-side. This list was missing Latvia and
+    // Luxembourg (verified live: 2 and 1 open postings respectively, silently
+    // dropped). Iceland has no GUID here because Workday's facet endpoint only
+    // returns country values with at least one current posting — ABB has zero
+    // Iceland postings right now, so there's nothing to discover. If ABB ever
+    // opens a role in a tracked country not listed below, it'll be silently
+    // dropped the same way until someone re-derives this list from the facet
+    // response (POST the jobs endpoint with an empty appliedFacets and read
+    // facets[].values[0].values for locationCountry id → name).
     'careers.abb':
-        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374',
+        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=1c026f3b1b8640d8bdfcb95466663e4d&locationCountry=328b82f597514643a7683a78fc67c3f1',
     // maersk.com is Maersk's branded career site; jobs live on Workday.
     'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
+    // asml.com/careers/find-your-job is a Sitecore/Next.js front end with no
+    // combined listing JSON of its own (each job detail page embeds its own
+    // job JSON, but there's no bulk endpoint) — however job detail pages
+    // (e.g. .../find-your-job/euv-...-j00278404) reveal applyUrl pointing at
+    // Workday, so the real source of truth is the standard Workday API.
+    'asml.com': 'https://asml.wd3.myworkdayjobs.com/ASMLEXT1',
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
     'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
@@ -1158,7 +1291,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     urlSubstring: string;
     name: string;
 }> = [
-    { urlSubstring: 'academicwork.fi', name: 'Academic Work' },
+    { urlSubstring: 'academicwork.', name: 'Academic Work' },
     { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
     { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
     { urlSubstring: 'jobs.arla.com', name: 'Arla' },
@@ -1175,6 +1308,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
+    { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },

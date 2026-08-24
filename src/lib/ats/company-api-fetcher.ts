@@ -160,6 +160,19 @@ function mapItem(
 }
 
 /**
+ * True when `city` is not really a city name but the display name of the country
+ * itself (e.g. "Denmark" for cc "DK") — some APIs give country-level secondary
+ * locations for cross-country postings instead of a specific city.
+ */
+function cityNameIsBareCountryName(city: string, cc: string): boolean {
+    const countryInfo = lookupCountryFromLocation(cc)[0];
+    return (
+        !!countryInfo &&
+        city.trim().toLowerCase() === countryInfo.name.toLowerCase()
+    );
+}
+
+/**
  * If expandSecondaryLocations is configured, handles multi-location job postings.
  *
  * Country mode (countryName set): returns additional RawJob copies for each secondary
@@ -168,6 +181,12 @@ function mapItem(
  *
  * City mode (cityField set): collects secondary city names into primaryJob.cities so
  * they appear as one consolidated posting. Returns [] (no duplicate jobs created).
+ *
+ * Grouped-city mode (cityField AND countryCodeField set): like city mode, but secondary
+ * entries are first grouped by their own country code — only same-country entries are
+ * merged into primaryJob.cities. Entries for a different country produce one extra job
+ * per distinct other country (not one per city). See expandSecondaryLocations' JSDoc in
+ * company-apis.ts for the full mode rundown.
  */
 function expandJobToSecondaryLocations(
     primaryJob: RawJob,
@@ -210,6 +229,61 @@ function expandJobToSecondaryLocations(
                     : undefined,
                 descriptionApiId:
                     primaryJob.descriptionApiId ?? primaryJob.sourceId,
+            });
+        }
+        return extras;
+    }
+
+    if (expand.cityField && expand.countryCodeField) {
+        // Grouped-city mode: group secondary locations by their own country code.
+        // Same-country entries are merged into primaryJob.cities (one entry, many
+        // cities); entries for a genuinely different country become exactly one
+        // extra job per distinct other country (not one per city).
+        // Normalise the primary country to an ISO code before comparing: some APIs
+        // (e.g. Oracle HCM's PrimaryLocationCountry) return a country *name*
+        // ("Denmark") while the secondary CountryCode is an ISO code ("DK"). A raw
+        // string compare would never match, so every same-country city would wrongly
+        // become a duplicate country row instead of folding into the primary job.
+        const primaryCountry =
+            lookupCountryFromLocation(primaryJob.country_code ?? '')[0]?.code ??
+            primaryJob.country_code?.toUpperCase();
+        const byCountry = new Map<string, string[]>();
+        for (const sec of secondaries) {
+            const city = getString(sec, expand.cityField);
+            if (!city) continue;
+            const cc =
+                getString(sec, expand.countryCodeField)?.toUpperCase() ?? '';
+            if (!byCountry.has(cc)) byCountry.set(cc, []);
+            // Some APIs (e.g. Oracle HCM) give country-level secondary locations
+            // for genuinely cross-country postings — the "city" field is just the
+            // country's own name (e.g. Name: "Denmark", CountryCode: "DK") rather
+            // than an actual city. Pushing that would show a fake city named after
+            // the country, so skip it — the country still gets its extra job entry
+            // (via byCountry.set above), just with no specific city.
+            if (cc && cityNameIsBareCountryName(city, cc)) continue;
+            byCountry.get(cc)!.push(city);
+        }
+        const extras: RawJob[] = [];
+        for (const [cc, cities] of byCountry) {
+            // No country code on the secondary entry, or it matches the primary
+            // job's own country: fold into the primary job's city list.
+            if (!cc || cc === primaryCountry) {
+                if (cities.length > 0) {
+                    primaryJob.cities = [
+                        ...(primaryJob.cities ?? []),
+                        ...cities,
+                    ];
+                }
+                continue;
+            }
+            extras.push({
+                ...primaryJob,
+                country_code: cc,
+                cities: cities.length > 0 ? cities : undefined,
+                city: undefined,
+                sourceId: primaryJob.sourceId
+                    ? `${primaryJob.sourceId}-${cc}`
+                    : undefined,
             });
         }
         return extras;
@@ -301,13 +375,61 @@ async function fetchPage(
             init.body = JSON.stringify(body ?? {});
         }
     }
-    const res = await fetch(url, init);
-    // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns 400
-    // with rest_post_invalid_page_number instead of an empty array). Treat as graceful end.
-    if (res.status === 400) return null;
-    if (!res.ok)
-        throw new Error(`Company API returned ${res.status} for ${url}`);
-    return res.json();
+    let lastStatus = 0;
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await sleep(1000 * attempt);
+        let res: Response;
+        try {
+            res = await fetch(url, init);
+        } catch (err) {
+            // A thrown fetch (DNS failure, connection reset, timeout) is the most
+            // common transient failure — retry it with backoff like a 5xx rather
+            // than aborting the whole company scrape on the first attempt.
+            lastError = err;
+            console.warn(
+                `[fetchPage] attempt ${attempt + 1}/3 threw for ${url}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+            continue;
+        }
+        // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns
+        // 400 with rest_post_invalid_page_number instead of an empty array). Treat as
+        // graceful end — never retried.
+        if (res.status === 400) return null;
+        // A 404 whose body is HTML rather than JSON means the app's own router served its
+        // generic error page instead of the API — observed on ABN AMRO, whose vacancy
+        // search backend hard-caps at 40 results (5 pages of 8) regardless of the
+        // `meta.num_total_hits` figure it reports on page 1. Confirmed against their own
+        // site: /en/vacancies/page/6 renders client-side from this same endpoint, so real
+        // visitors hit the identical 404 — this is a limit of their backend, not something
+        // retrying fixes. Treat it the same as 400: graceful end, no retry.
+        if (
+            res.status === 404 &&
+            !(res.headers.get('content-type') ?? '').includes('json')
+        ) {
+            return null;
+        }
+        if (res.ok) return res.json();
+        lastStatus = res.status;
+        console.warn(
+            `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
+        );
+    }
+    // Retries cover genuine transient failures (5xx, a JSON-formatted error from the
+    // API itself, or a thrown network error) — worth a couple of attempts with backoff
+    // before giving up.
+    if (lastStatus === 0 && lastError !== undefined) {
+        throw new Error(
+            `Company API request failed for ${url}: ${
+                lastError instanceof Error
+                    ? lastError.message
+                    : String(lastError)
+            }`,
+        );
+    }
+    throw new Error(`Company API returned ${lastStatus} for ${url}`);
 }
 
 const GONE_SENTINEL = '\x00GONE';
@@ -409,6 +531,14 @@ export async function enrichDescriptions(
                 }
             }),
         );
+        // Firing dozens of job-page fetches back-to-back with no pacing at all can trip
+        // rate limiting on stricter sites (e.g. ABN AMRO's WAF started returning 404 for
+        // every request, including pagination, after an unthrottled ~70-job burst).
+        // A short pause between batches keeps sustained throughput low without adding
+        // much wall-clock time to the scrape.
+        if (i + DESCRIPTION_BATCH < targets.length) {
+            await sleep(randomDelay(300, 700));
+        }
     }
 
     if (goneCount) {
