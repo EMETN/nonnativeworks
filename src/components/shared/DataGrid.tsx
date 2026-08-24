@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'preact/hooks';
+import { foldText } from '../../lib/text';
 
 export interface DataGridItem {
     id: string;
@@ -302,9 +303,9 @@ export default function DataGrid({
     }
 
     const filtered = useMemo(() => {
-        const q = search.toLowerCase().trim();
+        const q = foldText(search).trim();
         const list = q
-            ? items.filter((it) => it.name.toLowerCase().includes(q))
+            ? items.filter((it) => foldText(it.name).includes(q))
             : items;
         const dir = sortDir === 'desc' ? 1 : -1;
         return [...list].sort((a, b) => {

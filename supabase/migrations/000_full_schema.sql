@@ -1,5 +1,5 @@
--- Full schema for a fresh NonNativeWorks database.
--- This is the consolidated version of all incremental migrations (001–013).
+-- Full schema for a fresh nonnativeworks! database.
+-- This is the consolidated version of all incremental migrations (001–023).
 -- Run this file in the Supabase SQL editor on a brand-new project instead of
 -- running the individual migration files one by one.
 
