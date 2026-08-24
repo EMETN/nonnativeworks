@@ -5,27 +5,14 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import { getTopCompanies, getGlobalStats } from '../../lib/queries';
-import type { TopCompany } from '../../lib/queries';
-import type { GlobalStats } from '../../lib/types';
 
-let companies: TopCompany[] = [];
-let stats: GlobalStats | null = null;
-let loadError = false;
+const [companies, stats] = await Promise.all([
+    getTopCompanies(undefined, undefined, 0),
+    getGlobalStats(undefined, undefined),
+]);
 
-try {
-    const [allCompanies, globalStats] = await Promise.all([
-        getTopCompanies(Astro.request, Astro.cookies, 0),
-        getGlobalStats(Astro.request, Astro.cookies),
-    ]);
-    companies = allCompanies;
-    stats = globalStats;
-} catch (err) {
-    console.error('Companies page data load error:', err);
-    loadError = true;
-}
-
-const totalPositions = stats?.total_positions ?? 0;
-const englishPositions = stats?.english_positions ?? 0;
+const totalPositions = stats.total_positions;
+const englishPositions = stats.english_positions;
 ---
 
 <BaseLayout
@@ -61,14 +48,7 @@ const englishPositions = stats?.english_positions ?? 0;
         </div>
 
         {
-            loadError ? (
-                <div class="text-center py-8 text-gray-500">
-                    <p class="text-lg mb-2">
-                        Something went wrong loading the data.
-                    </p>
-                    <p class="text-sm">Please try again later.</p>
-                </div>
-            ) : companies.length === 0 ? (
+            companies.length === 0 ? (
                 <div class="text-center py-16 text-gray-500">
                     <p>No companies tracked yet. Check back soon!</p>
                     <a

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
+import PublishButton from '../components/admin/PublishButton.tsx';
 
 interface Props {
     title: string;
@@ -46,18 +47,21 @@ const path = Astro.url.pathname;
                                 >Dashboard</span
                             >
                         </div>
-                        <form
-                            method="POST"
-                            action="/api/auth/signout"
-                            data-astro-reload
-                        >
-                            <button
-                                type="submit"
-                                class="text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+                        <div class="flex items-center gap-4">
+                            <PublishButton client:load />
+                            <form
+                                method="POST"
+                                action="/api/auth/signout"
+                                data-astro-reload
                             >
-                                Sign out
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    class="text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+                                >
+                                    Sign out
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </header>

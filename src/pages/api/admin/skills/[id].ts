@@ -4,6 +4,14 @@ import type {
     SkillCategory,
     TablesUpdate,
 } from '../../../../lib/database.types';
+import {
+    recordChange,
+    changedBy,
+    EXISTED,
+} from '../../../../lib/admin-changes';
+import { skillState } from '../skills';
+
+export const prerender = false;
 
 const VALID_CATEGORIES = [
     'language',
@@ -26,7 +34,7 @@ function isSkillCategory(value: unknown): value is SkillCategory {
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export const PATCH: APIRoute = async ({ params, request }) => {
+export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { id } = params;
     if (!id || !UUID_RE.test(id)) {
         return json({ error: 'Invalid skill id' }, 400);
@@ -91,6 +99,12 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     const supabase = createSupabaseServiceClient();
+    const { data: before } = await supabase
+        .from('skills')
+        .select('canonical_name, category, aliases, is_legacy')
+        .eq('id', id)
+        .maybeSingle();
+
     const { data, error } = await supabase
         .from('skills')
         .update(patch)
@@ -112,22 +126,49 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         return json({ error: 'Failed to update skill' }, 500);
     }
 
+    await recordChange(supabase, {
+        entity_type: 'skill',
+        action: 'updated',
+        label: data?.canonical_name ?? id,
+        entity_id: id,
+        before_state: before ? skillState(before) : null,
+        after_state: skillState(data),
+        changed_by: changedBy(locals, request),
+    });
+
     return json(data, 200);
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, request, locals }) => {
     const { id } = params;
     if (!id || !UUID_RE.test(id)) {
         return json({ error: 'Invalid skill id' }, 400);
     }
 
     const supabase = createSupabaseServiceClient();
+
+    const { data: existing } = await supabase
+        .from('skills')
+        .select('canonical_name')
+        .eq('id', id)
+        .maybeSingle();
+
     const { error } = await supabase.from('skills').delete().eq('id', id);
 
     if (error) {
         console.error('DELETE /api/admin/skills/[id]:', error.message);
         return json({ error: 'Failed to delete skill' }, 500);
     }
+
+    await recordChange(supabase, {
+        entity_type: 'skill',
+        action: 'deleted',
+        label: existing?.canonical_name ?? id,
+        entity_id: id,
+        before_state: EXISTED,
+        after_state: null,
+        changed_by: changedBy(locals, request),
+    });
 
     return json({ ok: true }, 200);
 };
