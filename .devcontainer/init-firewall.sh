@@ -152,7 +152,6 @@ cdn_domains=(
 company_domains=(
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
-    "academicwork.fi"
     "academicwork.se"
     "academicwork.no"
     "academicwork.dk"

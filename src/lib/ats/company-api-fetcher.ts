@@ -239,7 +239,14 @@ function expandJobToSecondaryLocations(
         // Same-country entries are merged into primaryJob.cities (one entry, many
         // cities); entries for a genuinely different country become exactly one
         // extra job per distinct other country (not one per city).
-        const primaryCountry = primaryJob.country_code?.toUpperCase();
+        // Normalise the primary country to an ISO code before comparing: some APIs
+        // (e.g. Oracle HCM's PrimaryLocationCountry) return a country *name*
+        // ("Denmark") while the secondary CountryCode is an ISO code ("DK"). A raw
+        // string compare would never match, so every same-country city would wrongly
+        // become a duplicate country row instead of folding into the primary job.
+        const primaryCountry =
+            lookupCountryFromLocation(primaryJob.country_code ?? '')[0]?.code ??
+            primaryJob.country_code?.toUpperCase();
         const byCountry = new Map<string, string[]>();
         for (const sec of secondaries) {
             const city = getString(sec, expand.cityField);
@@ -369,9 +376,24 @@ async function fetchPage(
         }
     }
     let lastStatus = 0;
+    let lastError: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
         if (attempt > 0) await sleep(1000 * attempt);
-        const res = await fetch(url, init);
+        let res: Response;
+        try {
+            res = await fetch(url, init);
+        } catch (err) {
+            // A thrown fetch (DNS failure, connection reset, timeout) is the most
+            // common transient failure — retry it with backoff like a 5xx rather
+            // than aborting the whole company scrape on the first attempt.
+            lastError = err;
+            console.warn(
+                `[fetchPage] attempt ${attempt + 1}/3 threw for ${url}: ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+            continue;
+        }
         // 400 signals "page out of range" on some APIs (e.g. WordPress REST API returns
         // 400 with rest_post_invalid_page_number instead of an empty array). Treat as
         // graceful end — never retried.
@@ -395,8 +417,18 @@ async function fetchPage(
             `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
         );
     }
-    // Retries cover genuine transient failures (5xx, or a JSON-formatted error from the
-    // API itself) — those are worth a couple of attempts with backoff before giving up.
+    // Retries cover genuine transient failures (5xx, a JSON-formatted error from the
+    // API itself, or a thrown network error) — worth a couple of attempts with backoff
+    // before giving up.
+    if (lastStatus === 0 && lastError !== undefined) {
+        throw new Error(
+            `Company API request failed for ${url}: ${
+                lastError instanceof Error
+                    ? lastError.message
+                    : String(lastError)
+            }`,
+        );
+    }
     throw new Error(`Company API returned ${lastStatus} for ${url}`);
 }
 

@@ -523,7 +523,18 @@ const LANG_MENTIONS = (lang: string) => [
  * the language word is used as a geographic adjective: "Dutch retail ecosystem is a strong advantage".
  * Compound mentions (e.g. "dutch language skills") are more specific and allow up to 6 gap words.
  */
+// Cached because the cross-language scan compiles this for ~90 keywords per job.
+// Safe: the regex is non-global, so shared reuse of .exec() carries no lastIndex state.
+const _advantageRegexCache = new Map<string, RegExp>();
 function buildAdvantageRegex(lang: string): RegExp {
+    const cached = _advantageRegexCache.get(lang);
+    if (cached) return cached;
+    const regex = _buildAdvantageRegex(lang);
+    _advantageRegexCache.set(lang, regex);
+    return regex;
+}
+
+function _buildAdvantageRegex(lang: string): RegExp {
     const [bare, ...compound] = LANG_MENTIONS(lang).map((m) =>
         m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
     );
@@ -650,7 +661,17 @@ function buildAdvantageSignals(lang: string): string[] {
 }
 
 /** Explicit phrases that indicate the local language is required. */
-function buildRequirementSignals(lang: string): string[] {
+// Cached across the ~90-keyword scan; readonly because the shared array must not be mutated.
+const _requirementSignalsCache = new Map<string, readonly string[]>();
+function buildRequirementSignals(lang: string): readonly string[] {
+    const cached = _requirementSignalsCache.get(lang);
+    if (cached) return cached;
+    const signals = _buildRequirementSignals(lang);
+    _requirementSignalsCache.set(lang, signals);
+    return signals;
+}
+
+function _buildRequirementSignals(lang: string): string[] {
     return [
         // Direct requirement
         `${lang} required`,

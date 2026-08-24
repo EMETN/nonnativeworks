@@ -63,9 +63,14 @@ def _extract_job_ids(html: bytes) -> list[str]:
     """Return job IDs from /careers/job/{id} card links, in document order."""
     soup = BeautifulSoup(html, "html.parser")
     ids: list[str] = []
+    seen: set[str] = set()
     for a in soup.find_all("a", href=_JOB_HREF_RE):
         m = _JOB_HREF_RE.match(a["href"])
-        if m:
+        # Dedup: a card can render more than one <a> to the same job (title +
+        # "Apply"), which would otherwise inflate the id list and misalign the
+        # index-based zip with the JSON-LD postings.
+        if m and m.group(1) not in seen:
+            seen.add(m.group(1))
             ids.append(m.group(1))
     return ids
 
@@ -99,11 +104,15 @@ def scrape_aiven_static(url: str) -> list[dict]:
         if not title:
             continue
 
-        locations = item.get("jobLocation") or []
+        # schema.org allows jobLocation to be a single object or a list; normalise
+        # to a list so a lone dict isn't iterated as its string keys (AttributeError).
+        raw_location = item.get("jobLocation") or []
+        locations = raw_location if isinstance(raw_location, list) else [raw_location]
         location = ", ".join(
             locality
             for loc in locations
-            if (locality := loc.get("address", {}).get("addressLocality"))
+            if isinstance(loc, dict)
+            and (locality := (loc.get("address") or {}).get("addressLocality"))
         )
 
         job_id = job_ids[i] if i < len(job_ids) else None
