@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'preact/hooks';
 import type { PositionDetail } from '../../lib/types';
+import { foldText } from '../../lib/text';
 
 interface Props {
     positions: PositionDetail[];
@@ -105,14 +106,14 @@ export default function PositionList({
     );
 
     const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
+        const q = foldText(search).trim();
         if (!q) return nonNativePositions;
         return nonNativePositions.filter(
             (p) =>
-                p.title.toLowerCase().includes(q) ||
-                p.category_name.toLowerCase().includes(q) ||
-                (p.work_model && p.work_model.toLowerCase().includes(q)) ||
-                (p.city && p.city.some((c) => c.toLowerCase().includes(q))),
+                foldText(p.title).includes(q) ||
+                foldText(p.category_name).includes(q) ||
+                (p.work_model && foldText(p.work_model).includes(q)) ||
+                (p.city && p.city.some((c) => foldText(c).includes(q))),
         );
     }, [nonNativePositions, search]);
 
