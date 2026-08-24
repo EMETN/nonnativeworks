@@ -9,29 +9,19 @@ import {
     getCompanyCountsByCountry,
     getGlobalStats,
 } from '../lib/queries';
-import type { CountryStats, GlobalStats } from '../lib/types';
+import type { CountryStats } from '../lib/types';
 
-let countries: CountryStats[] = [];
-let companyCounts: Record<string, number> = {};
-let stats: GlobalStats | null = null;
-let loadError = false;
+const [allCountries, companyCounts, stats] = await Promise.all([
+    getCountryStats(undefined, undefined),
+    getCompanyCountsByCountry(undefined, undefined),
+    getGlobalStats(undefined, undefined),
+]);
+const countries: CountryStats[] = allCountries.filter(
+    (c) => c.total_positions > 0,
+);
 
-try {
-    const [allCountries, cc, globalStats] = await Promise.all([
-        getCountryStats(Astro.request, Astro.cookies),
-        getCompanyCountsByCountry(Astro.request, Astro.cookies),
-        getGlobalStats(Astro.request, Astro.cookies),
-    ]);
-    countries = allCountries.filter((c) => c.total_positions > 0);
-    companyCounts = cc;
-    stats = globalStats;
-} catch (err) {
-    console.error('Countries page data load error:', err);
-    loadError = true;
-}
-
-const totalPositions = stats?.total_positions ?? 0;
-const englishPositions = stats?.english_positions ?? 0;
+const totalPositions = stats.total_positions;
+const englishPositions = stats.english_positions;
 ---
 
 <BaseLayout
@@ -67,14 +57,7 @@ const englishPositions = stats?.english_positions ?? 0;
         </div>
 
         {
-            loadError ? (
-                <div class="text-center py-8 text-gray-500">
-                    <p class="text-lg mb-2">
-                        Something went wrong loading the data.
-                    </p>
-                    <p class="text-sm">Please try again later.</p>
-                </div>
-            ) : countries.length === 0 ? (
+            countries.length === 0 ? (
                 <div class="text-center py-16 text-gray-500">
                     <p>No countries tracked yet. Check back soon!</p>
                     <a

@@ -4,16 +4,27 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import CompanyCountryGrid from '../../components/company/CompanyCountryGrid.tsx';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
-import { getGlobalCompanyBySlug } from '../../lib/queries';
-import { timeAgo } from '../../lib/time';
+import { getGlobalCompanyBySlug, getTopCompanies } from '../../lib/queries';
+import TimeAgo from '../../components/shared/TimeAgo';
+
+export async function getStaticPaths() {
+    const companies = await getTopCompanies(undefined, undefined, 0);
+
+    return companies.map((company) => ({
+        params: { company: company.primary_company_slug },
+    }));
+}
 
 const { company: companySlug } = Astro.params;
-const { request, cookies } = Astro;
 
-const company = await getGlobalCompanyBySlug(request, cookies, companySlug!);
+const company = await getGlobalCompanyBySlug(
+    undefined,
+    undefined,
+    companySlug!,
+);
 
 if (!company) {
-    return new Response(null, { status: 404, statusText: 'Not Found' });
+    throw new Error(`No company data for slug "${companySlug}" at build time`);
 }
 
 const entries = company.entries.map((e) => ({
@@ -108,15 +119,11 @@ const entries = company.entries.map((e) => ({
                         companySlug={companySlug!}
                         client:idle
                     />
-                    <p
+                    <TimeAgo
+                        date={company.updated_at}
                         class="text-xs sm:text-sm text-gray-500 mt-4"
-                        title={new Date(company.updated_at).toLocaleDateString(
-                            'en-GB',
-                            { day: 'numeric', month: 'short', year: 'numeric' },
-                        )}
-                    >
-                        Updated {timeAgo(company.updated_at)}
-                    </p>
+                        client:load
+                    />
                 </>
             )
         }

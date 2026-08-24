@@ -292,6 +292,84 @@ export type Database = {
                     },
                 ];
             };
+            site_publishes: {
+                Row: {
+                    id: string;
+                    triggered_at: string;
+                    triggered_by: string;
+                };
+                Insert: {
+                    id?: string;
+                    triggered_at?: string;
+                    triggered_by: string;
+                };
+                Update: {
+                    id?: string;
+                    triggered_at?: string;
+                    triggered_by?: string;
+                };
+                Relationships: [];
+            };
+            admin_changes: {
+                Row: {
+                    id: string;
+                    entity_type: 'company' | 'position' | 'skill';
+                    action: 'created' | 'updated' | 'deleted';
+                    label: string;
+                    entity_id: string | null;
+                    before_state: string | null;
+                    after_state: string | null;
+                    changed_by: string;
+                    changed_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    entity_type: 'company' | 'position' | 'skill';
+                    action: 'created' | 'updated' | 'deleted';
+                    label: string;
+                    entity_id?: string | null;
+                    before_state?: string | null;
+                    after_state?: string | null;
+                    changed_by: string;
+                    changed_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    entity_type?: 'company' | 'position' | 'skill';
+                    action?: 'created' | 'updated' | 'deleted';
+                    label?: string;
+                    entity_id?: string | null;
+                    before_state?: string | null;
+                    after_state?: string | null;
+                    changed_by?: string;
+                    changed_at?: string;
+                };
+                Relationships: [];
+            };
+            site_builds: {
+                Row: {
+                    deploy_id: string;
+                    state: string;
+                    started_at: string | null;
+                    finished_at: string | null;
+                    created_at: string;
+                };
+                Insert: {
+                    deploy_id: string;
+                    state: string;
+                    started_at?: string | null;
+                    finished_at?: string | null;
+                    created_at?: string;
+                };
+                Update: {
+                    deploy_id?: string;
+                    state?: string;
+                    started_at?: string | null;
+                    finished_at?: string | null;
+                    created_at?: string;
+                };
+                Relationships: [];
+            };
         };
         Views: {
             country_stats: {
@@ -347,6 +425,14 @@ export type Database = {
                     country_count: number;
                     primary_country_slug: string;
                     career_page_url: string | null;
+                }[];
+            };
+            admin_change_summary: {
+                Args: { since: string };
+                Returns: {
+                    entity_type: string;
+                    action: string;
+                    count: number;
                 }[];
             };
         };

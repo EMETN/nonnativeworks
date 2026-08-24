@@ -160,7 +160,7 @@ export default function PositionList({
                                 setSearch('');
                                 clearTimeout(debounceRef.current);
                             }}
-                            class="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
+                            class="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
                             aria-label="Clear search"
                         >
                             <svg

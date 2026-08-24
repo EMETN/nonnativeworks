@@ -386,6 +386,17 @@ scrapers:
           param: page
           page_size: 25
 
+    # ── Tekever (TeamTailor) ─────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length); 25 stops the loop after page 1.
+    - match: 'careers.tekever.com'
+      name: Tekever
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
     # ── Volvo Group ──────────────────────────────────────────────────────────────
     # SuccessFactors XML job feed. Contains all fields inline (title, city,
     # 2-letter country code, department, HTML description) — no detail page

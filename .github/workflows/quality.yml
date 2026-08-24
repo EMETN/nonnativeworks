@@ -35,8 +35,24 @@ jobs:
             - name: Typecheck
               run: pnpm typecheck
 
+            - name: Install Doppler CLI
+              uses: dopplerhq/cli-action@v4
+
+            - name: Build (timed)
+              env:
+                  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+              run: |
+                  start=$(date +%s)
+                  doppler run -- pnpm build
+                  echo "BUILD_SECONDS=$(( $(date +%s) - start ))" >> $GITHUB_ENV
+
+            - name: Build budget guard
+              run: node scripts/check-build-budget.mjs "$BUILD_SECONDS"
+
             - name: Tests
-              run: pnpm test
+              env:
+                  DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+              run: doppler run -- pnpm test
 
             # ── Python / Ruff ────────────────────────────────────────────────
             - name: Setup Python
