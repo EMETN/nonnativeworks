@@ -23,6 +23,25 @@ export default defineConfig({
     },
     // Static by default; prerender = false opts /admin and /api into on-demand rendering.
     output: 'static',
+    // Astro hashes inline scripts, so script-src needs no 'unsafe-inline';
+    // style-src-attr covers the dynamic inline styles (gauges) that can't be
+    // hashed, and connect-src 'self' holds since PostHog/Sentry are proxied.
+    security: {
+        csp: {
+            directives: [
+                "default-src 'self'",
+                "img-src 'self' data:",
+                "font-src 'self'",
+                "connect-src 'self'",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+            ],
+            styleDirective: {
+                resources: [{ resource: "'unsafe-inline'", kind: 'attribute' }],
+            },
+        },
+    },
     adapter,
     prefetch: {
         defaultStrategy: 'hover',
