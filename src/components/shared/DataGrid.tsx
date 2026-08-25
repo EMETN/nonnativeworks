@@ -331,13 +331,6 @@ export default function DataGrid({
 
     return (
         <div class="w-full">
-            <style>{`
-                .dg-subgrid {
-                    display: grid;
-                    grid-template-columns: subgrid;
-                    grid-column: 1 / -1;
-                }
-            `}</style>
             <ul
                 class="w-full hover-hl-list"
                 style={{ display: 'grid', gridTemplateColumns: gridCols }}
