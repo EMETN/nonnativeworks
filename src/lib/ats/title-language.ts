@@ -389,7 +389,10 @@ export const KEYWORDS_RE = new RegExp(
 );
 
 // Non-ASCII characters used by tracked-country languages.
-const NON_ASCII_RE = /[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășț]/i;
+// Ͱ-Ͽ / Ѐ-ӿ match any Greek / Cyrillic character (Greek, Bulgarian) —
+// those scripts have no meaningful "diacritic subset", so the whole block is matched.
+const NON_ASCII_RE =
+    /[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășțáíúőűěřťďňůìòͰ-ϿЀ-ӿ]/i;
 
 /**
  * Strip bilingual slash suffixes from job titles.
@@ -427,10 +430,13 @@ export function stripBilingualSuffix(title: string): string {
 export function titleAppearsNonEnglish(title: string): boolean {
     // Covers all tracked-country native character sets:
     //   Nordic/Germanic: ä ö ü å ø æ ß
-    //   French/Romance: é è ê ë à â î ï ô ù û ç ñ ã õ œ ă ș ț
+    //   French/Romance: é è ê ë à â î ï ô ù û ç ñ ã õ œ ă ș ț ì ò
     //   Icelandic: þ ð
     //   Baltic (LV/LT): ā č ē ģ ī ķ ļ ņ š ū ž ą ę ė į ų
     //   Polish: ł ń ś ź ż ć ó ą ę
+    //   Spanish/Portuguese/Hungarian/Czech: á í ú ő ű ě ř ť ď ň ů
+    //   Greek / Bulgarian: full Greek and Cyrillic Unicode blocks (no useful
+    //   "diacritic subset" — either script is entirely non-Latin)
     if (NON_ASCII_RE.test(title)) return true;
     return KEYWORDS_RE.test(title);
 }

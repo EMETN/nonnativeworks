@@ -12,8 +12,11 @@ but may be listed here for documentation. Keep in sync with the TS file.
 
 import re
 
+# Ͱ-Ͽ / Ѐ-ӿ match any Greek / Cyrillic character (Greek, Bulgarian) — those
+# scripts have no meaningful "diacritic subset", so the whole block is matched.
 _NON_ASCII_RE = re.compile(
-    r"[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășț]", re.IGNORECASE
+    r"[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășțáíúőűěřťďňůìòͰ-ϿЀ-ӿ]",
+    re.IGNORECASE,
 )
 
 _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {

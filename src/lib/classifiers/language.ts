@@ -874,6 +874,14 @@ const REQUIREMENT_NEGATION_ADVANTAGE_RE =
 // e.g. "fluent in German or English" → English is enough, German is not preferred
 const REQUIREMENT_NEGATION_NONE_RE = /\bor\s+(?:in\s+)?english\b/;
 
+// "Our team(s)/company is/are proficient in ... the following languages: ..." — a generic
+// capability statement about the wider organization, not a requirement for this specific
+// role (e.g. "Our teams are proficient in one or more of the following languages: English,
+// French, German, ..., and many more"). Without this guard, the "english, {lang}" list-style
+// requirement signal below fires on the first two languages named in the sentence.
+const GENERIC_LANGUAGE_LIST_PREAMBLE_RE =
+    /\b(?:team|teams|company|organi[sz]ation|staff|colleagues)\s+(?:is|are)\s+proficient\s+in\s+(?:either\s+)?(?:one\s+or\s+more\s+of\s+)?(?:the\s+)?following\s+languages\b/;
+
 // Advantage prefix patterns that immediately precede a requirement signal phrase
 // (within ~80 characters), indicating the language is actually a nice-to-have.
 // e.g. "bonus points if you speak German", "it is meritorious if you have Finnish skills"
@@ -965,6 +973,11 @@ function requirementNegatedByContext(
 ): NegationKind {
     const idx = combined.indexOf(signal);
     if (idx === -1) return false;
+    // A generic "our teams are proficient in ... the following languages" preamble within
+    // the preceding ~120 characters means this is a company-wide capability list, not a
+    // requirement for this role — even though the signal (e.g. "english, french") matched.
+    const wideBefore = combined.slice(Math.max(0, idx - 120), idx);
+    if (GENERIC_LANGUAGE_LIST_PREAMBLE_RE.test(wideBefore)) return 'none';
     const after = combined.slice(idx + signal.length, idx + signal.length + 80);
     // "or english" must appear in the same clause as the signal — stop at sentence
     // boundaries so that a later "speak either X or English" doesn't negate an
