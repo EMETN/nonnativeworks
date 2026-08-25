@@ -60,6 +60,7 @@ const breadcrumbJsonLd =
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#ffffff" />
 
         <title>{siteTitle}</title>
         <meta name="description" content={description} />
@@ -121,22 +122,44 @@ const breadcrumbJsonLd =
         <script>
             const key = import.meta.env.PUBLIC_POSTHOG_KEY;
             if (key) {
-                import('../lib/wa').then(({ default: posthog }) => {
-                    posthog.init(key, {
-                        api_host: window.location.origin + '/t',
-                        ui_host: 'https://eu.posthog.com',
-                        autocapture: true,
-                        capture_pageview: true,
-                        capture_pageleave: false,
-                        request_batching: true,
-                        advanced_disable_flags: true,
-                        disable_external_dependency_loading: true,
-                        disable_session_recording: import.meta.env.DEV,
-                        capture_dead_clicks: !import.meta.env.DEV,
-                        capture_performance: !import.meta.env.DEV,
-                        debug: false,
+                // Boot off the critical path, on idle or first interaction
+                // (whichever is first) so early engagement is still captured.
+                const events = [
+                    'pointerdown',
+                    'keydown',
+                    'touchstart',
+                    'scroll',
+                ];
+                let booted = false;
+                const start = () => {
+                    if (booted) return;
+                    booted = true;
+                    events.forEach((e) => removeEventListener(e, start));
+                    import('../lib/wa').then(({ default: posthog }) => {
+                        posthog.init(key, {
+                            api_host: window.location.origin + '/t',
+                            ui_host: 'https://eu.posthog.com',
+                            autocapture: true,
+                            capture_pageview: true,
+                            capture_pageleave: false,
+                            request_batching: true,
+                            advanced_disable_flags: true,
+                            disable_external_dependency_loading: true,
+                            disable_session_recording: true,
+                            capture_dead_clicks: !import.meta.env.DEV,
+                            capture_performance: !import.meta.env.DEV,
+                            debug: false,
+                        });
                     });
-                });
+                };
+                events.forEach((e) =>
+                    addEventListener(e, start, { once: true, passive: true }),
+                );
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(start, { timeout: 2000 });
+                } else {
+                    setTimeout(start, 1);
+                }
             }
         </script>
         <!-- Skip to content (accessibility) -->

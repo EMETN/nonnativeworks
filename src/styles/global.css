@@ -54,6 +54,13 @@
     transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* DataGrid subgrid rows: keep here, not in a component <style> (CSP won't hash those) */
+.dg-subgrid {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .hover-hl-item {
         transition: none;
