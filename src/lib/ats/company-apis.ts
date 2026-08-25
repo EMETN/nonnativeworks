@@ -402,6 +402,29 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         fetchDescription: true,
     },
 
+    // Netflix's Eightfold API caps num at 10 regardless of what's requested, so
+    // paginate by start offset. job_description is empty in the list response and the
+    // detail page is an unrendered SPA shell, so there's nothing to enrich from —
+    // classification runs off the (English) title.
+    'explore.jobs.netflix.net': {
+        url: 'https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com&num=10&sort_by=relevance',
+        method: 'GET',
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'count',
+        },
+        itemsPath: 'positions',
+        companyName: 'Netflix',
+        fields: {
+            title: 'name',
+            location: 'location',
+            url: 'canonicalPositionUrl',
+            id: 'id',
+        },
+    },
+
     'op-careers.fi': {
         url: 'https://op-careers.fi/services/recruiting/v1/jobs',
         method: 'POST',

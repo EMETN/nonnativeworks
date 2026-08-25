@@ -193,6 +193,10 @@ companies:
       url: https://jobs.neste.com/search
       min_positions: 5
 
+    - name: Netflix
+      url: https://explore.jobs.netflix.net/careers
+      min_positions: 10
+
     - name: Nets/Nexi
       url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
       min_positions: 5

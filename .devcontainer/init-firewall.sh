@@ -210,6 +210,7 @@ company_domains=(
     "careers.microsoft.com"  # Microsoft
     "careers.munichre.com"  # Munich Re
     "jobs.neste.com"  # Neste
+    "explore.jobs.netflix.net"  # Netflix
     "nexigroup.com"  # Nexi
     "nitor.com"  # Nitor
     "jobs.nokia.com"  # Nokia
