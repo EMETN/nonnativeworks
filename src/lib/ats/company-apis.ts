@@ -381,6 +381,27 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
     },
 
+    // Spotify's WordPress "animal" jobs API. The search endpoint returns the whole
+    // job list in one response (the SPA filters client-side), so pagination is 'none'.
+    'lifeatspotify.com': {
+        url: 'https://api.lifeatspotify.com/wp-json/animal/v1/job/search',
+        method: 'GET',
+        pagination: { type: 'none' },
+        itemsPath: 'result',
+        companyName: 'Spotify',
+        fields: {
+            title: 'text',
+            location: 'locations.0.location',
+            id: 'id',
+        },
+        urlTemplate: 'https://www.lifeatspotify.com/jobs/{id}',
+        expandSecondaryLocations: {
+            path: 'locations',
+            countryName: 'location',
+        },
+        fetchDescription: true,
+    },
+
     'op-careers.fi': {
         url: 'https://op-careers.fi/services/recruiting/v1/jobs',
         method: 'POST',
