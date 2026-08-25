@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'preact/hooks';
 import { foldText } from '../../lib/text';
+import { flagWidth, FLAG_HEIGHT } from '../../lib/flag-dimensions';
 
 export interface DataGridItem {
     id: string;
@@ -168,6 +169,8 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                 <img
                                     src={item.flag}
                                     alt=""
+                                    width={flagWidth(item.flag)}
+                                    height={FLAG_HEIGHT}
                                     loading="lazy"
                                     decoding="async"
                                     class="w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)] h-[1.25rem] md:h-[1.125rem] lg:h-[1.5rem]"

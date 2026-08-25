@@ -5,6 +5,7 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import { getCountryStats } from '../../lib/queries';
+import { flagWidth, FLAG_HEIGHT } from '../../lib/flag-dimensions';
 import { fetchAllCompanyStats, groupBy } from '../../lib/build-queries';
 import type { CountryStats, CompanyStats } from '../../lib/types';
 
@@ -69,6 +70,8 @@ const { country, companies } = Astro.props as Props;
                 <img
                     src={`/flags/${country.code.toLowerCase()}.png`}
                     alt={`${country.name} flag`}
+                    width={flagWidth(country.code)}
+                    height={FLAG_HEIGHT}
                     class="h-[1.4rem] sm:h-[1.4rem] md:h-[2.1rem] w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)]"
                 />
             </h1>
