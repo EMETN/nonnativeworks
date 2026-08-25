@@ -50,7 +50,7 @@ export default defineConfig({
             // islands stuck mid-hydration). Listing them here pre-bundles them at startup
             // instead.
             include: [
-                'posthog-js/dist/module.full.no-external',
+                'posthog-js/dist/module.no-external',
                 'astro/virtual-modules/transitions-events.js',
                 'astro/virtual-modules/transitions-router.js',
                 'astro/virtual-modules/transitions-swap-functions.js',
