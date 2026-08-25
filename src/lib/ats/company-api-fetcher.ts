@@ -3,8 +3,10 @@ import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
 
-const MAX_PAGES = 50; // safety cap to avoid infinite loops
+// Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
+const MAX_PAGES = 200;
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
+const PAGE_CONCURRENCY = 5; // concurrent page fetches when a paginated total is known upfront
 
 /** Decode common HTML entities in a string (e.g. &amp; → &, &lt; → <). */
 function decodeHtmlEntities(str: string): string {
@@ -959,48 +961,18 @@ async function fetchAllJobsRaw(
     } else if (pagination.type === 'offset') {
         const param = pagination.param ?? 'offset';
         const pageSize = pagination.pageSize;
-        let offset = 0;
-        let totalCount: number | undefined;
 
-        for (let i = 0; i < MAX_PAGES; i++, offset += pageSize) {
-            const pageUrl =
-                method === 'GET' ? buildGetUrl(url, param, offset) : url;
-            const pageBody =
+        const specFor = (offset: number) => ({
+            pageUrl: method === 'GET' ? buildGetUrl(url, param, offset) : url,
+            pageBody:
                 method === 'POST'
                     ? param.includes('.')
                         ? setNestedParam(body ?? {}, param, offset)
                         : { ...body, [param]: offset }
-                    : undefined;
-            console.log(
-                `[${label}] fetching offset=${offset}${method === 'POST' ? `` : ` url=${pageUrl}`}`,
-            );
-            const data = await fetchPage(
-                pageUrl,
-                method,
-                pageBody,
-                headers,
-                bodyType,
-            );
-
-            if (!data) {
-                console.warn(`[${label}] empty response at offset=${offset}`, {
-                    url: pageUrl,
-                });
-                break;
-            }
-
-            if (totalCount === undefined && pagination.totalCountPath) {
-                const raw = getPath(data, pagination.totalCountPath);
-                if (typeof raw === 'number') {
-                    totalCount = raw;
-                    console.log(
-                        `[${label}] total count from API: ${totalCount} (via ${pagination.totalCountPath})`,
-                    );
-                }
-            }
-
+                    : undefined,
+        });
+        const addPage = (data: unknown): number => {
             const items = extractItems(data, itemsPath);
-            const before = jobs.length;
             jobs.push(
                 ...mapItems(
                     items,
@@ -1012,31 +984,99 @@ async function fetchAllJobsRaw(
                     keepQueryParams,
                 ),
             );
+            return items.length;
+        };
+
+        // Fetch page 1 alone to learn the grand total (reported only in the body); once
+        // it's known the remaining offsets are fixed and can be fetched concurrently.
+        const firstSpec = specFor(0);
+        console.log(`[${label}] fetching offset=0 url=${firstSpec.pageUrl}`);
+        const first = await fetchPage(
+            firstSpec.pageUrl,
+            method,
+            firstSpec.pageBody,
+            headers,
+            bodyType,
+        );
+        if (!first) {
+            console.warn(`[${label}] empty response at offset=0`, {
+                url: firstSpec.pageUrl,
+            });
+        } else {
+            let totalCount: number | undefined;
+            if (pagination.totalCountPath) {
+                const raw = getPath(first, pagination.totalCountPath);
+                if (typeof raw === 'number') totalCount = raw;
+            }
+            const firstCount = addPage(first);
             console.log(
-                `[${label}] offset=${offset} → ${items.length} items, mapped ${jobs.length - before}, cumulative=${jobs.length}`,
-                paginationMeta(data),
+                `[${label}] offset=0 → ${firstCount} items, total=${totalCount ?? 'unknown'}, cumulative=${jobs.length}`,
+                paginationMeta(first),
             );
 
-            if (items.length === 0) {
-                console.log(
-                    `[${label}] stopping: empty page at offset=${offset}`,
+            if (
+                firstCount === pageSize &&
+                totalCount !== undefined &&
+                totalCount > pageSize
+            ) {
+                // Offsets come from the raw total, not jobs.length, which multi-location
+                // expansion can inflate and cut the fetch short.
+                const lastOffset = Math.min(
+                    totalCount - 1,
+                    MAX_PAGES * pageSize - 1,
                 );
-                break;
-            }
-            if (totalCount !== undefined && jobs.length >= totalCount) {
+                const offsets: number[] = [];
+                for (let o = pageSize; o <= lastOffset; o += pageSize) {
+                    offsets.push(o);
+                }
                 console.log(
-                    `[${label}] stopping: ${jobs.length} jobs fetched of ${totalCount}`,
+                    `[${label}] ${offsets.length} more pages → fetching at concurrency ${PAGE_CONCURRENCY}`,
                 );
-                break;
-            }
-            if (items.length < pageSize) {
+                for (let i = 0; i < offsets.length; i += PAGE_CONCURRENCY) {
+                    const datas = await Promise.all(
+                        offsets.slice(i, i + PAGE_CONCURRENCY).map((o) => {
+                            const s = specFor(o);
+                            return fetchPage(
+                                s.pageUrl,
+                                method,
+                                s.pageBody,
+                                headers,
+                                bodyType,
+                            );
+                        }),
+                    );
+                    for (const d of datas) if (d) addPage(d);
+                    if (i + PAGE_CONCURRENCY < offsets.length) {
+                        await sleep(randomDelay(300, 700));
+                    }
+                }
                 console.log(
-                    `[${label}] stopping: partial page (${items.length} < ${pageSize}) at offset=${offset}`,
+                    `[${label}] parallel pagination done — cumulative=${jobs.length}`,
                 );
-                break;
+            } else if (firstCount === pageSize) {
+                let offset = pageSize;
+                for (let i = 1; i < MAX_PAGES; i++, offset += pageSize) {
+                    await sleep(randomDelay());
+                    const s = specFor(offset);
+                    console.log(
+                        `[${label}] fetching offset=${offset} url=${s.pageUrl}`,
+                    );
+                    const data = await fetchPage(
+                        s.pageUrl,
+                        method,
+                        s.pageBody,
+                        headers,
+                        bodyType,
+                    );
+                    if (!data) break;
+                    const n = addPage(data);
+                    console.log(
+                        `[${label}] offset=${offset} → ${n} items, cumulative=${jobs.length}`,
+                        paginationMeta(data),
+                    );
+                    if (n < pageSize) break;
+                }
             }
-
-            await sleep(randomDelay());
         }
     } else if (pagination.type === 'finder-offset') {
         const pageSize = pagination.pageSize;

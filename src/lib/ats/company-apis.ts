@@ -381,6 +381,50 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
     },
 
+    // Spotify's WordPress "animal" jobs API. The search endpoint returns the whole
+    // job list in one response (the SPA filters client-side), so pagination is 'none'.
+    'lifeatspotify.com': {
+        url: 'https://api.lifeatspotify.com/wp-json/animal/v1/job/search',
+        method: 'GET',
+        pagination: { type: 'none' },
+        itemsPath: 'result',
+        companyName: 'Spotify',
+        fields: {
+            title: 'text',
+            location: 'locations.0.location',
+            id: 'id',
+        },
+        urlTemplate: 'https://www.lifeatspotify.com/jobs/{id}',
+        expandSecondaryLocations: {
+            path: 'locations',
+            countryName: 'location',
+        },
+        fetchDescription: true,
+    },
+
+    // Netflix's Eightfold API caps num at 10 regardless of what's requested, so
+    // paginate by start offset. job_description is empty in the list response and the
+    // detail page is an unrendered SPA shell, so there's nothing to enrich from —
+    // classification runs off the (English) title.
+    'explore.jobs.netflix.net': {
+        url: 'https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com&num=10&sort_by=relevance',
+        method: 'GET',
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'count',
+        },
+        itemsPath: 'positions',
+        companyName: 'Netflix',
+        fields: {
+            title: 'name',
+            location: 'location',
+            url: 'canonicalPositionUrl',
+            id: 'id',
+        },
+    },
+
     'op-careers.fi': {
         url: 'https://op-careers.fi/services/recruiting/v1/jobs',
         method: 'POST',

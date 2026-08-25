@@ -193,6 +193,10 @@ companies:
       url: https://jobs.neste.com/search
       min_positions: 5
 
+    - name: Netflix
+      url: https://explore.jobs.netflix.net/careers
+      min_positions: 10
+
     - name: Nets/Nexi
       url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
       min_positions: 5
@@ -296,6 +300,10 @@ companies:
     - name: Solita
       url: https://www.solita.fi/join-us
       min_positions: 1
+
+    - name: Spotify
+      url: https://lifeatspotify.com/jobs
+      min_positions: 10
 
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities

@@ -210,6 +210,7 @@ company_domains=(
     "careers.microsoft.com"  # Microsoft
     "careers.munichre.com"  # Munich Re
     "jobs.neste.com"  # Neste
+    "explore.jobs.netflix.net"  # Netflix
     "nexigroup.com"  # Nexi
     "nitor.com"  # Nitor
     "jobs.nokia.com"  # Nokia
@@ -234,7 +235,9 @@ company_domains=(
     "jobs.siemens-healthineers.com"  # Siemens Healthineers
     "sok.wd502.myworkdayjobs.com"  # SOK
     "solita.fi"  # Solita
-    "lifeatspotify.com"  # Spotify
+    "api.lifeatspotify.com"  # Spotify — jobs JSON API (career page loads listings from here)
+    "lifeatspotify.com"  # Spotify — career page host
+    "www.lifeatspotify.com"  # Spotify — job detail pages (description enrichment fetches these)
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "supercell.com"  # Supercell
