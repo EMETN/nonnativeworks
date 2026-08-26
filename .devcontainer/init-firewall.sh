@@ -116,6 +116,7 @@ tool_domains=(
     "cli.doppler.com"  # Doppler
     "packages.doppler.com"  # Doppler
     "storage.googleapis.com"  # Google Cloud Storage
+    "nonnativeworks.netlify.app"  # Netlify: apex + all deploy previews share this edge IP set
     "registry.npmjs.org"  # npm
     "eu-assets.i.posthog.com"  # PostHog
     "eu.i.posthog.com"  # PostHog
@@ -147,6 +148,8 @@ cdn_domains=(
     "careers.futurice.com"  # Futurice
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Orkla, Nokia)
+    "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
+    "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
     "upcloud.teamtailor.com"  # UpCloud
 )
 company_domains=(

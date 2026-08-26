@@ -57,3 +57,6 @@ cookies.txt
 
 # Migration instrument — regenerated on demand, never committed
 .html-baseline/
+
+# Playwright MCP output (snapshots, console logs, traces) written into the working dir
+.playwright-mcp/
