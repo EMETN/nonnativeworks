@@ -214,7 +214,7 @@ companies:
       min_positions: 5
 
     - name: NXP
-      url: https://nxp.wd3.myworkdayjobs.com/careers?locations=98d67abaaa8a100fa6336e2819cc922e&locations=3db468d56aa610d69085a48b83d7492d&locations=98d67abaaa8a100fa63382ef6fcc924c&locations=98d67abaaa8a100fa633b04b600c928d&locations=2a9d66d0145c015c90758d64f5015e85&locations=98d67abaaa8a100fa6336739cb249224&locations=98d67abaaa8a100fa633a5cf721c927e
+      url: https://nxp.wd3.myworkdayjobs.com/careers?Location_Country=d004c0d1a6c84511ab048669fcdf9fd7&Location_Country=dcc5b7608d8644b3a93716604e78e995&Location_Country=f2e609fe92974a55a05fc1cdc2852122&Location_Country=9696868b09c64d52a62ee13b052383cc&Location_Country=54c5b6971ffb4bf0b116fe7651ec789a&Location_Country=8cd04a563fd94da7b06857a79faaf815&Location_Country=a04ea128f43a42e59b1e6a19e8f0b374&Location_Country=fc078443155c4ad294201ecf5a61a499&Location_Country=bd34c524a6a04ae6915f5d96fa086199&Location_Country=9db257f5937e4421b2fac64eec6832f8&Location_Country=1face6f426c14de9979a134697da0db3
       min_positions: 10
 
     - name: OP Financial Group
