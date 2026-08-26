@@ -121,6 +121,34 @@ RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
 # Install Claude (global tool, uses npm intentionally)
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
+# --- Browser setup for MCP servers (Node Playwright + Chrome DevTools) ---
+# Bakes browsers into the image so both MCP servers survive container rebuilds.
+# Browsers are installed via the exact Playwright bundled inside @playwright/mcp,
+# so their revisions always match the MCP that runs them (bump by rebuilding).
+
+# System libraries for Chromium, Firefox and WebKit (needs root/apt)
+USER root
+RUN npx -y -p @playwright/mcp@latest playwright install-deps chromium firefox webkit && \
+  rm -rf /root/.npm /root/.cache/ms-playwright
+USER node
+
+# Browser binaries for the Playwright MCP, into node's cache
+RUN npx -y -p @playwright/mcp@latest playwright install chromium firefox webkit
+
+# chrome-devtools-mcp shares the Playwright Chromium via a resolver shim placed at
+# the executablePath its plugin hardcodes (.../chromium-arm64/chrome-linux/chrome).
+# The shim resolves the newest installed chromium-<rev> at launch and exec's it, so
+# a future browser upgrade (new revision dir) can never orphan it. exec replaces the
+# process image, so Chromium still finds its own resources next to the real binary.
+RUN mkdir -p /home/node/.cache/chrome-devtools-mcp/chromium-arm64/chrome-linux && \
+  printf '%s\n' \
+    '#!/bin/sh' \
+    'bin=$(ls -d /home/node/.cache/ms-playwright/chromium-[0-9]*/chrome-linux/chrome 2>/dev/null | sort -V | tail -1)' \
+    '[ -x "$bin" ] || { echo "no Playwright chromium found under ~/.cache/ms-playwright" >&2; exit 1; }' \
+    'exec "$bin" "$@"' \
+    > /home/node/.cache/chrome-devtools-mcp/chromium-arm64/chrome-linux/chrome && \
+  chmod +x /home/node/.cache/chrome-devtools-mcp/chromium-arm64/chrome-linux/chrome
+
 # Copy and set up firewall script
 COPY .devcontainer/init-firewall.sh /usr/local/bin/
 USER root
