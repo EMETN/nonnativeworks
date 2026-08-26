@@ -70,8 +70,12 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Make venv the default Python
 ENV PATH="/opt/scraper-venv/bin:$PATH"
 
-# Install Playwright browser + system dependencies (runs as root before USER node)
-RUN /opt/scraper-venv/bin/playwright install --with-deps chromium
+# Deps need root; the browser binary must install as node so it lands in node's
+# cache (~/.cache/ms-playwright) where the scraper looks, not root's.
+RUN /opt/scraper-venv/bin/playwright install-deps chromium
+USER node
+RUN /opt/scraper-venv/bin/playwright install chromium
+USER root
 
 # --- END PYTHON SETUP ---
 
