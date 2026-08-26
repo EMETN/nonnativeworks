@@ -116,6 +116,7 @@ tool_domains=(
     "cli.doppler.com"  # Doppler
     "packages.doppler.com"  # Doppler
     "storage.googleapis.com"  # Google Cloud Storage
+    "nonnativeworks.netlify.app"  # Netlify: apex + all deploy previews share this edge IP set
     "registry.npmjs.org"  # npm
     "eu-assets.i.posthog.com"  # PostHog
     "eu.i.posthog.com"  # PostHog
