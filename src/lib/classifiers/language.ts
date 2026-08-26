@@ -1408,7 +1408,8 @@ export function detectNativeLanguage(
     // Check for explicit "X is a plus / an advantage" phrases before running
     // tinyld. See the JSDoc above for why this ordering matters.
     for (const lang of languages) {
-        const hasRequirement = anyGenuineRequirement || hasNordicOrBalticRequirement;
+        const hasRequirement =
+            anyGenuineRequirement || hasNordicOrBalticRequirement;
 
         for (const signal of buildAdvantageSignals(lang)) {
             if (combined.includes(signal)) {
