@@ -1469,4 +1469,12 @@ export const CASES: FixtureCase[] = [
         requires: false,
         advantage: true,
     },
+    {
+        label: '2a — "German, French or additional European languages are a plus. Fluent English, German or additional European languages are a plus." → advantage (a later advantage phrase overlapping the requirement signal must be found even when an earlier non-overlapping one matches first)',
+        title: 'Engineer',
+        desc: 'German, French or additional European languages are a plus. Fluent English, German or additional European languages are a plus.',
+        country: 'DE',
+        requires: false,
+        advantage: true,
+    },
 ];

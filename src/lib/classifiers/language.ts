@@ -635,8 +635,13 @@ function findOverlappingAdvantageMatch(
         buildLangListAdvantageRegex(lang),
         buildLangOrGroupAdvantageRegex(lang),
     ]) {
-        const m = regex.exec(combined);
-        if (m && m.index < sigEnd && m.index + m[0].length > sigIdx) return m;
+        // Scan every match, not just exec()'s first: an early non-overlapping one must not hide a later overlapping match.
+        const global = regex.global
+            ? regex
+            : new RegExp(regex.source, regex.flags + 'g');
+        for (const m of combined.matchAll(global)) {
+            if (m.index < sigEnd && m.index + m[0].length > sigIdx) return m;
+        }
     }
     return null;
 }
