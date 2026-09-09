@@ -1305,15 +1305,15 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     // careers.abb is ABB's branded career site; the actual jobs live on Workday.
     // ABB is a huge multinational (~2000 global postings), so the locationCountry
     // params pre-filter server-side to tracked countries only — cheaper than fetching
-    // everything and filtering client-side. Iceland and Luxembourg have no GUID here because Workday's facet endpoint only
+    // everything and filtering client-side. Iceland has no GUID here because Workday's facet endpoint only
     // returns country values with at least one current posting. If ABB ever
     // opens a role in a tracked country not listed below, it'll be silently
     // dropped the same way until someone re-derives this list from the facet
     // response (POST the jobs endpoint with an empty appliedFacets and read
     // facets[].values[0].values for locationCountry id → name).
     //
-    // Extended for the 2026-08 country expansion (Latvia, Spain, Portugal, Austria, Italy,
-    // Hungary, Croatia, Romania, Bulgaria, Greece, Czechia): 9 new GUIDs were added
+    // Extended for the 2026-08 country expansion (Spain, Portugal, Austria, Italy,
+    // Hungary, Croatia, Romania, Bulgaria, Czechia): 9 new GUIDs were added
     // from a live facet lookup.
     'careers.abb':
         'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=bd34c524a6a04ae6915f5d96fa086199&locationCountry=f2e609fe92974a55a05fc1cdc2852122&locationCountry=2e8c5034deb045d49315417c347472ca&locationCountry=8cd04a563fd94da7b06857a79faaf815&locationCountry=9db257f5937e4421b2fac64eec6832f8&locationCountry=fc078443155c4ad294201ecf5a61a499&locationCountry=1face6f426c14de9979a134697da0db3&locationCountry=25f4875dc598484dbeee857eb2d81652&locationCountry=d004c0d1a6c84511ab048669fcdf9fd7&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=1c026f3b1b8640d8bdfcb95466663e4d&locationCountry=328b82f597514643a7683a78fc67c3f1',
