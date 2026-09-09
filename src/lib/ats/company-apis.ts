@@ -741,8 +741,10 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
         repeatFor: {
             body: [
+                // Localized sites (jobLanguage:'') filter jobCountry by the
+                // local-language country name; the English name returns 0.
                 {
-                    jobCountry: 'Austria',
+                    jobCountry: 'Österreich',
                     countrySite: 'at-de',
                     jobLanguage: '',
                 },
@@ -759,7 +761,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                 },
                 { jobCountry: 'Greece', countrySite: 'gr-en' },
                 { jobCountry: 'Hungary', countrySite: 'hu-en' },
-                { jobCountry: 'Italy', countrySite: 'it-it', jobLanguage: '' },
+                { jobCountry: 'Italia', countrySite: 'it-it', jobLanguage: '' },
                 { jobCountry: 'Latvia', countrySite: 'lv-en' },
                 { jobCountry: 'Luxembourg', countrySite: 'lu-en' },
                 { jobCountry: 'Netherlands', countrySite: 'nl-en' },
@@ -771,7 +773,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
                     jobLanguage: '',
                 },
                 { jobCountry: 'Romania', countrySite: 'ro-en' },
-                { jobCountry: 'Spain', countrySite: 'es-es', jobLanguage: '' },
+                { jobCountry: 'España', countrySite: 'es-es', jobLanguage: '' },
                 { jobCountry: 'Sweden', countrySite: 'se-en' },
                 { jobCountry: 'Switzerland', countrySite: 'ch-en' },
             ],
