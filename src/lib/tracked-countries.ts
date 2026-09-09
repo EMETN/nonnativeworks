@@ -19,4 +19,14 @@ export const TRACKED_COUNTRY_CODES = new Set([
     'BE', // Belgium
     'LU', // Luxembourg
     'CH', // Switzerland
+    'ES', // Spain
+    'PT', // Portugal
+    'AT', // Austria
+    'IT', // Italy
+    'HU', // Hungary
+    'HR', // Croatia
+    'RO', // Romania
+    'BG', // Bulgaria
+    'GR', // Greece
+    'CZ', // Czechia
 ]);

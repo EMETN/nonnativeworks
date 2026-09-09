@@ -499,20 +499,30 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // it's open in, so tagging by the queried mfield2 facet is the only way to match the site.
         repeatFor: {
             body: [
-                'Finland',
-                'Sweden',
-                'Norway',
+                'Austria',
+                'Belgium',
+                'Bulgaria',
+                'Croatia',
+                'Czech Republic',
                 'Denmark',
-                'Iceland',
-                'Netherlands',
-                'Germany',
                 'Estonia',
+                'Finland',
+                'France',
+                'Germany',
+                'Greece',
+                'Hungary',
+                'Iceland',
+                'Italy',
                 'Latvia',
                 'Lithuania',
-                'Poland',
-                'France',
-                'Belgium',
                 'Luxembourg',
+                'Netherlands',
+                'Norway',
+                'Poland',
+                'Portugal',
+                'Romania',
+                'Spain',
+                'Sweden',
                 'Switzerland',
             ].map((country) => ({ facetFilters: { mfield2: [country] } })),
         },
@@ -775,21 +785,40 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
         repeatFor: {
             body: [
-                { jobCountry: 'Finland', countrySite: 'fi-en' },
-                { jobCountry: 'Sweden', countrySite: 'se-en' },
-                { jobCountry: 'Norway', countrySite: 'no-en' },
+                // Localized sites (jobLanguage:'') filter jobCountry by the
+                // local-language country name; the English name returns 0.
+                {
+                    jobCountry: 'Österreich',
+                    countrySite: 'at-de',
+                    jobLanguage: '',
+                },
+                { jobCountry: 'Belgium', countrySite: 'be-en' },
+                { jobCountry: 'Bulgaria', countrySite: 'bg-en' },
+                { jobCountry: 'Czech Republic', countrySite: 'cz-en' },
                 { jobCountry: 'Denmark', countrySite: 'dk-en' },
-                { jobCountry: 'Netherlands', countrySite: 'nl-en' },
+                { jobCountry: 'Finland', countrySite: 'fi-en' },
+                { jobCountry: 'France', countrySite: 'fr-fr', jobLanguage: '' },
                 {
                     jobCountry: 'Deutschland',
                     countrySite: 'de-de',
                     jobLanguage: '',
                 },
+                { jobCountry: 'Greece', countrySite: 'gr-en' },
+                { jobCountry: 'Hungary', countrySite: 'hu-en' },
+                { jobCountry: 'Italia', countrySite: 'it-it', jobLanguage: '' },
                 { jobCountry: 'Latvia', countrySite: 'lv-en' },
-                { jobCountry: 'Poland', countrySite: 'pl-en' },
-                { jobCountry: 'France', countrySite: 'fr-fr', jobLanguage: '' },
-                { jobCountry: 'Belgium', countrySite: 'be-en' },
                 { jobCountry: 'Luxembourg', countrySite: 'lu-en' },
+                { jobCountry: 'Netherlands', countrySite: 'nl-en' },
+                { jobCountry: 'Norway', countrySite: 'no-en' },
+                { jobCountry: 'Poland', countrySite: 'pl-en' },
+                {
+                    jobCountry: 'Portugal',
+                    countrySite: 'pt-pt',
+                    jobLanguage: '',
+                },
+                { jobCountry: 'Romania', countrySite: 'ro-en' },
+                { jobCountry: 'España', countrySite: 'es-es', jobLanguage: '' },
+                { jobCountry: 'Sweden', countrySite: 'se-en' },
                 { jobCountry: 'Switzerland', countrySite: 'ch-en' },
             ],
         },
@@ -827,20 +856,30 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
         repeatFor: {
             body: [
-                { location: 'Finland' },
-                { location: 'Sweden' },
-                { location: 'Norway' },
+                { location: 'Austria' },
+                { location: 'Belgium' },
+                { location: 'Bulgaria' },
+                { location: 'Croatia' },
+                { location: 'Czech Republic' },
                 { location: 'Denmark' },
-                { location: 'Netherlands' },
-                { location: 'Germany' },
                 { location: 'Estonia' },
+                { location: 'Finland' },
+                { location: 'France' },
+                { location: 'Germany' },
+                { location: 'Greece' },
+                { location: 'Hungary' },
+                { location: 'Iceland' },
+                { location: 'Italy' },
                 { location: 'Latvia' },
                 { location: 'Lithuania' },
-                { location: 'Iceland' },
-                { location: 'Belgium' },
-                { location: 'Poland' },
-                { location: 'France' },
                 { location: 'Luxembourg' },
+                { location: 'Netherlands' },
+                { location: 'Norway' },
+                { location: 'Poland' },
+                { location: 'Portugal' },
+                { location: 'Romania' },
+                { location: 'Spain' },
+                { location: 'Sweden' },
                 { location: 'Switzerland' },
             ],
         },
@@ -935,7 +974,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // "Diegem" for Belgium) — so it's kept only for city-list display via extractCitiesForCountry.
         // description_stripped contains the full job description as plain text (no HTML, actual
         // Unicode characters) — sufficient for language classification.
-        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=en-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cde-de%2CDE%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cse-en%2Cen-se%2CSE%2Cnl-nl%2CNL%2Cfr-fr%2Cpl-pl%2Cen-be%2Cen-ch%2Cen-lu&size=200',
+        url: 'https://cg-jobstream-api.azurewebsites.net/api/job-search?country_code=at-de%2Cde-at%2CAT%2CAUT%2Cen-be%2Cbe-en%2CBE%2Ccz-en%2Cen-cz%2CCZ%2CCZE%2Cen-dk%2Cdk-en%2CDK%2CFI%2Cen-fi%2Cfr-fr%2CFRA%2Cde-de%2CDE%2Cen-gr%2Cgr-en%2Chu-en%2Cen-hu%2CHU%2Cit-it%2Cit%2CITA%2Clu-en%2Cen-lu%2CLU%2Cnl-nl%2CNL%2Cno-no%2Cno-en%2Cen-no%2CNO%2Cpl-pl%2Cen-pt%2Cpt-en%2CPRT%2CPT%2Cro-en%2Cen-ro%2CRO%2Ces-es%2Ces%2CESP%2CES%2Cse-en%2Cen-se%2CSE%2Cen-ch%2Cch-en%2CCH%2CCHE&size=200',
         method: 'GET',
         headers: {
             'User-Agent':
@@ -1101,15 +1140,23 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             },
         },
         // Randstad's internal careers site takes one country slug per request.
-        // Only countries with confirmed openings are listed (Nordics/Baltics return 0).
+        // Only countries with confirmed openings are listed (Nordics/Baltics return 0;
+        // Bulgaria also verified 0 live). No working slug found for Spain, Italy, or
+        // Croatia — Randstad likely runs separate national sites for those markets.
         repeatFor: {
             body: [
-                'the-netherlands',
-                'germany',
+                'austria',
                 'belgium',
+                'czech-republic',
                 'france',
+                'germany',
+                'greece',
+                'hungary',
                 'poland',
+                'portugal',
+                'romania',
                 'switzerland',
+                'the-netherlands',
             ].map((country) => ({
                 data: {
                     currentRoute: {
@@ -1302,17 +1349,18 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     // careers.abb is ABB's branded career site; the actual jobs live on Workday.
     // ABB is a huge multinational (~2000 global postings), so the locationCountry
     // params pre-filter server-side to tracked countries only — cheaper than fetching
-    // everything and filtering client-side. This list was missing Latvia and
-    // Luxembourg (verified live: 2 and 1 open postings respectively, silently
-    // dropped). Iceland has no GUID here because Workday's facet endpoint only
-    // returns country values with at least one current posting — ABB has zero
-    // Iceland postings right now, so there's nothing to discover. If ABB ever
+    // everything and filtering client-side. Iceland has no GUID here because Workday's facet endpoint only
+    // returns country values with at least one current posting. If ABB ever
     // opens a role in a tracked country not listed below, it'll be silently
     // dropped the same way until someone re-derives this list from the facet
     // response (POST the jobs endpoint with an empty appliedFacets and read
     // facets[].values[0].values for locationCountry id → name).
+    //
+    // Extended for the 2026-08 country expansion (Spain, Portugal, Austria, Italy,
+    // Hungary, Croatia, Romania, Bulgaria, Czechia): 9 new GUIDs were added
+    // from a live facet lookup.
     'careers.abb':
-        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=1c026f3b1b8640d8bdfcb95466663e4d&locationCountry=328b82f597514643a7683a78fc67c3f1',
+        'https://abb.wd3.myworkdayjobs.com/External_Career_Page?locationCountry=bd34c524a6a04ae6915f5d96fa086199&locationCountry=f2e609fe92974a55a05fc1cdc2852122&locationCountry=2e8c5034deb045d49315417c347472ca&locationCountry=8cd04a563fd94da7b06857a79faaf815&locationCountry=9db257f5937e4421b2fac64eec6832f8&locationCountry=fc078443155c4ad294201ecf5a61a499&locationCountry=1face6f426c14de9979a134697da0db3&locationCountry=25f4875dc598484dbeee857eb2d81652&locationCountry=d004c0d1a6c84511ab048669fcdf9fd7&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=6a800a4736884df5826858d435650f45&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8a0328effd25491fb8e6a08801f08e94&locationCountry=038b0482bfea403abb61c9bcc3d7eb60&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=187134fccb084a0ea9b4b95f23890dbe&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=1c026f3b1b8640d8bdfcb95466663e4d&locationCountry=328b82f597514643a7683a78fc67c3f1',
     // maersk.com is Maersk's branded career site; jobs live on Workday.
     'maersk.com': 'https://maersk.wd3.myworkdayjobs.com/Maersk_Careers',
     // asml.com/careers/find-your-job is a Sitecore/Next.js front end with no
