@@ -15,7 +15,7 @@ import re
 # Ͱ-Ͽ / Ѐ-ӿ match any Greek / Cyrillic character (Greek, Bulgarian) — those
 # scripts have no meaningful "diacritic subset", so the whole block is matched.
 _NON_ASCII_RE = re.compile(
-    r"[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășțáíúőűěřťďňůìòͰ-ϿЀ-ӿ]",
+    r"[äöüåéèêëàâîïôùûçñßãõøæœþðāčēģīķļņšūžąęėįųłńśźżćóășțáíúőűěřťďňůìòýđͰ-ϿЀ-ӿ]",
     re.IGNORECASE,
 )
 
