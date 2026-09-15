@@ -18,29 +18,29 @@ paginated request for each entry in `repeatFor.body` and merges the results.
 
 **Currently tracked countries included (21):**
 
-| Country     | `jobCountry`     | `countrySite` | Notes                          |
-| ----------- | ---------------- | ------------- | ------------------------------ |
+| Country     | `jobCountry`     | `countrySite` | Notes                              |
+| ----------- | ---------------- | ------------- | ---------------------------------- |
 | Austria     | `Österreich`     | `at-de`       | localized site (`jobLanguage: ''`) |
-| Belgium     | `Belgium`        | `be-en`       |                                 |
-| Bulgaria    | `Bulgaria`       | `bg-en`       |                                 |
-| Czechia     | `Czech Republic` | `cz-en`       |                                 |
-| Denmark     | `Denmark`        | `dk-en`       |                                 |
-| Finland     | `Finland`        | `fi-en`       |                                 |
-| France      | `France`         | `fr-fr`       | localized site                 |
-| Germany     | `Deutschland`    | `de-de`       | localized site                 |
-| Greece      | `Greece`         | `gr-en`       |                                 |
-| Hungary     | `Hungary`        | `hu-en`       |                                 |
-| Italy       | `Italia`         | `it-it`       | localized site                 |
-| Latvia      | `Latvia`         | `lv-en`       |                                 |
-| Luxembourg  | `Luxembourg`     | `lu-en`       |                                 |
-| Netherlands | `Netherlands`    | `nl-en`       |                                 |
-| Norway      | `Norway`         | `no-en`       |                                 |
-| Poland      | `Poland`         | `pl-en`       |                                 |
-| Portugal    | `Portugal`       | `pt-pt`       | localized site                 |
-| Romania     | `Romania`        | `ro-en`       |                                 |
-| Spain       | `España`         | `es-es`       | localized site                 |
-| Sweden      | `Sweden`         | `se-en`       |                                 |
-| Switzerland | `Switzerland`    | `ch-en`       |                                 |
+| Belgium     | `Belgium`        | `be-en`       |                                    |
+| Bulgaria    | `Bulgaria`       | `bg-en`       |                                    |
+| Czechia     | `Czech Republic` | `cz-en`       |                                    |
+| Denmark     | `Denmark`        | `dk-en`       |                                    |
+| Finland     | `Finland`        | `fi-en`       |                                    |
+| France      | `France`         | `fr-fr`       | localized site                     |
+| Germany     | `Deutschland`    | `de-de`       | localized site                     |
+| Greece      | `Greece`         | `gr-en`       |                                    |
+| Hungary     | `Hungary`        | `hu-en`       |                                    |
+| Italy       | `Italia`         | `it-it`       | localized site                     |
+| Latvia      | `Latvia`         | `lv-en`       |                                    |
+| Luxembourg  | `Luxembourg`     | `lu-en`       |                                    |
+| Netherlands | `Netherlands`    | `nl-en`       |                                    |
+| Norway      | `Norway`         | `no-en`       |                                    |
+| Poland      | `Poland`         | `pl-en`       |                                    |
+| Portugal    | `Portugal`       | `pt-pt`       | localized site                     |
+| Romania     | `Romania`        | `ro-en`       |                                    |
+| Spain       | `España`         | `es-es`       | localized site                     |
+| Sweden      | `Sweden`         | `se-en`       |                                    |
+| Switzerland | `Switzerland`    | `ch-en`       |                                    |
 
 Localized sites (`jobLanguage: ''`) filter `jobCountry` by the local-language country
 name; the English name returns 0 for those countries.
@@ -75,7 +75,7 @@ in the Airbus section below.
 **Currently included `locationCountry` facet IDs (24 of 25 tracked countries):**
 
 | Country     | `locationCountry` GUID             |
-| ----------- | ----------------------------------- |
+| ----------- | ---------------------------------- |
 | Austria     | `d004c0d1a6c84511ab048669fcdf9fd7` |
 | Belgium     | `a04ea128f43a42e59b1e6a19e8f0b374` |
 | Bulgaria    | `25f4875dc598484dbeee857eb2d81652` |
@@ -130,7 +130,7 @@ correctly left out because Airbus has no roles there.
 **Currently included (14):**
 
 | Country     | `locationCountry` GUID             |
-| ----------- | ----------------------------------- |
+| ----------- | ---------------------------------- |
 | Belgium     | `a04ea128f43a42e59b1e6a19e8f0b374` |
 | Denmark     | `49ab063f422741e2aef271de00efeac8` |
 | Finland     | `0afb2fa656da42e8bfb6d47bd24a26fa` |
