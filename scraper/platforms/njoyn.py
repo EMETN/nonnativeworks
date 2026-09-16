@@ -33,6 +33,16 @@ NJOYN_TRACKED_COUNTRIES = [
     "BE",
     "LU",
     "CH",
+    "ES",
+    "PT",
+    "AT",
+    "IT",
+    "HU",
+    "HR",
+    "RO",
+    "BG",
+    "GR",
+    "CZ",
 ]
 
 # Country names (lowercase) expected for each tracked country code.
@@ -54,6 +64,16 @@ NJOYN_COUNTRY_NAMES: dict[str, list[str]] = {
     "BE": ["belgium", "belgique", "belgië"],
     "LU": ["luxembourg"],
     "CH": ["switzerland", "schweiz", "suisse"],
+    "ES": ["spain", "españa"],
+    "PT": ["portugal"],
+    "AT": ["austria", "österreich"],
+    "IT": ["italy", "italia"],
+    "HU": ["hungary", "magyarország"],
+    "HR": ["croatia", "hrvatska"],
+    "RO": ["romania", "românia"],
+    "BG": ["bulgaria", "българия"],
+    "GR": ["greece", "ελλάδα"],
+    "CZ": ["czech republic", "czechia", "česko"],
 }
 
 # njoyn listing + description enrichment can take 30+ min for large companies.

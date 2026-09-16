@@ -57,6 +57,7 @@ _ROVIO_CITY_TO_CC: dict[str, str] = {
     "tallinn": "EE",
     "riga": "LV",
     "vilnius": "LT",
+    "barcelona": "ES",
 }
 
 # Splits "Helsinki Metropolitan Area or Barcelona or Stockholm" into parts.

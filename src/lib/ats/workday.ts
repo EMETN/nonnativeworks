@@ -16,7 +16,8 @@
  *                 skipped), e.g. "external"
  *
  * Recognised facet query params on the career URL (locationCountry,
- * locationRegionStateProvince, workerSubType, jobFamilyGroup) are captured
+ * Location_Country, locationRegionStateProvince, workerSubType, jobFamilyGroup)
+ * are captured
  * into `appliedFacets` and forwarded to every API request so the server
  * returns only jobs matching those pre-filters (useful for companies whose
  * Workday instance covers multiple countries but we only want one).
@@ -401,6 +402,7 @@ export function parseWorkdayUrl(url: string): WorkdayUrlParts | null {
 
         const FACET_PARAMS = [
             'locationCountry',
+            'Location_Country',
             'Country',
             'locationHierarchy1',
             'locationRegionStateProvince',

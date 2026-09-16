@@ -348,6 +348,10 @@ const NORDIC_LANGUAGE_ADVANTAGE_PHRASES = [
     'nordic language skills are an advantage',
     'nordic language skills are a plus',
     'nordic language skills are preferred',
+    'nordic language skills is considered an advantage',
+    'nordic language skills are considered an advantage',
+    'scandinavian language skills is considered an advantage',
+    'scandinavian language skills are considered an advantage',
     'scandinavian language skills is an advantage',
     'scandinavian language skills is a plus',
     'scandinavian language skills are an advantage',
@@ -542,7 +546,7 @@ function _buildAdvantageRegex(lang: string): RegExp {
     // or any single word (handles typos like "considerd" and extras like "also", "really").
     // The bare "considered(?: as)?" alternative handles ellipsis where "is" is dropped
     // entirely, e.g. "French or German considered a strong advantage".
-    const operatorSuffix = `\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)\\b`;
+    const operatorSuffix = `(?:\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)|\\s+of\\s+(?:an?\\s+)?advantage)\\b`;
     // Gap words in the compound-mention branch must not cross over a DIFFERENT
     // language's name — otherwise "proficiency in Dutch and English (French is
     // considered an asset)" would let "proficiency in Dutch" reach across "and
@@ -607,6 +611,39 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
         `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
         `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
+}
+
+/**
+ * Finds the first match, among all three advantage-regex builders for `lang`,
+ * that overlaps the character range [sigIdx, sigEnd) of a requirement-signal
+ * match. Used to detect when a requirement signal (a naive substring match,
+ * e.g. "english, german" or "english; german") is actually just the leading
+ * part of a larger advantage phrase such as "German or additional European
+ * languages are a plus" or "German of advantage" — cases buildAdvantageRegex
+ * alone doesn't cover since the language-group ("or additional ... languages")
+ * and language-list ("German, French a bonus") phrasings have their own
+ * dedicated builders.
+ */
+function findOverlappingAdvantageMatch(
+    lang: string,
+    combined: string,
+    sigIdx: number,
+    sigEnd: number,
+): RegExpExecArray | null {
+    for (const regex of [
+        buildAdvantageRegex(lang),
+        buildLangListAdvantageRegex(lang),
+        buildLangOrGroupAdvantageRegex(lang),
+    ]) {
+        // Scan every match, not just exec()'s first: an early non-overlapping one must not hide a later overlapping match.
+        const global = regex.global
+            ? regex
+            : new RegExp(regex.source, regex.flags + 'g');
+        for (const m of combined.matchAll(global)) {
+            if (m.index < sigEnd && m.index + m[0].length > sigIdx) return m;
+        }
+    }
+    return null;
 }
 
 function buildAdvantageSignals(lang: string): string[] {
@@ -874,6 +911,14 @@ const REQUIREMENT_NEGATION_ADVANTAGE_RE =
 // e.g. "fluent in German or English" → English is enough, German is not preferred
 const REQUIREMENT_NEGATION_NONE_RE = /\bor\s+(?:in\s+)?english\b/;
 
+// "Our team(s)/company is/are proficient in ... the following languages: ..." — a generic
+// capability statement about the wider organization, not a requirement for this specific
+// role (e.g. "Our teams are proficient in one or more of the following languages: English,
+// French, German, ..., and many more"). Without this guard, the "english, {lang}" list-style
+// requirement signal below fires on the first two languages named in the sentence.
+const GENERIC_LANGUAGE_LIST_PREAMBLE_RE =
+    /\b(?:team|teams|company|organi[sz]ation|staff|colleagues)\s+(?:is|are)\s+proficient\s+in\s+(?:either\s+)?(?:one\s+or\s+more\s+of\s+)?(?:the\s+)?following\s+languages\b/;
+
 // Advantage prefix patterns that immediately precede a requirement signal phrase
 // (within ~80 characters), indicating the language is actually a nice-to-have.
 // e.g. "bonus points if you speak German", "it is meritorious if you have Finnish skills"
@@ -925,7 +970,7 @@ const LANG_AND_OR_ENGLISH_RE = new RegExp(
 // Covers: "is preferred/desirable/beneficial/welcome/nice to have", "would be beneficial",
 // and the buildAdvantageRegex operator patterns (is/are/would be a(n) [adj] advantage/plus/etc.)
 const DIRECT_ADVANTAGE_SUFFIX_RE = new RegExp(
-    `^${ADVANTAGE_SUFFIX_LANG_LIST_GAP}\\s+(?:preferred\\b|(?:is|are)\\s+(?:preferred|preferable|desirable|beneficial|welcome|nice\\s+to\\s+have|considered\\s+an?\\s+additional\\s+qualification)|would\\s+be\\s+(?:preferred|preferable|desirable|beneficial|nice(?:\\s+to\\s+have)?)|(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b|(?:is|are|would\\s+be)\\s+of\\s+(?:\\w+\\s+){0,2}added\\s+value\\b)\\b`,
+    `^${ADVANTAGE_SUFFIX_LANG_LIST_GAP}\\s+(?:preferred\\b|(?:is|are)\\s+(?:preferred|preferable|desirable|beneficial|welcome|nice\\s+to\\s+have|considered\\s+an?\\s+additional\\s+qualification)|would\\s+be\\s+(?:preferred|preferable|desirable|beneficial|nice(?:\\s+to\\s+have)?)|(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b|(?:is|are|would\\s+be)\\s+of\\s+(?:\\w+\\s+){0,2}added\\s+value\\b|of\\s+(?:an?\\s+)?advantage\\b)\\b`,
 );
 
 type NegationKind = 'advantage' | 'none' | false;
@@ -965,6 +1010,11 @@ function requirementNegatedByContext(
 ): NegationKind {
     const idx = combined.indexOf(signal);
     if (idx === -1) return false;
+    // A generic "our teams are proficient in ... the following languages" preamble within
+    // the preceding ~120 characters means this is a company-wide capability list, not a
+    // requirement for this role — even though the signal (e.g. "english, french") matched.
+    const wideBefore = combined.slice(Math.max(0, idx - 120), idx);
+    if (GENERIC_LANGUAGE_LIST_PREAMBLE_RE.test(wideBefore)) return 'none';
     const after = combined.slice(idx + signal.length, idx + signal.length + 80);
     // "or english" must appear in the same clause as the signal — stop at sentence
     // boundaries so that a later "speak either X or English" doesn't negate an
@@ -1309,7 +1359,6 @@ export function detectNativeLanguage(
     // ever checked. This mirrors the exact acceptance logic Phase 2a's per-lang
     // loop uses to decide a genuine (non-negated) requirement match.
     const languageHasGenuineRequirement = (lang: string): boolean => {
-        const langAdvRegex = buildAdvantageRegex(lang);
         for (const signal of buildRequirementSignals(lang)) {
             if (!combined.includes(signal)) continue;
             if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
@@ -1320,14 +1369,13 @@ export function detectNativeLanguage(
             );
             if (negation === 'none' || negation === 'advantage') continue;
             const sigIdx = combined.indexOf(signal);
-            const advOverlap = langAdvRegex.exec(combined);
-            if (
-                advOverlap &&
-                advOverlap.index <= sigIdx &&
-                advOverlap.index + advOverlap[0].length >=
-                    sigIdx + signal.length
-            )
-                continue;
+            const advOverlap = findOverlappingAdvantageMatch(
+                lang,
+                combined,
+                sigIdx,
+                sigIdx + signal.length,
+            );
+            if (advOverlap) continue;
             return true;
         }
         return false;
@@ -1344,11 +1392,29 @@ export function detectNativeLanguage(
                 !languages.includes(kw) && languageHasGenuineRequirement(kw),
         );
 
+    // Same idea as anyGenuineRequirement, but for the group-language requirement
+    // phrases (e.g. "fluency in English and a Nordic language") — these name a
+    // language GROUP rather than a specific tracked keyword, so
+    // languageHasGenuineRequirement can't detect them. Without this, a separate
+    // generic advantage phrase about EXTRA languages beyond the required one
+    // (e.g. "additional European languages are a plus") would short-circuit
+    // Phase 1b before the genuine group requirement is ever checked in Phase 2a.
+    const hasNordicOrBalticRequirement =
+        (NORDIC_COUNTRY_CODES.has(cc) &&
+            NORDIC_LANGUAGE_REQUIREMENT_PHRASES.some((p) =>
+                combined.includes(p),
+            )) ||
+        (BALTIC_COUNTRY_CODES.has(cc) &&
+            BALTIC_LANGUAGE_REQUIREMENT_PHRASES.some((p) =>
+                combined.includes(p),
+            ));
+
     // ── Phase 1b: Advantage-signal pre-filter (before tinyld) ───────────────
     // Check for explicit "X is a plus / an advantage" phrases before running
     // tinyld. See the JSDoc above for why this ordering matters.
     for (const lang of languages) {
-        const hasRequirement = anyGenuineRequirement;
+        const hasRequirement =
+            anyGenuineRequirement || hasNordicOrBalticRequirement;
 
         for (const signal of buildAdvantageSignals(lang)) {
             if (combined.includes(signal)) {
@@ -1427,8 +1493,13 @@ export function detectNativeLanguage(
         }
     }
 
+    // A genuine requirement (specific-language or group-level) always wins over
+    // these group/generic advantage phrases — see hasNordicOrBalticRequirement above.
+    const hasAnyGenuineRequirement =
+        anyGenuineRequirement || hasNordicOrBalticRequirement;
+
     // Group-language advantage phrases (e.g. "fluent in a Nordic language").
-    if (NORDIC_COUNTRY_CODES.has(cc)) {
+    if (NORDIC_COUNTRY_CODES.has(cc) && !hasAnyGenuineRequirement) {
         for (const phrase of NORDIC_LANGUAGE_ADVANTAGE_PHRASES) {
             if (combined.includes(phrase)) {
                 return {
@@ -1447,7 +1518,7 @@ export function detectNativeLanguage(
             }
         }
     }
-    if (BALTIC_COUNTRY_CODES.has(cc)) {
+    if (BALTIC_COUNTRY_CODES.has(cc) && !hasAnyGenuineRequirement) {
         for (const phrase of BALTIC_LANGUAGE_ADVANTAGE_PHRASES) {
             if (combined.includes(phrase)) {
                 return {
@@ -1468,7 +1539,10 @@ export function detectNativeLanguage(
     }
     // "{Language} or other Nordic/Scandinavian/Baltic languages are a plus"
     // "Knowledge of Nordic or Baltic languages is an advantage"
-    if (NORDIC_COUNTRY_CODES.has(cc) || BALTIC_COUNTRY_CODES.has(cc)) {
+    if (
+        (NORDIC_COUNTRY_CODES.has(cc) || BALTIC_COUNTRY_CODES.has(cc)) &&
+        !hasAnyGenuineRequirement
+    ) {
         const LANG_GROUP_RE = /(?:nordic|scandinavian|baltic)/;
         const ADVANTAGE_SUFFIX_RE =
             /(?:(?:is|are|would\s+be)(?:\s+(?:considered|seen\s+as))?\s+)?(?:a(?:n)?\s+)?(?:advantage|plus|bonus|asset|benefit)\b/;
@@ -1504,7 +1578,7 @@ export function detectNativeLanguage(
 
     // Generic "local language is a plus/advantage" — doesn't name the specific language
     // but signals it is a nice-to-have (e.g. "local language is a plus i.e. French, Dutch").
-    if (languages.length > 0) {
+    if (languages.length > 0 && !hasAnyGenuineRequirement) {
         const genericAdvantageMatch = combined.match(
             /\b(?:a\s+)?local language[^.]{0,80}(?:is|are|would\s+be)\s+(?:a\s+)?(?:plus|bonus|advantage|preferred|beneficial|preferable|an?\s+asset)\b/,
         );
@@ -1637,7 +1711,7 @@ export function detectNativeLanguage(
     const genericMatch =
         languages.length > 0
             ? combined.match(
-                  /native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)|in addition to the local language/,
+                  /native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)|in addition to the local language|as well as (?:the )?local languages?\b/,
               )
             : null;
     if (genericMatch) {
@@ -1769,7 +1843,6 @@ export function detectNativeLanguage(
     }
 
     for (const lang of languages) {
-        const langAdvRegex = buildAdvantageRegex(lang);
         for (const signal of buildRequirementSignals(lang)) {
             if (combined.includes(signal)) {
                 if (knowledgeOfSignalIsAdjective(combined, signal)) continue;
@@ -1802,17 +1875,19 @@ export function detectNativeLanguage(
                     }
                     continue;
                 }
-                // If the advantage regex fully contains the requirement signal's match position,
+                // If an advantage regex overlaps the requirement signal's match position,
                 // the requirement phrase is part of a larger advantage phrase (e.g. "dutch speaking
-                // skills on top of that are preferred") — the advantage wins.
+                // skills on top of that are preferred", or "German" ending a signal like "english,
+                // german" immediately followed by "or additional European languages are a plus")
+                // — the advantage wins.
                 const sigIdx = combined.indexOf(signal);
-                const advOverlap = langAdvRegex.exec(combined);
-                if (
-                    advOverlap &&
-                    advOverlap.index <= sigIdx &&
-                    advOverlap.index + advOverlap[0].length >=
-                        sigIdx + signal.length
-                ) {
+                const advOverlap = findOverlappingAdvantageMatch(
+                    lang,
+                    combined,
+                    sigIdx,
+                    sigIdx + signal.length,
+                );
+                if (advOverlap) {
                     if (!anyGenuineRequirement) {
                         return {
                             value: false,

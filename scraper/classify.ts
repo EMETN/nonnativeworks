@@ -30,6 +30,16 @@ const COUNTRY_NAMES: Record<string, string> = {
     BE: 'Belgium',
     LU: 'Luxembourg',
     CH: 'Switzerland',
+    ES: 'Spain',
+    PT: 'Portugal',
+    AT: 'Austria',
+    IT: 'Italy',
+    HU: 'Hungary',
+    HR: 'Croatia',
+    RO: 'Romania',
+    BG: 'Bulgaria',
+    GR: 'Greece',
+    CZ: 'Czech Republic',
 };
 
 interface RawJob {

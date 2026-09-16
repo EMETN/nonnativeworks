@@ -59,6 +59,9 @@ ZALANDO_CITY_TO_CC: dict[str, str] = {
     "Warsaw": "PL",
     "Łódź": "PL",
     "Lodz": "PL",
+    "Bydgoszcz": "PL",
+    "Gardno": "PL",
+    "Gluchow": "PL",
     "Milan": "IT",
     "Lisbon": "PT",
     "Zagreb": "HR",
@@ -70,6 +73,7 @@ ZALANDO_CITY_TO_CC: dict[str, str] = {
     "Tallinn": "EE",
     "Riga": "LV",
     "Vilnius": "LT",
+    "Bucharest": "RO",
 }
 
 _HEADERS = {
