@@ -53,6 +53,9 @@ _strip_chrome, applied to every fetched description page.
 """
 
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 
 import requests
@@ -62,6 +65,12 @@ from extract import build_job
 from title_language import _title_appears_non_english_excluding_cities
 
 MAX_PAGES = 50
+
+# Concurrent description fetches per country site. The six sites are separate
+# domains and also run in parallel, so this is per-host politeness, not a total.
+DESCRIPTION_WORKERS = 4
+DESCRIPTION_FETCH_ATTEMPTS = 3
+_RETRYABLE_STATUSES = {429, 502, 503, 504}
 
 _HEADERS = {
     "User-Agent": (
@@ -307,15 +316,50 @@ def _strip_chrome(html: str) -> str:
 
 
 def _fetch_description(session: requests.Session, job_url: str) -> str:
-    try:
-        resp = session.get(job_url, timeout=20, headers=_HEADERS)
-        resp.raise_for_status()
-        return _strip_chrome(resp.text)
-    except Exception as e:
-        print(
-            f"academicwork: description fetch error ({job_url}): {e}", file=sys.stderr
-        )
-        return ""
+    for attempt in range(1, DESCRIPTION_FETCH_ATTEMPTS + 1):
+        try:
+            resp = session.get(job_url, timeout=20, headers=_HEADERS)
+            if (
+                resp.status_code in _RETRYABLE_STATUSES
+                and attempt < DESCRIPTION_FETCH_ATTEMPTS
+            ):
+                time.sleep(attempt)
+                continue
+            resp.raise_for_status()
+            return _strip_chrome(resp.text)
+        except Exception as e:
+            if attempt < DESCRIPTION_FETCH_ATTEMPTS:
+                time.sleep(attempt)
+                continue
+            print(
+                f"academicwork: description fetch error ({job_url}): {e}",
+                file=sys.stderr,
+            )
+    return ""
+
+
+def _fetch_descriptions(urls: list[str], country: str) -> dict[str, str]:
+    """Fetch descriptions concurrently. One requests.Session per worker thread."""
+    local = threading.local()
+    done = 0
+    lock = threading.Lock()
+
+    def fetch(job_url: str) -> str:
+        nonlocal done
+        if not hasattr(local, "session"):
+            local.session = requests.Session()
+        html = _fetch_description(local.session, job_url)
+        with lock:
+            done += 1
+            if done % 10 == 0:
+                print(
+                    f"academicwork [{country}]: enriched {done}/{len(urls)}",
+                    file=sys.stderr,
+                )
+        return html
+
+    with ThreadPoolExecutor(max_workers=DESCRIPTION_WORKERS) as pool:
+        return dict(zip(urls, pool.map(fetch, urls)))
 
 
 def _scrape_site(session: requests.Session, site: dict) -> list[dict]:
@@ -371,14 +415,7 @@ def _scrape_site(session: requests.Session, site: dict) -> list[dict]:
         file=sys.stderr,
     )
 
-    desc_cache: dict[str, str] = {}
-    for i, job_url in enumerate(unique_urls):
-        desc_cache[job_url] = _fetch_description(session, job_url)
-        if (i + 1) % 10 == 0:
-            print(
-                f"academicwork [{country}]: enriched {i + 1}/{len(unique_urls)}",
-                file=sys.stderr,
-            )
+    desc_cache = _fetch_descriptions(unique_urls, country)
 
     for job in english_jobs:
         html = desc_cache.get(_description_url(job.get("url", ""), site), "")
@@ -404,17 +441,24 @@ def scrape_academicwork_static(url: str) -> list[dict]:
     if site_for_url(url) is None:
         raise ValueError(f"academicwork: no site config matches URL: {url}")
 
-    session = requests.Session()
-    all_jobs: list[dict] = []
-    for domain, site in SITES.items():
+    def scrape_one(item: tuple[str, dict]) -> list[dict]:
+        domain, site = item
         print(f"academicwork: scraping {domain} …", file=sys.stderr)
         try:
-            all_jobs.extend(_scrape_site(session, site))
+            return _scrape_site(requests.Session(), site)
         except Exception as e:
             print(
                 f"academicwork [{site['country_code']}]: site failed: {e}",
                 file=sys.stderr,
             )
+            return []
+
+    # The country sites are independent domains, so scrape them in parallel.
+    # map() keeps SITES order, so the combined job list stays deterministic.
+    all_jobs: list[dict] = []
+    with ThreadPoolExecutor(max_workers=len(SITES)) as pool:
+        for site_jobs in pool.map(scrape_one, SITES.items()):
+            all_jobs.extend(site_jobs)
 
     print(
         f"academicwork: done — {len(all_jobs)} jobs across {len(SITES)} sites",
