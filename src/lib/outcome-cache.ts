@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { createHash } from 'crypto';
 import type { SignalEntry } from './classifiers/language';
@@ -28,7 +28,7 @@ type Store = Record<string, CachedOutcome>;
 
 let _store: Store = {};
 let _dirty = false;
-let _loaded = false;
+let _loadedPath: string | null = null;
 
 export function titleHash(title: string): string {
     return createHash('md5').update(title).digest('hex').slice(0, 8);
@@ -38,10 +38,16 @@ function cacheKey(url: string, countryCode: string): string {
     return `${url}|${countryCode}`;
 }
 
+/**
+ * Load the cache from disk once per process. Scrapes run concurrently, so a
+ * per-request reload would replace the shared in-memory store and drop other
+ * scrapes' unflushed entries.
+ */
 export function load(path: string): void {
+    if (_loadedPath === path) return;
     _store = {};
     _dirty = false;
-    _loaded = true;
+    _loadedPath = path;
     try {
         const raw = readFileSync(path, 'utf-8');
         _store = JSON.parse(raw) as Store;
@@ -58,7 +64,7 @@ export function get(
     countryCode: string,
     currentTitleHash: string,
 ): CachedOutcome | null {
-    if (!_loaded) return null;
+    if (_loadedPath === null) return null;
     const key = cacheKey(url, countryCode);
     const entry = _store[key];
     if (!entry) return null;
@@ -112,7 +118,10 @@ export function flush(path: string): void {
     if (!_dirty) return;
     try {
         mkdirSync(dirname(path), { recursive: true });
-        writeFileSync(path, JSON.stringify(_store));
+        // Write-then-rename so a crash or concurrent reader never sees a partial file.
+        const tmp = `${path}.${process.pid}.tmp`;
+        writeFileSync(tmp, JSON.stringify(_store));
+        renameSync(tmp, path);
         console.log(
             `[outcome-cache] saved ${Object.keys(_store).length} entries`,
         );
