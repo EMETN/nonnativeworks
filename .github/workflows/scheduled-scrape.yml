@@ -148,8 +148,11 @@ jobs:
               if: steps.playwright-cache.outputs.cache-hit == 'true'
               run: playwright install-deps chromium
 
+            # Restore and save are separate steps: the combined actions/cache only saves
+            # when the whole job succeeds, so one failed company (or a timeout) discarded
+            # the cache and every following run started cold.
             - name: Restore outcome cache
-              uses: actions/cache@v6
+              uses: actions/cache/restore@v6
               with:
                   path: cache/outcomes.json
                   key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
@@ -190,6 +193,15 @@ jobs:
                   doppler run -- python scraper/batch_run.py \
                     --api-url http://localhost:4321 \
                     ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+            # always(): save the cache even when some companies failed (and, on a
+            # best-effort basis, when the run is cancelled or hits the timeout).
+            - name: Save outcome cache
+              if: always()
+              uses: actions/cache/save@v6
+              with:
+                  path: cache/outcomes.json
+                  key: outcome-cache-${{ runner.os }}-${{ github.run_id }}
 
             # Rebuild the public site only when the scrape actually uploaded something.
             # Skipped for dry runs and dev-database runs, which must never touch production.
