@@ -167,6 +167,14 @@ export interface CompanyApiConfig {
      * Set this when the job URL requires query params to identify the posting (e.g. ?id=12345).
      */
     keepQueryParams?: boolean;
+    /**
+     * Set when the API answers intermittently with an HTML 404 page (no JSON) even for
+     * pages that exist — bot protection / rate limiting, not "page out of range". The
+     * fetcher then retries such responses with a long backoff instead of treating them
+     * as the end of results, and skips a page that stays blocked rather than stopping.
+     * Leave unset for APIs where a 404/400 genuinely means "past the last page".
+     */
+    retryOnHtml404?: boolean;
     /** Dot-path to the jobs array in the response body. Omit if root is the array. */
     itemsPath?: string;
     /** Optional HTTP headers (e.g. Accept, X-Api-Key). Content-Type is set automatically for POST. */
@@ -1224,6 +1232,10 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             id: 'id',
         },
         urlTemplate: 'https://www.werkenbijabnamro.nl/en/vacancy/{id}/{slug}',
+        // The vacancy API intermittently answers with an HTML 404 even for pages that
+        // exist (seen: pages 1–7 blocked while 8–10 succeeded), so a 404 is not a reliable
+        // end-of-results signal here.
+        retryOnHtml404: true,
         companyName: 'ABN AMRO',
         fetchDescription: true,
     },
