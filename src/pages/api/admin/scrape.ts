@@ -61,10 +61,11 @@ import {
     get as getOutcome,
     set as setOutcome,
     flush as flushOutcomeCache,
-    cachedUrls as getOutcomeCachedUrls,
+    cachedTitleHashes as getCachedOutcomes,
     titleHash,
     CLASSIFIER_VERSION,
 } from '../../../lib/outcome-cache';
+import type { CachedTitleHashes } from '../../../lib/outcome-cache';
 
 export const prerender = false;
 
@@ -194,7 +195,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 });
                 await enrichWorkdayDescriptions(
                     workdayTracked,
-                    getOutcomeCachedUrls(),
+                    getCachedOutcomes(),
                 );
                 companyName =
                     parts.company.charAt(0).toUpperCase() +
@@ -223,7 +224,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 await enrichWorkableDescriptions(
                     trackedJobs,
                     detection.companySlug,
-                    getOutcomeCachedUrls(),
+                    getCachedOutcomes(),
                 );
                 rawJobs = jobs;
                 companyName = name;
@@ -247,7 +248,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                         lookupCountryFromLocation(location).some((c) =>
                             TRACKED_COUNTRY_CODES.has(c.code),
                         ),
-                    getOutcomeCachedUrls(),
+                    getCachedOutcomes(),
                 );
                 if (rawJobs.length > 0) {
                     companyName =
@@ -289,14 +290,14 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         rawJobs = await runPythonScraper(
             scraperPath,
             careerUrl,
-            getOutcomeCachedUrls(),
+            getCachedOutcomes(),
         );
         ats = 'python';
         await enrichDescriptions(
             rawJobs,
             undefined,
             undefined,
-            getOutcomeCachedUrls(),
+            getCachedOutcomes(),
         );
     }
 
@@ -580,7 +581,7 @@ function buildScrapeResult(
 function runPythonScraper(
     scraperPath: string,
     url: string,
-    skipUrls: Set<string>,
+    skipUrls: CachedTitleHashes,
 ): Promise<RawJob[]> {
     return new Promise((resolve, reject) => {
         // Check venv locations in order: system-installed (Docker), local dev fallback
@@ -603,7 +604,7 @@ function runPythonScraper(
             env.PLAYWRIGHT_CDP_URL = cdpUrl;
         }
 
-        // Hand the outcome cache's URLs to Python so it can skip fetching descriptions
+        // Hand the outcome cache (URL → title hash) to Python so it can skip fetching descriptions
         // for jobs Node will classify from cache anyway. Per-call temp dir because
         // several scrapes run concurrently. Best-effort: on failure Python fetches all.
         let skipDir: string | null = null;
@@ -611,7 +612,7 @@ function runPythonScraper(
             try {
                 skipDir = mkdtempSync(join(tmpdir(), 'scraper-skip-'));
                 const skipFile = join(skipDir, 'urls.json');
-                writeFileSync(skipFile, JSON.stringify([...skipUrls]));
+                writeFileSync(skipFile, JSON.stringify(Object.fromEntries(skipUrls)));
                 env.SCRAPER_SKIP_URLS_FILE = skipFile;
             } catch (err) {
                 console.warn('[python-scraper] could not write skip-URL file:', err);

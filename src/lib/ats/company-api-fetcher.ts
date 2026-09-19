@@ -2,6 +2,7 @@ import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
+import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 
 // Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
 const MAX_PAGES = 200;
@@ -469,7 +470,7 @@ export async function enrichDescriptions(
     jobs: RawJob[],
     locationRegex?: RegExp,
     descriptionRegex?: RegExp,
-    skipUrls?: Set<string>,
+    skipUrls?: CachedTitleHashes,
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
@@ -477,7 +478,7 @@ export async function enrichDescriptions(
         // missing its location must be fetched, or location-from-HTML companies hit 0.
         const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
-            !skipUrls?.has(j.url) &&
+            !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
@@ -508,7 +509,7 @@ export async function enrichDescriptions(
                     return;
                 }
                 if (
-                    !skipUrls?.has(job.url!) &&
+                    !isCachedJob(skipUrls, job.url, job.title) &&
                     !titleAppearsNonEnglishExcludingCityNames(job.title) &&
                     !job.descriptionText
                 ) {
@@ -1239,8 +1240,8 @@ export async function fetchCompanyApiJobs(
     config: CompanyApiConfig,
     /** When provided, description enrichment is skipped for jobs not in a tracked country. */
     isTrackedLocation?: (location: string) => boolean,
-    /** URLs with cached classification outcomes — skip description fetching for these. */
-    skipUrls?: Set<string>,
+    /** Cached classification outcomes (URL → title hash) — skip description fetching for matching jobs. */
+    skipUrls?: CachedTitleHashes,
 ): Promise<RawJob[]> {
     const method = config.method ?? 'GET';
     const headers = {
