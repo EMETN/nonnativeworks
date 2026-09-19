@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { spawn } from 'child_process';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { tmpdir } from 'os';
+import { existsSync, mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { detectAts } from '../../../lib/ats/detector';
 import {
     fetchGreenhouseJobs,
@@ -285,7 +286,11 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 `${reason}. Python scraper not found at scraper/main.py — set it up to enable page scraping.`,
             );
         }
-        rawJobs = await runPythonScraper(scraperPath, careerUrl);
+        rawJobs = await runPythonScraper(
+            scraperPath,
+            careerUrl,
+            getOutcomeCachedUrls(),
+        );
         ats = 'python';
         await enrichDescriptions(
             rawJobs,
@@ -572,7 +577,11 @@ function buildScrapeResult(
 //    if (scraperServiceUrl) { /* HTTP call */ } else { /* spawn below */ }
 //
 // ─────────────────────────────────────────────────────────────────────────────
-function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
+function runPythonScraper(
+    scraperPath: string,
+    url: string,
+    skipUrls: Set<string>,
+): Promise<RawJob[]> {
     return new Promise((resolve, reject) => {
         // Check venv locations in order: system-installed (Docker), local dev fallback
         const venvCandidates = [
@@ -594,6 +603,26 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
             env.PLAYWRIGHT_CDP_URL = cdpUrl;
         }
 
+        // Hand the outcome cache's URLs to Python so it can skip fetching descriptions
+        // for jobs Node will classify from cache anyway. Per-call temp dir because
+        // several scrapes run concurrently. Best-effort: on failure Python fetches all.
+        let skipDir: string | null = null;
+        if (skipUrls.size > 0) {
+            try {
+                skipDir = mkdtempSync(join(tmpdir(), 'scraper-skip-'));
+                const skipFile = join(skipDir, 'urls.json');
+                writeFileSync(skipFile, JSON.stringify([...skipUrls]));
+                env.SCRAPER_SKIP_URLS_FILE = skipFile;
+            } catch (err) {
+                console.warn('[python-scraper] could not write skip-URL file:', err);
+                skipDir = null;
+            }
+        }
+        const cleanupSkipFile = () => {
+            if (skipDir) rmSync(skipDir, { recursive: true, force: true });
+            skipDir = null;
+        };
+
         const py = spawn(pythonBin, [scraperPath, url], {
             timeout: PYTHON_TIMEOUT_MS,
             killSignal: 'SIGKILL',
@@ -611,6 +640,7 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
         });
 
         py.on('close', (code) => {
+            cleanupSkipFile();
             console.log('[python-scraper] exit code:', code);
             console.log('[python-scraper] stderr:', stderr.trim() || '(empty)');
             console.log('[python-scraper] stdout:', stdout.trim() || '(empty)');
@@ -638,6 +668,7 @@ function runPythonScraper(scraperPath: string, url: string): Promise<RawJob[]> {
         });
 
         py.on('error', (err) => {
+            cleanupSkipFile();
             console.log('[python-scraper] spawn error:', err.message);
             reject(new Error(`Could not start Python scraper: ${err.message}`));
         });

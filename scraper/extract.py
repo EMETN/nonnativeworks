@@ -5,8 +5,34 @@ Provides heuristic extractors that work across arbitrary career pages,
 plus shared helpers (build_job, deduplicate) used by platform-specific scrapers.
 """
 
+import json
+import os
 import re
+import sys
 from urllib.parse import urljoin, urlparse
+
+_skip_urls: set[str] | None = None
+
+
+def load_skip_urls() -> set[str]:
+    """Job URLs whose classification the Node server already has cached.
+
+    Node writes them to the file named by SCRAPER_SKIP_URLS_FILE. Scrapers use
+    this to skip fetching descriptions for those jobs — the cached outcome is
+    used instead, so the fetch would be wasted. Empty when unset (local runs).
+    """
+    global _skip_urls
+    if _skip_urls is None:
+        _skip_urls = set()
+        path = os.environ.get("SCRAPER_SKIP_URLS_FILE")
+        if path:
+            try:
+                with open(path) as f:
+                    _skip_urls = set(json.load(f))
+            except Exception as e:
+                print(f"could not load skip-URL file {path}: {e}", file=sys.stderr)
+    return _skip_urls
+
 
 JOB_CLASS_PATTERNS = re.compile(
     r"(job|position|opening|vacancy|career|role|listing|posting)",

@@ -61,7 +61,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import build_job
+from extract import build_job, load_skip_urls
 from title_language import _title_appears_non_english_excluding_cities
 
 MAX_PAGES = 50
@@ -398,6 +398,9 @@ def _scrape_site(session: requests.Session, site: dict) -> list[dict]:
     # the classifier sees English page content without local-site boilerplate.
     # The job slug and ID are identical between the local-language and English
     # URL paths.
+    # Jobs whose outcome the Node server has cached are skipped — matched on the
+    # listing URL (job["url"]), not the rewritten description URL.
+    skip_urls = load_skip_urls()
     english_jobs = [
         j
         for j in all_jobs
@@ -405,13 +408,15 @@ def _scrape_site(session: requests.Session, site: dict) -> list[dict]:
             j.get("classifierTitle") or j.get("title", "")
         )
     ]
+    fetch_jobs = [j for j in english_jobs if j.get("url") not in skip_urls]
     unique_urls = list(
         dict.fromkeys(
-            _description_url(j["url"], site) for j in english_jobs if j.get("url")
+            _description_url(j["url"], site) for j in fetch_jobs if j.get("url")
         )
     )
     print(
-        f"academicwork [{country}]: fetching descriptions for {len(unique_urls)} English-titled jobs",
+        f"academicwork [{country}]: fetching descriptions for {len(unique_urls)} English-titled jobs "
+        f"({len(english_jobs) - len(fetch_jobs)} skipped — outcome cached)",
         file=sys.stderr,
     )
 
