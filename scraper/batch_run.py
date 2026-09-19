@@ -171,6 +171,22 @@ def _cleanup_stale_countries(
     resp.raise_for_status()
 
 
+def _format_duration(seconds: float) -> str:
+    minutes, secs = divmod(int(round(seconds)), 60)
+    return f"{minutes}m{secs:02d}s" if minutes else f"{secs}s"
+
+
+def _process_company_timed(
+    company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
+) -> tuple[dict, str]:
+    """Run _process_company and record its wall-clock duration (scrape + upload)."""
+    started = time.monotonic()
+    entry, output = _process_company(company, api_url, secret, dry_run, scrape_timeout)
+    elapsed = time.monotonic() - started
+    entry["duration_s"] = elapsed
+    return entry, f"{output}\n  duration: {_format_duration(elapsed)}"
+
+
 def _process_company(
     company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
 ) -> tuple[dict, str]:
@@ -294,7 +310,7 @@ def _process_company(
     return summary_entry, "\n".join(out)
 
 
-TABLE_HEADER = "| Company | Countries | Positions | Skipped | Status |\n| --- | --- | --- | --- | --- |"
+TABLE_HEADER = "| Company | Countries | Positions | Skipped | Duration | Status |\n| --- | --- | --- | --- | --- | --- |"
 
 
 def _summary_row(e: dict) -> str:
@@ -313,7 +329,8 @@ def _summary_row(e: dict) -> str:
     # Link problem rows (warnings + failures) straight to the career page for verification.
     if e["status"] != "success":
         company = f"[{company}]({e['url']})"
-    return f"| {company} | {countries} | {positions} | {skipped} | {status} |"
+    duration = _format_duration(e["duration_s"]) if "duration_s" in e else "—"
+    return f"| {company} | {countries} | {positions} | {skipped} | {duration} | {status} |"
 
 
 def _write_github_summary(entries: list[dict]) -> None:
@@ -428,7 +445,7 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {
             executor.submit(
-                _process_company,
+                _process_company_timed,
                 company,
                 args.api_url,
                 secret,
@@ -467,6 +484,17 @@ def main() -> int:
         print("\nFailed companies:", file=sys.stderr)
         for f in failures:
             print(f"  {f['url']} — {f['error']}", file=sys.stderr)
+
+    timed = sorted(
+        (e for e in summary_entries if "duration_s" in e),
+        key=lambda e: e["duration_s"],
+        reverse=True,
+    )
+    if timed:
+        print("\nSlowest companies:")
+        for e in timed[:10]:
+            name = e.get("company_name") or e["url"]
+            print(f"  {_format_duration(e['duration_s']):>7}  {name}")
 
     _write_github_summary(summary_entries)
 
