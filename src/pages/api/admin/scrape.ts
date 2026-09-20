@@ -612,10 +612,16 @@ function runPythonScraper(
             try {
                 skipDir = mkdtempSync(join(tmpdir(), 'scraper-skip-'));
                 const skipFile = join(skipDir, 'urls.json');
-                writeFileSync(skipFile, JSON.stringify(Object.fromEntries(skipUrls)));
+                writeFileSync(
+                    skipFile,
+                    JSON.stringify(Object.fromEntries(skipUrls)),
+                );
                 env.SCRAPER_SKIP_URLS_FILE = skipFile;
             } catch (err) {
-                console.warn('[python-scraper] could not write skip-URL file:', err);
+                console.warn(
+                    '[python-scraper] could not write skip-URL file:',
+                    err,
+                );
                 skipDir = null;
             }
         }
