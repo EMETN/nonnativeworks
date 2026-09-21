@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import LOCATION_CLASS_PATTERNS, build_job, job_key, is_cached_job
+from extract import LOCATION_CLASS_PATTERNS, build_job, is_cached_job, job_key
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
@@ -968,7 +968,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     jobs_needing_detail.update(j["url"] for j in multi_loc_jobs if j.get("url"))
     unique_urls = list(dict.fromkeys(jobs_needing_detail))
     cached_skipped = sum(
-        1 for j in english_jobs if is_cached_job(j) and j["url"] not in jobs_needing_detail
+        1
+        for j in english_jobs
+        if is_cached_job(j) and j["url"] not in jobs_needing_detail
     )
     print(
         f"generic [{name}]: fetching details for {len(unique_urls)} jobs "

@@ -330,7 +330,9 @@ def _summary_row(e: dict) -> str:
     if e["status"] != "success":
         company = f"[{company}]({e['url']})"
     duration = _format_duration(e["duration_s"]) if "duration_s" in e else "—"
-    return f"| {company} | {countries} | {positions} | {skipped} | {duration} | {status} |"
+    return (
+        f"| {company} | {countries} | {positions} | {skipped} | {duration} | {status} |"
+    )
 
 
 def _write_github_summary(entries: list[dict]) -> None:

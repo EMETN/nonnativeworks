@@ -359,7 +359,7 @@ def _fetch_descriptions(urls: list[str], country: str) -> dict[str, str]:
         return html
 
     with ThreadPoolExecutor(max_workers=DESCRIPTION_WORKERS) as pool:
-        return dict(zip(urls, pool.map(fetch, urls)))
+        return dict(zip(urls, pool.map(fetch, urls), strict=True))
 
 
 def _scrape_site(session: requests.Session, site: dict) -> list[dict]:
