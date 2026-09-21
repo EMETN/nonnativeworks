@@ -153,14 +153,14 @@ Configured in `scraper/generic_scrapers.yaml`. Each entry matches a career page 
 
 Six extraction modes are supported:
 
-| Mode                  | Description                                                         | Example companies                                                                              |
-| --------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Siemens Healthineers, Scout24, WPP |
-| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                                                          |
-| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                                           |
-| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                                                        |
-| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                                                     |
-| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                                                    |
+| Mode                  | Description                                                         | Example companies                                                                                        |
+| --------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Siemens Healthineers, Scout24, WPP, Heineken |
+| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                                                                    |
+| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                                                     |
+| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                                                                  |
+| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                                                               |
+| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                                                              |
 
 All modes share a two-phase structure:
 
@@ -172,7 +172,7 @@ Additional features:
 - **Country filtering** (`country_filter_param` + `countries`) — runs one paginated fetch per country and merges results (e.g. SAP, Sweco)
 - **Multi-location fan-out** (`detail_location_selector`) — resolves "Multiple Locations" jobs by fetching the detail page and extracting individual locations (e.g. Siemens Healthineers)
 - **Job function extraction** (`job_function_selector`) — extracts department/function from the detail page for category classification
-- **Composite page parameters** (`pagination.value_template` + `pagination.param_join`) — for sites that pack the refinement and the page number into a single query parameter (e.g. WPP: `qs_search_job=refine.country=spain&page=2`)
+- **Composite page parameters** (`pagination.value_template` + `pagination.param_join`) — for sites whose page parameter is not a bare number: Heineken's Drupal multi-pager wants `page=,,2`, and WPP packs the refinement alongside it in `qs_search_job=refine.country=spain&page=2`
 - **Throttling and retry** (`request_delay` + `max_retries`) — spaces requests out and retries 429/5xx responses, for sites that rate-limit (e.g. WPP)
 
 ### Platform-specific scrapers

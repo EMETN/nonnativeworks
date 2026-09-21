@@ -153,6 +153,10 @@ companies:
       url: https://happeo.recruitee.com
       min_positions: 1
 
+    - name: Heineken
+      url: https://careers.theheinekencompany.com/Job-Listing
+      min_positions: 10
+
     - name: Hiab
       url: https://careers.hiab.com/search
       min_positions: 3

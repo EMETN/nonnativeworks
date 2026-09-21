@@ -583,3 +583,46 @@ scrapers:
       location_selector: '.category-location .city'
       description_selector: '.description-info'
       job_function_selector: 'tr:has(td.job-field:-soup-contains("Category")) td.job-field-value'
+
+    # ── Heineken ───────────────────────────────────────────────────────────────
+    # Drupal Views listing, server-rendered. Two quirks:
+    #  • The view sits on pager element 2, so Drupal wants the multi-pager form
+    #    "page=,,N" — a plain "page=N" is silently ignored and every request
+    #    returns page 1. value_template builds it.
+    #  • The page is wired for infinite scroll, but the same markup comes back
+    #    from a plain paginated GET, so no browser is needed.
+    # list_url pins the bare listing URL so the country filter below is the only
+    # source of truth — pasting an already-filtered URL into the admin tab can't
+    # double up the params. The 16 countries are every tracked country Heineken's
+    # own filter offers; it has no FI/SE/NO/DK/IS/EE/LV/LT/LU option at all.
+    - match: 'careers.theheinekencompany.com'
+      name: Heineken
+      list_url: https://careers.theheinekencompany.com/Job-Listing
+      extra_params:
+          field_location_country_code_1[]:
+              - AT
+              - BE
+              - BG
+              - CH
+              - CZ
+              - DE
+              - ES
+              - FR
+              - GR
+              - HR
+              - HU
+              - IT
+              - NL
+              - PL
+              - PT
+              - RO
+      pagination:
+          type: index
+          param: page
+          page_size: 10
+          value_template: ',,{page}'
+      card_selector: '.job-list-item'
+      title_selector: '.job-title a'
+      location_selector: '.job-location .nation'
+      description_selector: '.job-fields'
+      job_function_selector: '.job-meta-grid .function'
