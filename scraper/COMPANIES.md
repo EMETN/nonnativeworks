@@ -76,6 +76,7 @@
 - Volvo Group
 - Wolt
 - Wärtsilä
+- WPP
 - Zalando
 - Yousician
 
@@ -155,6 +156,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Fortum               | `jobs.fortum.com/search`                                    | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Hiab                 | `careers.hiab.com/search`                                   | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
 | Wärtsilä             | `careers.wartsila.com/search`                               | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| WPP                  | `wpp.careersitecloud.com`                                   | `css_cards`                 | One fetch per tracked country; `qs_search_job` carries refinement + page; throttled     |
 | Vestas               | `careers.vestas.com/search`                                 | `css_cards`                 | Paginated `?startrow=N` table; 10 rows per page; descriptions enriched via static fetch |
 | Bolt                 | `bolt.eu/en/careers/positions`                              | `script_json`               | Paginated; 20 rows per page                                                             |
 | UpCloud              | `upcloud.teamtailor.com/jobs`                               | teamtailor                  |                                                                                         |

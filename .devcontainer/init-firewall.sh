@@ -257,6 +257,7 @@ company_domains=(
     "jobs.volvogroup.com"  # Volvo Group
     "careers.wartsila.com"  # Wärtsilä
     "careers.wolt.com"  # Wolt
+    "wpp.careersitecloud.com"  # WPP
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando
 )

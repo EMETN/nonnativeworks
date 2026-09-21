@@ -1418,4 +1418,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },
+    { urlSubstring: 'wpp.careersitecloud.com', name: 'WPP' },
 ];

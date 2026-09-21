@@ -365,6 +365,10 @@ companies:
       url: https://careers.wartsila.com/search
       min_positions: 5
 
+    - name: WPP
+      url: https://wpp.careersitecloud.com/search
+      min_positions: 10
+
     - name: Yousician
       url: https://yousician.com/careers
       min_positions: 0

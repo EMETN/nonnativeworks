@@ -46,6 +46,7 @@ import contextlib
 import json as json_mod
 import re
 import sys
+import time
 from urllib.parse import urljoin
 
 import requests
@@ -74,18 +75,72 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
     "main",
 ]
 
+# Statuses worth a retry: a rate-limit or a transient server/proxy error. A 404
+# or 410 is deliberately absent — that is a deleted posting, not a blip.
+_RETRY_STATUSES = {429, 500, 502, 503, 504}
+
+# Start time of the most recent request, used to space requests out when a
+# config sets request_delay. Module-level because the spacing has to hold across
+# every fetch in a run — listing pages and detail pages alike.
+_last_request_at = 0.0
+
+
+def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.Response:
+    """``session.get()`` with the config's request_delay and max_retries applied.
+
+    request_delay is the minimum gap between the *starts* of two requests, so a
+    slow response doesn't stack extra waiting on top of it. A response with a
+    retryable status is retried with exponential backoff.
+
+    The response is returned as-is, without raise_for_status() — callers keep
+    their own status handling (detail pages, for one, read 404/410 as a posting
+    that no longer exists rather than as a failure).
+    """
+    global _last_request_at
+    delay = cfg.get("request_delay", 0)
+    retries = cfg.get("max_retries", 0)
+
+    for attempt in range(retries + 1):
+        if delay:
+            pending = delay - (time.monotonic() - _last_request_at)
+            if pending > 0:
+                time.sleep(pending)
+        _last_request_at = time.monotonic()
+
+        last_attempt = attempt == retries
+        try:
+            resp = session.get(url, **kwargs)
+        except Exception:
+            if last_attempt:
+                raise
+        else:
+            if last_attempt or resp.status_code not in _RETRY_STATUSES:
+                return resp
+            print(
+                f"generic: HTTP {resp.status_code} on {url} — retrying "
+                f"({attempt + 1}/{retries})",
+                file=sys.stderr,
+            )
+        time.sleep(max(delay, 1) * 2**attempt)
+
 
 # ── css_cards helpers ─────────────────────────────────────────────────────────
 
 
-def _page_param_value(pagination: dict, page_number: int) -> int:
+def _page_param_value(pagination: dict, page_number: int) -> int | str:
     ptype = pagination.get("type", "offset")
     page_size = pagination.get("page_size", 25)
     if ptype == "offset":
-        return page_number * page_size
-    if ptype == "page":
-        return page_number + 1
-    return page_number  # index
+        value = page_number * page_size
+    elif ptype == "page":
+        value = page_number + 1
+    else:
+        value = page_number  # index
+    # value_template wraps the number when the site expects more than a bare
+    # digit in the parameter — e.g. WPP packs "page=3" inside qs_search_job.
+    if template := pagination.get("value_template"):
+        return template.format(page=value)
+    return value
 
 
 def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
@@ -152,7 +207,7 @@ def _fetch_css_cards_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
@@ -260,7 +315,7 @@ def _fetch_attribute_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -372,7 +427,7 @@ def _fetch_script_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -439,7 +494,7 @@ def _fetch_teamtailor_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
@@ -544,7 +599,7 @@ def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
 
 def _fetch_xml_feed(session: requests.Session, url: str, cfg: dict) -> list[dict]:
     try:
-        resp = session.get(url, timeout=30, headers=_HEADERS)
+        resp = _get(session, url, cfg, timeout=30, headers=_HEADERS)
         resp.raise_for_status()
         return _extract_xml_feed(resp.content, cfg, url)
     except Exception as e:
@@ -645,7 +700,7 @@ def _fetch_script_var_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -698,6 +753,7 @@ def _extract_rsc_description(raw_html: str) -> str:
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
+    cfg: dict,
     desc_sel: str | None,
     jf_sel: str | None,
     detail_loc_sel: str | None = None,
@@ -708,7 +764,7 @@ def _fetch_detail_page(
     locations is a list of location strings when detail_loc_sel is set and matches.
     """
     try:
-        resp = session.get(job_url, timeout=20, headers=_HEADERS)
+        resp = _get(session, job_url, cfg, timeout=20, headers=_HEADERS)
         if resp.status_code in _GONE_STATUSES:
             print(
                 f"generic: detail page gone (HTTP {resp.status_code}): {job_url}",
@@ -902,11 +958,16 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             all_jobs.extend(new_jobs)
         else:
             param_name = pagination["param"]
+            param_join = pagination.get("param_join")
             for page_num in range(max_pages):
-                params = {
-                    **base_params,
-                    param_name: _page_param_value(pagination, page_num),
-                }
+                page_value = _page_param_value(pagination, page_num)
+                # Some sites pack the refinement and the page number into one
+                # parameter (WPP: qs_search_job=refine.country=spain&page=2).
+                # param_join appends the page value to whatever the country
+                # filter already put there instead of overwriting it.
+                if param_join and (refinement := base_params.get(param_name)):
+                    page_value = f"{refinement}{param_join}{page_value}"
+                params = {**base_params, param_name: page_value}
                 jobs = fetch_page(session, list_url, params, cfg)
                 print(
                     f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs",
@@ -980,7 +1041,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
 
     detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
     for i, job_url in enumerate(unique_urls):
-        result = _fetch_detail_page(session, job_url, desc_sel, jf_sel, detail_loc_sel)
+        result = _fetch_detail_page(
+            session, job_url, cfg, desc_sel, jf_sel, detail_loc_sel
+        )
         detail_cache[job_url] = result
         if (i + 1) % 10 == 0:
             print(

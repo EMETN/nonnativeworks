@@ -18,6 +18,12 @@
 #                         string value is used as the HTML to extract cards from.
 #                         Use when the endpoint wraps HTML inside a JSON envelope
 #                         (e.g. { "results": "<ul>...</ul>" }).
+#   request_delay         Minimum seconds between the starts of two requests, for
+#                         sites that rate-limit (WPP's nginx 429s above ~1/sec).
+#                         Applies to listing and detail-page fetches alike.
+#                         Default: 0 (no throttling)
+#   max_retries           Retries for a 429 or 5xx response, with exponential
+#                         backoff. Default: 0
 #   description_selector  CSS selector for the job description on the detail page
 #                         Used for language classification (English-titled jobs only).
 #                         Default: tries .jobdescription, .job-description,
@@ -33,6 +39,15 @@
 #   pagination.param      Query-parameter name (e.g. "startrow", "page", "i")
 #   pagination.page_size  Expected results per page; stop when fewer are returned
 #   pagination.max_pages  Safety ceiling (default: 200)
+#   pagination.value_template
+#                         Format string wrapping the computed page value, with a
+#                         {page} placeholder. Use when the site wants more than a
+#                         bare number in the parameter (e.g. "page={page}").
+#   pagination.param_join Separator used to append the page value to a value the
+#                         country filter already set on the same parameter,
+#                         instead of overwriting it. Use when a site packs its
+#                         refinement and page number into one parameter — e.g.
+#                         "&" yields qs_search_job=refine.country=spain&page=2.
 #
 # ── extract_mode: css_cards (default) ────────────────────────────────────────
 #
@@ -485,3 +500,86 @@ scrapers:
       title_selector: 'a.jobTitle-link'
       location_selector: 'div[id$="-desktop-section-location-value"]'
       description_selector: '.jobdescription'
+
+    # ── WPP ────────────────────────────────────────────────────────────────────
+    # CareerSiteCloud. Server-rendered HTML — no browser needed. Every refinement
+    # and the page number are packed into one query parameter as an inner
+    # querystring (qs_search_job=refine.country=spain&page=2), which is what
+    # value_template + param_join build. Without a country filter the full list
+    # is ~2,400 jobs over 119 pages, so filtering per tracked country cuts the
+    # run to a fraction of that and tags every job with an authoritative country.
+    # The site's nginx 429s above roughly one request per second — hence
+    # request_delay; max_retries covers the occasional 429 that still slips
+    # through. The listing card's description is the same boilerplate blurb on
+    # every job, so language classification depends on the detail page.
+    # Country values are the site's own facet slugs ("+" is its space).
+    # Countries with no postings today are kept in the list so new ones get
+    # picked up; each costs one request.
+    - match: 'wpp.careersitecloud.com'
+      name: WPP
+      request_delay: 1
+      max_retries: 3
+      country_filter_param: 'qs_search_job'
+      countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
+          - ES
+          - PT
+          - AT
+          - IT
+          - HU
+          - HR
+          - RO
+          - BG
+          - GR
+          - CZ
+      country_values:
+          FI: 'refine.country=finland'
+          SE: 'refine.country=sweden'
+          'NO': 'refine.country=norway'
+          DK: 'refine.country=denmark'
+          IS: 'refine.country=iceland'
+          NL: 'refine.country=netherlands'
+          DE: 'refine.country=germany'
+          EE: 'refine.country=estonia'
+          LV: 'refine.country=latvia'
+          LT: 'refine.country=lithuania'
+          PL: 'refine.country=poland'
+          FR: 'refine.country=france'
+          BE: 'refine.country=belgium'
+          LU: 'refine.country=luxembourg'
+          CH: 'refine.country=switzerland'
+          ES: 'refine.country=spain'
+          PT: 'refine.country=portugal'
+          AT: 'refine.country=austria'
+          IT: 'refine.country=italy'
+          HU: 'refine.country=hungary'
+          HR: 'refine.country=croatia'
+          RO: 'refine.country=romania'
+          BG: 'refine.country=bulgaria'
+          GR: 'refine.country=greece'
+          CZ: 'refine.country=czech+republic'
+      pagination:
+          type: index
+          param: 'qs_search_job'
+          page_size: 20
+          value_template: 'page={page}'
+          param_join: '&'
+      card_selector: '.job-listing-full li'
+      title_selector: 'h3 a'
+      location_selector: '.category-location .city'
+      description_selector: '.description-info'
+      job_function_selector: 'tr:has(td.job-field:-soup-contains("Category")) td.job-field-value'
