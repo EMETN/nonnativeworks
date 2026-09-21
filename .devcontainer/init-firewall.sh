@@ -196,7 +196,6 @@ company_domains=(
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo
-    "careers.theheinekencompany.com"  # Heineken
     "careers.hiab.com"  # Hiab
     "if.wd3.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA

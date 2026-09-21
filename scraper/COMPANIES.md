@@ -7,6 +7,7 @@
 - AlphaSense
 - Arla
 - Barona (local script)
+- Bayer
 - Bolt
 - Booking.com
 - Capgemini
@@ -106,24 +107,25 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostname.
 
-| Company            | Hostname                                     | API type                                                          |
-| ------------------ | -------------------------------------------- | ----------------------------------------------------------------- |
-| OP Financial Group | `op-careers.fi`                              | Custom recruiting API (POST, Polylang locale)                     |
-| Nokia              | `jobs.nokia.com`                             | Oracle HCM Recruiting Cloud                                       |
-| Nets/Nexi          | `fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                       |
-| Orion              | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                       |
-| Gofore             | `gofore.com`                                 | WordPress REST API (Polylang)                                     |
-| Nordea             | `nordea.com`                                 | Custom Nordea API                                                 |
-| Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                      |
-| Accenture          | `accenture.com`                              | Custom API                                                        |
-| Booking.com        | `jobs.booking.com`                           | Custom API                                                        |
-| Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                 |
-| Capgemini          | `capgemini.com/careers`                      | Custom API                                                        |
-| Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                        |
-| Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                        |
-| Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                     |
-| Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings) |
-| E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)             |
+| Company            | Hostname                                     | API type                                                                  |
+| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------- |
+| OP Financial Group | `op-careers.fi`                              | Custom recruiting API (POST, Polylang locale)                             |
+| Nokia              | `jobs.nokia.com`                             | Oracle HCM Recruiting Cloud                                               |
+| Nets/Nexi          | `fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                               |
+| Orion              | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                               |
+| Gofore             | `gofore.com`                                 | WordPress REST API (Polylang)                                             |
+| Nordea             | `nordea.com`                                 | Custom Nordea API                                                         |
+| Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                              |
+| Accenture          | `accenture.com`                              | Custom API                                                                |
+| Booking.com        | `jobs.booking.com`                           | Custom API                                                                |
+| Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                         |
+| Capgemini          | `capgemini.com/careers`                      | Custom API                                                                |
+| Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                                |
+| Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                                |
+| Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                             |
+| Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings)         |
+| E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                     |
+| Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions) |
 
 ---
 
