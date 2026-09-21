@@ -4,6 +4,7 @@
 - Academic Work
 - Accenture
 - Airbus
+- Allianz
 - AlphaSense
 - Arla
 - Barona (local script)

@@ -144,6 +144,7 @@ ats_domains=(
 # CDN/multi-node hosts — each edge answers with a different slice of the IP pool, so these
 # are resolved separately below via several DNS resolvers (not the single-resolver loop).
 cdn_domains=(
+    "careers.allianz.com"  # Allianz — CloudFront, rotates IPs
     "jobs.booking.com"  # Booking.com
     "careers.futurice.com"  # Futurice
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
@@ -165,7 +166,6 @@ company_domains=(
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
     "akqa.com"  # AKQA
-    "careers.allianz.com"  # Allianz
     "alpha-sense.com"  # AlphaSense
     "careers.amd.com"  # AMD
     "jobs.arla.com"  # Arla

@@ -79,6 +79,9 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
 # or 410 is deliberately absent — that is a deleted posting, not a blip.
 _RETRY_STATUSES = {429, 500, 502, 503, 504}
 
+# Ceiling for the retry backoff, so a large max_retries cannot stall a run.
+_MAX_BACKOFF_SECONDS = 60
+
 # Start time of the most recent request, used to space requests out when a
 # config sets request_delay. Module-level because the spacing has to hold across
 # every fetch in a run — listing pages and detail pages alike.
@@ -121,7 +124,9 @@ def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.R
                 f"({attempt + 1}/{retries})",
                 file=sys.stderr,
             )
-        time.sleep(max(delay, 1) * 2**attempt)
+        # Capped: an uncapped doubling reaches tens of minutes on a config with
+        # a generous max_retries, which stalls a run rather than recovering it.
+        time.sleep(min(max(delay, 1) * 2**attempt, _MAX_BACKOFF_SECONDS))
 
 
 # ── css_cards helpers ─────────────────────────────────────────────────────────
@@ -659,6 +664,8 @@ def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
     url_field = fields.get("url", "url")
     location_field = fields.get("location")
     jf_field = fields.get("job_function")
+    desc_field = fields.get("description")
+    url_template = cfg.get("url_template")
 
     items = _find_jobs_payload(html)
 
@@ -677,8 +684,18 @@ def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
         if not title:
             continue
 
-        raw_url = _get_nested(item, url_field)
-        job_url = urljoin(base_url, raw_url) if raw_url else None
+        if url_template:
+            # Built from payload fields rather than read from one, for sites whose
+            # listing carries no link to the job page (Allianz's only URL field is
+            # its SuccessFactors application form, not the posting itself).
+            job_url = re.sub(
+                r"\{([\w.]+)\}",
+                lambda m, it=item: str(_get_nested(it, m.group(1)) or ""),
+                url_template,
+            )
+        else:
+            raw_url = _get_nested(item, url_field)
+            job_url = urljoin(base_url, raw_url) if raw_url else None
 
         location = _get_nested(item, location_field)
         jf = _get_nested(item, jf_field) if jf_field else None
@@ -687,6 +704,12 @@ def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
 
         if jf:
             job["jobFunction"] = jf
+
+        # A description carried in the listing payload (e.g. Allianz's
+        # descriptionTeaser) is written straight onto the job, which lets the
+        # enrichment phase below skip the detail page entirely.
+        if desc_field and (desc := _get_nested(item, desc_field)):
+            job["descriptionText"] = desc
 
         jobs.append(job)
 
@@ -1012,6 +1035,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         for j in all_jobs
         if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and (j.get("country_code") or is_tracked_location(j.get("location")))
+        # A listing that already carried its own description needs no detail
+        # fetch — there is nothing the page would add for classification.
+        and not (j.get("descriptionText") or j.get("descriptionHtml"))
     ]
     multi_loc_jobs = (
         [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)]

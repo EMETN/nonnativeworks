@@ -53,6 +53,10 @@ companies:
       url: https://aiven.io/careers/job
       min_positions: 10
 
+    - name: Allianz
+      url: https://careers.allianz.com/global/en/search-results
+      min_positions: 10
+
     - name: AlphaSense
       url: https://www.alpha-sense.com/careers
       min_positions: 1

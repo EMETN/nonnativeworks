@@ -118,6 +118,14 @@
 #   fields.country_subfield   Key within each location object for country code
 #                             One job is created per location object (fan-out).
 #   fields.job_function   Dot-path to job function/department string
+#   url_template          (script_var_json) Job URL built from payload fields with
+#                         {field} placeholders, e.g.
+#                         'https://example.com/job/{jobId}'. Use instead of
+#                         fields.url when the listing carries no link to the posting.
+#   fields.description    (script_var_json) Key holding description text already in
+#                         the listing payload. When set, the job skips the detail-page
+#                         fetch entirely — use when the payload carries enough text for
+#                         language classification (e.g. Allianz's descriptionTeaser).
 
 # ── extract_mode: teamtailor ──────────────────────────────────────────────────
 #
@@ -165,8 +173,19 @@ scrapers:
           job_function: header.teamTitle
 
     # ── Allianz ────────────────────────────────────────────────────────────────────
+    # Phenom People site fronted by CloudFront; jobs come from the phApp payload.
+    # location uses cityStateCountry, not city: the bare city resolves to a country
+    # for barely half the board (COQUELLES, LOGROÑO, TRIESTE, "Upcountry" and the
+    # like are not in the city map), while "WARSZAWA, Poland" resolves every time.
+    # descriptionTeaser is 200+ chars of the posting's own language, so it feeds the
+    # language classifier directly and no detail page is fetched.
+    # The payload has no link to the posting itself — applyUrl and imApplyUrl both
+    # point at the SuccessFactors application form — so url_template rebuilds the
+    # real job page from jobId. The trailing title slug the site puts on its own
+    # links is decorative: the id alone serves the right posting.
     - match: 'careers.allianz.com/global/en/search-results'
       name: Allianz
+      max_retries: 3
       extract_mode: script_var_json
       var_name: phApp
       data_path: data.jobs
@@ -176,10 +195,12 @@ scrapers:
           page_size: 10
       extra_params:
           s: 1
+      url_template: 'https://careers.allianz.com/global/en/job/{jobId}'
       fields:
           title: title
-          url: applyUrl
-          location: city
+          location: cityStateCountry
+          job_function: category
+          description: descriptionTeaser
 
       # ── Metso ────────────────────────────────────────────────────────────────────
     - match: 'metso.com/corporate/careers/open-jobs'
