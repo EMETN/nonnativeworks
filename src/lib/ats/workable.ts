@@ -1,5 +1,6 @@
 import type { RawJob } from './types';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
+import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 
 const DESCRIPTION_BATCH = 1;
 
@@ -79,13 +80,13 @@ export async function fetchWorkableJobs(account: string): Promise<RawJob[]> {
 export async function enrichWorkableDescriptions(
     jobs: RawJob[],
     account: string,
-    skipUrls?: Set<string>,
+    skipUrls?: CachedTitleHashes,
 ): Promise<void> {
     const targets = jobs.filter(
         (j) =>
             j.sourceId &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
-            !(j.url && skipUrls?.has(j.url)),
+            !isCachedJob(skipUrls, j.url, j.title),
     );
     console.log(
         `[workable] fetching descriptions for ${targets.length} of ${jobs.length} jobs`,

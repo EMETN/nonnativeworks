@@ -5,8 +5,49 @@ Provides heuristic extractors that work across arbitrary career pages,
 plus shared helpers (build_job, deduplicate) used by platform-specific scrapers.
 """
 
+import hashlib
+import json
+import os
 import re
+import sys
 from urllib.parse import urljoin, urlparse
+
+_cached_title_hashes: dict[str, str] | None = None
+
+
+def title_hash(title: str) -> str:
+    """Same as titleHash() in src/lib/outcome-cache.ts: first 8 hex chars of md5(title)."""
+    return hashlib.md5(title.encode("utf-8")).hexdigest()[:8]
+
+
+def _load_cached_title_hashes() -> dict[str, str]:
+    global _cached_title_hashes
+    if _cached_title_hashes is None:
+        _cached_title_hashes = {}
+        path = os.environ.get("SCRAPER_SKIP_URLS_FILE")
+        if path:
+            try:
+                with open(path) as f:
+                    _cached_title_hashes = dict(json.load(f))
+            except Exception as e:
+                print(f"could not load skip-URL file {path}: {e}", file=sys.stderr)
+    return _cached_title_hashes
+
+
+def is_cached_job(job: dict) -> bool:
+    """True when the Node server has this job's classification cached under its current title.
+
+    Node writes {url: titleHash} to the file named by SCRAPER_SKIP_URLS_FILE. Scrapers
+    skip fetching descriptions for these jobs — Node uses the cached outcome, so the
+    fetch would be wasted. A changed title makes Node's cache miss, so it must not be
+    skipped. Always False when the variable is unset (local runs).
+    """
+    url = job.get("url")
+    if not url:
+        return False
+    cached = _load_cached_title_hashes().get(url)
+    return cached is not None and cached == title_hash(job.get("title", ""))
+
 
 JOB_CLASS_PATTERNS = re.compile(
     r"(job|position|opening|vacancy|career|role|listing|posting)",

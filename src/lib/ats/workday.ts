@@ -89,6 +89,7 @@
 
 import type { RawJob } from './types';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
+import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
@@ -293,12 +294,12 @@ async function fetchWorkdayDescriptionOnce(job: RawJob): Promise<boolean> {
 
 export async function enrichWorkdayDescriptions(
     jobs: RawJob[],
-    skipUrls?: Set<string>,
+    skipUrls?: CachedTitleHashes,
 ): Promise<void> {
     const targets = jobs.filter(
         (j) =>
             j.url &&
-            !skipUrls?.has(j.url) &&
+            !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionText,
     );

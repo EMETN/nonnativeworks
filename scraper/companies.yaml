@@ -119,7 +119,7 @@ companies:
 
     - name: Equinor
       url: https://equinor.wd3.myworkdayjobs.com/EQNR
-      min_positions: 5
+      min_positions: 1
 
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
@@ -158,7 +158,7 @@ companies:
       min_positions: 3
 
     - name: If
-      url: https://if.wd3.myworkdayjobs.com/Careers
+      url: https://if.wd502.myworkdayjobs.com/Careers
       min_positions: 5
 
     - name: ING
@@ -247,7 +247,7 @@ companies:
 
     - name: Prosus
       url: https://jobs.eu.lever.co/prosus
-      min_positions: 3
+      min_positions: 0
 
     - name: Proton
       url: https://proton.me/careers

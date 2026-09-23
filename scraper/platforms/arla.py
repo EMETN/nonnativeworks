@@ -33,7 +33,7 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
-from extract import build_job
+from extract import build_job, is_cached_job
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
@@ -227,10 +227,13 @@ def scrape_arla_static(url: str) -> list[dict]:
         if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and is_tracked_location(j.get("location"))
     ]
-    unique_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
+    all_urls = list(dict.fromkeys(j["url"] for j in english_jobs if j.get("url")))
+    cached_urls = {j["url"] for j in english_jobs if is_cached_job(j)}
+    unique_urls = [u for u in all_urls if u not in cached_urls]
 
     print(
-        f"arla: fetching descriptions for {len(unique_urls)} unique English-titled tracked-country jobs",
+        f"arla: fetching descriptions for {len(unique_urls)} unique English-titled tracked-country jobs "
+        f"({len(all_urls) - len(unique_urls)} skipped — outcome cached)",
         file=sys.stderr,
     )
 

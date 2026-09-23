@@ -2,6 +2,7 @@ import type { RawJob } from './types';
 import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
+import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 
 // Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
 const MAX_PAGES = 200;
@@ -354,12 +355,17 @@ function buildFormData(body: Record<string, unknown>): FormData {
     return fd;
 }
 
+// Backoff between attempts for APIs flagged retryOnHtml404. Blocks last longer than
+// the ordinary 1s/2s retry, so wait progressively longer before giving up on a page.
+const HTML_404_BACKOFF_MS = [3000, 6000, 12000, 20000];
+
 async function fetchPage(
     url: string,
     method: 'GET' | 'POST',
     body: Record<string, unknown> | undefined,
     headers: Record<string, string>,
     bodyType: 'json' | 'multipart' = 'json',
+    retryOnHtml404 = false,
 ): Promise<unknown> {
     const init: RequestInit = {
         method,
@@ -379,8 +385,17 @@ async function fetchPage(
     }
     let lastStatus = 0;
     let lastError: unknown;
-    for (let attempt = 0; attempt < 3; attempt++) {
-        if (attempt > 0) await sleep(1000 * attempt);
+    const maxAttempts = retryOnHtml404 ? HTML_404_BACKOFF_MS.length + 1 : 3;
+    let blockedByHtml404 = false;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        if (attempt > 0) {
+            await sleep(
+                blockedByHtml404
+                    ? HTML_404_BACKOFF_MS[attempt - 1]
+                    : 1000 * attempt,
+            );
+        }
+        blockedByHtml404 = false;
         let res: Response;
         try {
             res = await fetch(url, init);
@@ -390,7 +405,7 @@ async function fetchPage(
             // than aborting the whole company scrape on the first attempt.
             lastError = err;
             console.warn(
-                `[fetchPage] attempt ${attempt + 1}/3 threw for ${url}: ${
+                `[fetchPage] attempt ${attempt + 1}/${maxAttempts} threw for ${url}: ${
                     err instanceof Error ? err.message : String(err)
                 }`,
             );
@@ -411,12 +426,22 @@ async function fetchPage(
             res.status === 404 &&
             !(res.headers.get('content-type') ?? '').includes('json')
         ) {
+            if (retryOnHtml404) {
+                // Not "end of results" for this API — retry, and only give up (null)
+                // once every attempt has been blocked.
+                console.warn(
+                    `[fetchPage] attempt ${attempt + 1}/${maxAttempts} got HTML 404 for ${url}`,
+                );
+                blockedByHtml404 = true;
+                if (attempt === maxAttempts - 1) return null;
+                continue;
+            }
             return null;
         }
         if (res.ok) return res.json();
         lastStatus = res.status;
         console.warn(
-            `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
+            `[fetchPage] attempt ${attempt + 1}/${maxAttempts} got ${res.status} for ${url}`,
         );
     }
     // Retries cover genuine transient failures (5xx, a JSON-formatted error from the
@@ -469,7 +494,7 @@ export async function enrichDescriptions(
     jobs: RawJob[],
     locationRegex?: RegExp,
     descriptionRegex?: RegExp,
-    skipUrls?: Set<string>,
+    skipUrls?: CachedTitleHashes,
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
@@ -477,7 +502,7 @@ export async function enrichDescriptions(
         // missing its location must be fetched, or location-from-HTML companies hit 0.
         const wantsLocation = !!locationRegex && !j.location;
         const wantsDescription =
-            !skipUrls?.has(j.url) &&
+            !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
@@ -508,7 +533,7 @@ export async function enrichDescriptions(
                     return;
                 }
                 if (
-                    !skipUrls?.has(job.url!) &&
+                    !isCachedJob(skipUrls, job.url, job.title) &&
                     !titleAppearsNonEnglishExcludingCityNames(job.title) &&
                     !job.descriptionText
                 ) {
@@ -759,6 +784,7 @@ interface FetchSpec {
     urlTemplate?: string;
     urlPlaceholders?: Record<string, string>;
     keepQueryParams?: boolean;
+    retryOnHtml404?: boolean;
     expandSecondaryLocations?: CompanyApiConfig['expandSecondaryLocations'];
     descriptionFields?: string[];
 }
@@ -849,6 +875,7 @@ async function fetchAllJobsRaw(
         urlTemplate,
         urlPlaceholders,
         keepQueryParams,
+        retryOnHtml404,
         expandSecondaryLocations,
         descriptionFields,
     } = spec;
@@ -884,6 +911,10 @@ async function fetchAllJobsRaw(
         // Track unique jobs for the stop condition — cross-page duplicates must not
         // count toward the total, otherwise we stop early and miss real jobs.
         const uniqueKeys = new Set<string>();
+        // With retryOnHtml404 a blocked page is skipped, not treated as the end; only
+        // several blocked pages in a row (or a run of them at the very end) stop the loop.
+        const MAX_CONSECUTIVE_BLOCKED = 3;
+        let consecutiveBlocked = 0;
 
         for (let i = 0; i < MAX_PAGES; i++, page++) {
             const pageUrl =
@@ -903,14 +934,30 @@ async function fetchAllJobsRaw(
                 pageBody,
                 headers,
                 bodyType,
+                retryOnHtml404,
             );
 
             if (!data) {
+                if (retryOnHtml404) {
+                    consecutiveBlocked++;
+                    console.warn(
+                        `[${label}] page=${page} stayed blocked after retries (${consecutiveBlocked}/${MAX_CONSECUTIVE_BLOCKED} in a row)`,
+                    );
+                    if (consecutiveBlocked >= MAX_CONSECUTIVE_BLOCKED) {
+                        console.log(
+                            `[${label}] stopping: ${MAX_CONSECUTIVE_BLOCKED} blocked pages in a row`,
+                        );
+                        break;
+                    }
+                    await sleep(randomDelay());
+                    continue;
+                }
                 console.log(
                     `[${label}] stopping: null response at page=${page} (400 = page out of range)`,
                 );
                 break;
             }
+            consecutiveBlocked = 0;
 
             // Extract total count from first page if a path is configured
             if (totalCount === undefined && pagination.totalCountPath) {
@@ -957,6 +1004,15 @@ async function fetchAllJobsRaw(
             }
 
             await sleep(randomDelay());
+        }
+        if (
+            retryOnHtml404 &&
+            totalCount !== undefined &&
+            uniqueKeys.size < totalCount
+        ) {
+            console.warn(
+                `[${label}] only ${uniqueKeys.size} of ${totalCount} jobs fetched — some pages stayed blocked`,
+            );
         }
     } else if (pagination.type === 'offset') {
         const param = pagination.param ?? 'offset';
@@ -1239,8 +1295,8 @@ export async function fetchCompanyApiJobs(
     config: CompanyApiConfig,
     /** When provided, description enrichment is skipped for jobs not in a tracked country. */
     isTrackedLocation?: (location: string) => boolean,
-    /** URLs with cached classification outcomes — skip description fetching for these. */
-    skipUrls?: Set<string>,
+    /** Cached classification outcomes (URL → title hash) — skip description fetching for matching jobs. */
+    skipUrls?: CachedTitleHashes,
 ): Promise<RawJob[]> {
     const method = config.method ?? 'GET';
     const headers = {
@@ -1261,6 +1317,7 @@ export async function fetchCompanyApiJobs(
         urlTemplate: config.urlTemplate,
         urlPlaceholders: config.urlPlaceholders,
         keepQueryParams: config.keepQueryParams,
+        retryOnHtml404: config.retryOnHtml404,
         expandSecondaryLocations: config.expandSecondaryLocations,
         descriptionFields: config.descriptionFields,
     };
