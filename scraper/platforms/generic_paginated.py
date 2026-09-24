@@ -47,6 +47,7 @@ import json as json_mod
 import re
 import sys
 import time
+from html import unescape
 from urllib.parse import urljoin
 
 import requests
@@ -773,6 +774,38 @@ def _extract_rsc_description(raw_html: str) -> str:
     return "<div>" + "".join(str(p) for p in parts) + "</div>"
 
 
+def _extract_json_description(raw_html: str, key: str) -> str:
+    """Longest string value stored under ``key`` in a page's embedded JSON.
+
+    Some career sites render the posting client-side, so the description never
+    reaches the DOM and no CSS selector can see it — it exists only inside a
+    script payload (Allianz's Phenom People pages are the case this was written
+    for). The longest match wins because such payloads usually repeat the field,
+    once HTML-escaped and once not, alongside shorter teaser variants.
+    """
+    best = ""
+    for m in re.finditer(re.escape(f'"{key}"') + r'\s*:\s*"', raw_html):
+        i = m.end()
+        buf: list[str] = []
+        while i < len(raw_html):
+            char = raw_html[i]
+            if char == "\\":
+                buf.append(raw_html[i : i + 2])
+                i += 2
+                continue
+            if char == '"':
+                break
+            buf.append(char)
+            i += 1
+        if len(buf) > len(best):
+            best = "".join(buf)
+    if not best:
+        return ""
+    with contextlib.suppress(Exception):
+        best = json_mod.loads(f'"{best}"')
+    return unescape(best)
+
+
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
@@ -780,6 +813,7 @@ def _fetch_detail_page(
     desc_sel: str | None,
     jf_sel: str | None,
     detail_loc_sel: str | None = None,
+    json_desc_key: str | None = None,
 ) -> tuple[str, str | None, list[str] | None, bool]:
     """Fetch a job detail page and return (description_html, job_function, locations, gone).
 
@@ -829,6 +863,10 @@ def _fetch_detail_page(
             rsc_html = _extract_rsc_description(raw_html)
             if rsc_html:
                 desc_html = rsc_html
+            elif json_desc_key:
+                json_desc = _extract_json_description(raw_html, json_desc_key)
+                if json_desc:
+                    desc_html = json_desc
 
         job_function = None
         if jf_sel:
@@ -900,6 +938,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     desc_sel = cfg.get("description_selector")
     jf_sel = cfg.get("job_function_selector")
     detail_loc_sel = cfg.get("detail_location_selector")
+    json_desc_key = cfg.get("description_json_key")
     list_url = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
     country_filter_param: str | None = cfg.get("country_filter_param")
@@ -1030,14 +1069,18 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # and the TS-side fallback then does an unfiltered full-page fetch instead —
     # picking up local-language nav/cookie-consent/footer text and producing
     # false native-language-requirement signals on an English-language posting.
+    # Every English-titled job in a tracked country fetches its detail page, even
+    # when the listing already carried a description. A listing teaser cannot
+    # stand in for the real posting: the Python-side language heuristic here
+    # fires on a single non-ASCII character, while the classifier downstream
+    # counts native characters and needs far more of them. Allianz's ~300-char
+    # German teasers sit between the two, so short-circuiting on them silently
+    # classified plainly German postings as English-friendly.
     english_jobs = [
         j
         for j in all_jobs
         if not _title_appears_non_english_excluding_cities(j.get("title", ""))
         and (j.get("country_code") or is_tracked_location(j.get("location")))
-        # A listing that already carried its own description needs no detail
-        # fetch — there is nothing the page would add for classification.
-        and not (j.get("descriptionText") or j.get("descriptionHtml"))
     ]
     multi_loc_jobs = (
         [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)]
@@ -1068,7 +1111,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
     for i, job_url in enumerate(unique_urls):
         result = _fetch_detail_page(
-            session, job_url, cfg, desc_sel, jf_sel, detail_loc_sel
+            session, job_url, cfg, desc_sel, jf_sel, detail_loc_sel, json_desc_key
         )
         detail_cache[job_url] = result
         if (i + 1) % 10 == 0:

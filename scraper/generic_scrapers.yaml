@@ -123,9 +123,15 @@
 #                         'https://example.com/job/{jobId}'. Use instead of
 #                         fields.url when the listing carries no link to the posting.
 #   fields.description    (script_var_json) Key holding description text already in
-#                         the listing payload. When set, the job skips the detail-page
-#                         fetch entirely — use when the payload carries enough text for
-#                         language classification (e.g. Allianz's descriptionTeaser).
+#                         the listing payload. Used as a fallback when the detail
+#                         page yields nothing — it never replaces that fetch. A
+#                         listing teaser is usually too short to classify language
+#                         from, so treating one as sufficient silently marks
+#                         local-language postings as English-friendly.
+#   description_json_key  Key to read the description from in the detail page's
+#                         embedded JSON, for sites that render the posting
+#                         client-side so no CSS selector can reach it. Tried only
+#                         when description_selector yields too little text.
 
 # ── extract_mode: teamtailor ──────────────────────────────────────────────────
 #
@@ -177,8 +183,12 @@ scrapers:
     # location uses cityStateCountry, not city: the bare city resolves to a country
     # for barely half the board (COQUELLES, LOGROÑO, TRIESTE, "Upcountry" and the
     # like are not in the city map), while "WARSZAWA, Poland" resolves every time.
-    # descriptionTeaser is 200+ chars of the posting's own language, so it feeds the
-    # language classifier directly and no detail page is fetched.
+    # Every job fetches its detail page. descriptionTeaser is kept only as a
+    # fallback for when that fetch yields nothing — it is far too short to decide
+    # the language question on its own: a ~300-char German teaser carries too few
+    # umlauts for the classifier's character count and reads as English to it.
+    # The posting's description lives in a script payload rather than the DOM,
+    # hence description_json_key instead of a CSS selector.
     # The payload has no link to the posting itself — applyUrl and imApplyUrl both
     # point at the SuccessFactors application form — so url_template rebuilds the
     # real job page from jobId. The trailing title slug the site puts on its own
@@ -196,6 +206,7 @@ scrapers:
       extra_params:
           s: 1
       url_template: 'https://careers.allianz.com/global/en/job/{jobId}'
+      description_json_key: description
       fields:
           title: title
           location: cityStateCountry
