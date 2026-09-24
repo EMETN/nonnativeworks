@@ -185,6 +185,12 @@ companies:
       url: https://konecranes.careers/jobs
       min_positions: 10
 
+    # 337 positions across 11 tracked countries today, 258 of them in Germany,
+    # so the floor only has to catch a broken run, not a slow hiring quarter.
+    - name: Lufthansa Group
+      url: https://apply.lufthansagroup.careers/index.php?ac=search_result&search_criterion_channel%5B%5D=12&language=2
+      min_positions: 50
+
     - name: Maersk
       url: https://www.maersk.com/careers
       min_positions: 5

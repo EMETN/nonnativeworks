@@ -1383,6 +1383,81 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         descriptionFields: ['data.description'],
         companyName: 'AMD',
     },
+
+    // Lufthansa Group's own job board (milch & zucker "Global Job Board"). The page
+    // at apply.lufthansagroup.careers renders nothing server-side — the listing is a
+    // DataTable widget that GETs/POSTs an HR-XML search request to api-apply. The
+    // request below is the site's own, with the PublicationChannel.Code 12 criterion
+    // from the pasted URL's search_criterion_channel[]=12 (the public/external channel).
+    // CountItem is deliberately larger than the board: the site itself asks for 10000
+    // in one request when its map view is enabled, and the response carries the grand
+    // total (SearchResultCountAll), so a single request is provably complete — 386 of
+    // 386 today. There is no offset pagination here because FirstItem is 1-based while
+    // the fetcher's offsets are 0-based, which would duplicate one job per page boundary.
+    'apply.lufthansagroup.careers': {
+        url: 'https://api-apply.lufthansagroup.careers/search/',
+        method: 'POST',
+        body: {
+            LanguageCode: 'EN',
+            SearchParameters: {
+                FirstItem: 1,
+                CountItem: 10000,
+                Sort: [
+                    { Criterion: 'PublicationStartDate', Direction: 'DESC' },
+                ],
+                // The API only returns the descriptor fields it is asked for.
+                MatchedObjectDescriptor: [
+                    'ID',
+                    'PositionTitle',
+                    'PositionLocation.CountryName',
+                    'PositionLocation.CityName',
+                    'JobCategory.Name',
+                ],
+            },
+            SearchCriteria: [
+                {
+                    CriterionName: 'PublicationChannel.Code',
+                    CriterionValue: ['12'],
+                },
+            ],
+        },
+        pagination: { type: 'none' },
+        itemsPath: 'SearchResult.SearchResultItems',
+        companyName: 'Lufthansa Group',
+        fields: {
+            title: 'MatchedObjectDescriptor.PositionTitle',
+            // PositionLocation is an array; every posting has at least one entry and
+            // all 386 carry both a city and a country name. Indexing [0] takes the
+            // primary location — see the note on multi-location postings below.
+            location: 'MatchedObjectDescriptor.PositionLocation.0.CityName',
+            country: 'MatchedObjectDescriptor.PositionLocation.0.CountryName',
+            jobFunction: 'MatchedObjectDescriptor.JobCategory.0.Name',
+            id: 'MatchedObjectId',
+        },
+        // Ten postings list more than one location; nine of them stay inside one
+        // country (extra cities only), one spans Germany and Switzerland. Grouped-city
+        // expansion can't be used: it compares the secondary entries' country against
+        // the primary's ISO code, and this API gives country *names* on both sides.
+        // Taking the primary location costs one Swiss row and some secondary cities,
+        // which is cheaper than the wrong fix.
+        //
+        // PositionURI omits the language param, and the job page defaults to German
+        // chrome — so build the URL with language=2 (English) instead. The id lives in
+        // the query string, hence keepQueryParams.
+        urlTemplate:
+            'https://apply.lufthansagroup.careers/index.php?ac=jobad&id={MatchedObjectDescriptor.ID}&language=2',
+        keepQueryParams: true,
+        // The search response carries no description at all, and the title cannot
+        // decide the language question here: LanguageCode: 'EN' serves the English
+        // title whenever a posting has been translated, so a German-only role can
+        // still arrive with an English-looking title. The detail page is authoritative
+        // — it serves the German body verbatim when no English version exists, under
+        // English chrome. descriptionFromHtml cuts that chrome away (and the company
+        // boilerplate that follows), leaving the intro, facts, tasks and requirements.
+        fetchDescription: true,
+        descriptionFromHtml:
+            '(<div class="lh-jobad-intro">.*?)<div class="about-company',
+    },
 };
 
 // ─── Career URL aliases ───────────────────────────────────────────────────────

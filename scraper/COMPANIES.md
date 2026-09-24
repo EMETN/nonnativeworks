@@ -33,6 +33,7 @@
 - ING
 - Kone
 - Konecranes
+- Lufthansa Group
 - Maersk
 - Mapbox
 - Metso
@@ -127,6 +128,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings)         |
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                     |
 | Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions) |
+| Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)       |
 
 ---
 
