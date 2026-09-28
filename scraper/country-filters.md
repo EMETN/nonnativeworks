@@ -151,3 +151,67 @@ the same facet endpoint as ABB, `https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Ai
 
 **How to add a new country:** same method as ABB — run a live facet lookup, then append
 `&locationCountry=<id>` to the `Airbus` entry's `url` in `companies.yaml`.
+
+---
+
+## Siemens and Siemens Healthineers — `scraper/generic_scrapers.yaml` → `extra_params`
+
+Both run on the same Avature tenant, and their country refinement takes a JSON array
+of numeric option IDs. The facet's **field number differs per portal** — `42414` for
+`jobs.siemens.com`, `42420` for `jobs.siemens-healthineers.com` — but the option IDs
+behind it are tenant-wide, so both configs carry the same 25 IDs in the same order.
+(The per-field `_format` value differs too: `17570` and `17573`.)
+
+Unfiltered, Siemens' board is far larger than the tracked world, so the filter is what
+keeps that scrape to ~1,270 postings instead of everything Siemens has open globally.
+`list_url` pins the bare search URL so this array is the only source of truth — a
+facet-filtered URL pasted into the admin tab is ignored.
+
+For Healthineers the filter had the opposite problem: it listed only 9 countries, which
+showed 41 of 93 postings. Single-country roles in the other 16 were dropped, and the
+only Portuguese or Spanish jobs that appeared did so via multi-location postings that
+also touched a listed country. Both lists are now the full 25.
+
+**All 25 tracked countries are included, in both configs:**
+
+| Country     | Option ID |
+| ----------- | --------- |
+| Austria     | `812123`  |
+| Belgium     | `812131`  |
+| Bulgaria    | `812009`  |
+| Croatia     | `812145`  |
+| Czechia     | `812141`  |
+| Denmark     | `812124`  |
+| Estonia     | `812008`  |
+| Finland     | `812020`  |
+| France      | `812134`  |
+| Germany     | `812132`  |
+| Greece      | `811990`  |
+| Hungary     | `812024`  |
+| Iceland     | `812126`  |
+| Italy       | `812120`  |
+| Latvia      | `812010`  |
+| Lithuania   | `812011`  |
+| Luxembourg  | `812133`  |
+| Netherlands | `812130`  |
+| Norway      | `812027`  |
+| Poland      | `812023`  |
+| Portugal    | `812097`  |
+| Romania     | `812022`  |
+| Spain       | `812119`  |
+| Sweden      | `812013`  |
+| Switzerland | `812129`  |
+
+The IDs are Avature dataset option IDs, not per-facet values, so the same numbers also
+work for the `42386[]` country field on Siemens' own search form.
+
+**How to find a new country's ID:** the portal serves the whole country list from its
+own autocomplete datasource. POST to
+`https://jobs.siemens.com/en_US/externaljobs/_wizardPortalDatasetSingleColumnOptionsSearchApi`
+with `Content-Type: application/json` and a body built from the `42386` field's
+`ValuesDatasource` settings — those live in the `avature.wizard.config` meta tag on
+`https://jobs.siemens.com/en_US/externaljobs/SearchJobs/`, and the call needs
+`datasetSchemaSpecId`, `datasetFieldSchemaFieldId`, `schemaFieldIdToUseForIndirectFiltering`,
+`filters` and `optionFormatComponents` copied across, plus `limit: 300`. The response is
+`{"results": [{"id": 812123, "name": "Austria"}, …]}` for all 187 countries. Append the
+new ID to **both** the `42414` and `42420` arrays (and to the table above).

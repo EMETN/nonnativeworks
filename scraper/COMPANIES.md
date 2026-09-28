@@ -61,6 +61,7 @@
 - SAP
 - Scout24
 - SEB
+- Siemens (local script)
 - Siemens Healthineers
 - Smartly
 - SOK
@@ -170,7 +171,8 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                         |
 | Nordnet              | `career.nordnetab.com/jobs`                                 | teamtailor                  |
 | Tekever              | `careers.tekever.com/jobs`                                  | teamtailor                  |
-| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                           |
+| Siemens              | `jobs.siemens.com/en_US/externaljobs/SearchJobs`            | `css_cards`                 | Local run only; ~212 pages at 6 rows/page. Host rate-limits under load                  |
+| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page; same 25-country facet IDs as Siemens                     |
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                           |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                           |
 | Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                  |

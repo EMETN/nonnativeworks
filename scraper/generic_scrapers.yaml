@@ -22,6 +22,12 @@
 #                         sites that rate-limit (WPP's nginx 429s above ~1/sec).
 #                         Applies to listing and detail-page fetches alike.
 #                         Default: 0 (no throttling)
+#   concurrency           Requests in flight at once, for listing pages and detail
+#                         pages alike. Default: 1 (one at a time; forced to 1
+#                         whenever request_delay is set). Raising it is the single
+#                         biggest speed-up available on a slow-rendering site, but
+#                         verify against a FULL run first — five in flight over
+#                         ~1,000 Siemens pages earned a tenant-wide IP block.
 #   max_retries           Retries for a 429 or 5xx response, with exponential
 #                         backoff. Default: 0
 #   description_selector  CSS selector for the job description on the detail page
@@ -384,12 +390,19 @@ scrapers:
       url_selector: 'a.js-vacancy-link'
 
     # ── Siemens Healthineers ─────────────────────────────────────────────────────
-    # Oracle/Taleo-style career site. The 42420 param is a country/region facet
-    # filter (numeric IDs), folderRecordsPerPage controls page size.
+    # Avature portal, same tenant and markup as Siemens below. The 42420 param is
+    # the country facet (numeric option IDs), folderRecordsPerPage the page size.
+    # The facet field number differs per portal (42420 here, 42414 for Siemens) but
+    # the option IDs behind it are tenant-wide, so both lists are the same 25 IDs,
+    # in the order of the table in scraper/country-filters.md.
+    # This used to list only 9 countries, which left 41 of 93 postings visible:
+    # single-country roles in the other 16 were dropped outright, and the only
+    # reason any Portuguese or Spanish job showed up was a multi-location posting
+    # that happened to also touch a listed country.
     - match: 'jobs.siemens-healthineers.com'
       name: Siemens Healthineers
       extra_params:
-          '42420': '[812124,812008,812020,812132,812010,812011,812130,812027,812013]'
+          '42420': '[812123,812131,812009,812145,812141,812124,812008,812020,812134,812132,811990,812024,812126,812120,812010,812011,812133,812130,812027,812023,812097,812022,812119,812013,812129]'
           '42420_format': '17573'
           listFilterMode: '1'
           folderRecordsPerPage: '6'
@@ -397,6 +410,44 @@ scrapers:
           type: offset
           param: folderOffset
           page_size: 6
+      card_selector: 'article.article--result'
+      title_selector: 'h3.article__header__text__title a.link'
+      location_selector: 'span.list-item-location'
+      description_selector: '#section1__content .article__content__view__field__value'
+      detail_location_selector: 'ul.list--locations li'
+
+    # ── Siemens ──────────────────────────────────────────────────────────────────
+    # Avature portal, same markup family as Siemens Healthineers above — but a far
+    # bigger board: ~1,270 postings across the 25 tracked-country facets, served 6
+    # to a page (folderRecordsPerPage is capped server-side; 25/50/100 all return 6).
+    # That is ~212 listing pages plus a detail fetch per English-titled job: ~45
+    # minutes, which is why Siemens lives in companies-local.yaml rather than the
+    # scheduled companies.yaml. Leave it serial — see the note there before setting
+    # `concurrency`, which is fast but is what earned a tenant-wide IP block.
+    # list_url pins the bare search URL so extra_params is the only source of truth —
+    # the facet-filtered URL an operator pastes into the admin tab would otherwise be
+    # appended to these params, sending 42414 twice.
+    # The 42414 facet is the country refinement — one numeric option ID per country,
+    # all 25 tracked ones listed here in the same order as the table in
+    # scraper/country-filters.md. 42414_format and listFilterMode come from the
+    # site's own filtered URL and are required — dropping them drops the filter.
+    # About 28% of cards read "Multiple Locations" rather than a city, so
+    # detail_location_selector resolves those from the detail page and fans them out
+    # into one entry per country they cover.
+    - match: 'jobs.siemens.com'
+      name: Siemens
+      list_url: https://jobs.siemens.com/en_US/externaljobs/SearchJobs/
+      extra_params:
+          '42414': '[812123,812131,812009,812145,812141,812124,812008,812020,812134,812132,811990,812024,812126,812120,812010,812011,812133,812130,812027,812023,812097,812022,812119,812013,812129]'
+          '42414_format': '17570'
+          listFilterMode: '1'
+          folderRecordsPerPage: '6'
+      pagination:
+          type: offset
+          param: folderOffset
+          page_size: 6
+          # ~212 pages today; the 200 default would silently cut the tail.
+          max_pages: 300
       card_selector: 'article.article--result'
       title_selector: 'h3.article__header__text__title a.link'
       location_selector: 'span.list-item-location'

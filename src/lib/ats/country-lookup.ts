@@ -181,6 +181,10 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     turkey: { name: 'Turkey', code: 'TR', slug: 'turkey' },
     türkiye: { name: 'Turkey', code: 'TR', slug: 'turkey' },
     turkiye: { name: 'Turkey', code: 'TR', slug: 'turkey' },
+    // Siemens' Avature portal transliterates umlauts (also "Zuerich"), so its
+    // Istanbul postings arrived as an unresolvable location rather than a clean
+    // untracked skip.
+    tuerkiye: { name: 'Turkey', code: 'TR', slug: 'turkey' },
     // North America
     barbados: { name: 'Barbados', code: 'BB', slug: 'barbados' },
     belize: { name: 'Belize', code: 'BZ', slug: 'belize' },

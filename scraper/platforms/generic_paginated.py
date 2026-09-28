@@ -47,6 +47,7 @@ import json as json_mod
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 from urllib.parse import urljoin
 
@@ -55,7 +56,7 @@ from bs4 import BeautifulSoup
 
 from extract import LOCATION_CLASS_PATTERNS, build_job, is_cached_job, job_key
 from title_language import _title_appears_non_english_excluding_cities
-from tracked_countries import is_tracked_location
+from tracked_countries import TRACKED_NAMES, is_tracked_location
 
 _HEADERS = {
     "User-Agent": (
@@ -67,6 +68,27 @@ _HEADERS = {
 }
 
 _DEFAULT_MAX_PAGES = 200
+
+# Pages fetched at once, per config. These sites spend seconds rendering a page
+# server-side, so fetching one at a time makes the wall clock a multiple of the
+# work — Siemens measured 3.3s per listing page serially against 0.7s at five in
+# flight, and Neste's board came back identical in half the time.
+#
+# The default is nevertheless 1, i.e. exactly the behaviour every config had
+# before this knob existed. Concurrency is opt-in per config because the cost of
+# guessing wrong is not a slow scrape but a ban: a sustained ~1,000-page run
+# against jobs.siemens.com at five in flight drew nginx 406s partway through and
+# then a blanket IP block across the whole Avature tenant, taking Siemens
+# Healthineers offline with it. Raise this only for a site you have watched hold
+# up under a full run.
+#
+# A config that sets request_delay is throttled on purpose and always stays
+# serial, whatever this says.
+_DEFAULT_CONCURRENCY = 1
+
+# Breather between batches, mirroring enrichDescriptions: sustained bursts with
+# no pacing at all are what trips WAFs, not the concurrency itself.
+_BATCH_PAUSE_SECONDS = 0.5
 
 _DESCRIPTION_SELECTOR_FALLBACKS = [
     ".jobdescription",
@@ -204,6 +226,50 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
                     break
 
     return build_job(title, job_url, location)
+
+
+def _concurrency(cfg: dict) -> int:
+    """How many requests this config may have in flight at once."""
+    if cfg.get("request_delay"):
+        return 1
+    return max(1, int(cfg.get("concurrency", _DEFAULT_CONCURRENCY)))
+
+
+def _map_concurrently(fn, items: list, workers: int, pool: list) -> list:
+    """Run fn(item, session) over items, `workers` at a time, preserving order.
+    Falls back to a plain serial loop when workers == 1."""
+    if workers == 1 or len(items) <= 1:
+        return [fn(item, pool[0]) for item in items]
+    results: list = []
+    for start in range(0, len(items), workers):
+        chunk = items[start : start + workers]
+        with ThreadPoolExecutor(max_workers=len(chunk)) as ex:
+            results.extend(
+                ex.map(lambda p: fn(p[1], pool[p[0] % workers]), enumerate(chunk))
+            )
+        if start + workers < len(items):
+            time.sleep(_BATCH_PAUSE_SECONDS)
+    return results
+
+
+# Longest first so "czech republic" wins over "czech" and the key stays stable.
+_COUNTRY_NAMES_BY_LENGTH = sorted(TRACKED_NAMES, key=len, reverse=True)
+
+
+def _country_key(location: str) -> str:
+    """Group key for a detail-page location string such as "Zuerich - Zuerich -
+    Switzerland". Returns the tracked country name it mentions, or the string
+    itself when none is recognised (so it groups only with identical entries)."""
+    loc = location.lower()
+    for name in _COUNTRY_NAMES_BY_LENGTH:
+        if name in loc:
+            return name
+    return loc
+
+
+def _city_of(location: str) -> str:
+    """First segment of a "City - State - Country" detail-page location."""
+    return location.split(" - ")[0].strip()
 
 
 def _fetch_css_cards_page(
@@ -947,7 +1013,10 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     locale_param: str | None = cfg.get("locale_param")
     locales: list[str] = cfg.get("locales", [])
 
-    session = requests.Session()
+    # One Session per worker — a Session is not meant to be shared across threads.
+    # sessions[0] is the one used wherever a fetch stays serial.
+    sessions = [requests.Session() for _ in range(_concurrency(cfg))]
+    session = sessions[0]
 
     country_from_select = cfg.get("country_from_select")
     if country_from_select and country_filter_param:
@@ -989,6 +1058,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # leaving per-job location text to resolve the country as usual.
     all_jobs: list[dict] = []
     seen_keys: set[str] = set()
+    workers = len(sessions)
 
     if country_filter_param and countries:
         param_sets: list[tuple[dict, str | None]] = [
@@ -1021,7 +1091,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         else:
             param_name = pagination["param"]
             param_join = pagination.get("param_join")
-            for page_num in range(max_pages):
+
+            def _params_for(
+                page_num: int,
+                base_params: dict = base_params,
+                param_name: str = param_name,
+                param_join: str | None = param_join,
+            ) -> dict:
                 page_value = _page_param_value(pagination, page_num)
                 # Some sites pack the refinement and the page number into one
                 # parameter (WPP: qs_search_job=refine.country=spain&page=2).
@@ -1029,21 +1105,44 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
                 # filter already put there instead of overwriting it.
                 if param_join and (refinement := base_params.get(param_name)):
                     page_value = f"{refinement}{param_join}{page_value}"
-                params = {**base_params, param_name: page_value}
-                jobs = fetch_page(session, list_url, params, cfg)
-                print(
-                    f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs",
-                    file=sys.stderr,
+                return {**base_params, param_name: page_value}
+
+            # Pages come in batches of `workers`. The end of the list is still a
+            # page that returns fewer than page_size rows, and results are
+            # consumed in order, so a batch that overshoots the last page is
+            # simply discarded — the job set is identical to fetching serially.
+            # (Overshooting is harmless even where a past-the-end page wraps back
+            # to page 1, as Carlsberg's does: those rows are dropped here anyway.)
+            done = False
+            for batch_start in range(0, max_pages, workers):
+                page_nums = list(
+                    range(batch_start, min(batch_start + workers, max_pages))
                 )
+                pages = _map_concurrently(
+                    lambda n, sess, _p=_params_for: fetch_page(
+                        sess, list_url, _p(n), cfg
+                    ),
+                    page_nums,
+                    workers,
+                    sessions,
+                )
+                for page_num, jobs in zip(page_nums, pages, strict=True):
+                    print(
+                        f"{prefix}: {param_name}={_params_for(page_num)[param_name]}"
+                        f" → {len(jobs)} jobs",
+                        file=sys.stderr,
+                    )
+                    new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
+                    for j in new_jobs:
+                        seen_keys.add(job_key(j))
+                        if country_code:
+                            j["country_code"] = country_code
+                    all_jobs.extend(new_jobs)
 
-                new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
-                for j in new_jobs:
-                    seen_keys.add(job_key(j))
-                    if country_code:
-                        j["country_code"] = country_code
-                all_jobs.extend(new_jobs)
-
-                if len(jobs) < page_size:
+                    if len(jobs) < page_size:
+                        done = True
+                        break
+                if done:
                     break
 
     print(f"generic [{name}]: collected {len(all_jobs)} jobs", file=sys.stderr)
@@ -1108,17 +1207,17 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         file=sys.stderr,
     )
 
-    detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
-    for i, job_url in enumerate(unique_urls):
-        result = _fetch_detail_page(
-            session, job_url, cfg, desc_sel, jf_sel, detail_loc_sel, json_desc_key
-        )
-        detail_cache[job_url] = result
-        if (i + 1) % 10 == 0:
-            print(
-                f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}",
-                file=sys.stderr,
-            )
+    detail_results = _map_concurrently(
+        lambda job_url, sess: _fetch_detail_page(
+            sess, job_url, cfg, desc_sel, jf_sel, detail_loc_sel, json_desc_key
+        ),
+        unique_urls,
+        workers,
+        sessions,
+    )
+    detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = dict(
+        zip(unique_urls, detail_results, strict=True)
+    )
 
     gone_urls: set[str] = {u for u, (_, _, _, gone) in detail_cache.items() if gone}
     if gone_urls:
@@ -1139,7 +1238,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         if job_function and not job.get("jobFunction"):
             job["jobFunction"] = job_function
 
-    # Fan out multi-location jobs into one entry per resolved location
+    # Fan out multi-location jobs into one entry per resolved COUNTRY — not one
+    # per location. A posting open in five Swiss cities is one position offered in
+    # Switzerland, and emitting a row per city inflated the country's count
+    # fivefold. The extra cities ride along in job["cities"], which the TypeScript
+    # side uses verbatim instead of re-deriving them from the location string.
+    # Locations whose country can't be identified keep the old one-row-each
+    # behaviour, since there is nothing to group them by.
     if detail_loc_sel:
         expanded: list[dict] = []
         for job in all_jobs:
@@ -1153,9 +1258,15 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             if not locations:
                 expanded.append(job)
                 continue
+            grouped: dict[str, list[str]] = {}
             for loc in locations:
+                grouped.setdefault(_country_key(loc), []).append(loc)
+            for locs in grouped.values():
                 copy = dict(job)
-                copy["location"] = loc
+                copy["location"] = locs[0]
+                cities = [c for c in (_city_of(loc) for loc in locs) if c]
+                if cities:
+                    copy["cities"] = cities
                 expanded.append(copy)
         if len(expanded) != len(all_jobs):
             print(
