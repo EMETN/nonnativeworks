@@ -96,15 +96,13 @@ const breadcrumbJsonLd =
         />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {
-            breadcrumbJsonLd && (
-                <script
-                    is:inline
-                    type="application/ld+json"
-                    set:html={breadcrumbJsonLd}
-                />
-            )
-        }
+        {breadcrumbJsonLd && (
+            <script
+                is:inline
+                type="application/ld+json"
+                set:html={breadcrumbJsonLd}
+            />
+        )}
 
         <!-- Self-hosted Inter variable font — preload to avoid swap flicker -->
         <link
