@@ -1398,7 +1398,11 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'nordnetab.com', name: 'Nordnet' },
     { urlSubstring: 'upcloud.teamtailor.com', name: 'UpCloud' },
     {
-        urlSubstring: 'jobs.siemens-healthineers.com',
+        urlSubstring: 'careers.siemens-healthineers.com',
+        name: 'Siemens Healthineers',
+    },
+    {
+        urlSubstring: 'onehealthineers.wd3.myworkdayjobs.com',
         name: 'Siemens Healthineers',
     },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },

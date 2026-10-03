@@ -89,15 +89,15 @@ Which companies are handled at each layer. Layers run in order and stop as soon 
 
 Detected automatically from the career page URL. No per-company config needed — just submit the ATS-hosted URL.
 
-| ATS             | URL pattern                                         | Companies using it                                                                                                                          |
-| --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                              |
-| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                         |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                             |
-| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                  |
-| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
-| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                      |
-| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                         |
+| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                       |
+| --------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                           |
+| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                      |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                                                                                          |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                               |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`) |
+| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                   |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                      |
 
 ---
 
@@ -162,7 +162,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                                                                                               |
 | Nordnet              | `career.nordnetab.com/jobs`                                 | teamtailor                  |
 | Tekever              | `careers.tekever.com/jobs`                                  | teamtailor                  |
-| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                                                                                                 |
+| Siemens Healthineers | `careers.siemens-healthineers.com/global/en/search-results` | `phenom_api`                | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Workday tenant merged in as `extra_urls`                                |
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                                                                                                 |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                                                                                                 |
 | Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                                                                                        |

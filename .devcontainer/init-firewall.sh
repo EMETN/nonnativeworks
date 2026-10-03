@@ -236,7 +236,8 @@ company_domains=(
     "scout24.com"  # Scout24
     "sebgroup.com"  # SEB
     "jobs.siemens.com"  # Siemens
-    "jobs.siemens-healthineers.com"  # Siemens Healthineers
+    "careers.siemens-healthineers.com"  # Siemens Healthineers
+    "onehealthineers.wd3.myworkdayjobs.com"  # Siemens Healthineers (Workday)
     "sok.wd502.myworkdayjobs.com"  # SOK
     "solita.fi"  # Solita
     "api.lifeatspotify.com"  # Spotify — jobs JSON API (career page loads listings from here)

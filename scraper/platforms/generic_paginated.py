@@ -4,7 +4,7 @@ Config-driven static HTML scraper.
 Handles career sites that render jobs as plain HTML. Driven by entries in
 scraper/generic_scrapers.yaml — no new Python file needed to add a company.
 
-Three extraction modes (set via extract_mode in config):
+Extraction modes (set via extract_mode in config):
 
   css_cards (default)
     Jobs are repeating HTML elements selected by card_selector. Field values
@@ -28,6 +28,13 @@ Three extraction modes (set via extract_mode in config):
     identifies the variable; data_path (dot-notation) navigates to the jobs
     array inside the parsed object. Fields support the same dot-notation access
     as script_json.
+
+  phenom_api
+    Phenom career sites, queried through their /widgets refineSearch JSON
+    endpoint (api_body supplies the tenant's refNum). With country_filter_param
+    set to a facet field (e.g. "country"), the tracked values of that facet are
+    discovered and fetched one country at a time. A locations field yields one
+    job per country with that country's cities.
 
   teamtailor
     TeamTailor ATS career sites. Jobs are in #jobs_list_container > li. Each
@@ -53,7 +60,7 @@ from bs4 import BeautifulSoup
 
 from extract import LOCATION_CLASS_PATTERNS, build_job, is_cached_job, job_key
 from title_language import _title_appears_non_english_excluding_cities
-from tracked_countries import is_tracked_location
+from tracked_countries import TRACKED_NAMES, is_tracked_location
 
 _HEADERS = {
     "User-Agent": (
@@ -594,24 +601,38 @@ def _find_jobs_payload(html: str):
         pos = idx + len(marker)
 
 
-def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
-    """
-    Extract jobs from embedded JSON payload in raw HTML.
-    """
+_POSTCODE_RE = re.compile(r"^\d{4,6}\s+")
+_HOUSE_NUMBER_RE = re.compile(r"\s\d+[a-zA-Z]?$")
+
+
+def _city_from_location(location: str) -> str | None:
+    """'An d. Lände 3, 91301 Forchheim, Germany' → 'Forchheim'."""
+    for segment in location.split(",")[:-1]:
+        segment = _POSTCODE_RE.sub("", segment.strip())
+        if segment and not _HOUSE_NUMBER_RE.search(segment):
+            return segment
+    return None
+
+
+def _group_locations_by_country(locations: list[str]) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {}
+    for loc in locations:
+        if isinstance(loc, str) and loc.strip():
+            groups.setdefault(loc.rsplit(",", 1)[-1].strip(), []).append(loc)
+    return groups
+
+
+def _jobs_from_items(
+    items: list, cfg: dict, base_url: str, country: str | None = None
+) -> list[dict]:
     fields = cfg.get("fields", {})
 
     title_field = fields.get("title", "title")
     url_field = fields.get("url", "url")
+    url_template = cfg.get("url_template")
     location_field = fields.get("location")
+    locations_field = fields.get("locations")
     jf_field = fields.get("job_function")
-
-    items = _find_jobs_payload(html)
-
-    if not items:
-        print("generic: jobs payload not found", file=sys.stderr)
-        return []
-
-    print(f"generic: found jobs payload ({len(items)} items)", file=sys.stderr)
 
     jobs = []
     for item in items:
@@ -622,20 +643,60 @@ def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
         if not title:
             continue
 
-        raw_url = _get_nested(item, url_field)
+        if url_template:
+            try:
+                raw_url = url_template.format_map(item)
+            except KeyError:
+                raw_url = None
+        else:
+            raw_url = _get_nested(item, url_field)
         job_url = urljoin(base_url, raw_url) if raw_url else None
 
-        location = _get_nested(item, location_field)
         jf = _get_nested(item, jf_field) if jf_field else None
 
-        job = build_job(title, job_url, location)
+        locations = _get_nested(item, locations_field) if locations_field else None
+        if not isinstance(locations, list) or not locations:
+            job = build_job(
+                title,
+                job_url,
+                _get_nested(item, location_field) if location_field else None,
+            )
+            if jf:
+                job["jobFunction"] = jf
+            jobs.append(job)
+            continue
 
-        if jf:
-            job["jobFunction"] = jf
-
-        jobs.append(job)
+        # One job per country, not per location: a posting listed at two sites in
+        # the same country is still one opening.
+        groups = _group_locations_by_country(locations)
+        if country:
+            groups = {
+                c: locs for c, locs in groups.items() if c.lower() == country.lower()
+            } or {country: []}
+        for ctry, locs in groups.items():
+            job = build_job(title, job_url, "; ".join(locs) or ctry)
+            cities = list(dict.fromkeys(filter(None, map(_city_from_location, locs))))
+            if cities:
+                job["cities"] = cities
+            if jf:
+                job["jobFunction"] = jf
+            jobs.append(job)
 
     return jobs
+
+
+def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
+    """
+    Extract jobs from embedded JSON payload in raw HTML.
+    """
+    items = _find_jobs_payload(html)
+
+    if not items:
+        print("generic: jobs payload not found", file=sys.stderr)
+        return []
+
+    print(f"generic: found jobs payload ({len(items)} items)", file=sys.stderr)
+    return _jobs_from_items(items, cfg, base_url)
 
 
 def _fetch_script_var_json_page(
@@ -651,6 +712,73 @@ def _fetch_script_var_json_page(
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
         return []
     return _extract_script_var_json(resp.text, cfg, list_url)
+
+
+# ── phenom_api helpers ────────────────────────────────────────────────────────
+
+
+def _phenom_search(
+    session: requests.Session, list_url: str, cfg: dict, body: dict
+) -> dict | None:
+    """POST a refineSearch query to the Phenom /widgets endpoint."""
+    try:
+        resp = session.post(
+            urljoin(list_url, "/widgets"),
+            json={
+                "ddoKey": "refineSearch",
+                "jobs": True,
+                **cfg.get("api_body", {}),
+                **body,
+            },
+            timeout=20,
+            headers={**_HEADERS, "Accept": "application/json"},
+        )
+        resp.raise_for_status()
+        return resp.json().get("refineSearch", {}).get("data")
+    except Exception as e:
+        print(f"generic: phenom search error ({list_url}): {e}", file=sys.stderr)
+        return None
+
+
+def _phenom_tracked_countries(
+    session: requests.Session, list_url: str, cfg: dict
+) -> list[str]:
+    """Tracked values of the country facet, so per-country queries cover whatever
+    countries currently have openings."""
+    facet = cfg["country_filter_param"]
+    data = _phenom_search(
+        session,
+        list_url,
+        cfg,
+        {"size": 1, "selected_fields": {}, "counts": True, "all_fields": [facet]},
+    )
+    for agg in (data or {}).get("aggregations") or []:
+        if isinstance(agg, dict) and agg.get("field") == facet:
+            return [c for c in agg.get("value") or {} if c.lower() in TRACKED_NAMES]
+    print(f"generic: no {facet!r} facet in phenom response", file=sys.stderr)
+    return []
+
+
+def _fetch_phenom_api_page(
+    session: requests.Session,
+    list_url: str,
+    params: dict,
+    cfg: dict,
+) -> list[dict]:
+    pagination = cfg.get("pagination", {})
+    facet = cfg.get("country_filter_param")
+    country = params.get(facet) if facet else None
+    data = _phenom_search(
+        session,
+        list_url,
+        cfg,
+        {
+            "from": params.get(pagination.get("param", "from"), 0),
+            "size": pagination.get("page_size", 100),
+            "selected_fields": {facet: [country]} if country else {},
+        },
+    )
+    return _jobs_from_items((data or {}).get("jobs") or [], cfg, list_url, country)
 
 
 # ── detail page enrichment (shared) ──────────────────────────────────────────
@@ -695,6 +823,21 @@ def _extract_rsc_description(raw_html: str) -> str:
     return "<div>" + "".join(str(p) for p in parts) + "</div>"
 
 
+def _extract_phenom_description(raw_html: str) -> str:
+    """Fallback for Phenom job pages, which render the description client-side
+    from the phApp.ddo jobDetail payload rather than shipping it in the DOM."""
+    idx = raw_html.find('"jobDetail"')
+    if idx == -1:
+        return ""
+    start = raw_html.find("{", idx)
+    try:
+        payload, _ = json_mod.JSONDecoder().raw_decode(raw_html, start)
+    except ValueError:
+        return ""
+    desc = _get_nested(payload, "data.job.description")
+    return desc if isinstance(desc, str) else ""
+
+
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
@@ -734,12 +877,16 @@ def _fetch_detail_page(
             # Fallback chain: keep first-match-wins behaviour, since these
             # selectors (e.g. "[class*='description']", "main") are broad enough
             # that concatenating every match across many different companies'
-            # page structures would risk pulling in unrelated content.
-            for sel in _DESCRIPTION_SELECTOR_FALLBACKS:
-                tag = soup.select_one(sel)
-                if tag:
-                    desc_html = str(tag)
-                    break
+            # page structures would risk pulling in unrelated content. Phenom's
+            # payload goes first: its "main" is page chrome long enough to pass
+            # the length check below.
+            desc_html = _extract_phenom_description(raw_html)
+            if not desc_html:
+                for sel in _DESCRIPTION_SELECTOR_FALLBACKS:
+                    tag = soup.select_one(sel)
+                    if tag:
+                        desc_html = str(tag)
+                        break
 
         # If the selector result is too short the page likely uses Next.js RSC
         # streaming — real content lives in __next_f.push script chunks, not the DOM.
@@ -841,6 +988,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             file=sys.stderr,
         )
 
+    if extract_mode == "phenom_api" and country_filter_param:
+        countries = _phenom_tracked_countries(session, list_url, cfg)
+        print(
+            f"generic [{name}]: resolved {len(countries)} tracked countries from facet",
+            file=sys.stderr,
+        )
+
     if extract_mode == "xml_feed":
         jobs = _fetch_xml_feed(session, list_url, cfg)
         print(f"generic [{name}]: xml feed → {len(jobs)} jobs", file=sys.stderr)
@@ -852,6 +1006,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         fetch_page = _fetch_script_json_page
     elif extract_mode == "script_var_json":
         fetch_page = _fetch_script_var_json_page
+    elif extract_mode == "phenom_api":
+        fetch_page = _fetch_phenom_api_page
     elif extract_mode == "teamtailor":
         fetch_page = _fetch_teamtailor_page
     else:
