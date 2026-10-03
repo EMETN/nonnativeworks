@@ -33,8 +33,8 @@ describe('detectAts — other ATS hostnames still detect correctly', () => {
             { ats: 'greenhouse', companySlug: 'smartlyio' },
         ],
         [
-            'https://jobs.eu.lever.co/prosus',
-            { ats: 'lever', companySlug: 'prosus', leverEu: true },
+            'https://jobs.eu.lever.co/seb',
+            { ats: 'lever', companySlug: 'seb', leverEu: true },
         ],
         [
             'https://jobs.lever.co/someco',

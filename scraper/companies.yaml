@@ -246,8 +246,8 @@ companies:
       min_positions: 5
 
     - name: Prosus
-      url: https://jobs.eu.lever.co/prosus
-      min_positions: 0
+      url: https://jobs.ashbyhq.com/prosus
+      min_positions: 3
 
     - name: Proton
       url: https://proton.me/careers
