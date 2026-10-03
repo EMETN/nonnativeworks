@@ -167,14 +167,6 @@ export interface CompanyApiConfig {
      * Set this when the job URL requires query params to identify the posting (e.g. ?id=12345).
      */
     keepQueryParams?: boolean;
-    /**
-     * Set when the API answers intermittently with an HTML 404 page (no JSON) even for
-     * pages that exist — bot protection / rate limiting, not "page out of range". The
-     * fetcher then retries such responses with a long backoff instead of treating them
-     * as the end of results, and skips a page that stays blocked rather than stopping.
-     * Leave unset for APIs where a 404/400 genuinely means "past the last page".
-     */
-    retryOnHtml404?: boolean;
     /** Dot-path to the jobs array in the response body. Omit if root is the array. */
     itemsPath?: string;
     /** Optional HTTP headers (e.g. Accept, X-Api-Key). Content-Type is set automatically for POST. */
@@ -1207,16 +1199,15 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     },
 
     'werkenbijabnamro.nl': {
-        // Unfiltered listing covers both countries ABN AMRO posts in (Netherlands
-        // and Belgium) — the earlier Netherlands-only filter silently dropped the
-        // Belgium postings. City-based country resolution (fields.location: 'city')
-        // handles both without needing an explicit country field.
+        // Unfiltered: a Netherlands-only filter silently dropped the Belgium postings.
         url: 'https://www.werkenbijabnamro.nl/en/api/vacancy/?sort=created&sortDir=DESC',
         headers: {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
             Accept: 'application/json',
             Referer: 'https://www.werkenbijabnamro.nl/en/vacancies',
+            // Without it the origin answers an HTML 404; only CDN-cached pages succeed.
+            'X-Requested-With': 'XMLHttpRequest',
         },
         pagination: {
             type: 'page',
@@ -1228,14 +1219,11 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         fields: {
             title: 'title',
             location: 'city',
+            country: 'country',
             jobFunction: 'option_values.value',
             id: 'id',
         },
         urlTemplate: 'https://www.werkenbijabnamro.nl/en/vacancy/{id}/{slug}',
-        // The vacancy API intermittently answers with an HTML 404 even for pages that
-        // exist (seen: pages 1–7 blocked while 8–10 succeeded), so a 404 is not a reliable
-        // end-of-results signal here.
-        retryOnHtml404: true,
         companyName: 'ABN AMRO',
         fetchDescription: true,
     },

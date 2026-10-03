@@ -355,17 +355,12 @@ function buildFormData(body: Record<string, unknown>): FormData {
     return fd;
 }
 
-// Backoff between attempts for APIs flagged retryOnHtml404. Blocks last longer than
-// the ordinary 1s/2s retry, so wait progressively longer before giving up on a page.
-const HTML_404_BACKOFF_MS = [3000, 6000, 12000, 20000];
-
 async function fetchPage(
     url: string,
     method: 'GET' | 'POST',
     body: Record<string, unknown> | undefined,
     headers: Record<string, string>,
     bodyType: 'json' | 'multipart' = 'json',
-    retryOnHtml404 = false,
 ): Promise<unknown> {
     const init: RequestInit = {
         method,
@@ -385,17 +380,8 @@ async function fetchPage(
     }
     let lastStatus = 0;
     let lastError: unknown;
-    const maxAttempts = retryOnHtml404 ? HTML_404_BACKOFF_MS.length + 1 : 3;
-    let blockedByHtml404 = false;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        if (attempt > 0) {
-            await sleep(
-                blockedByHtml404
-                    ? HTML_404_BACKOFF_MS[attempt - 1]
-                    : 1000 * attempt,
-            );
-        }
-        blockedByHtml404 = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await sleep(1000 * attempt);
         let res: Response;
         try {
             res = await fetch(url, init);
@@ -405,7 +391,7 @@ async function fetchPage(
             // than aborting the whole company scrape on the first attempt.
             lastError = err;
             console.warn(
-                `[fetchPage] attempt ${attempt + 1}/${maxAttempts} threw for ${url}: ${
+                `[fetchPage] attempt ${attempt + 1}/3 threw for ${url}: ${
                     err instanceof Error ? err.message : String(err)
                 }`,
             );
@@ -415,33 +401,17 @@ async function fetchPage(
         // 400 with rest_post_invalid_page_number instead of an empty array). Treat as
         // graceful end — never retried.
         if (res.status === 400) return null;
-        // A 404 whose body is HTML rather than JSON means the app's own router served its
-        // generic error page instead of the API — observed on ABN AMRO, whose vacancy
-        // search backend hard-caps at 40 results (5 pages of 8) regardless of the
-        // `meta.num_total_hits` figure it reports on page 1. Confirmed against their own
-        // site: /en/vacancies/page/6 renders client-side from this same endpoint, so real
-        // visitors hit the identical 404 — this is a limit of their backend, not something
-        // retrying fixes. Treat it the same as 400: graceful end, no retry.
+        // An HTML (not JSON) 404 is the app's generic error page: end gracefully, like 400.
         if (
             res.status === 404 &&
             !(res.headers.get('content-type') ?? '').includes('json')
         ) {
-            if (retryOnHtml404) {
-                // Not "end of results" for this API — retry, and only give up (null)
-                // once every attempt has been blocked.
-                console.warn(
-                    `[fetchPage] attempt ${attempt + 1}/${maxAttempts} got HTML 404 for ${url}`,
-                );
-                blockedByHtml404 = true;
-                if (attempt === maxAttempts - 1) return null;
-                continue;
-            }
             return null;
         }
         if (res.ok) return res.json();
         lastStatus = res.status;
         console.warn(
-            `[fetchPage] attempt ${attempt + 1}/${maxAttempts} got ${res.status} for ${url}`,
+            `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
         );
     }
     // Retries cover genuine transient failures (5xx, a JSON-formatted error from the
@@ -784,7 +754,6 @@ interface FetchSpec {
     urlTemplate?: string;
     urlPlaceholders?: Record<string, string>;
     keepQueryParams?: boolean;
-    retryOnHtml404?: boolean;
     expandSecondaryLocations?: CompanyApiConfig['expandSecondaryLocations'];
     descriptionFields?: string[];
 }
@@ -875,7 +844,6 @@ async function fetchAllJobsRaw(
         urlTemplate,
         urlPlaceholders,
         keepQueryParams,
-        retryOnHtml404,
         expandSecondaryLocations,
         descriptionFields,
     } = spec;
@@ -911,10 +879,6 @@ async function fetchAllJobsRaw(
         // Track unique jobs for the stop condition — cross-page duplicates must not
         // count toward the total, otherwise we stop early and miss real jobs.
         const uniqueKeys = new Set<string>();
-        // With retryOnHtml404 a blocked page is skipped, not treated as the end; only
-        // several blocked pages in a row (or a run of them at the very end) stop the loop.
-        const MAX_CONSECUTIVE_BLOCKED = 3;
-        let consecutiveBlocked = 0;
 
         for (let i = 0; i < MAX_PAGES; i++, page++) {
             const pageUrl =
@@ -934,30 +898,14 @@ async function fetchAllJobsRaw(
                 pageBody,
                 headers,
                 bodyType,
-                retryOnHtml404,
             );
 
             if (!data) {
-                if (retryOnHtml404) {
-                    consecutiveBlocked++;
-                    console.warn(
-                        `[${label}] page=${page} stayed blocked after retries (${consecutiveBlocked}/${MAX_CONSECUTIVE_BLOCKED} in a row)`,
-                    );
-                    if (consecutiveBlocked >= MAX_CONSECUTIVE_BLOCKED) {
-                        console.log(
-                            `[${label}] stopping: ${MAX_CONSECUTIVE_BLOCKED} blocked pages in a row`,
-                        );
-                        break;
-                    }
-                    await sleep(randomDelay());
-                    continue;
-                }
                 console.log(
                     `[${label}] stopping: null response at page=${page} (400 = page out of range)`,
                 );
                 break;
             }
-            consecutiveBlocked = 0;
 
             // Extract total count from first page if a path is configured
             if (totalCount === undefined && pagination.totalCountPath) {
@@ -1004,15 +952,6 @@ async function fetchAllJobsRaw(
             }
 
             await sleep(randomDelay());
-        }
-        if (
-            retryOnHtml404 &&
-            totalCount !== undefined &&
-            uniqueKeys.size < totalCount
-        ) {
-            console.warn(
-                `[${label}] only ${uniqueKeys.size} of ${totalCount} jobs fetched — some pages stayed blocked`,
-            );
         }
     } else if (pagination.type === 'offset') {
         const param = pagination.param ?? 'offset';
@@ -1317,7 +1256,6 @@ export async function fetchCompanyApiJobs(
         urlTemplate: config.urlTemplate,
         urlPlaceholders: config.urlPlaceholders,
         keepQueryParams: config.keepQueryParams,
-        retryOnHtml404: config.retryOnHtml404,
         expandSecondaryLocations: config.expandSecondaryLocations,
         descriptionFields: config.descriptionFields,
     };
