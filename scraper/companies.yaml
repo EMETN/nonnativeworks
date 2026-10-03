@@ -235,7 +235,7 @@ companies:
 
     - name: Oura
       url: https://boards.greenhouse.io/oura
-      min_positions: 5
+      min_positions: 2
 
     - name: Philips
       url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
