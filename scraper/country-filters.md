@@ -115,6 +115,20 @@ gives `{id, descriptor, count}` (GUID, country name, live posting count). Append
 
 ---
 
+## Siemens Healthineers — `src/lib/ats/workday.ts` → `SITE_CODE_TENANTS`
+
+The Workday tenant (`onehealthineers.wd3.myworkdayjobs.com/SHSJB`) carries roles the
+Phenom site lacks (e.g. Finland), so it's merged in as the company's `extra_urls`.
+No GUIDs are hardcoded: its locations are internal site codes (`MAD MA` = Madrid,
+`HEL AA` = Helsinki), so the fetcher reads the `locationCountry` facet from one
+unfiltered request, keeps the tracked countries, then queries one country at a time and
+tags each posting with that country. New tracked countries are covered automatically.
+
+Cities are unknown, so the batch merge treats a same-country, same-title Phenom job as
+the duplicate.
+
+---
+
 ## Airbus — `scraper/companies.yaml` → `Airbus` entry `url`
 
 Airbus runs on a separate Workday tenant (`ag.wd3.myworkdayjobs.com`) and is configured

@@ -138,6 +138,7 @@ ats_domains=(
     "api.eu.lever.co"  # Lever
     "api.lever.co"  # Lever
     "career2.successfactors.eu"  # SuccessFactors
+    "api.smartrecruiters.com"  # SmartRecruiters
     "apply.workable.com"  # Workable
     "wd3.myworkdaysite.com"  # Workday
 )
@@ -231,11 +232,12 @@ company_domains=(
     "rovio.com"  # Rovio
     "s-pankki.fi"  # S-Pankki
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
-    "jobs.sap.com"  # SAP
+    "careers.sap.com"  # SAP
     "scout24.com"  # Scout24
     "sebgroup.com"  # SEB
     "jobs.siemens.com"  # Siemens
-    "jobs.siemens-healthineers.com"  # Siemens Healthineers
+    "careers.siemens-healthineers.com"  # Siemens Healthineers
+    "onehealthineers.wd3.myworkdayjobs.com"  # Siemens Healthineers (Workday)
     "sok.wd502.myworkdayjobs.com"  # SOK
     "solita.fi"  # Solita
     "api.lifeatspotify.com"  # Spotify — jobs JSON API (career page loads listings from here)

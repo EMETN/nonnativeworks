@@ -8,6 +8,8 @@
 # ─── Fields ───────────────────────────────────────────────────────────────────
 #   name            Display name — for readability only, not used by the scraper
 #   url             Career page URL passed to the scraper (required)
+#   extra_urls      More career page URLs merged into one upload; duplicates of
+#                   an earlier URL's jobs are dropped. Optional
 #   min_positions   Minimum expected positions across all tracked countries.
 #                   The batch job fails this company if fewer are found.
 #                   Set conservatively. Default: 1

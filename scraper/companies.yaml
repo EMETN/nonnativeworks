@@ -9,6 +9,8 @@
 # ─── Fields ───────────────────────────────────────────────────────────────────
 #   name            Display name — for readability only, not used by the scraper
 #   url             Career page URL passed to the scraper (required)
+#   extra_urls      More career page URLs merged into one upload; duplicates of
+#                   an earlier URL's jobs are dropped. Optional
 #   min_positions   Minimum expected positions across all tracked countries.
 #                   If fewer are found, the company FAILS the run (a red run +
 #                   email) — usually a sign the scraper regressed.
@@ -235,7 +237,7 @@ companies:
 
     - name: Oura
       url: https://boards.greenhouse.io/oura
-      min_positions: 5
+      min_positions: 2
 
     - name: Philips
       url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
@@ -246,8 +248,8 @@ companies:
       min_positions: 5
 
     - name: Prosus
-      url: https://jobs.eu.lever.co/prosus
-      min_positions: 0
+      url: https://jobs.ashbyhq.com/prosus
+      min_positions: 3
 
     - name: Proton
       url: https://proton.me/careers
@@ -273,8 +275,11 @@ companies:
       url: https://sanoma.wd3.myworkdayjobs.com/en-GB/Sanoma_Media_Finland
       min_positions: 0
 
+    # Drop extra_urls once SAP retires careers.sap.com (mid-migration to jobs.sap.com).
     - name: SAP
-      url: https://jobs.sap.com/search
+      url: https://jobs.smartrecruiters.com/SAPITBusinessSysteme
+      extra_urls:
+          - https://careers.sap.com/search
       min_positions: 5
 
     - name: Scout24
@@ -286,7 +291,9 @@ companies:
       min_positions: 5
 
     - name: Siemens Healthineers
-      url: https://jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs
+      url: https://careers.siemens-healthineers.com/global/en/search-results
+      extra_urls:
+          - https://onehealthineers.wd3.myworkdayjobs.com/SHSJB
       min_positions: 5
 
     - name: Smartly

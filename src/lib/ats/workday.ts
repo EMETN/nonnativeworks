@@ -90,6 +90,7 @@
 import type { RawJob } from './types';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
+import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
 import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
@@ -442,9 +443,17 @@ interface WorkdayJobPosting {
     externalPath: string;
 }
 
+interface WorkdayFacet {
+    facetParameter?: string;
+    id?: string;
+    descriptor?: string;
+    values?: WorkdayFacet[];
+}
+
 interface WorkdayResponse {
     total?: number;
     jobPostings?: WorkdayJobPosting[];
+    facets?: WorkdayFacet[];
 }
 
 // Job-detail endpoint. Untrusted external JSON, so leaf fields are `unknown`
@@ -575,42 +584,52 @@ async function fetchJobLocations(
     }
 }
 
-export async function fetchWorkdayJobs(
+async function fetchJobsPage(
     parts: WorkdayUrlParts,
-): Promise<RawJob[]> {
+    appliedFacets: Record<string, string[]>,
+    offset: number,
+    limit = PAGE_SIZE,
+): Promise<WorkdayResponse> {
     const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
+    const origin = `https://${parts.host}`;
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            origin: origin,
+            referer: `${origin}/`,
+            'user-agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        },
+        body: JSON.stringify({
+            appliedFacets,
+            limit,
+            offset,
+            searchText: '',
+        }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(
+            `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
+        );
+    }
+
+    return res.json();
+}
+
+async function fetchPostings(
+    parts: WorkdayUrlParts,
+    appliedFacets: Record<string, string[]>,
+): Promise<WorkdayJobPosting[]> {
     const allPostings: WorkdayJobPosting[] = [];
     let offset = 0;
     let total = Infinity;
 
     while (offset < total) {
-        const origin = `https://${parts.host}`;
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                origin: origin,
-                referer: `${origin}/`,
-                'user-agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            },
-            body: JSON.stringify({
-                appliedFacets: parts.appliedFacets ?? {},
-                limit: PAGE_SIZE,
-                offset,
-                searchText: '',
-            }),
-        });
-
-        if (!res.ok) {
-            const body = await res.text();
-            throw new Error(
-                `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
-            );
-        }
-
-        const data: WorkdayResponse = await res.json();
+        const data = await fetchJobsPage(parts, appliedFacets, offset);
         const postings = data.jobPostings ?? [];
         allPostings.push(...postings);
         if (total === Infinity && data.total != null) total = data.total;
@@ -618,6 +637,79 @@ export async function fetchWorkdayJobs(
         offset += PAGE_SIZE;
         if (postings.length < PAGE_SIZE) break;
     }
+
+    return allPostings;
+}
+
+/** Maps each `locationCountry` facet GUID to its country name, searching nested facet groups. */
+function countryFacetNames(facets: WorkdayFacet[] = []): Map<string, string> {
+    const names = new Map<string, string>();
+    for (const facet of facets) {
+        for (const value of facet.values ?? []) {
+            if (facet.facetParameter === 'locationCountry' && value.id) {
+                names.set(value.id, value.descriptor ?? '');
+            }
+            for (const [id, name] of countryFacetNames([value])) {
+                names.set(id, name);
+            }
+        }
+    }
+    return names;
+}
+
+/**
+ * Tenants whose locationsText and detail locations are internal site codes
+ * (e.g. Siemens Healthineers' "MAD MA" = Madrid, "HEL AA" = Helsinki): the
+ * trailing pair reads as an ISO code (Morocco), and codes in additionalLocations
+ * can't be resolved at all. For these, query one tracked locationCountry facet
+ * at a time and tag every posting with that country instead.
+ */
+const SITE_CODE_TENANTS = new Set(['onehealthineers']);
+
+async function fetchWorkdayJobsPerCountry(
+    parts: WorkdayUrlParts,
+): Promise<RawJob[]> {
+    const { locationCountry: urlCountryIds, ...otherFacets } =
+        parts.appliedFacets ?? {};
+    // One unfiltered request lists every country with openings, so tracked
+    // countries are picked up without hardcoding facet IDs.
+    const { facets } = await fetchJobsPage(parts, otherFacets, 0, 1);
+    const tracked = [...countryFacetNames(facets)].filter(
+        ([id, name]) =>
+            (!urlCountryIds?.length || urlCountryIds.includes(id)) &&
+            lookupCountryFromLocation(name).some((c) =>
+                TRACKED_COUNTRY_CODES.has(c.code),
+            ),
+    );
+    console.log(
+        `[workday] ${parts.company}: fetching ${tracked.length} tracked countries`,
+    );
+
+    const jobs: RawJob[] = [];
+    for (const [id, country] of tracked) {
+        const postings = await fetchPostings(parts, {
+            ...otherFacets,
+            locationCountry: [id],
+        });
+        for (const posting of postings) {
+            jobs.push({
+                title: posting.title,
+                url: buildJobUrl(parts, posting.externalPath),
+                location: country,
+                country_code: country,
+            });
+        }
+    }
+    return jobs;
+}
+
+export async function fetchWorkdayJobs(
+    parts: WorkdayUrlParts,
+): Promise<RawJob[]> {
+    if (SITE_CODE_TENANTS.has(parts.company)) {
+        return fetchWorkdayJobsPerCountry(parts);
+    }
+    const allPostings = await fetchPostings(parts, parts.appliedFacets ?? {});
 
     // Split into single-location, venue-name, multi-location, and unresolvable postings.
     // Unresolvable: locationsText exists but lookupCountryFromLocation can't identify a country.

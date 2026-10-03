@@ -58,7 +58,7 @@ Run the migration in the Supabase SQL editor:
 
 ## Scraping system
 
-Automated extraction of job listings from company career pages via `src/pages/api/admin/scrape.ts` (POST). Runs three layers: ATS API detection (Greenhouse, Lever, Ashby, Workable, Workday) → per-company custom APIs → Python/Playwright browser scraper. For details see `scraper/CLAUDE.md`.
+Automated extraction of job listings from company career pages via `src/pages/api/admin/scrape.ts` (POST). Runs three layers: ATS API detection (Greenhouse, Lever, Ashby, Workable, Workday, Recruitee, SmartRecruiters) → per-company custom APIs → Python/Playwright browser scraper. For details see `scraper/CLAUDE.md`.
 
 ## Category taxonomy
 

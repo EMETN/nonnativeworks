@@ -95,6 +95,21 @@ export function detectAts(url: string): AtsDetectionResult {
             if (slug) return { ats: 'recruitee', companySlug: slug };
         }
 
+        // SmartRecruiters
+        // Patterns: jobs.smartrecruiters.com/{company}, careers.smartrecruiters.com/{company},
+        //           api.smartrecruiters.com/v1/companies/{company}/postings
+        if (
+            hostname === 'jobs.smartrecruiters.com' ||
+            hostname === 'careers.smartrecruiters.com'
+        ) {
+            const match = pathname.match(/^\/([^/]+)/);
+            if (match) return { ats: 'smartrecruiters', companySlug: match[1] };
+        }
+        if (hostname === 'api.smartrecruiters.com') {
+            const match = pathname.match(/^\/v1\/companies\/([^/]+)/);
+            if (match) return { ats: 'smartrecruiters', companySlug: match[1] };
+        }
+
         // Workday (myworkdayjobs.com)
         // Pattern: {company}.wd{N}.myworkdayjobs.com/{locale}/{site}
         if (hostname.endsWith('.myworkdayjobs.com')) {
@@ -161,6 +176,8 @@ export function atsLabel(ats: string | null): string {
             return 'Workday';
         case 'recruitee':
             return 'Recruitee';
+        case 'smartrecruiters':
+            return 'SmartRecruiters';
         case 'company-api':
             return 'Company API';
         case 'python':

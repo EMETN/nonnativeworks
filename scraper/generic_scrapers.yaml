@@ -199,10 +199,10 @@ scrapers:
       job_function_selector: "[data-careersite-propertyid='department']"
 
     # ── SAP ──────────────────────────────────────────────────────────────────────
-    # Taleo instance that only accepts one country per request. country_filter_param
+    # SuccessFactors site that only accepts one country per request. country_filter_param
     # + countries makes the scraper iterate one paginated fetch per country and
-    # merge results before description enrichment.
-    - match: 'jobs.sap.com'
+    # merge results before description enrichment. Not jobs.sap.com: Cloudflare-challenged.
+    - match: 'careers.sap.com'
       name: SAP
       country_filter_param: 'optionsFacetsDD_country'
       countries:
@@ -336,25 +336,27 @@ scrapers:
       location_selector: 'em.vacancy__location'
       url_selector: 'a.js-vacancy-link'
 
-    # ── Siemens Healthineers ─────────────────────────────────────────────────────
-    # Oracle/Taleo-style career site. The 42420 param is a country/region facet
-    # filter (numeric IDs), folderRecordsPerPage controls page size.
-    - match: 'jobs.siemens-healthineers.com'
+    # ── Siemens Healthineers (Phenom) ────────────────────────────────────────────
+    # phenom_api queries one tracked country at a time (discovered from the
+    # country facet). url_template, not applyUrl: SuccessFactors (P-) reqs have
+    # no applyUrl.
+    - match: 'careers.siemens-healthineers.com/global/en/search-results'
       name: Siemens Healthineers
-      extra_params:
-          '42420': '[812124,812008,812020,812132,812010,812011,812130,812027,812013]'
-          '42420_format': '17573'
-          listFilterMode: '1'
-          folderRecordsPerPage: '6'
+      extract_mode: phenom_api
+      api_body:
+          refNum: SHDSHWUS
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
       pagination:
           type: offset
-          param: folderOffset
-          page_size: 6
-      card_selector: 'article.article--result'
-      title_selector: 'h3.article__header__text__title a.link'
-      location_selector: 'span.list-item-location'
-      description_selector: '#section1__content .article__content__view__field__value'
-      detail_location_selector: 'ul.list--locations li'
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
 
     # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
     - match: 'career.nordnetab.com'
