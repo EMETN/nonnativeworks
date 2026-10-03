@@ -32,3 +32,7 @@ minimumReleaseAgeExclude:
   - '@supabase/storage-js@2.112.3'
   - '@supabase/supabase-js@2.112.3'
   - posthog-js@1.415.2
+
+supportedArchitectures:
+  os: [current, darwin]
+  cpu: [current, arm64]

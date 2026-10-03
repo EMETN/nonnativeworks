@@ -40,12 +40,13 @@ const path = Astro.url.pathname;
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="text-gray-500 hover:text-gray-900 text-sm"
-                                >← Public site</a
                             >
+                                ← Public site
+                            </a>
                             <span class="text-gray-500">|</span>
-                            <span class="font-semibold text-gray-900"
-                                >Dashboard</span
-                            >
+                            <span class="font-semibold text-gray-900">
+                                Dashboard
+                            </span>
                         </div>
                         <div class="flex items-center gap-4">
                             <PublishButton client:load />
@@ -70,27 +71,23 @@ const path = Astro.url.pathname;
                 class="bg-white border-b border-gray-200"
                 aria-label="Admin sections"
             >
-                <div
-                    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden"
-                >
-                    {
-                        navItems.map((item) => {
-                            const active = path === item.href;
-                            return (
-                                <a
-                                    href={item.href}
-                                    aria-current={active ? 'page' : undefined}
-                                    class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                                        active
-                                            ? 'border-gray-900 text-gray-900'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    {item.label}
-                                </a>
-                            );
-                        })
-                    }
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden">
+                    {navItems.map((item) => {
+                        const active = path === item.href;
+                        return (
+                            <a
+                                href={item.href}
+                                aria-current={active ? 'page' : undefined}
+                                class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                                    active
+                                        ? 'border-gray-900 text-gray-900'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                {item.label}
+                            </a>
+                        );
+                    })}
                 </div>
             </nav>
         </div>
@@ -98,13 +95,11 @@ const path = Astro.url.pathname;
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="mb-8">
                 <h1 class="text-2xl font-bold text-gray-900">{title}</h1>
-                {
-                    description && (
-                        <p class="text-sm text-gray-500 mt-1 max-w-3xl">
-                            {description}
-                        </p>
-                    )
-                }
+                {description && (
+                    <p class="text-sm text-gray-500 mt-1 max-w-3xl">
+                        {description}
+                    </p>
+                )}
             </div>
             <slot />
         </main>
@@ -127,7 +122,8 @@ const path = Astro.url.pathname;
                 <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    d="M1 5l4-4 4 4"></path>
+                    d="M1 5l4-4 4 4"
+                ></path>
             </svg>
         </button>
 

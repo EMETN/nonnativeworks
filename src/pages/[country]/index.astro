@@ -47,9 +47,7 @@ const { country, companies } = Astro.props as Props;
         { name: country.name },
     ]}
 >
-    <div
-        class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
-    >
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16">
         <Breadcrumb
             items={[
                 { label: 'Home', href: '/' },
@@ -59,9 +57,7 @@ const { country, companies } = Astro.props as Props;
         />
 
         <!-- Title + Gauge -->
-        <div
-            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
-        >
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="flex items-center gap-2 sm:gap-3 md:gap-4 text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
@@ -75,58 +71,51 @@ const { country, companies } = Astro.props as Props;
                     class="h-[1.4rem] sm:h-[1.4rem] md:h-[2.1rem] w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)]"
                 />
             </h1>
-            {
-                country.total_positions > 0 && (
-                    <CompanyGauge
-                        englishPositions={country.english_positions}
-                        totalPositions={country.total_positions}
-                    />
-                )
-            }
+            {country.total_positions > 0 && (
+                <CompanyGauge
+                    englishPositions={country.english_positions}
+                    totalPositions={country.total_positions}
+                />
+            )}
         </div>
 
-        {
-            companies.length > 0 && (
-                <StatsDescription>
-                    <strong class="font-semibold text-gray-900">
-                        {companies.length}
-                    </strong>{' '}
-                    {companies.length === 1 ? 'company' : 'companies'} —{' '}
-                    <strong class="font-semibold text-gray-900">
-                        {country.english_positions.toLocaleString()}
-                    </strong>{' '}
-                    of{' '}
-                    <strong class="font-semibold text-gray-900">
-                        {country.total_positions.toLocaleString()}
-                    </strong>{' '}
-                    open{' '}
-                    {country.total_positions === 1 ? 'position' : 'positions'}{' '}
-                    {country.english_positions === 1 ? "doesn't" : "don't"}{' '}
-                    require the local language(s).
-                </StatsDescription>
-            )
-        }
-        {
-            companies.length === 0 ? (
-                <div class="text-center py-16 text-gray-500">
-                    <p>
-                        No companies tracked yet for{' '}
-                        <strong>{country.name}</strong>. Check back soon!
-                    </p>
-                    <a
-                        href="/countries"
-                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
-                    >
-                        Browse all countries
-                    </a>
-                </div>
-            ) : (
-                <CompanyGrid
-                    companies={companies}
-                    countrySlug={country.slug}
-                    client:idle
-                />
-            )
-        }
+        {companies.length > 0 && (
+            <StatsDescription>
+                <strong class="font-semibold text-gray-900">
+                    {companies.length}
+                </strong>{' '}
+                {companies.length === 1 ? 'company' : 'companies'} —{' '}
+                <strong class="font-semibold text-gray-900">
+                    {country.english_positions.toLocaleString()}
+                </strong>{' '}
+                of{' '}
+                <strong class="font-semibold text-gray-900">
+                    {country.total_positions.toLocaleString()}
+                </strong>{' '}
+                open {country.total_positions === 1 ? 'position' : 'positions'}{' '}
+                {country.english_positions === 1 ? "doesn't" : "don't"} require
+                the local language(s).
+            </StatsDescription>
+        )}
+        {companies.length === 0 ? (
+            <div class="text-center py-16 text-gray-500">
+                <p>
+                    No companies tracked yet for <strong>{country.name}</strong>
+                    . Check back soon!
+                </p>
+                <a
+                    href="/countries"
+                    class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                >
+                    Browse all countries
+                </a>
+            </div>
+        ) : (
+            <CompanyGrid
+                companies={companies}
+                countrySlug={country.slug}
+                client:idle
+            />
+        )}
     </div>
 </BaseLayout>

@@ -50,118 +50,106 @@ const companyItems = topCompanies.map((c) => ({
     title="Home"
     description="nonnativeworks! tracks open positions where English is enough — no local language required. Browse by country to find your next opportunity abroad."
 >
-    <div
-        class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12"
-    >
+    <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12">
         <!-- Intro -->
         <div class="max-w-3xl mx-auto text-center mb-4 sm:mb-8">
-            <h1
-                class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight"
-            >
-                <span class="text-gray-900">No native language?</span><br />
-                <span class="text-gray-900">nonnative</span><span
-                    class="text-[#0F7A4F] underline decoration-[#0F7A4F] underline-offset-4"
-                    >works</span
-                ><span class="text-[#0F7A4F]">!</span>
+            <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
+                <span class="text-gray-900">No native language?</span>
+                <br />
+                <span class="text-gray-900">nonnative</span>
+                <span class="text-[#0F7A4F] underline decoration-[#0F7A4F] underline-offset-4">
+                    works
+                </span>
+                <span class="text-[#0F7A4F]">!</span>
             </h1>
         </div>
 
-        {
-            countries.length > 0 && (
-                <div class="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8 sm:mb-16">
-                    <p class="text-base sm:text-lg text-gray-500 md:flex-1 text-center md:text-left">
-                        Discover companies that welcome non-native language
-                        speakers. Track open positions across countries
-                        worldwide.
-                    </p>
-                    <div class="grid grid-cols-2 gap-x-8 gap-y-0 md:flex-1">
-                        <div class="text-center py-3">
-                            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                                {totalPositions.toLocaleString()}
-                            </span>
-                            <span class="text-xs sm:text-sm text-gray-500">
-                                positions tracked
-                            </span>
-                        </div>
-                        <div class="text-center py-3">
-                            <span class="block text-2xl sm:text-3xl font-bold text-[#0F7A4F]">
-                                {englishPositions.toLocaleString()}
-                            </span>
-                            <span class="text-xs sm:text-sm text-gray-500">
-                                English-friendly
-                            </span>
-                        </div>
-                        <div class="border-t border-gray-200" />
-                        <div class="border-t border-gray-200" />
-                        <div class="text-center py-3">
-                            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                                {totalCompanies.toLocaleString()}
-                            </span>
-                            <span class="text-xs sm:text-sm text-gray-500">
-                                {totalCompanies === 1 ? 'company' : 'companies'}
-                            </span>
-                        </div>
-                        <div class="text-center py-3">
-                            <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                                {countries.length}
-                            </span>
-                            <span class="text-xs sm:text-sm text-gray-500">
-                                {countries.length === 1
-                                    ? 'country'
-                                    : 'countries'}
-                            </span>
-                        </div>
+        {countries.length > 0 && (
+            <div class="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8 sm:mb-16">
+                <p class="text-base sm:text-lg text-gray-500 md:flex-1 text-center md:text-left">
+                    Discover companies that welcome non-native language
+                    speakers. Track open positions across countries worldwide.
+                </p>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-0 md:flex-1">
+                    <div class="text-center py-3">
+                        <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
+                            {totalPositions.toLocaleString()}
+                        </span>
+                        <span class="text-xs sm:text-sm text-gray-500">
+                            positions tracked
+                        </span>
+                    </div>
+                    <div class="text-center py-3">
+                        <span class="block text-2xl sm:text-3xl font-bold text-[#0F7A4F]">
+                            {englishPositions.toLocaleString()}
+                        </span>
+                        <span class="text-xs sm:text-sm text-gray-500">
+                            English-friendly
+                        </span>
+                    </div>
+                    <div class="border-t border-gray-200" />
+                    <div class="border-t border-gray-200" />
+                    <div class="text-center py-3">
+                        <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
+                            {totalCompanies.toLocaleString()}
+                        </span>
+                        <span class="text-xs sm:text-sm text-gray-500">
+                            {totalCompanies === 1 ? 'company' : 'companies'}
+                        </span>
+                    </div>
+                    <div class="text-center py-3">
+                        <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
+                            {countries.length}
+                        </span>
+                        <span class="text-xs sm:text-sm text-gray-500">
+                            {countries.length === 1 ? 'country' : 'countries'}
+                        </span>
                     </div>
                 </div>
-            )
-        }
+            </div>
+        )}
 
-        {
-            countries.length === 0 && (
-                <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
-                    <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
-                        Discover companies that welcome non-native language
-                        speakers. Track open positions across countries
-                        worldwide.
-                    </p>
-                </div>
-            )
-        }
+        {countries.length === 0 && (
+            <div class="max-w-3xl mx-auto text-center mb-8 sm:mb-16">
+                <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto">
+                    Discover companies that welcome non-native language
+                    speakers. Track open positions across countries worldwide.
+                </p>
+            </div>
+        )}
     </div>
 
     <!-- Top lists -->
     <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        {
-            countries.length === 0 ? (
-                <div class="text-center py-8 text-gray-500">
-                    <p class="text-lg mb-2">No positions tracked yet.</p>
-                    <p class="text-sm">
-                        Check back soon — we're adding new countries and
-                        companies regularly.
-                    </p>
-                    <a
-                        href="/companies"
-                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
-                    >
-                        Browse companies
-                    </a>
-                </div>
-            ) : (
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
-                    <TopList
-                        title="Top Countries"
-                        items={countryItems}
-                        seeAllHref="/countries"
-                        seeAllLabel="See all countries"
-                    />
-                    <TopList
-                        title="Top Companies"
-                        items={companyItems}
-                        seeAllHref="/companies"
-                        seeAllLabel="See all companies"
-                    />
-                </div>
-            )
-        }
+        {countries.length === 0 ? (
+            <div class="text-center py-8 text-gray-500">
+                <p class="text-lg mb-2">No positions tracked yet.</p>
+                <p class="text-sm">
+                    Check back soon — we're adding new countries and companies
+                    regularly.
+                </p>
+                <a
+                    href="/companies"
+                    class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                >
+                    Browse companies
+                </a>
+            </div>
+        ) : (
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+                <TopList
+                    title="Top Countries"
+                    items={countryItems}
+                    seeAllHref="/countries"
+                    seeAllLabel="See all countries"
+                />
+                <TopList
+                    title="Top Companies"
+                    items={companyItems}
+                    seeAllHref="/companies"
+                    seeAllLabel="See all companies"
+                />
+            </div>
+        )}
     </div>
 </BaseLayout>

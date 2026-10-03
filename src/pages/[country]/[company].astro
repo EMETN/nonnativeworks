@@ -76,9 +76,7 @@ const reportUrl =
         { name: company.name },
     ]}
 >
-    <div
-        class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16"
-    >
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16">
         <Breadcrumb
             id="breadcrumb-country"
             items={[
@@ -100,73 +98,64 @@ const reportUrl =
         />
 
         <!-- Title + Gauge -->
-        <div
-            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
-        >
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 {company.name}
             </h1>
-            {
-                company.total_positions > 0 && (
-                    <CompanyGauge
-                        englishPositions={company.english_positions}
-                        totalPositions={company.total_positions}
-                    />
-                )
-            }
+            {company.total_positions > 0 && (
+                <CompanyGauge
+                    englishPositions={company.english_positions}
+                    totalPositions={company.total_positions}
+                />
+            )}
         </div>
 
-        {
-            positions.length > 0 && (
-                <StatsDescription>
-                    <strong class="font-semibold text-gray-900">
-                        {company.english_positions.toLocaleString()}
-                    </strong>{' '}
-                    of{' '}
-                    <strong class="font-semibold text-gray-900">
-                        {company.total_positions.toLocaleString()}
-                    </strong>{' '}
-                    open{' '}
-                    {company.total_positions === 1 ? 'position' : 'positions'}{' '}
-                    at {company.name}{' '}
-                    {company.english_positions === 1 ? "doesn't" : "don't"}{' '}
-                    require the local language(s).
-                </StatsDescription>
-            )
-        }
-        {
-            positions.length === 0 ? (
-                <div class="text-center py-16 text-gray-500">
-                    <p>
-                        No positions tracked yet for{' '}
-                        <strong>{company.name}</strong>. Check back soon!
-                    </p>
-                    <a
-                        href={`/${countrySlug}`}
-                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
-                    >
-                        Browse other companies in {country.name}
-                    </a>
-                </div>
-            ) : (
-                <>
-                    <PositionList
-                        positions={positions}
-                        careerPageUrl={company.career_page_url}
-                        reportUrl={reportUrl}
-                        client:idle
-                    />
-                    <TimeAgo
-                        date={company.updated_at}
-                        class="text-xs sm:text-sm text-gray-500 mt-4"
-                        client:load
-                    />
-                </>
-            )
-        }
+        {positions.length > 0 && (
+            <StatsDescription>
+                <strong class="font-semibold text-gray-900">
+                    {company.english_positions.toLocaleString()}
+                </strong>{' '}
+                of{' '}
+                <strong class="font-semibold text-gray-900">
+                    {company.total_positions.toLocaleString()}
+                </strong>{' '}
+                open {company.total_positions === 1 ? 'position' : 'positions'}{' '}
+                at {company.name}{' '}
+                {company.english_positions === 1 ? "doesn't" : "don't"} require
+                the local language(s).
+            </StatsDescription>
+        )}
+        {positions.length === 0 ? (
+            <div class="text-center py-16 text-gray-500">
+                <p>
+                    No positions tracked yet for <strong>{company.name}</strong>
+                    . Check back soon!
+                </p>
+                <a
+                    href={`/${countrySlug}`}
+                    class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
+                >
+                    Browse other companies in {country.name}
+                </a>
+            </div>
+        ) : (
+            <>
+                <PositionList
+                    positions={positions}
+                    careerPageUrl={company.career_page_url}
+                    reportUrl={reportUrl}
+                    client:idle
+                />
+                <TimeAgo
+                    date={company.updated_at}
+                    class="text-xs sm:text-sm text-gray-500 mt-4"
+                    client:load
+                />
+            </>
+        )}
     </div>
     <script is:inline>
         const fromCompany = sessionStorage.getItem('nav-from-company');
