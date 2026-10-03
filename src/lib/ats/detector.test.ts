@@ -56,6 +56,22 @@ describe('detectAts — other ATS hostnames still detect correctly', () => {
             'https://happeo.recruitee.com',
             { ats: 'recruitee', companySlug: 'happeo' },
         ],
+        [
+            'https://jobs.smartrecruiters.com/SAPITBusinessSysteme',
+            { ats: 'smartrecruiters', companySlug: 'SAPITBusinessSysteme' },
+        ],
+        [
+            'https://jobs.smartrecruiters.com/SAPITBusinessSysteme/744000153324379-hr-project-associate',
+            { ats: 'smartrecruiters', companySlug: 'SAPITBusinessSysteme' },
+        ],
+        [
+            'https://careers.smartrecruiters.com/SomeCo',
+            { ats: 'smartrecruiters', companySlug: 'SomeCo' },
+        ],
+        [
+            'https://api.smartrecruiters.com/v1/companies/SomeCo/postings',
+            { ats: 'smartrecruiters', companySlug: 'SomeCo' },
+        ],
     ])('%s → %o', (url, expected) => {
         expect(detectAts(url)).toEqual(expected);
     });

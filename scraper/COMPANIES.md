@@ -89,14 +89,15 @@ Which companies are handled at each layer. Layers run in order and stop as soon 
 
 Detected automatically from the career page URL. No per-company config needed — just submit the ATS-hosted URL.
 
-| ATS        | URL pattern                                         | Companies using it                                                                                                                          |
-| ---------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                              |
-| Lever      | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                         |
-| Ashby      | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                             |
-| Workable   | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                  |
-| Workday    | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
-| Recruitee  | `{slug}.recruitee.com`                              | Happeo                                                                                                                                      |
+| ATS             | URL pattern                                         | Companies using it                                                                                                                          |
+| --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                              |
+| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                         |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                             |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                  |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips |
+| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                      |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                         |
 
 ---
 
@@ -146,25 +147,25 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 - **`css_cards`** — jobs are repeating HTML elements; configure a card selector + field selectors
 - **`attribute_json`** — all jobs are encoded as a JSON array in an HTML attribute (common with web components)
 
-| Company              | Hostname                                                    | Mode                        | Notes                                                                                   |
-| -------------------- | ----------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------- |
-| Metso                | `metso.com/corporate/careers/open-jobs`                     | `attribute_json`            | `<careers-list-page open-positions='[…]'>`; fan-out per country via `countries[]` array |
-| Neste                | `jobs.neste.com`                                            | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| Vaisala              | `careers.vaisala.com/search`                                | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| SAP                  | `jobs.sap.com/search`                                       | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| Fortum               | `jobs.fortum.com/search`                                    | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| Hiab                 | `careers.hiab.com/search`                                   | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| Wärtsilä             | `careers.wartsila.com/search`                               | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
-| Vestas               | `careers.vestas.com/search`                                 | `css_cards`                 | Paginated `?startrow=N` table; 10 rows per page; descriptions enriched via static fetch |
-| Bolt                 | `bolt.eu/en/careers/positions`                              | `script_json`               | Paginated; 20 rows per page                                                             |
-| UpCloud              | `upcloud.teamtailor.com/jobs`                               | teamtailor                  |                                                                                         |
-| Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                         |
+| Company              | Hostname                                                    | Mode                        | Notes                                                                                                                                                         |
+| -------------------- | ----------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metso                | `metso.com/corporate/careers/open-jobs`                     | `attribute_json`            | `<careers-list-page open-positions='[…]'>`; fan-out per country via `countries[]` array                                                                       |
+| Neste                | `jobs.neste.com`                                            | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch                                                                       |
+| Vaisala              | `careers.vaisala.com/search`                                | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch                                                                       |
+| SAP                  | `careers.sap.com/search`                                    | `css_cards`                 | Legacy site, scraped as SAP's `extra_urls` alongside SmartRecruiters. Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch |
+| Fortum               | `jobs.fortum.com/search`                                    | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch                                                                       |
+| Hiab                 | `careers.hiab.com/search`                                   | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch                                                                       |
+| Wärtsilä             | `careers.wartsila.com/search`                               | `css_cards`                 | Paginated `?startrow=N` table; 25 rows per page; descriptions enriched via static fetch                                                                       |
+| Vestas               | `careers.vestas.com/search`                                 | `css_cards`                 | Paginated `?startrow=N` table; 10 rows per page; descriptions enriched via static fetch                                                                       |
+| Bolt                 | `bolt.eu/en/careers/positions`                              | `script_json`               | Paginated; 20 rows per page                                                                                                                                   |
+| UpCloud              | `upcloud.teamtailor.com/jobs`                               | teamtailor                  |                                                                                                                                                               |
+| Futurice             | `careers.futurice.com/en-GB/jobs`                           | teamtailor                  |                                                                                                                                                               |
 | Nordnet              | `career.nordnetab.com/jobs`                                 | teamtailor                  |
 | Tekever              | `careers.tekever.com/jobs`                                  | teamtailor                  |
-| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                           |
-| Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                           |
-| Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                           |
-| Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                  |
+| Siemens Healthineers | `jobs.siemens-healthineers.com/en_US/searchjobs/SearchJobs` | `css_cards`                 | Paginated offset; 6 rows page                                                                                                                                 |
+| Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                                                                                                 |
+| Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                                                                                                 |
+| Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                                                                                        |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 

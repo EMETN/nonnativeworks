@@ -199,10 +199,10 @@ scrapers:
       job_function_selector: "[data-careersite-propertyid='department']"
 
     # ── SAP ──────────────────────────────────────────────────────────────────────
-    # Taleo instance that only accepts one country per request. country_filter_param
+    # SuccessFactors site that only accepts one country per request. country_filter_param
     # + countries makes the scraper iterate one paginated fetch per country and
-    # merge results before description enrichment.
-    - match: 'jobs.sap.com'
+    # merge results before description enrichment. Not jobs.sap.com: Cloudflare-challenged.
+    - match: 'careers.sap.com'
       name: SAP
       country_filter_param: 'optionsFacetsDD_country'
       countries:

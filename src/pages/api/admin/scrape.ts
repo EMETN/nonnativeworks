@@ -22,6 +22,10 @@ import {
 } from '../../../lib/ats/workday';
 import { fetchRecruiteeJobs } from '../../../lib/ats/recruitee';
 import {
+    fetchSmartRecruitersJobs,
+    enrichSmartRecruitersDescriptions,
+} from '../../../lib/ats/smartrecruiters';
+import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
     extractWorkModelFromLocation,
@@ -206,6 +210,15 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                     detection.companySlug,
                 ));
                 ats = 'recruitee';
+            } else if (resolvedAts === 'smartrecruiters') {
+                ({ jobs: rawJobs, companyName } =
+                    await fetchSmartRecruitersJobs(detection.companySlug));
+                await enrichSmartRecruitersDescriptions(
+                    rawJobs,
+                    detection.companySlug,
+                    getCachedOutcomes(),
+                );
+                ats = 'smartrecruiters';
             } else if (resolvedAts === 'workable') {
                 const [jobs, name] = await Promise.all([
                     fetchWorkableJobs(detection.companySlug),
