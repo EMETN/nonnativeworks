@@ -663,7 +663,14 @@ function runPythonScraper(
             cleanupSkipFile();
             console.log('[python-scraper] exit code:', code);
             console.log('[python-scraper] stderr:', stderr.trim() || '(empty)');
-            console.log('[python-scraper] stdout:', stdout.trim() || '(empty)');
+            // Full stdout can be one multi-MB line; it times out CI log matchers.
+            const out = stdout.trim();
+            console.log(
+                `[python-scraper] stdout (${out.length} chars):`,
+                out.length > 2000
+                    ? `${out.slice(0, 2000)}… [truncated]`
+                    : out || '(empty)',
+            );
 
             if (code !== 0) {
                 reject(
