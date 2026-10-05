@@ -1,22 +1,30 @@
 # Companies tracked
 
 - ABB
+- ABN AMRO
 - Academic Work
 - Accenture
 - Airbus
+- Aiven
 - AlphaSense
+- AMD
 - Arla
+- ASML
+- Autodesk
 - Barona (local script)
 - Bolt
 - Booking.com
 - Capgemini
+- Carlsberg
 - CGI (local script)
+- Danske Bank
 - Deel
 - Delivery Hero
 - DEPT
+- E.ON
 - Edenred
 - Elekta
-- E.ON
+- Equinor
 - Ericsson
 - Finnair
 - Fiskars
@@ -35,6 +43,7 @@
 - Metso
 - Munich Re
 - Neste
+- Netflix
 - Nets/Nexi
 - Nokia
 - Nordea
@@ -61,6 +70,7 @@
 - Smartly
 - SOK
 - Solita
+- Spotify
 - Stora Enso
 - Supercell
 - Sweco Group
@@ -76,8 +86,8 @@
 - Volvo Group
 - Wolt
 - Wärtsilä
-- Zalando
 - Yousician
+- Zalando
 
 ## Companies by Scraping Layer
 
@@ -89,15 +99,15 @@ Which companies are handled at each layer. Layers run in order and stop as soon 
 
 Detected automatically from the career page URL. No per-company config needed — just submit the ATS-hosted URL.
 
-| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                       |
-| --------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                           |
-| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                      |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                                                                                          |
-| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                               |
-| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`) |
-| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                   |
-| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                      |
+| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                       |
+| --------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                                                                           |
+| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                      |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                                                                                                                                          |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                               |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor |
+| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                   |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                                                                      |
 
 ---
 
@@ -123,6 +133,11 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                     |
 | Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings) |
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)             |
+| Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                              |
+| Netflix            | `explore.jobs.netflix.net`                   | Eightfold API (offset pagination)                                 |
+| Danske Bank        | `ejqi.fa.ocs.oraclecloud.eu`                 | Oracle HCM Recruiting Cloud                                       |
+| ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)              |
+| AMD                | `careers.amd.com`                            | Jibe jobs API                                                     |
 
 ---
 
@@ -166,6 +181,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Scout24              | `scout24.com/en/career/jobs`                                | `css_cards`                 | no pagination                                                                                                                                                 |
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                                                                                                 |
 | Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                                                                                        |
+| Carlsberg            | `careers.carlsberg.com/search`                              | `css_cards`                 | SuccessFactors; fetches and merges every site locale (each serves a distinct slice of jobs)                                                                   |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 
@@ -174,6 +190,7 @@ Dedicated per-platform Python modules for sites with non-standard structures.
 | Company       | Hostname                              | Notes                                                                                                                                                                                                                                                                                                                  |
 | ------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Academic Work | `academicwork.fi/.se/.no/.dk/.de/.ch` | Staffing agency; one companies.yaml entry fans out to all six country sites per run; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions fetched from English URL (`/en/jobs/j/…?lang=en`) to avoid local-site boilerplate; jobs stamped with country_code explicitly per site |
+| Aiven         | `aiven.io/careers/job`                | Static single page; JSON-LD `JobPosting` list paired with job-card links for URLs                                                                                                                                                                                                                                      |
 | Arla          | `jobs.arla.com`                       | Jobs JSON embedded in a `<script>` block (`phApp.ddo`); paginated `?from=N`; descriptions enriched via static fetch                                                                                                                                                                                                    |
 | Barona        | `barona.fi`                           | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs                                                                                                    |
 | CGI           | `cgi.njoyn.com`                       | Njoyn ATS; Playwright                                                                                                                                                                                                                                                                                                  |
