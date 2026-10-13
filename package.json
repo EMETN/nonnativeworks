@@ -20,6 +20,7 @@
         "postinstall": "node scripts/patch-preact-vite.mjs && simple-git-hooks",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:live": "WORKDAY_LIVE=1 vitest run tests/workday-live.test.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "format:py": "ruff format scraper",
