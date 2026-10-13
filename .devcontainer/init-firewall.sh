@@ -127,7 +127,7 @@ tool_domains=(
     "sentry.io"  # Sentry
     "statsig.com"  # Statsig
     "aws-0-eu-central-1.pooler.supabase.com"  # Supabase
-    "movbttbpcfrwrgshffef.supabase.co"  # Supabase
+    "oysrdftuvtlgltnvqqsg.supabase.co"  # Supabase
     "marketplace.visualstudio.com"  # VS Code
     "update.code.visualstudio.com"  # VS Code
     "vscode.blob.core.windows.net"  # VS Code

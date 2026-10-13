@@ -2,12 +2,7 @@
     "name": "nonnativeworks!",
     "build": {
         "dockerfile": "Dockerfile",
-        "context": "..",
-        "args": {
-            "CLAUDE_CODE_VERSION": "latest",
-            "GIT_DELTA_VERSION": "0.19.2",
-            "ZSH_IN_DOCKER_VERSION": "1.2.1"
-        }
+        "context": ".."
     },
     "runArgs": [
         "--cap-add=NET_ADMIN",
