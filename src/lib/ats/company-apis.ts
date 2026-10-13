@@ -1408,6 +1408,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
+    { urlSubstring: 'dentsuaegis.wd3.myworkdayjobs.com', name: 'Dentsu' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },

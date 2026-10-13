@@ -182,6 +182,7 @@ company_domains=(
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
     "deel.com"  # Deel
     "careers.deliveryhero.com"  # Delivery Hero
+    "dentsuaegis.wd3.myworkdayjobs.com"  # Dentsu
     "deptagency.com"  # DEPT
     "careers.telekom.com"  # Deutsche Telekom
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom

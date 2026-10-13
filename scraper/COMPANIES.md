@@ -20,6 +20,7 @@
 - Danske Bank
 - Deel
 - Delivery Hero
+- Dentsu
 - DEPT
 - E.ON
 - Edenred
@@ -99,15 +100,15 @@ Which companies are handled at each layer. Layers run in order and stop as soon 
 
 Detected automatically from the career page URL. No per-company config needed — just submit the ATS-hosted URL.
 
-| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                       |
-| --------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                                                                           |
-| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                      |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                                                                                                                                          |
-| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                               |
-| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor |
-| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                   |
-| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                                                                      |
+| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
+| --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                                                                                                        |
+| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus                                                                                                                                                                                                                                                                       |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                            |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor, Dentsu (per-country facets) |
+| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                                                                                                   |
 
 ---
 

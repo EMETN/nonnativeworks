@@ -103,6 +103,10 @@ companies:
       url: https://careers.deliveryhero.com/jobs
       min_positions: 5
 
+    - name: Dentsu
+      url: https://dentsuaegis.wd3.myworkdayjobs.com/DAN_GLOBAL
+      min_positions: 30
+
     - name: DEPT
       url: https://www.deptagency.com/careers/roles
       min_positions: 5
