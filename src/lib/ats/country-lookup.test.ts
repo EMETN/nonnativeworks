@@ -72,3 +72,14 @@ describe('lookupCountryFromLocation — n-gram fallback does not disturb other c
         }
     });
 });
+
+// Dentsu's Workday lists bare city names in additionalLocations; unknown ones are
+// silently dropped when another location in the same posting resolves.
+describe('lookupCountryFromLocation — bare Workday city names', () => {
+    test('Bulgarian and Portuguese delivery-centre cities resolve', () => {
+        expect(codes('Sofia')).toEqual(['BG']);
+        expect(codes('Leiria')).toEqual(['PT']);
+        expect(codes('Vila Real')).toEqual(['PT']);
+        expect(codes('Guarda')).toEqual(['PT']);
+    });
+});

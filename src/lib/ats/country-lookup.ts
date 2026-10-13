@@ -915,6 +915,8 @@ const CITY_MAP: Record<string, CountryInfo> = {
     machelen: { name: 'Belgium', code: 'BE', slug: 'belgium' },
     'sint-martens-latem': { name: 'Belgium', code: 'BE', slug: 'belgium' },
     tubize: { name: 'Belgium', code: 'BE', slug: 'belgium' },
+    // ── Bulgaria ─────────────────────────────────────────────────────────────
+    sofia: { name: 'Bulgaria', code: 'BG', slug: 'bulgaria' },
     // ── Czech Republic ───────────────────────────────────────────────────────
     brno: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
     ostrava: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
@@ -1070,7 +1072,10 @@ const CITY_MAP: Record<string, CountryInfo> = {
     // ── Portugal ─────────────────────────────────────────────────────────────
     lisbon: { name: 'Portugal', code: 'PT', slug: 'portugal' },
     lisboa: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    guarda: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    leiria: { name: 'Portugal', code: 'PT', slug: 'portugal' },
     porto: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    'vila real': { name: 'Portugal', code: 'PT', slug: 'portugal' },
     // ── Romania ──────────────────────────────────────────────────────────────
     bucurești: { name: 'Romania', code: 'RO', slug: 'romania' },
     bucharest: { name: 'Romania', code: 'RO', slug: 'romania' },
