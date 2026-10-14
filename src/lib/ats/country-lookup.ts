@@ -1084,6 +1084,9 @@ const CITY_MAP: Record<string, CountryInfo> = {
     // Slovakia
     bratislava: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
     kosice: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    košice: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    zilina: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    žilina: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
     // ── Spain ────────────────────────────────────────────────────────────────
     alicante: { name: 'Spain', code: 'ES', slug: 'spain' },
     barcelona: { name: 'Spain', code: 'ES', slug: 'spain' },
@@ -1313,11 +1316,12 @@ const CITY_MAP: Record<string, CountryInfo> = {
     seattle: { name: 'United States', code: 'US', slug: 'united-states' },
     springfield: { name: 'United States', code: 'US', slug: 'united-states' },
     tulsa: { name: 'United States', code: 'US', slug: 'united-states' },
-    'washington DC': {
+    'washington dc': {
         name: 'United States',
         code: 'US',
         slug: 'united-states',
     },
+    wilmington: { name: 'United States', code: 'US', slug: 'united-states' },
     // ── Canada (provinces) ───────────────────────────────────────────────────
     alberta: { name: 'Canada', code: 'CA', slug: 'canada' },
     'british columbia': { name: 'Canada', code: 'CA', slug: 'canada' },
@@ -1338,7 +1342,9 @@ const CITY_MAP: Record<string, CountryInfo> = {
     montréal: { name: 'Canada', code: 'CA', slug: 'canada' },
     ottawa: { name: 'Canada', code: 'CA', slug: 'canada' },
     'quebec city': { name: 'Canada', code: 'CA', slug: 'canada' },
+    regina: { name: 'Canada', code: 'CA', slug: 'canada' },
     'saint laurent': { name: 'Canada', code: 'CA', slug: 'canada' },
+    saskatoon: { name: 'Canada', code: 'CA', slug: 'canada' },
     toronto: { name: 'Canada', code: 'CA', slug: 'canada' },
     vancouver: { name: 'Canada', code: 'CA', slug: 'canada' },
     winnipeg: { name: 'Canada', code: 'CA', slug: 'canada' },
@@ -1699,7 +1705,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         .split(/[;|]/)
         .map((s) => s.trim())
         .filter(Boolean);
-    const segments = parts.flatMap((part) => {
+    const segmentGroups = parts.map((part) => {
         const stripped = part
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
@@ -1731,13 +1737,27 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     // then city prefix match (e.g. "riga central" → "riga", "tartu kontor" → "tartu").
     const seen = new Set<string>();
     const results: CountryInfo[] = [];
-    for (const segment of segments) {
-        const key = normalizeKey(segment);
-        const info =
+    for (const group of segmentGroups) {
+        // A bare 2-letter code counts only if nothing else resolved: "San Francisco, CA" isn't Canada.
+        const keys = group.map(normalizeKey);
+        const isCode = (key: string) => /^[a-z]{2}$/.test(key);
+        const lookup = (key: string) =>
             COUNTRY_MAP[key] ?? CITY_MAP[key] ?? lookupCityByPrefix(key);
-        if (info && !seen.has(info.code)) {
-            seen.add(info.code);
-            results.push(info);
+        let infos = keys
+            .filter((key) => !isCode(key))
+            .map(lookup)
+            .filter((info): info is CountryInfo => !!info);
+        if (infos.length === 0) {
+            infos = keys
+                .filter(isCode)
+                .map(lookup)
+                .filter((info): info is CountryInfo => !!info);
+        }
+        for (const info of infos) {
+            if (!seen.has(info.code)) {
+                seen.add(info.code);
+                results.push(info);
+            }
         }
     }
     if (results.length > 0) return results;

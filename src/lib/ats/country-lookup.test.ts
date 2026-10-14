@@ -83,3 +83,65 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
         expect(codes('Guarda')).toEqual(['PT']);
     });
 });
+
+describe('lookupCountryFromLocation — "City, XX" code qualifies the city', () => {
+    test.each([
+        ['San Francisco, CA', ['US']],
+        ['Boston, MA', ['US']],
+        ['Seattle, WA', ['US']],
+    ])('%s → %j', (loc, expected) => {
+        expect(codes(loc)).toEqual(expected);
+    });
+
+    test('a code that agrees with the city still resolves', () => {
+        expect(codes('Dublin, IE')).toEqual(['IE']);
+        expect(codes('Zürich, CH')).toEqual(['CH']);
+    });
+
+    test('each pipe/semicolon part is judged on its own', () => {
+        expect(
+            codes(
+                'Boston, MA; San Francisco, CA | Munich, Germany; Zürich, CH',
+            ),
+        ).toEqual(['CH', 'DE', 'US']);
+    });
+
+    test('a bare code with no city before it is still a country', () => {
+        expect(codes('Remote, DE')).toEqual(['DE']);
+        expect(codes('DE')).toEqual(['DE']);
+    });
+
+    test('a country named later in the part outranks a colliding code', () => {
+        expect(codes('Smyrna, DE, USA')).toEqual(['US']);
+        expect(codes("St. John's, NL, Canada")).toEqual(['CA']);
+    });
+
+    test('a known US city outranks a colliding code', () => {
+        expect(codes('Wilmington, DE')).toEqual(['US']);
+    });
+
+    test('an unknown city with a bare DE still defaults to Germany', () => {
+        expect(codes('Walldorf, DE')).toEqual(['DE']);
+        expect(codes('Berlin, DE')).toEqual(['DE']);
+    });
+
+    test('Saskatchewan cities outrank the SK code', () => {
+        expect(codes('Regina, SK')).toEqual(['CA']);
+        expect(codes('Saskatoon, SK')).toEqual(['CA']);
+    });
+
+    test('Slovak cities resolve with or without diacritics', () => {
+        expect(codes('Bratislava, SK')).toEqual(['SK']);
+        expect(codes('Košice, SK')).toEqual(['SK']);
+        expect(codes('Košice')).toEqual(['SK']);
+        expect(codes('Žilina')).toEqual(['SK']);
+        expect(codes('Zilina')).toEqual(['SK']);
+    });
+});
+
+describe('lookupCountryFromLocation — Washington DC', () => {
+    test('resolves without a comma', () => {
+        expect(codes('Washington DC')).toEqual(['US']);
+        expect(codes('Washington, DC')).toEqual(['US']);
+    });
+});
