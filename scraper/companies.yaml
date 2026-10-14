@@ -247,6 +247,10 @@ companies:
       url: https://op-careers.fi
       min_positions: 5
 
+    - name: OpenAI
+      url: https://openai.com/careers/search/
+      min_positions: 10
+
     - name: Orion
       url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
       min_positions: 1

@@ -227,6 +227,7 @@ company_domains=(
     "career.nordnetab.com"  # Nordnet
     "nxp.wd3.myworkdayjobs.com"  # NXP
     "op-careers.fi"  # OP Financial Group
+    "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla
     "philips.wd3.myworkdayjobs.com"  # Philips
     "posti.wd3.myworkdayjobs.com"  # Posti

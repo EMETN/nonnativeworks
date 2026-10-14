@@ -23,6 +23,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'vml.com': { ats: 'greenhouse', slug: 'wundermanthompson' },
     'tandemhealth.ai': { ats: 'ashby', slug: 'tandem-health' },
     'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
+    'openai.com': { ats: 'ashby', slug: 'openai' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
