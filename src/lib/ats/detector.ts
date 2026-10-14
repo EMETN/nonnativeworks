@@ -19,6 +19,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'legora.com': { ats: 'ashby', slug: 'legora' },
     // Slug probing would hit a stale, empty Workable "iceye" account.
     'iceye.com': { ats: 'ashby', slug: 'iceye' },
+    // VML kept its pre-merger Wunderman Thompson board; Greenhouse's "vml" is empty.
+    'vml.com': { ats: 'greenhouse', slug: 'wundermanthompson' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

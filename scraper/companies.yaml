@@ -380,6 +380,10 @@ companies:
       url: https://careers.vestas.com/search
       min_positions: 10
 
+    - name: VML
+      url: https://www.vml.com/careers
+      min_positions: 10
+
     - name: Volvo Group
       url: https://jobs.volvogroup.com/feed/361555
       min_positions: 10
