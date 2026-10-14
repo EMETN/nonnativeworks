@@ -17,6 +17,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     // Slug probing would hit Greenhouse's "lovable", an unrelated Italian company.
     'lovable.dev': { ats: 'ashby', slug: 'lovable' },
     'legora.com': { ats: 'ashby', slug: 'legora' },
+    // Slug probing would hit a stale, empty Workable "iceye" account.
+    'iceye.com': { ats: 'ashby', slug: 'iceye' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

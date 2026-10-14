@@ -199,6 +199,7 @@ company_domains=(
     "happeo.recruitee.com"  # Happeo
     "careers.theheinekencompany.com"  # Heineken
     "careers.hiab.com"  # Hiab
+    "www.iceye.com"  # ICEYE
     "if.wd3.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING

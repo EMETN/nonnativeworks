@@ -163,6 +163,10 @@ companies:
       url: https://careers.hiab.com/search
       min_positions: 3
 
+    - name: ICEYE
+      url: https://www.iceye.com/careers/positions
+      min_positions: 10
+
     - name: If
       url: https://if.wd502.myworkdayjobs.com/Careers
       min_positions: 5
