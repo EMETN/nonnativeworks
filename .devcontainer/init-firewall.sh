@@ -154,6 +154,7 @@ cdn_domains=(
     "upcloud.teamtailor.com"  # UpCloud
 )
 company_domains=(
+    "abb.wd3.myworkdayjobs.com"  # ABB
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
     "academicwork.se"
@@ -190,6 +191,7 @@ company_domains=(
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
     "careers.dhl.com"  # DHL
     "edenred.com"  # Edenred
+    "elekta.wd3.myworkdayjobs.com"  # Elekta
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "finnair.wd103.myworkdayjobs.com"  # Finnair
@@ -203,6 +205,7 @@ company_domains=(
     "careers.hiab.com"  # Hiab
     "www.iceye.com"  # ICEYE
     "if.wd3.myworkdayjobs.com"  # If
+    "if.wd502.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING
     "kesko.fi"  # Kesko
@@ -230,6 +233,7 @@ company_domains=(
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla
+    "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
     "philips.wd3.myworkdayjobs.com"  # Philips
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
@@ -237,7 +241,6 @@ company_domains=(
     "www.randstad.com"  # Randstad
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
-    "s-pankki.fi"  # S-Pankki
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
     "careers.sap.com"  # SAP
     "scout24.com"  # Scout24
@@ -256,6 +259,7 @@ company_domains=(
     "swecogroup.com"  # Sweco
     "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever
+    "www.teliacompany.com"  # Telia
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
     "www.thoughtworks.com"  # Thoughtworks — on Greenhouse (boards-api.greenhouse.io does the scraping); page host for Python fallback
