@@ -21,6 +21,9 @@ export default defineConfig({
     build: {
         format: 'file',
     },
+    redirects: {
+        '/czech-republic': '/czechia',
+    },
     // Static by default; prerender = false opts /admin and /api into on-demand rendering.
     output: 'static',
     // Astro hashes inline scripts, so script-src needs no 'unsafe-inline';

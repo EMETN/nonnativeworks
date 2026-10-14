@@ -7,11 +7,7 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/czech-republic"
-  to = "/czechia"
-  status = 301
-
+# Lives here, not in Astro's redirects: Astro can't target the shared /[country]/[company] route.
 [[redirects]]
   from = "/czech-republic/*"
   to = "/czechia/:splat"
