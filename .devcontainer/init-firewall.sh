@@ -209,6 +209,7 @@ company_domains=(
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING
     "kesko.fi"  # Kesko
+    "jobs.deel.com"  # Klarna
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
     "legora.com"  # Legora

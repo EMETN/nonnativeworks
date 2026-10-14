@@ -183,6 +183,10 @@ companies:
       url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5
 
+    - name: Klarna
+      url: https://jobs.deel.com/klarna
+      min_positions: 10
+
     - name: Kone
       url: https://kone.wd3.myworkdayjobs.com/en-US/Careers
       min_positions: 5

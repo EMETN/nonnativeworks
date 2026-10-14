@@ -98,11 +98,16 @@
 #                         (required) e.g. "parsedJobs"
 #   fields.title          Dot-path to job title (default: "title")
 #   fields.url            Dot-path to job URL (relative URLs are resolved)
+#   url_template          Builds the URL from top-level item keys instead of
+#                         fields.url, e.g. "/acme/job-details/{id}/overview"
 #   fields.locations      Dot-path to array of location objects
-#   fields.location_subfield  Key within each location object for city/location string
-#   fields.country_subfield   Key within each location object for country code
+#   fields.location_subfield  Dot-path within each location object for city/location string
+#   fields.country_subfield   Dot-path within each location object for country code
 #                             One job is created per location object (fan-out).
 #   fields.job_function   Dot-path to job function/department string
+#                         (numeric parts index into arrays, e.g. "depts.0.name")
+#   fields.description    Dot-path to the description HTML; "$78"-style RSC
+#                         references are resolved. Skips the detail page fetch.
 
 # ── extract_mode: teamtailor ──────────────────────────────────────────────────
 #
@@ -487,3 +492,19 @@ scrapers:
       title_selector: 'a.jobTitle-link'
       location_selector: 'div[id$="-desktop-section-location-value"]'
       description_selector: '.jobdescription'
+
+    # ── Klarna ─────────────────────────────────────────────────────────────────────
+    # Detail pages render client-side, so descriptions come from the listing payload.
+    - match: 'jobs.deel.com/klarna'
+      name: Klarna
+      extract_mode: script_json
+      script_key: jobPostings
+      url_template: '/klarna/job-details/{id}/overview'
+      pagination:
+          type: none
+      fields:
+          title: title
+          locations: job.jobLocations
+          location_subfield: location.name
+          job_function: job.jobDepartments.0.department.name
+          description: richtextDescription
