@@ -81,6 +81,7 @@
 - Thales
 - Thoughtworks
 - Tieto
+- Trustpilot
 - Uniper
 - UpCloud
 - Vaisala
@@ -103,7 +104,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
 | --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks                                                                                                                                                                                                        |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot                                                                                                                                                                                            |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
 | Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable                                                                                                                                                                                                                                                              |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | â€” (none currently tracked)                                                                                                                                                                                                                                                            |

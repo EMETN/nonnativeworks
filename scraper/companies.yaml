@@ -352,6 +352,10 @@ companies:
       url: https://careers.tieto.com
       min_positions: 10
 
+    - name: Trustpilot
+      url: https://corporate.trustpilot.com/careers
+      min_positions: 5
+
     - name: Uniper
       url: https://careers.uniper.energy
       min_positions: 5

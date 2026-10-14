@@ -254,6 +254,7 @@ company_domains=(
     "thales.wd3.myworkdayjobs.com"  # Thales
     "www.thoughtworks.com"  # Thoughtworks — on Greenhouse (boards-api.greenhouse.io does the scraping); page host for Python fallback
     "careers.tieto.com"  # Tietoevry
+    "corporate.trustpilot.com"  # Trustpilot
     "uber.com"  # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
