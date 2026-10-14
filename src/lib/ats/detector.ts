@@ -13,6 +13,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
     'deptagency.com': { ats: 'greenhouse', slug: 'dept' },
     'thoughtworks.com': { ats: 'greenhouse', slug: 'thoughtworks' },
+    // Slug probing would hit Greenhouse's "lovable", an unrelated Italian company.
+    'lovable.dev': { ats: 'ashby', slug: 'lovable' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
