@@ -41,6 +41,13 @@ describe('detectAts — hostname slug overrides', () => {
             companySlug: 'iceye',
         });
     });
+
+    test('https://tandemhealth.ai/about/careers → ashby board "tandem-health"', () => {
+        expect(detectAts('https://tandemhealth.ai/about/careers')).toEqual({
+            ats: 'ashby',
+            companySlug: 'tandem-health',
+        });
+    });
 });
 
 // The Thoughtworks override must not perturb the standard hostname patterns every

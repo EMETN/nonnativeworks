@@ -340,6 +340,10 @@ companies:
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1
 
+    - name: Tandem Health
+      url: https://tandemhealth.ai/about/careers
+      min_positions: 10
+
     - name: Tekever
       url: https://careers.tekever.com/jobs
       min_positions: 5

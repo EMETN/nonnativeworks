@@ -251,6 +251,7 @@ company_domains=(
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "supercell.com"  # Supercell
     "swecogroup.com"  # Sweco
+    "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
