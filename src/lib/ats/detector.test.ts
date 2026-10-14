@@ -58,6 +58,13 @@ describe('detectAts — hostname slug overrides', () => {
             companySlug: 'openai',
         });
     });
+
+    test('https://mistral.ai/careers/ → ashby board "mistral.ai"', () => {
+        expect(detectAts('https://mistral.ai/careers/')).toEqual({
+            ats: 'ashby',
+            companySlug: 'mistral.ai',
+        });
+    });
 });
 
 // The Thoughtworks override must not perturb the standard hostname patterns every
@@ -83,6 +90,10 @@ describe('detectAts — other ATS hostnames still detect correctly', () => {
         [
             'https://jobs.ashbyhq.com/notion/abc-123',
             { ats: 'ashby', companySlug: 'notion' },
+        ],
+        [
+            'https://jobs.ashbyhq.com/mistral.ai',
+            { ats: 'ashby', companySlug: 'mistral.ai' },
         ],
         [
             'https://kone.wd3.myworkdayjobs.com/en-US/Careers',

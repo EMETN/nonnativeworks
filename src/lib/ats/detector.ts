@@ -26,6 +26,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'openai.com': { ats: 'ashby', slug: 'openai' },
     'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
     'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
+    // Slug probing would hit Lever's "mistral", an empty board.
+    'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

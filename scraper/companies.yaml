@@ -215,6 +215,10 @@ companies:
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
 
+    - name: Mistral
+      url: https://jobs.ashbyhq.com/mistral.ai
+      min_positions: 10
+
     - name: Munich Re
       url: https://careers.munichre.com/en/search-jobs
       min_positions: 10

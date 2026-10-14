@@ -134,6 +134,7 @@ tool_domains=(
 )
 ats_domains=(
     "api.ashbyhq.com"  # Ashby
+    "jobs.ashbyhq.com"  # Ashby: page host for direct-board companies (Mistral, Prosus)
     "boards-api.greenhouse.io"  # Greenhouse
     "api.eu.lever.co"  # Lever
     "api.lever.co"  # Lever
@@ -220,6 +221,7 @@ company_domains=(
     "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
+    "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft
     "careers.munichre.com"  # Munich Re

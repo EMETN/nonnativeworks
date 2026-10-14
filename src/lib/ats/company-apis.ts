@@ -1413,4 +1413,5 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'jobs.volvogroup.com', name: 'Volvo Group' },
     { urlSubstring: 'careers.munichre.com', name: 'Munich Re' },
     { urlSubstring: 'jobs.deel.com/klarna', name: 'Klarna' },
+    { urlSubstring: 'mistral.ai', name: 'Mistral' },
 ];
