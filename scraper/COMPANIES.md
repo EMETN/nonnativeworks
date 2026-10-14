@@ -111,9 +111,9 @@ Detected automatically from the career page URL. No per-company config needed �
 
 | ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
 | --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite                                                                                                                                             |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide                                                                                                                               |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), OpenAI                                                                                                                                                                                                      |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), OpenAI, Supercell, Mapbox                                                                                                                                                                                   |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                            |
 | Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor, Dentsu (per-country facets) |
 | Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                |
@@ -143,11 +143,13 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                     |
 | Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings) |
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)             |
+| Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)               |
 | Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                              |
 | Netflix            | `explore.jobs.netflix.net`                   | Eightfold API (offset pagination)                                 |
 | Danske Bank        | `ejqi.fa.ocs.oraclecloud.eu`                 | Oracle HCM Recruiting Cloud                                       |
 | ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)              |
 | AMD                | `careers.amd.com`                            | Jibe jobs API                                                     |
+| Ericsson           | `jobs.ericsson.com`                          | Eightfold PCSX search API                                         |
 
 ---
 
@@ -192,6 +194,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Volvo Group          | `jobs.volvogroup.com/feed/361555`                           | `xml_feed`                  | no pagination                                                                                                                                                 |
 | Munich Re            | `careers.munichre.com/en/search-jobs`                       | `css_cards - json_html_key` | Paginated; CurrentPage                                                                                                                                        |
 | Carlsberg            | `careers.carlsberg.com/search`                              | `css_cards`                 | SuccessFactors; fetches and merges every site locale (each serves a distinct slice of jobs)                                                                   |
+| Sweco Group          | `swecogroup.com/careers/vacancies`                          | `css_cards`                 | Recruitee-backed; per-country facet IDs read live from the country `<select>`; `description_selector` avoids local-language form fields                       |
 
 #### Platform-specific scrapers (`scraper/platforms/`)
 
