@@ -205,6 +205,7 @@ company_domains=(
     "kesko.fi"  # Kesko
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
+    "legora.com"  # Legora
     "lovable.dev"  # Lovable
     "api-apply.lufthansagroup.careers"  # Lufthansa
     "apply.lufthansagroup.careers"  # Lufthansa

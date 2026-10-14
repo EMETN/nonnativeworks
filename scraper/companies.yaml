@@ -179,6 +179,10 @@ companies:
       url: https://konecranes.careers/jobs
       min_positions: 10
 
+    - name: Legora
+      url: https://legora.com/careers
+      min_positions: 10
+
     - name: Lovable
       url: https://lovable.dev/careers
       min_positions: 10

@@ -16,6 +16,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'corporate.trustpilot.com': { ats: 'greenhouse', slug: 'trustpilot' },
     // Slug probing would hit Greenhouse's "lovable", an unrelated Italian company.
     'lovable.dev': { ats: 'ashby', slug: 'lovable' },
+    'legora.com': { ats: 'ashby', slug: 'legora' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
