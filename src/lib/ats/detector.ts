@@ -22,6 +22,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     // VML kept its pre-merger Wunderman Thompson board; Greenhouse's "vml" is empty.
     'vml.com': { ats: 'greenhouse', slug: 'wundermanthompson' },
     'tandemhealth.ai': { ats: 'ashby', slug: 'tandem-health' },
+    'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

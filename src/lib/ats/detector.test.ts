@@ -14,6 +14,7 @@ describe('detectAts — hostname slug overrides', () => {
         ['https://deptagency.com/en-us/careers', 'dept'],
         ['https://corporate.trustpilot.com/careers', 'trustpilot'],
         ['https://www.vml.com/careers', 'wundermanthompson'],
+        ['https://www.anthropic.com/careers/jobs', 'anthropic'],
     ])('%s → greenhouse board %j', (url, slug) => {
         expect(detectAts(url)).toEqual({
             ats: 'greenhouse',

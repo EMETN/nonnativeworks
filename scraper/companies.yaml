@@ -63,6 +63,10 @@ companies:
       url: https://careers.amd.com/careers-home/jobs
       min_positions: 15
 
+    - name: Anthropic
+      url: https://www.anthropic.com/careers/jobs
+      min_positions: 10
+
     - name: Arla
       url: https://jobs.arla.com
       min_positions: 10

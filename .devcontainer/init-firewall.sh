@@ -168,6 +168,7 @@ company_domains=(
     "careers.allianz.com"  # Allianz
     "alpha-sense.com"  # AlphaSense
     "careers.amd.com"  # AMD
+    "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
     "autodesk.wd1.myworkdayjobs.com"  # Autodesk
