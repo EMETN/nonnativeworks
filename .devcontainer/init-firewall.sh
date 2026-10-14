@@ -180,6 +180,7 @@ company_domains=(
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
     "careers.carlsberg.com"  # Carlsberg
     "cgi.njoyn.com"  # CGI
+    "www.cognite.com"  # Cognite
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
     "deel.com"  # Deel
     "careers.deliveryhero.com"  # Delivery Hero

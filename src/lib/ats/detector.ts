@@ -24,6 +24,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'tandemhealth.ai': { ats: 'ashby', slug: 'tandem-health' },
     'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
     'openai.com': { ats: 'ashby', slug: 'openai' },
+    'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

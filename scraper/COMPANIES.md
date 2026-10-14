@@ -18,6 +18,7 @@
 - Capgemini
 - Carlsberg
 - CGI (local script)
+- Cognite
 - Danske Bank
 - Deel
 - Delivery Hero
@@ -110,7 +111,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
 | --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic                                                                                                                                                      |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite                                                                                                                                             |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
 | Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), OpenAI                                                                                                                                                                                                      |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | â€” (none currently tracked)                                                                                                                                                                                                                                                            |
