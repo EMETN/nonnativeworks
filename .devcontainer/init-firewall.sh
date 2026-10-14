@@ -276,6 +276,7 @@ company_domains=(
     "jobs.volkswagen-group.com"  # Volkswagen
     "jobs.volvogroup.com"  # Volvo Group
     "careers.wartsila.com"  # Wärtsilä
+    "wise.jobs"  # Wise
     "careers.wolt.com"  # Wolt
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando

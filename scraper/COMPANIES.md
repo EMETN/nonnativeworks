@@ -97,6 +97,7 @@
 - Vestas
 - VML
 - Volvo Group
+- Wise
 - Wolt
 - Wärtsilä
 - Yousician
@@ -120,7 +121,7 @@ Detected automatically from the career page URL. No per-company config needed �
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                            |
 | Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor, Dentsu (per-country facets) |
 | Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                |
-| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration)                                                                                                                                                                                                                   |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration), Wise (via `wise.jobs` override)                                                                                                                                                                                  |
 
 ---
 

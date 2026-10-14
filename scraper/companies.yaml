@@ -416,6 +416,10 @@ companies:
       url: https://jobs.volvogroup.com/feed/361555
       min_positions: 10
 
+    - name: Wise
+      url: https://wise.jobs/jobs
+      min_positions: 10
+
     - name: Wolt
       url: https://careers.wolt.com/en/jobs
       min_positions: 10
