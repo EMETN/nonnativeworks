@@ -231,6 +231,7 @@ company_domains=(
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
     "nxp.wd3.myworkdayjobs.com"  # NXP
+    "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla

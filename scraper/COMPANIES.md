@@ -57,6 +57,7 @@
 - Nordnet
 - Novo Nordisk
 - NXP
+- Ogilvy
 - OP Financial Group
 - OpenAI
 - Orion
@@ -112,7 +113,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
 | --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide                                                                                                                               |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy                                                                                                                       |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
 | Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), OpenAI, Supercell, Mapbox                                                                                                                                                                                   |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | â€” (none currently tracked)                                                                                                                                                                                                                                                            |

@@ -25,6 +25,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
     'openai.com': { ats: 'ashby', slug: 'openai' },
     'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
+    'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
