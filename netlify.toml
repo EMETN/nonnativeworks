@@ -7,6 +7,16 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/czech-republic"
+  to = "/czechia"
+  status = 301
+
+[[redirects]]
+  from = "/czech-republic/*"
+  to = "/czechia/:splat"
+  status = 301
+
 # Set at the CDN layer, not middleware: prerendered pages never invoke middleware at request time.
 [[headers]]
   for = "/*"

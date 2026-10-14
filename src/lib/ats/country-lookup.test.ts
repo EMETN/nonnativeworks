@@ -145,3 +145,18 @@ describe('lookupCountryFromLocation — Washington DC', () => {
         expect(codes('Washington, DC')).toEqual(['US']);
     });
 });
+
+describe('lookupCountryFromLocation — Czechia', () => {
+    test('both the short and long names resolve to the canonical Czechia entry', () => {
+        for (const loc of [
+            'Czechia',
+            'Czech Republic',
+            'Prague, Czech Republic',
+            'Brno, Czechia',
+        ]) {
+            expect(lookupCountryFromLocation(loc)).toEqual([
+                { name: 'Czechia', code: 'CZ', slug: 'czechia' },
+            ]);
+        }
+    });
+});
