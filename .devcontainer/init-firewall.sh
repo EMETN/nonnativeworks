@@ -134,6 +134,7 @@ tool_domains=(
 )
 ats_domains=(
     "api.ashbyhq.com"  # Ashby
+    "jobs.ashbyhq.com"  # Ashby: page host for direct-board companies (Mistral, Prosus)
     "boards-api.greenhouse.io"  # Greenhouse
     "api.eu.lever.co"  # Lever
     "api.lever.co"  # Lever
@@ -154,6 +155,7 @@ cdn_domains=(
     "upcloud.teamtailor.com"  # UpCloud
 )
 company_domains=(
+    "abb.wd3.myworkdayjobs.com"  # ABB
     "werkenbijabnamro.nl"  # ABN AMRO
     "academicwork.fi"  # Academic Work
     "academicwork.se"
@@ -168,6 +170,7 @@ company_domains=(
     "careers.allianz.com"  # Allianz
     "alpha-sense.com"  # AlphaSense
     "careers.amd.com"  # AMD
+    "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
     "autodesk.wd1.myworkdayjobs.com"  # Autodesk
@@ -179,14 +182,17 @@ company_domains=(
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
     "careers.carlsberg.com"  # Carlsberg
     "cgi.njoyn.com"  # CGI
+    "www.cognite.com"  # Cognite
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
     "deel.com"  # Deel
     "careers.deliveryhero.com"  # Delivery Hero
+    "dentsuaegis.wd3.myworkdayjobs.com"  # Dentsu
     "deptagency.com"  # DEPT
     "careers.telekom.com"  # Deutsche Telekom
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
     "careers.dhl.com"  # DHL
     "edenred.com"  # Edenred
+    "elekta.wd3.myworkdayjobs.com"  # Elekta
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "finnair.wd103.myworkdayjobs.com"  # Finnair
@@ -198,18 +204,24 @@ company_domains=(
     "happeo.recruitee.com"  # Happeo
     "careers.theheinekencompany.com"  # Heineken
     "careers.hiab.com"  # Hiab
+    "www.iceye.com"  # ICEYE
     "if.wd3.myworkdayjobs.com"  # If
+    "if.wd502.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING
     "kesko.fi"  # Kesko
+    "jobs.deel.com"  # Klarna
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
+    "legora.com"  # Legora
+    "lovable.dev"  # Lovable
     "api-apply.lufthansagroup.careers"  # Lufthansa
     "apply.lufthansagroup.careers"  # Lufthansa
     "maersk.wd3.myworkdayjobs.com"  # Maersk
     "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
+    "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft
     "careers.munichre.com"  # Munich Re
@@ -221,8 +233,11 @@ company_domains=(
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
     "nxp.wd3.myworkdayjobs.com"  # NXP
+    "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
+    "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla
+    "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
     "philips.wd3.myworkdayjobs.com"  # Philips
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
@@ -230,7 +245,6 @@ company_domains=(
     "www.randstad.com"  # Randstad
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
-    "s-pankki.fi"  # S-Pankki
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
     "careers.sap.com"  # SAP
     "scout24.com"  # Scout24
@@ -247,17 +261,22 @@ company_domains=(
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "supercell.com"  # Supercell
     "swecogroup.com"  # Sweco
+    "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever
+    "www.teliacompany.com"  # Telia
     "careers.thalesgroup.com"  # Thales
     "thales.wd3.myworkdayjobs.com"  # Thales
     "www.thoughtworks.com"  # Thoughtworks — on Greenhouse (boards-api.greenhouse.io does the scraping); page host for Python fallback
     "careers.tieto.com"  # Tietoevry
+    "corporate.trustpilot.com"  # Trustpilot
     "uber.com"  # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
+    "www.vml.com"  # VML
     "jobs.volkswagen-group.com"  # Volkswagen
     "jobs.volvogroup.com"  # Volvo Group
     "careers.wartsila.com"  # Wärtsilä
+    "wise.jobs"  # Wise
     "careers.wolt.com"  # Wolt
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando

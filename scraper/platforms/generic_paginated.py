@@ -20,7 +20,8 @@ Extraction modes (set via extract_mode in config):
     script tag (self.__next_f.push([id, "...escaped payload..."])). Fields
     support dot notation for nested access (e.g. "header.roleTitle"). Location
     fan-out works via a locations array of objects with location_subfield and
-    country_subfield keys.
+    country_subfield keys (or location_subfield alone, leaving the country to
+    be resolved from the location text).
 
   script_var_json
     Jobs are embedded as a plain JavaScript variable assignment in a <script>
@@ -43,10 +44,11 @@ Extraction modes (set via extract_mode in config):
 
 All modes share the same two-phase structure:
   1. Listing — fetch page(s) and extract jobs.
-  2. Description enrichment — detail pages are always fetched for English-titled
-     jobs so the language classifier has content to work with. In attribute_json
-     and script_json modes, jobFunction is already set from the JSON so that
-     assignment is skipped, but the description fetch itself still runs.
+  2. Description enrichment — detail pages are fetched for English-titled jobs
+     so the language classifier has content to work with, unless the listing
+     already supplied a description. In attribute_json and script_json modes,
+     jobFunction is already set from the JSON so that assignment is skipped,
+     but the description fetch itself still runs.
 """
 
 import contextlib
@@ -279,11 +281,14 @@ def _fetch_attribute_json_page(
 
 
 def _get_nested(obj, path: str):
-    """Dot-notation access into a nested dict, e.g. 'header.roleTitle'."""
+    """Dot-notation access into nested dicts and lists, e.g. 'items.0.name'."""
     for part in path.split("."):
-        if not isinstance(obj, dict):
+        if isinstance(obj, list) and part.isdigit():
+            obj = obj[int(part)] if int(part) < len(obj) else None
+        elif isinstance(obj, dict):
+            obj = obj.get(part)
+        else:
             return None
-        obj = obj.get(part)
     return obj
 
 
@@ -313,6 +318,32 @@ def _search_rsc_pushes(text: str, script_key: str) -> list | None:
     return None
 
 
+def _rsc_text_rows(html: str) -> dict[str, str]:
+    """
+    Map RSC text-row ids to their content. Long strings are emitted as their own
+    row ("78:T13a3," then 0x13a3 bytes, possibly spanning pushes) and referenced
+    from the JSON as "$78".
+    """
+    pushes = []
+    for m in re.finditer(r'__next_f\.push\(\[\d+,\s*"((?:[^"\\]|\\.)*)"\]', html):
+        with contextlib.suppress(Exception):
+            pushes.append(json_mod.loads('"' + m.group(1) + '"'))
+    stream = "".join(pushes).encode("utf-8")
+
+    # A row starts after a newline, or straight after the previous text row's bytes.
+    header = re.compile(rb"([0-9a-f]+):T([0-9a-f]+),")
+    after_newline = re.compile(rb"(?:^|\n)([0-9a-f]+):T([0-9a-f]+),")
+    rows: dict[str, str] = {}
+    pos = 0
+    while m := header.match(stream, pos) or after_newline.search(stream, pos):
+        size = int(m.group(2), 16)
+        rows[m.group(1).decode()] = stream[m.end() : m.end() + size].decode(
+            "utf-8", errors="replace"
+        )
+        pos = m.end() + size
+    return rows
+
+
 def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
     """Extract jobs from a JSON array embedded in a Next.js RSC script tag."""
     fields = cfg.get("fields", {})
@@ -323,6 +354,9 @@ def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
     loc_subfield = fields.get("location_subfield")
     ctry_subfield = fields.get("country_subfield")
     jf_field = fields.get("job_function")
+    desc_field = fields.get("description")
+    url_template = cfg.get("url_template")
+    text_rows = _rsc_text_rows(html) if desc_field else {}
 
     soup = BeautifulSoup(html, "html.parser")
     items = None
@@ -344,29 +378,41 @@ def _extract_script_json(html: str, cfg: dict, base_url: str) -> list[dict]:
         if not title:
             continue
 
-        raw_url = _get_nested(item, url_field) if url_field else None
+        if url_template:
+            try:
+                raw_url = url_template.format_map(item)
+            except KeyError:
+                raw_url = None
+        else:
+            raw_url = _get_nested(item, url_field) if url_field else None
         job_url = urljoin(base_url, raw_url) if raw_url else None
         jf = _get_nested(item, jf_field) if jf_field else None
+        desc = _get_nested(item, desc_field) if desc_field else None
+        if isinstance(desc, str) and desc.startswith("$"):
+            desc = text_rows.get(desc[1:])
         loc_objs = _get_nested(item, locations_field) if locations_field else []
         if not isinstance(loc_objs, list):
             loc_objs = []
 
-        if loc_objs and ctry_subfield:
+        entries: list[tuple[str | None, str | None]] = []
+        if loc_objs and (ctry_subfield or loc_subfield):
             for loc_obj in loc_objs:
                 if not isinstance(loc_obj, dict):
                     continue
-                country = loc_obj.get(ctry_subfield)
-                location = loc_obj.get(loc_subfield) if loc_subfield else None
-                job = build_job(title, job_url, location)
-                if country:
-                    job["country_code"] = country
-                if jf:
-                    job["jobFunction"] = jf
-                jobs.append(job)
+                country = _get_nested(loc_obj, ctry_subfield) if ctry_subfield else None
+                location = _get_nested(loc_obj, loc_subfield) if loc_subfield else None
+                entries.append((location, country))
         else:
-            job = build_job(title, job_url, None)
+            entries.append((None, None))
+
+        for location, country in entries:
+            job = build_job(title, job_url, location)
+            if country:
+                job["country_code"] = country
             if jf:
                 job["jobFunction"] = jf
+            if desc:
+                job["descriptionHtml"] = desc
             jobs.append(job)
 
     return jobs
@@ -1119,7 +1165,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # the detail page is what resolves their countries. Caveat: skipped jobs are not
     # checked for expired detail pages ("gone"), so a stale listing entry stays.
     jobs_needing_detail = {
-        j["url"] for j in english_jobs if j.get("url") and not is_cached_job(j)
+        j["url"]
+        for j in english_jobs
+        if j.get("url") and not j.get("descriptionHtml") and not is_cached_job(j)
     }
     jobs_needing_detail.update(j["url"] for j in multi_loc_jobs if j.get("url"))
     unique_urls = list(dict.fromkeys(jobs_needing_detail))

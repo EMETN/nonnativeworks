@@ -63,6 +63,10 @@ companies:
       url: https://careers.amd.com/careers-home/jobs
       min_positions: 15
 
+    - name: Anthropic
+      url: https://www.anthropic.com/careers/jobs
+      min_positions: 10
+
     - name: Arla
       url: https://jobs.arla.com
       min_positions: 10
@@ -91,6 +95,10 @@ companies:
       url: https://careers.carlsberg.com/search/?createNewAlert=false&q=&locationsearch=&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield3=&optionsFacetsDD_customfield2=
       min_positions: 10
 
+    - name: Cognite
+      url: https://www.cognite.com/en/company/careers
+      min_positions: 5
+
     - name: Danske Bank
       url: https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001/jobs
       min_positions: 10
@@ -102,6 +110,10 @@ companies:
     - name: Delivery Hero
       url: https://careers.deliveryhero.com/jobs
       min_positions: 5
+
+    - name: Dentsu
+      url: https://dentsuaegis.wd3.myworkdayjobs.com/DAN_GLOBAL
+      min_positions: 30
 
     - name: DEPT
       url: https://www.deptagency.com/careers/roles
@@ -159,6 +171,10 @@ companies:
       url: https://careers.hiab.com/search
       min_positions: 3
 
+    - name: ICEYE
+      url: https://www.iceye.com/careers/positions
+      min_positions: 10
+
     - name: If
       url: https://if.wd502.myworkdayjobs.com/Careers
       min_positions: 5
@@ -167,12 +183,24 @@ companies:
       url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5
 
+    - name: Klarna
+      url: https://jobs.deel.com/klarna
+      min_positions: 10
+
     - name: Kone
       url: https://kone.wd3.myworkdayjobs.com/en-US/Careers
       min_positions: 5
 
     - name: Konecranes
       url: https://konecranes.careers/jobs
+      min_positions: 10
+
+    - name: Legora
+      url: https://legora.com/careers
+      min_positions: 10
+
+    - name: Lovable
+      url: https://lovable.dev/careers
       min_positions: 10
 
     - name: Maersk
@@ -186,6 +214,10 @@ companies:
     - name: Metso
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
+
+    - name: Mistral
+      url: https://jobs.ashbyhq.com/mistral.ai
+      min_positions: 10
 
     - name: Munich Re
       url: https://careers.munichre.com/en/search-jobs
@@ -223,9 +255,17 @@ companies:
       url: https://nxp.wd3.myworkdayjobs.com/careers?Location_Country=d004c0d1a6c84511ab048669fcdf9fd7&Location_Country=dcc5b7608d8644b3a93716604e78e995&Location_Country=f2e609fe92974a55a05fc1cdc2852122&Location_Country=9696868b09c64d52a62ee13b052383cc&Location_Country=54c5b6971ffb4bf0b116fe7651ec789a&Location_Country=8cd04a563fd94da7b06857a79faaf815&Location_Country=a04ea128f43a42e59b1e6a19e8f0b374&Location_Country=fc078443155c4ad294201ecf5a61a499&Location_Country=bd34c524a6a04ae6915f5d96fa086199&Location_Country=9db257f5937e4421b2fac64eec6832f8&Location_Country=1face6f426c14de9979a134697da0db3
       min_positions: 10
 
+    - name: Ogilvy
+      url: https://www.ogilvy.com/work-with-us
+      min_positions: 5
+
     - name: OP Financial Group
       url: https://op-careers.fi
       min_positions: 5
+
+    - name: OpenAI
+      url: https://openai.com/careers/search/
+      min_positions: 10
 
     - name: Orion
       url: https://fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/OrionCareers
@@ -324,6 +364,10 @@ companies:
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1
 
+    - name: Tandem Health
+      url: https://tandemhealth.ai/about/careers
+      min_positions: 10
+
     - name: Tekever
       url: https://careers.tekever.com/jobs
       min_positions: 5
@@ -344,6 +388,10 @@ companies:
       url: https://careers.tieto.com
       min_positions: 10
 
+    - name: Trustpilot
+      url: https://corporate.trustpilot.com/careers
+      min_positions: 5
+
     - name: Uniper
       url: https://careers.uniper.energy
       min_positions: 5
@@ -360,8 +408,16 @@ companies:
       url: https://careers.vestas.com/search
       min_positions: 10
 
+    - name: VML
+      url: https://www.vml.com/careers
+      min_positions: 10
+
     - name: Volvo Group
       url: https://jobs.volvogroup.com/feed/361555
+      min_positions: 10
+
+    - name: Wise
+      url: https://wise.jobs/jobs
       min_positions: 10
 
     - name: Wolt

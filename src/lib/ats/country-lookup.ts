@@ -125,22 +125,22 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     hrvatska: { name: 'Croatia', code: 'HR', slug: 'croatia' },
     hrv: { name: 'Croatia', code: 'HR', slug: 'croatia' },
     'czech republic': {
-        name: 'Czech Republic',
+        name: 'Czechia',
         code: 'CZ',
-        slug: 'czech-republic',
+        slug: 'czechia',
     },
-    czechia: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+    czechia: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
     'česká republika': {
-        name: 'Czech Republic',
+        name: 'Czechia',
         code: 'CZ',
-        slug: 'czech-republic',
+        slug: 'czechia',
     },
     'ceska republika': {
-        name: 'Czech Republic',
+        name: 'Czechia',
         code: 'CZ',
-        slug: 'czech-republic',
+        slug: 'czechia',
     },
-    cze: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+    cze: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
     georgia: { name: 'Georgia', code: 'GE', slug: 'georgia' },
     hungary: { name: 'Hungary', code: 'HU', slug: 'hungary' },
     kosovo: { name: 'Kosovo', code: 'XK', slug: 'kosovo' },
@@ -434,7 +434,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     by: { name: 'Belarus', code: 'BY', slug: 'belarus' },
     ch: { name: 'Switzerland', code: 'CH', slug: 'switzerland' },
     cy: { name: 'Cyprus', code: 'CY', slug: 'cyprus' },
-    cz: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+    cz: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
     es: { name: 'Spain', code: 'ES', slug: 'spain' },
     fr: { name: 'France', code: 'FR', slug: 'france' },
     gb: { name: 'United Kingdom', code: 'GB', slug: 'united-kingdom' },
@@ -915,15 +915,17 @@ const CITY_MAP: Record<string, CountryInfo> = {
     machelen: { name: 'Belgium', code: 'BE', slug: 'belgium' },
     'sint-martens-latem': { name: 'Belgium', code: 'BE', slug: 'belgium' },
     tubize: { name: 'Belgium', code: 'BE', slug: 'belgium' },
-    // ── Czech Republic ───────────────────────────────────────────────────────
-    brno: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
-    ostrava: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
-    prague: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
-    praha: { name: 'Czech Republic', code: 'CZ', slug: 'czech-republic' },
+    // ── Bulgaria ─────────────────────────────────────────────────────────────
+    sofia: { name: 'Bulgaria', code: 'BG', slug: 'bulgaria' },
+    // ── Czechia ──────────────────────────────────────────────────────────────
+    brno: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
+    ostrava: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
+    prague: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
+    praha: { name: 'Czechia', code: 'CZ', slug: 'czechia' },
     'usti nad labem': {
-        name: 'Czech Republic',
+        name: 'Czechia',
         code: 'CZ',
-        slug: 'czech-republic',
+        slug: 'czechia',
     },
     // ── France ───────────────────────────────────────────────────────────────
     'aix-en-provence': { name: 'France', code: 'FR', slug: 'france' },
@@ -1070,7 +1072,10 @@ const CITY_MAP: Record<string, CountryInfo> = {
     // ── Portugal ─────────────────────────────────────────────────────────────
     lisbon: { name: 'Portugal', code: 'PT', slug: 'portugal' },
     lisboa: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    guarda: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    leiria: { name: 'Portugal', code: 'PT', slug: 'portugal' },
     porto: { name: 'Portugal', code: 'PT', slug: 'portugal' },
+    'vila real': { name: 'Portugal', code: 'PT', slug: 'portugal' },
     // ── Romania ──────────────────────────────────────────────────────────────
     bucurești: { name: 'Romania', code: 'RO', slug: 'romania' },
     bucharest: { name: 'Romania', code: 'RO', slug: 'romania' },
@@ -1079,6 +1084,9 @@ const CITY_MAP: Record<string, CountryInfo> = {
     // Slovakia
     bratislava: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
     kosice: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    košice: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    zilina: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
+    žilina: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
     // ── Spain ────────────────────────────────────────────────────────────────
     alicante: { name: 'Spain', code: 'ES', slug: 'spain' },
     barcelona: { name: 'Spain', code: 'ES', slug: 'spain' },
@@ -1308,11 +1316,12 @@ const CITY_MAP: Record<string, CountryInfo> = {
     seattle: { name: 'United States', code: 'US', slug: 'united-states' },
     springfield: { name: 'United States', code: 'US', slug: 'united-states' },
     tulsa: { name: 'United States', code: 'US', slug: 'united-states' },
-    'washington DC': {
+    'washington dc': {
         name: 'United States',
         code: 'US',
         slug: 'united-states',
     },
+    wilmington: { name: 'United States', code: 'US', slug: 'united-states' },
     // ── Canada (provinces) ───────────────────────────────────────────────────
     alberta: { name: 'Canada', code: 'CA', slug: 'canada' },
     'british columbia': { name: 'Canada', code: 'CA', slug: 'canada' },
@@ -1333,7 +1342,9 @@ const CITY_MAP: Record<string, CountryInfo> = {
     montréal: { name: 'Canada', code: 'CA', slug: 'canada' },
     ottawa: { name: 'Canada', code: 'CA', slug: 'canada' },
     'quebec city': { name: 'Canada', code: 'CA', slug: 'canada' },
+    regina: { name: 'Canada', code: 'CA', slug: 'canada' },
     'saint laurent': { name: 'Canada', code: 'CA', slug: 'canada' },
+    saskatoon: { name: 'Canada', code: 'CA', slug: 'canada' },
     toronto: { name: 'Canada', code: 'CA', slug: 'canada' },
     vancouver: { name: 'Canada', code: 'CA', slug: 'canada' },
     winnipeg: { name: 'Canada', code: 'CA', slug: 'canada' },
@@ -1694,7 +1705,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         .split(/[;|]/)
         .map((s) => s.trim())
         .filter(Boolean);
-    const segments = parts.flatMap((part) => {
+    const segmentGroups = parts.map((part) => {
         const stripped = part
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
@@ -1726,13 +1737,27 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     // then city prefix match (e.g. "riga central" → "riga", "tartu kontor" → "tartu").
     const seen = new Set<string>();
     const results: CountryInfo[] = [];
-    for (const segment of segments) {
-        const key = normalizeKey(segment);
-        const info =
+    for (const group of segmentGroups) {
+        // A bare 2-letter code counts only if nothing else resolved: "San Francisco, CA" isn't Canada.
+        const keys = group.map(normalizeKey);
+        const isCode = (key: string) => /^[a-z]{2}$/.test(key);
+        const lookup = (key: string) =>
             COUNTRY_MAP[key] ?? CITY_MAP[key] ?? lookupCityByPrefix(key);
-        if (info && !seen.has(info.code)) {
-            seen.add(info.code);
-            results.push(info);
+        let infos = keys
+            .filter((key) => !isCode(key))
+            .map(lookup)
+            .filter((info): info is CountryInfo => !!info);
+        if (infos.length === 0) {
+            infos = keys
+                .filter(isCode)
+                .map(lookup)
+                .filter((info): info is CountryInfo => !!info);
+        }
+        for (const info of infos) {
+            if (!seen.has(info.code)) {
+                seen.add(info.code);
+                results.push(info);
+            }
         }
     }
     if (results.length > 0) return results;

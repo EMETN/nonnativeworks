@@ -13,6 +13,22 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
     'deptagency.com': { ats: 'greenhouse', slug: 'dept' },
     'thoughtworks.com': { ats: 'greenhouse', slug: 'thoughtworks' },
+    'corporate.trustpilot.com': { ats: 'greenhouse', slug: 'trustpilot' },
+    // Slug probing would hit Greenhouse's "lovable", an unrelated Italian company.
+    'lovable.dev': { ats: 'ashby', slug: 'lovable' },
+    'legora.com': { ats: 'ashby', slug: 'legora' },
+    // Slug probing would hit a stale, empty Workable "iceye" account.
+    'iceye.com': { ats: 'ashby', slug: 'iceye' },
+    // VML kept its pre-merger Wunderman Thompson board; Greenhouse's "vml" is empty.
+    'vml.com': { ats: 'greenhouse', slug: 'wundermanthompson' },
+    'tandemhealth.ai': { ats: 'ashby', slug: 'tandem-health' },
+    'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
+    'openai.com': { ats: 'ashby', slug: 'openai' },
+    'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
+    'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
+    // Slug probing would hit Lever's "mistral", an empty board.
+    'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
+    'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {

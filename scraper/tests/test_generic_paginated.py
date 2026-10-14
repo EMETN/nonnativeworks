@@ -7,10 +7,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from platforms.generic_paginated import (  # noqa: E402
     _extract_phenom_description,
+    _extract_script_json,
     _extract_script_var_json,
     _fetch_phenom_api_page,
     _jobs_from_items,
     _phenom_tracked_countries,
+    _rsc_text_rows,
 )
 
 BASE_URL = "https://careers.example.com/global/en/search-results"
@@ -98,6 +100,91 @@ class ExtractScriptVarJsonTest(unittest.TestCase):
         )
 
         self.assertEqual(jobs, [{"title": "Nurse"}])
+
+
+def _rsc_html(*pushes: str) -> str:
+    return "".join(
+        f"<script>self.__next_f.push([1,{json.dumps(p)}])</script>" for p in pushes
+    )
+
+
+DEEL_CFG = {
+    "script_key": "jobPostings",
+    "url_template": "/acme/job-details/{id}/overview",
+    "fields": {
+        "title": "title",
+        "locations": "job.jobLocations",
+        "location_subfield": "location.name",
+        "job_function": "job.jobDepartments.0.department.name",
+        "description": "richtextDescription",
+    },
+}
+
+
+def _deel_posting(id_: str, title: str, cities: list[str], desc: str) -> dict:
+    return {
+        "id": id_,
+        "title": title,
+        "richtextDescription": desc,
+        "job": {
+            "jobLocations": [{"location": {"name": c}} for c in cities],
+            "jobDepartments": [{"department": {"name": "Engineering"}}],
+        },
+    }
+
+
+class ExtractScriptJsonTest(unittest.TestCase):
+    def test_deel_board_fans_out_cities_and_resolves_descriptions(self):
+        postings = [
+            _deel_posting("a1", "Engineer", ["Stockholm", "London"], "$1a"),
+            _deel_posting("b2", "Analyst", ["Milan"], "$1b"),
+        ]
+        page = 'f:{"jobPostings":' + json.dumps(postings) + "}\n"
+        # Row header ending a push, adjacent rows, and a multi-byte char in the length.
+        html = _rsc_html(page + "1a:Ta,", "<p>é!</p>1b:T9,<p>Hi</p>")
+
+        jobs = _extract_script_json(html, DEEL_CFG, "https://jobs.example.com/acme")
+
+        url_a = "https://jobs.example.com/acme/job-details/a1/overview"
+        self.assertEqual(
+            jobs,
+            [
+                {
+                    "title": "Engineer",
+                    "url": url_a,
+                    "location": "Stockholm",
+                    "jobFunction": "Engineering",
+                    "descriptionHtml": "<p>é!</p>",
+                },
+                {
+                    "title": "Engineer",
+                    "url": url_a,
+                    "location": "London",
+                    "jobFunction": "Engineering",
+                    "descriptionHtml": "<p>é!</p>",
+                },
+                {
+                    "title": "Analyst",
+                    "url": "https://jobs.example.com/acme/job-details/b2/overview",
+                    "location": "Milan",
+                    "jobFunction": "Engineering",
+                    "descriptionHtml": "<p>Hi</p>",
+                },
+            ],
+        )
+
+    def test_unresolved_description_reference_is_dropped(self):
+        posting = _deel_posting("a1", "Engineer", ["Stockholm"], "$ff")
+        html = _rsc_html('f:{"jobPostings":' + json.dumps([posting]) + "}\n")
+
+        jobs = _extract_script_json(html, DEEL_CFG, "https://jobs.example.com/acme")
+
+        self.assertNotIn("descriptionHtml", jobs[0])
+
+    def test_text_rows_ignore_non_text_rows(self):
+        html = _rsc_html('0:{"a":1}\n2a:Tc,<h1>Hey</h1>3:["$","div"]\n')
+
+        self.assertEqual(_rsc_text_rows(html), {"2a": "<h1>Hey</h1>"})
 
 
 class PhenomApiTest(unittest.TestCase):

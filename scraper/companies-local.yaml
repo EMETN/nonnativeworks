@@ -26,7 +26,3 @@ companies:
     - name: CGI
       url: https://cgi.njoyn.com
       min_positions: 10
-
-    - name: Vaisala
-      url: https://careers.vaisala.com
-      min_positions: 1
