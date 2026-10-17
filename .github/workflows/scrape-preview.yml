@@ -201,7 +201,7 @@ jobs:
                     --dry-run \
                     2>&1 | tee /tmp/scrape_output.txt
 
-            - name: Post PR comment
+            - name: Post result
               if: steps.diff.outputs.count != '0'
               uses: actions/github-script@v9
               # Company names come from the PR branch — pass via env, never
@@ -236,6 +236,12 @@ jobs:
                         '',
                         '_Dry run against a temporary local database: no data was written._',
                       ].join('\n');
+
+                      // Manual runs have no PR to comment on.
+                      if (!context.issue.number) {
+                        await core.summary.addRaw(body).write();
+                        return;
+                      }
 
                       await github.rest.issues.createComment({
                         issue_number: context.issue.number,
