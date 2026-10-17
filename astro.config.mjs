@@ -71,6 +71,7 @@ export default defineConfig({
             // instead.
             include: [
                 'posthog-js/dist/module.no-external',
+                '@sentry/browser',
                 'astro/virtual-modules/transitions-events.js',
                 'astro/virtual-modules/transitions-router.js',
                 'astro/virtual-modules/transitions-swap-functions.js',

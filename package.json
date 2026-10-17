@@ -30,7 +30,8 @@
         "db:start": "supabase start --runtime native",
         "db:stop": "supabase stop",
         "db:env": "node scripts/local-supabase-env.mjs --doppler",
-        "db:env:file": "node scripts/local-supabase-env.mjs"
+        "db:env:file": "node scripts/local-supabase-env.mjs",
+        "db:seed": "node scripts/seed-local.mjs"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"

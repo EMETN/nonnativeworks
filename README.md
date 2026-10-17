@@ -73,6 +73,7 @@ The database runs locally with the [Supabase CLI](https://supabase.com/docs/guid
 pnpm db:start      # first run downloads the services (about 470 MB), then applies supabase/migrations/
 pnpm db:env        # Doppler route: writes the local URL and keys to your dev_personal config
 pnpm db:env:file   # .env route: writes .env.supabase, read by pnpm dev:env
+pnpm db:seed       # admin login (admin@local.test); prints a new password on each run
 pnpm db:stop
 ```
 
@@ -103,6 +104,7 @@ pnpm dev        # Doppler route (maintainers)
 | `pnpm db:start`     | Start the local Supabase stack                  |
 | `pnpm db:stop`      | Stop the local Supabase stack                   |
 | `pnpm db:env`       | Point `dev_personal` at the local stack         |
+| `pnpm db:seed`      | Create or reset the local admin login           |
 | `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
 | `pnpm format`       | Format with Prettier                            |
 | `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
