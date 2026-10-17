@@ -12,7 +12,7 @@ The script mirrors the GitHub Actions workflow: it builds the Astro app, starts 
 
 ### Prerequisites
 
-1. **Doppler CLI** authenticated, with a config (default: `dev_personal`) that contains:
+1. **Doppler CLI** authenticated, with a config (default: `dev_personal`, pointed at the local Supabase stack by `pnpm db:start` then `pnpm db:env`) that contains:
     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — database credentials
     - `SCRAPER_SECRET` — matches the server's auth header
     - `PLAYWRIGHT_CDP_URL` — e.g. `http://192.168.65.254:9222` (see below)
@@ -39,7 +39,7 @@ The script mirrors the GitHub Actions workflow: it builds the Astro app, starts 
 ### Usage
 
 ```bash
-# Scrape into the dev database (default)
+# Scrape into your local Supabase stack (default)
 bash scraper/run-local.sh
 
 # Scrape into production

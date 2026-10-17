@@ -16,7 +16,7 @@ Discover companies that welcome non-native language speakers. Track open positio
 ### Prerequisites
 
 - Node 24+ and [pnpm](https://pnpm.io/) (or a container runtime — [OrbStack](https://orbstack.dev/), [Docker Desktop](https://www.docker.com/) — to use the devcontainer)
-- A free [Supabase](https://supabase.com/) project
+- Linux (amd64/arm64) or macOS on Apple silicon for the local database; the devcontainer qualifies. On Windows or an Intel Mac, see [Database setup](#database-setup).
 
 ### Contributor setup (`.env`)
 
@@ -24,14 +24,13 @@ You do **not** need Doppler access to work on this project.
 
 ```bash
 pnpm install
-cp .env.example .env    # then fill in your Supabase URL and keys
+pnpm db:start           # local Supabase, see Database setup
+pnpm db:env:file        # writes the local URL and keys to .env.supabase
 pnpm dev:env            # dev server at localhost:4321
 ```
 
-Create a Supabase project, run `supabase/migrations/000_full_schema.sql` in its SQL
-editor, and copy the URL and keys from Settings → API into your `.env`. Only
-`SUPABASE_URL` and `SUPABASE_ANON_KEY` are needed for the public site;
-`.env.example` documents the rest.
+`pnpm dev:env` reads `.env` (optional, see `.env.example` for the other variables)
+and then `.env.supabase`, so the local database always wins.
 
 `pnpm dev:env` and `pnpm build:env` are the `.env` equivalents of `pnpm dev` and
 `pnpm build`. They load the file via `node --env-file`, which the plain `astro`
@@ -68,13 +67,21 @@ Git config is applied automatically on container start via `postStartCommand`.
 
 ### Database setup
 
-Run the migration in the Supabase SQL editor:
+The database runs locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development), installed as a dev dependency. It uses the CLI's experimental native runtime, so it needs no Docker and runs inside the devcontainer:
 
-```
-supabase/migrations/000_full_schema.sql
+```bash
+pnpm db:start      # first run downloads the services (about 470 MB), then applies supabase/migrations/
+pnpm db:env        # Doppler route: writes the local URL and keys to your dev_personal config
+pnpm db:env:file   # .env route: writes .env.supabase, read by pnpm dev:env
+pnpm db:seed       # admin login (admin@local.test); prints a new password on each run
+pnpm db:stop
 ```
 
-This creates all tables, views, RLS policies, and seeds the 12 job categories. Countries are created automatically on first upload.
+`pnpm db:env` **overwrites** `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in your `dev_personal` config. If they point at your own hosted Supabase project, note them first (Doppler dashboard → `dev_personal`) or they are lost.
+
+The migrations create all tables, views and RLS policies, and seed the 13 job categories. Countries are created automatically on first upload. The local database starts empty otherwise.
+
+The native runtime supports Linux (amd64, arm64) and macOS on Apple silicon. On Windows or an Intel Mac, run `pnpm exec supabase start` with Docker instead, then `pnpm db:env:file`.
 
 ### Start developing
 
@@ -85,17 +92,23 @@ pnpm dev        # Doppler route (maintainers)
 
 ## Commands
 
-| Command             | Action                                         |
-| ------------------- | ---------------------------------------------- |
-| `pnpm dev:env`      | Dev server at `localhost:4321`, reading `.env` |
-| `pnpm build:env`    | Production build, reading `.env`               |
-| `pnpm dev`          | Dev server via Doppler (maintainers)           |
-| `pnpm build`        | Production build to `./dist/`                  |
-| `pnpm preview`      | Preview production build via Doppler           |
-| `pnpm test`         | Run the test suite (Vitest)                    |
-| `pnpm format`       | Format with Prettier                           |
-| `pnpm lint:py`      | Lint `scraper/` with Ruff                      |
-| `pnpm lint:secrets` | Scan the repo for credentials (Secretlint)     |
+| Command             | Action                                          |
+| ------------------- | ----------------------------------------------- |
+| `pnpm dev:env`      | Dev server at `localhost:4321`, reading `.env`  |
+| `pnpm build:env`    | Production build, reading `.env`                |
+| `pnpm dev`          | Dev server via Doppler (maintainers)            |
+| `pnpm build`        | Production build to `./dist/`                   |
+| `pnpm preview`      | Preview production build via Doppler            |
+| `pnpm test`         | Run the test suite (Vitest)                     |
+| `pnpm test:db`      | Database tests against the running local stack  |
+| `pnpm db:start`     | Start the local Supabase stack                  |
+| `pnpm db:stop`      | Stop the local Supabase stack                   |
+| `pnpm db:env`       | Point `dev_personal` at the local stack         |
+| `pnpm db:seed`      | Create or reset the local admin login           |
+| `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
+| `pnpm format`       | Format with Prettier                            |
+| `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
+| `pnpm lint:secrets` | Scan the repo for credentials (Secretlint)      |
 
 ## URL structure
 
@@ -131,22 +144,19 @@ src/
 
 ## CI / workflows
 
-| Workflow               | Trigger                                                      | What it does                                                                                                                                                                                                |
-| ---------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `quality.yml`          | Every PR and push to `main`                                  | Secret scan (Secretlint), Prettier format check, test suite, and Ruff format + lint on `scraper/`                                                                                                           |
-| `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`                     | Detects newly added companies, dry-runs their scrape, and posts the results as a PR comment for review before merge. Can also be triggered manually to write new (or all) companies to the **dev** database |
-| `scheduled-scrape.yml` | Mon–Fri at 03:00 EET / 01:00 UTC (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                                                       |
+| Workflow               | Trigger                                                      | What it does                                                                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quality.yml`          | Every PR and push to `main`                                  | Secret scan (Secretlint), Prettier format check, test suite, and Ruff format + lint on `scraper/`                                                                                 |
+| `scrape-preview.yml`   | PR that touches `scraper/companies.yaml`                     | Detects newly added companies, dry-runs their scrape against a temporary local Supabase database, and posts the results as a PR comment for review before merge. Needs no secrets |
+| `scheduled-scrape.yml` | Mon–Fri at 03:00 EET / 01:00 UTC (also manually triggerable) | Scrapes all companies in `companies.yaml` and writes results to the **prod** database                                                                                             |
 
 ### scrape-preview.yml — manual trigger options
 
-| `company_url` | `all_companies` | `write_to_dev` | Result                                |
-| ------------- | --------------- | -------------- | ------------------------------------- |
-| set           | —               | false          | Dry-run that one company              |
-| set           | —               | true           | Write that one company to dev DB      |
-| blank         | false           | false          | Dry-run newly added companies only    |
-| blank         | false           | true           | Write newly added companies to dev DB |
-| blank         | true            | false          | Dry-run all companies                 |
-| blank         | true            | true           | Write all companies to dev DB         |
+| `company_url` | `all_companies` | Result                             |
+| ------------- | --------------- | ---------------------------------- |
+| set           | —               | Dry-run that one company           |
+| blank         | false           | Dry-run newly added companies only |
+| blank         | true            | Dry-run all companies              |
 
 `company_url` takes precedence over `all_companies`. On a manual run with both
 blank, the base-branch diff is empty and every company counts as new — so use

@@ -27,7 +27,8 @@ REBUILD=""
 # Doppler config to use. Must contain SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 # SCRAPER_SECRET, and PLAYWRIGHT_CDP_URL.
 #
-# Use dev_personal (default) to scrape into the dev database.
+# Use dev_personal (default) to scrape into your local Supabase stack
+# (run `pnpm db:start` and `pnpm db:env` first).
 # Override with DOPPLER_CONFIG=prd to scrape into production:
 #   DOPPLER_CONFIG=prd bash scraper/run-local.sh
 DOPPLER_CONFIG="${DOPPLER_CONFIG:-dev_personal}"

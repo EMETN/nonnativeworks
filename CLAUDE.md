@@ -40,9 +40,11 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 
 ## Database
 
-Run the migration in the Supabase SQL editor:
+Migrations live in `supabase/migrations/`.
 
-1. `supabase/migrations/000_full_schema.sql` — tables, views, RLS, seed data (12 categories)
+- Local: `pnpm db:start` runs the Supabase CLI's native runtime (no Docker; `[experimental] stack = true` in `supabase/config.toml`) and applies every migration. `pnpm db:env` / `pnpm db:env:file` point the app at it. CLI pinned as devDependency `supabase@2.121.0`.
+- Prod: still applied manually in the Supabase SQL editor.
+- `000_full_schema.sql` seeds 13 categories.
 
 ### Key schema points
 
