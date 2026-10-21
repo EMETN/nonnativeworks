@@ -11,7 +11,7 @@
         "dev": "doppler run -- env NODE_OPTIONS='--dns-result-order=ipv4first' astro dev --host",
         "build": "astro build",
         "build:local": "doppler run -- astro build",
-        "dev:env": "node --dns-result-order=ipv4first --env-file=.env node_modules/astro/bin/astro.mjs dev --host",
+        "dev:env": "node --dns-result-order=ipv4first --env-file-if-exists=.env --env-file-if-exists=.env.supabase node_modules/astro/bin/astro.mjs dev --host",
         "build:env": "node --env-file=.env node_modules/astro/bin/astro.mjs build",
         "preview": "doppler run -- env HOST=127.0.0.1 node dist/server/entry.mjs",
         "preview:static": "node scripts/preview-static.mjs",
@@ -21,11 +21,17 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:live": "WORKDAY_LIVE=1 vitest run tests/workday-live.test.ts",
+        "test:db": "SUPABASE_LOCAL=1 vitest run tests/local-db.test.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "format:py": "ruff format scraper",
         "lint:py": "ruff check scraper",
-        "lint:secrets": "secretlint --secretlintignore .gitignore '**/*'"
+        "lint:secrets": "secretlint --secretlintignore .gitignore '**/*'",
+        "db:start": "supabase start --runtime native",
+        "db:stop": "supabase stop",
+        "db:env": "node scripts/local-supabase-env.mjs --doppler",
+        "db:env:file": "node scripts/local-supabase-env.mjs",
+        "db:seed": "node scripts/seed-local.mjs"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"
@@ -63,6 +69,7 @@
         "prettier-plugin-astro": "^1.1.0",
         "secretlint": "^13.0.6",
         "simple-git-hooks": "^2.14.0",
+        "supabase": "2.121.0",
         "vitest": "^5.0.3"
     }
 }

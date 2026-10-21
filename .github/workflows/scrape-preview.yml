@@ -1,7 +1,8 @@
 name: Scrape preview
 
 # Runs on any PR that touches companies.yaml.
-# Detects newly added companies, does a dry-run scrape against the dev database,
+# Detects newly added companies, does a dry-run scrape against a temporary local
+# Supabase database (native runtime, no secrets needed),
 # and posts the results as a PR comment so the change can be reviewed before merge.
 
 on:
@@ -10,10 +11,6 @@ on:
             - 'scraper/companies.yaml'
     workflow_dispatch:
         inputs:
-            write_to_dev:
-                description: 'Write results to the dev database (default: dry run only)'
-                type: boolean
-                default: false
             all_companies:
                 description: 'Run all companies in companies.yaml, not just newly added ones'
                 type: boolean
@@ -32,24 +29,16 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 30
 
-        # Fork PRs get no secrets and a read-only token, so both the scrape and the
-        # comment step would fail. Maintainers run the preview manually instead.
+        # Fork PRs get a read-only token, so the comment step would fail.
+        # Maintainers run the preview manually instead.
         if: >-
             github.event_name == 'workflow_dispatch' ||
             github.event.pull_request.head.repo.full_name == github.repository
-
-        env:
-            # Scoped to the Doppler *dev* config so scrapes hit the dev database.
-            # Set this secret at: Settings → Secrets and variables → Actions → DOPPLER_TOKEN_DEV
-            DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN_DEV }}
 
         steps:
             - uses: actions/checkout@v7
               with:
                   fetch-depth: 0 # needed to read the base-branch version of companies.yaml
-
-            - name: Install Doppler CLI
-              uses: dopplerhq/cli-action@v4
 
             - name: Install PyYAML
               run: pip install pyyaml
@@ -119,6 +108,30 @@ jobs:
               if: steps.diff.outputs.count != '0'
               run: pnpm install --frozen-lockfile
 
+            # ── Local Supabase ───────────────────────────────────────────────────────
+
+            - name: Cache Supabase native runtime
+              if: steps.diff.outputs.count != '0'
+              uses: actions/cache@v6
+              with:
+                  path: ~/.supabase/cache/stack
+                  key: supabase-native-${{ runner.os }}-${{ runner.arch }}-2.121.0
+
+            - name: Start local Supabase
+              if: steps.diff.outputs.count != '0'
+              run: |
+                  pnpm db:start
+                  pnpm db:env:file
+                  cat .env.supabase >> "$GITHUB_ENV"
+
+            # Random per run: a fixed value in a public repo could leak into a real config.
+            - name: Generate scraper secret
+              if: steps.diff.outputs.count != '0'
+              run: |
+                  secret=$(openssl rand -hex 32)
+                  echo "::add-mask::$secret"
+                  echo "SCRAPER_SECRET=$secret" >> "$GITHUB_ENV"
+
             # ── Python / scraper ─────────────────────────────────────────────────────
             # Must come BEFORE the Astro server starts so the server inherits Python 3.12
             # in PATH. The server spawns `python3` as a subprocess for Layer 2 scraping;
@@ -143,14 +156,12 @@ jobs:
 
             - name: Build Astro
               if: steps.diff.outputs.count != '0'
-              # doppler run: the SSG build prerenders public pages, which needs
-              # SUPABASE_URL at build time (getStaticPaths reads the database).
-              run: doppler run -- pnpm build
+              run: pnpm build
 
-            - name: Start Astro server (dev DB)
+            - name: Start Astro server (local DB)
               if: steps.diff.outputs.count != '0'
               run: |
-                  doppler run -- node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
+                  node dist/server/entry.mjs > /tmp/astro-server.log 2>&1 &
                   echo "SERVER_PID=$!" >> $GITHUB_ENV
               env:
                   HOST: 127.0.0.1
@@ -184,13 +195,13 @@ jobs:
               if: steps.diff.outputs.count != '0'
               continue-on-error: true # always post the comment even if the scrape fails
               run: |
-                  doppler run -- python scraper/batch_run.py \
+                  python scraper/batch_run.py \
                     --api-url http://localhost:4321 \
                     --companies-file /tmp/new_companies.yaml \
-                    ${{ github.event_name == 'workflow_dispatch' && inputs.write_to_dev == true && '' || '--dry-run' }} \
+                    --dry-run \
                     2>&1 | tee /tmp/scrape_output.txt
 
-            - name: Post PR comment
+            - name: Post result
               if: steps.diff.outputs.count != '0'
               uses: actions/github-script@v9
               # Company names come from the PR branch — pass via env, never
@@ -223,8 +234,14 @@ jobs:
                         output,
                         '```',
                         '',
-                        '_Dry run against the dev database — no data was written._',
+                        '_Dry run against a temporary local database: no data was written._',
                       ].join('\n');
+
+                      // Manual runs have no PR to comment on.
+                      if (!context.issue.number) {
+                        await core.summary.addRaw(body).write();
+                        return;
+                      }
 
                       await github.rest.issues.createComment({
                         issue_number: context.issue.number,

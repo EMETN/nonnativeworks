@@ -60,3 +60,5 @@ cookies.txt
 
 # Playwright MCP output (snapshots, console logs, traces) written into the working dir
 .playwright-mcp/
+# Supabase local stack credentials (pnpm db:env:file)
+.env.supabase
