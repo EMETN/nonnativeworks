@@ -33,6 +33,7 @@ from platforms.attrax import (
     scrape_attrax_static,
 )
 from platforms.barona import scrape_barona
+from platforms.bmw import scrape_bmw_static
 from platforms.generic_paginated import scrape_generic
 from platforms.njoyn import scrape_njoyn_playwright
 from platforms.rovio import scrape_rovio_static
@@ -68,6 +69,7 @@ PLATFORM_ARLA = "arla"
 PLATFORM_ATTRAX = "attrax"
 PLATFORM_NJOYN = "njoyn"
 PLATFORM_BARONA = "barona"
+PLATFORM_BMW = "bmw"
 PLATFORM_ROVIO = "rovio"
 PLATFORM_ZALANDO = "zalando"
 
@@ -93,6 +95,8 @@ def detect_platform(html: str, url: str = "") -> str | None:
         return PLATFORM_NJOYN
     if "baronacareers.com" in url or "barona.fi" in url:
         return PLATFORM_BARONA
+    if "bmwgroup.jobs" in url:
+        return PLATFORM_BMW
     if "rovio.com" in url:
         return PLATFORM_ROVIO
     if "jobs.zalando.com" in url:
@@ -261,6 +265,18 @@ def main():
             print(f"Barona hybrid found {len(jobs)} jobs", file=sys.stderr)
         except Exception as e:
             print(f"Barona hybrid scraper failed: {e}", file=sys.stderr)
+        print(json.dumps(jobs, ensure_ascii=False))
+        return
+
+    if platform == PLATFORM_BMW:
+        print(
+            "bmwgroup.jobs detected — using dedicated static scraper", file=sys.stderr
+        )
+        try:
+            jobs = scrape_bmw_static(url)
+            print(f"BMW static found {len(jobs)} jobs", file=sys.stderr)
+        except Exception as e:
+            print(f"BMW static failed: {e}", file=sys.stderr)
         print(json.dumps(jobs, ensure_ascii=False))
         return
 

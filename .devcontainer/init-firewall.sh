@@ -68,7 +68,15 @@ do
 done
 
 # Akamai edge (AS20940) rotates IPs across a large pool on a ~20-77s TTL, so an init-time
-# snapshot goes stale before the scraper connects (www.novonordisk.com).
+# snapshot goes stale before the scraper connects (www.novonordisk.com, www.bmwgroup.jobs).
+#
+# www.bmwgroup.jobs (CNAME grpw-ion.bmw.com.edgekey.net -> e26981.dsca.akamaiedge.net)
+# is answered from two clusters, and which one DNS hands out changes minute to minute:
+#   95.100.0.0/15    — every IP reverse-resolves to akamaitechnologies.com
+#   80.239.128.0/17  — Akamai nodes deployed inside Telia's network, so they carry no
+#                      akamaitechnologies.com PTR; reached through the same
+#                      akamaiedge.net CNAME, which is what identifies them.
+# Without both, the scrape fails whenever DNS lands on the cluster that isn't covered.
 echo "Adding Akamai edge IP ranges..."
 for cidr in \
     2.16.0.0/13 \
@@ -76,7 +84,9 @@ for cidr in \
     23.32.0.0/11 \
     23.192.0.0/11 \
     72.246.0.0/15 \
+    80.239.128.0/17 \
     88.221.0.0/16 \
+    95.100.0.0/15 \
     96.6.0.0/15 \
     104.64.0.0/10 \
     184.24.0.0/13
@@ -145,6 +155,10 @@ ats_domains=(
 # are resolved separately below via several DNS resolvers (not the single-resolver loop).
 cdn_domains=(
     "careers.allianz.com"  # Allianz — CloudFront, rotates IPs
+    # BMW — Akamai, rotates IPs. Both names are needed: the apex 302s to www, and
+    # www is a separate edgekey CNAME that resolves to its own pool.
+    "bmwgroup.jobs"  # BMW
+    "www.bmwgroup.jobs"  # BMW
     "jobs.booking.com"  # Booking.com
     "careers.futurice.com"  # Futurice
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
@@ -173,7 +187,6 @@ company_domains=(
     "autodesk.wd1.myworkdayjobs.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
-    "bmwgroup.jobs"  # BMW
     "bolt.eu"  # Bolt
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
