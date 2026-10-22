@@ -27,8 +27,8 @@
         "format:py": "ruff format scraper",
         "lint:py": "ruff check scraper",
         "lint:secrets": "secretlint --secretlintignore .gitignore '**/*'",
-        "db:start": "supabase start --runtime native",
-        "db:stop": "supabase stop",
+        "db:start": "node scripts/local-supabase-stack.mjs start",
+        "db:stop": "node scripts/local-supabase-stack.mjs stop",
         "db:env": "node scripts/local-supabase-env.mjs --doppler",
         "db:env:file": "node scripts/local-supabase-env.mjs",
         "db:seed": "node scripts/seed-local.mjs"

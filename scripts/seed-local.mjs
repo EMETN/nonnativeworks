@@ -2,10 +2,10 @@
 // Creates (or resets) the local admin login. Refuses anything but the local stack.
 
 import { createClient } from '@supabase/supabase-js';
-import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { toAppEnv } from './local-supabase-env.mjs';
+import { readStatus } from './local-supabase-stack.mjs';
 
 export function assertLocalUrl(url) {
     if (!/^http:\/\/(127\.0\.0\.1|localhost):/.test(url ?? '')) {
@@ -14,12 +14,7 @@ export function assertLocalUrl(url) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const status = JSON.parse(
-        execFileSync('supabase', ['status', '--output-format', 'json'], {
-            encoding: 'utf8',
-        }),
-    );
-    const env = toAppEnv(status.env);
+    const env = toAppEnv(readStatus().env);
     assertLocalUrl(env.SUPABASE_URL);
 
     const supabase = createClient(

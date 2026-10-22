@@ -5,6 +5,7 @@
 import { writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { readStatus } from './local-supabase-stack.mjs';
 
 export function toAppEnv(statusEnv) {
     const url = statusEnv?.API_URL;
@@ -29,12 +30,7 @@ export function formatEnv(env) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const status = JSON.parse(
-        execFileSync('supabase', ['status', '--output-format', 'json'], {
-            encoding: 'utf8',
-        }),
-    );
-    const env = toAppEnv(status.env);
+    const env = toAppEnv(readStatus().env);
     writeFileSync('.env.supabase', formatEnv(env));
     console.log(`Wrote .env.supabase (${env.SUPABASE_URL})`);
 
