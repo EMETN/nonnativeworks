@@ -18,6 +18,9 @@ export const TABLES = [
     'company_snapshots',
     'skills',
 ];
+// Never copied, but cleared: stale change logs would show as unpublished changes.
+const ADMIN_LOGS = ['admin_changes', 'site_publishes', 'site_builds'];
+const KEY_COLUMN = { site_builds: 'deploy_id' };
 const PAGE_SIZE = 1000;
 const INSERT_CHUNK = 500;
 
@@ -56,17 +59,27 @@ export function parseSource(secrets) {
     return { url, anonKey };
 }
 
+export function clearOrder({ keepCategories }) {
+    return [...ADMIN_LOGS, 'skill_snapshots', ...[...TABLES].reverse()].filter(
+        (table) => !(keepCategories && table === 'categories'),
+    );
+}
+
+export async function clearTables(client, tables) {
+    for (const table of tables) {
+        const { error } = await client
+            .from(table)
+            .delete()
+            .not(KEY_COLUMN[table] ?? 'id', 'is', null);
+        if (error) throw new Error(`clear ${table}: ${error.message}`);
+    }
+}
+
 export async function copyPublicData({ source, target, log = console.log }) {
     const data = {};
     for (const table of TABLES) data[table] = await fetchAll(source, table);
 
-    for (const table of ['skill_snapshots', ...[...TABLES].reverse()]) {
-        const { error } = await target
-            .from(table)
-            .delete()
-            .not('id', 'is', null);
-        if (error) throw new Error(`clear ${table}: ${error.message}`);
-    }
+    await clearTables(target, clearOrder({ keepCategories: false }));
 
     const copied = {};
     for (const table of TABLES) {

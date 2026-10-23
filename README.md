@@ -75,6 +75,7 @@ pnpm db:env        # Doppler route: writes the local URL and keys to your dev_pe
 pnpm db:env:file   # .env route: writes .env.supabase, read by pnpm dev:env
 pnpm db:seed       # admin login (admin@local.test); prints a new password on each run
 pnpm db:copy-prod  # maintainers: replaces local data with prod's public tables
+pnpm db:clear      # empties local data (keeps categories and the admin login), e.g. to check empty states
 pnpm db:stop
 ```
 
@@ -109,6 +110,7 @@ pnpm dev        # Doppler route (maintainers)
 | `pnpm db:env`       | Point `dev_personal` at the local stack         |
 | `pnpm db:seed`      | Create or reset the local admin login           |
 | `pnpm db:copy-prod` | Copy prod's public data locally (maintainers)   |
+| `pnpm db:clear`     | Empty the local database's data                 |
 | `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
 | `pnpm format`       | Format with Prettier                            |
 | `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
