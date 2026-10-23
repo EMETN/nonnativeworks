@@ -74,6 +74,24 @@ test('a role in user_metadata does not grant admin access', async () => {
     expect(next).not.toHaveBeenCalled();
 });
 
+test('a public page is cacheable in production', async () => {
+    vi.stubEnv('DEV', false);
+
+    const { response } = await run('/companies/alpha');
+
+    expect(response.headers.get('Cache-Control')).toContain('max-age=60');
+    vi.unstubAllEnvs();
+});
+
+test('a public page is not cached by the browser on the dev server', async () => {
+    vi.stubEnv('DEV', true);
+
+    const { response } = await run('/companies/alpha');
+
+    expect(response.headers.get('Cache-Control')).toBeNull();
+    vi.unstubAllEnvs();
+});
+
 test('a user with the admin role in app_metadata reaches the route', async () => {
     const admin = { id: 'u1', app_metadata: { role: 'admin' } };
     signedInAs(admin);
