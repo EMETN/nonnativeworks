@@ -38,6 +38,7 @@ const entries = company.entries.map((e) => ({
 ---
 
 <BaseLayout
+    backToTop
     title={`${company.name}`}
     description={`${company.name} has ${company.total_positions} open positions across ${company.entries.length} ${company.entries.length === 1 ? 'country' : 'countries'} — ${company.english_positions} don't require the local language(s).`}
     breadcrumbs={[
