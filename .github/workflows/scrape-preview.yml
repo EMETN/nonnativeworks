@@ -93,16 +93,13 @@ jobs:
 
             # ── Node / Astro server ──────────────────────────────────────────────────
 
-            - name: Setup pnpm
+            - name: Setup pnpm and Node
               if: steps.diff.outputs.count != '0'
-              uses: pnpm/action-setup@v5
-
-            - name: Setup Node
-              if: steps.diff.outputs.count != '0'
-              uses: actions/setup-node@v7
+              uses: pnpm/setup@v3
               with:
                   node-version-file: '.node-version'
-                  cache: 'pnpm'
+                  cache: true
+                  install: false
 
             - name: Install Node dependencies
               if: steps.diff.outputs.count != '0'
