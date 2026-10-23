@@ -31,7 +31,9 @@
         "db:stop": "node scripts/local-supabase-stack.mjs stop",
         "db:env": "node scripts/local-supabase-env.mjs --doppler",
         "db:env:file": "node scripts/local-supabase-env.mjs",
-        "db:seed": "node scripts/seed-local.mjs"
+        "db:seed": "node scripts/seed-local.mjs",
+        "db:copy-prod": "node scripts/copy-public-data.mjs",
+        "db:clear": "node scripts/clear-local-data.mjs"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"

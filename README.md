@@ -74,12 +74,16 @@ pnpm db:start      # first run downloads the services (about 470 MB), then appli
 pnpm db:env        # Doppler route: writes the local URL and keys to your dev_personal config
 pnpm db:env:file   # .env route: writes .env.supabase, read by pnpm dev:env
 pnpm db:seed       # admin login (admin@local.test); prints a new password on each run
+pnpm db:copy-prod  # maintainers: replaces local data with prod's public tables
+pnpm db:clear      # empties local data (keeps categories and the admin login), e.g. to check empty states
 pnpm db:stop
 ```
 
 `pnpm db:env` **overwrites** `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in your `dev_personal` config. If they point at your own hosted Supabase project, note them first (Doppler dashboard → `dev_personal`) or they are lost.
 
 The migrations create all tables, views and RLS policies, and seed the 13 job categories. Countries are created automatically on first upload. The local database starts empty otherwise.
+
+`pnpm db:copy-prod` reads prod with the anon key only (fetched from Doppler's `prd` config), so RLS limits it to public data. It only writes to the local stack, and needs access to `prd`, so it's for maintainers.
 
 The native runtime supports Linux (amd64, arm64) and macOS on Apple silicon. On Windows or an Intel Mac, run `pnpm exec supabase start` with Docker instead, then `pnpm db:env:file`.
 
@@ -105,6 +109,8 @@ pnpm dev        # Doppler route (maintainers)
 | `pnpm db:stop`      | Stop the local Supabase stack                   |
 | `pnpm db:env`       | Point `dev_personal` at the local stack         |
 | `pnpm db:seed`      | Create or reset the local admin login           |
+| `pnpm db:copy-prod` | Copy prod's public data locally (maintainers)   |
+| `pnpm db:clear`     | Empty the local database's data                 |
 | `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
 | `pnpm format`       | Format with Prettier                            |
 | `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
