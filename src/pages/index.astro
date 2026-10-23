@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import TopList from '../components/shared/TopList.astro';
+import SuggestCta from '../components/shared/SuggestCta.astro';
 import {
     getCountryStats,
     getGlobalStats,
@@ -128,12 +129,7 @@ const companyItems = topCompanies.map((c) => ({
                     Check back soon — we're adding new countries and companies
                     regularly.
                 </p>
-                <a
-                    href="/companies"
-                    class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
-                >
-                    Browse companies
-                </a>
+                <SuggestCta kind="company" class="mt-6" />
             </div>
         ) : (
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">

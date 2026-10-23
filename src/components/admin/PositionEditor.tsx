@@ -491,6 +491,11 @@ export default function PositionEditor() {
                                                             class="text-[#0F7A4F] hover:underline font-medium line-clamp-2"
                                                         >
                                                             {pos.title}
+                                                            <span class="sr-only">
+                                                                {' '}
+                                                                (opens in a new
+                                                                tab)
+                                                            </span>
                                                         </a>
                                                     ) : (
                                                         <span class="font-medium text-gray-800">
