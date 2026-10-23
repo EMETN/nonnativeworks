@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import PublishButton from '../components/admin/PublishButton.tsx';
 import BackToTop from '../components/shared/BackToTop.astro';
+import { readLocalDataEpoch } from '../../scripts/local-data-epoch.mjs';
 
 interface Props {
     title: string;
@@ -19,10 +20,11 @@ const navItems = [
     { href: '/admin/skills', label: 'Skills' },
 ];
 const path = Astro.url.pathname;
+const localDataEpoch = import.meta.env.DEV ? readLocalDataEpoch() : undefined;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-local-data-epoch={localDataEpoch}>
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
