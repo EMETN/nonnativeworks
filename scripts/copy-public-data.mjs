@@ -8,8 +8,7 @@ import { toAppEnv } from './local-supabase-env.mjs';
 import { readStatus } from './local-supabase-stack.mjs';
 import { assertLocalUrl } from './seed-local.mjs';
 
-// Insert order, parents first. Clearing runs in reverse after skill_snapshots,
-// which isn't publicly readable but references skills and categories.
+// Parents first: inserts run in this order, clearing in reverse.
 export const TABLES = [
     'countries',
     'categories',
@@ -18,8 +17,14 @@ export const TABLES = [
     'company_snapshots',
     'skills',
 ];
-// Never copied, but cleared: stale change logs would show as unpublished changes.
-const ADMIN_LOGS = ['admin_changes', 'site_publishes', 'site_builds'];
+// Not public, so never copied, but cleared: stale logs would show as unpublished
+// changes, and skill_snapshots would block deleting skills and categories.
+const LOCAL_ONLY = [
+    'admin_changes',
+    'site_publishes',
+    'site_builds',
+    'skill_snapshots',
+];
 const KEY_COLUMN = { site_builds: 'deploy_id' };
 const PAGE_SIZE = 1000;
 const INSERT_CHUNK = 500;
@@ -60,7 +65,7 @@ export function parseSource(secrets) {
 }
 
 export function clearOrder({ keepCategories }) {
-    return [...ADMIN_LOGS, 'skill_snapshots', ...[...TABLES].reverse()].filter(
+    return [...LOCAL_ONLY, ...[...TABLES].reverse()].filter(
         (table) => !(keepCategories && table === 'categories'),
     );
 }
