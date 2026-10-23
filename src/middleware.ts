@@ -106,6 +106,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
             return withSecurityHeaders(context.redirect('/admin/login'));
         }
 
+        // app_metadata, not user_metadata: only the service role can write it.
+        // A 403 rather than a redirect, since /admin/login sends signed-in users back here.
+        if (user.app_metadata?.role !== 'admin') {
+            return withSecurityHeaders(
+                new Response(JSON.stringify({ error: 'Forbidden' }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            );
+        }
+
         context.locals.user = user;
     }
 
