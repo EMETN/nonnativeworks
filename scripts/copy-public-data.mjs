@@ -4,6 +4,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { bumpLocalDataEpoch } from './local-data-epoch.mjs';
 import { toAppEnv } from './local-supabase-env.mjs';
 import { readStatus } from './local-supabase-stack.mjs';
 import { assertLocalUrl } from './seed-local.mjs';
@@ -139,4 +140,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             opts,
         ),
     });
+    bumpLocalDataEpoch();
 }
