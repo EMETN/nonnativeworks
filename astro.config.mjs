@@ -5,6 +5,7 @@ import netlify from '@astrojs/netlify';
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 import sentry from '@sentry/astro';
+import { liveStaticPathsInDev } from './scripts/live-static-paths-in-dev.mjs';
 
 // Use the Netlify adapter when building on Netlify (NETLIFY env var is set automatically).
 // Fall back to the Node standalone adapter for local dev and GitHub Actions CI.
@@ -60,7 +61,7 @@ export default defineConfig({
         }),
     ],
     vite: {
-        plugins: [tailwindcss()],
+        plugins: [tailwindcss(), liveStaticPathsInDev()],
         optimizeDeps: {
             // ClientRouter (astro:transitions) is only used by AdminLayout.astro, not any
             // public page. Vite's dependency crawl runs from the pages it's actually seen,
