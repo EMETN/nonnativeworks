@@ -1,0 +1,75 @@
+<button
+    type="button"
+    aria-label="Back to top"
+    class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+>
+    <svg
+        width="16"
+        height="16"
+        viewBox="0 0 10 6"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+    >
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M1 5l4-4 4 4"
+        ></path>
+    </svg>
+</button>
+
+<script>
+    const toggleBackToTop = () => {
+        document
+            .querySelector('.back-to-top')
+            ?.classList.toggle(
+                'is-visible',
+                window.scrollY > window.innerHeight,
+            );
+    };
+    window.addEventListener('scroll', toggleBackToTop, { passive: true });
+    document.addEventListener('astro:page-load', toggleBackToTop);
+    toggleBackToTop();
+
+    // Without this, the next Tab continues from the hidden button at the bottom.
+    document.addEventListener('click', (e) => {
+        if (!(e.target as Element).closest('.back-to-top')) return;
+        const { body } = document;
+        body.tabIndex = -1;
+        body.focus({ preventScroll: true });
+        body.addEventListener('blur', () => body.removeAttribute('tabindex'), {
+            once: true,
+        });
+        window.scrollTo({ top: 0 });
+    });
+</script>
+
+<style is:global>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body:focus {
+        outline: none;
+    }
+
+    .back-to-top {
+        opacity: 0;
+        visibility: hidden;
+        transition:
+            opacity 0.2s ease,
+            visibility 0.2s ease;
+    }
+    .back-to-top.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html {
+            scroll-behavior: auto;
+        }
+    }
+</style>

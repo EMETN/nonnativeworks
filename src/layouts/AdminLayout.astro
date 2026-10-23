@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import PublishButton from '../components/admin/PublishButton.tsx';
+import BackToTop from '../components/shared/BackToTop.astro';
 
 interface Props {
     title: string;
@@ -108,46 +109,12 @@ const path = Astro.url.pathname;
             <slot />
         </main>
 
-        <button
-            type="button"
-            onclick="window.scrollTo({ top: 0 })"
-            aria-label="Back to top"
-            class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow cursor-pointer"
-        >
-            <svg
-                width="16"
-                height="16"
-                viewBox="0 0 10 6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M1 5l4-4 4 4"
-                ></path>
-            </svg>
-        </button>
-
-        <script>
-            const toggleBackToTop = () => {
-                document
-                    .querySelector('.back-to-top')
-                    ?.classList.toggle('is-visible', window.scrollY > 300);
-            };
-            window.addEventListener('scroll', toggleBackToTop, {
-                passive: true,
-            });
-            document.addEventListener('astro:page-load', toggleBackToTop);
-        </script>
+        <BackToTop />
     </body>
 </html>
 
 <style is:global>
     html {
-        scroll-behavior: smooth;
         overflow-y: scroll;
     }
 
@@ -161,23 +128,5 @@ const path = Astro.url.pathname;
         z-index: 10;
         background-color: #f9fafb;
         box-shadow: inset 0 -1px 0 #e5e7eb;
-    }
-
-    .back-to-top {
-        opacity: 0;
-        visibility: hidden;
-        transition:
-            opacity 0.2s ease,
-            visibility 0.2s ease;
-    }
-    .back-to-top.is-visible {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        html {
-            scroll-behavior: auto;
-        }
     }
 </style>

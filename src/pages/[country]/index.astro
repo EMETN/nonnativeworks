@@ -39,6 +39,7 @@ const { country, companies } = Astro.props as Props;
 ---
 
 <BaseLayout
+    backToTop
     title={country.name}
     description={`Browse ${country.total_positions} open positions in ${country.name} — ${country.english_positions} can be done in English without knowing the local language.`}
     breadcrumbs={[
