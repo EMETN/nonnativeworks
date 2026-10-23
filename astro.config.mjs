@@ -7,17 +7,13 @@ import tailwindcss from '@tailwindcss/vite';
 import sentry from '@sentry/astro';
 import { liveStaticPathsInDev } from './scripts/live-static-paths-in-dev.mjs';
 
-// Use the Netlify adapter when building on Netlify (NETLIFY env var is set automatically).
-// Fall back to the Node standalone adapter for local dev and GitHub Actions CI.
 const adapter = process.env.NETLIFY ? netlify() : node({ mode: 'standalone' });
 
-// https://astro.build/config
 export default defineConfig({
     // Without a site, Astro.url resolves to localhost in the built HTML (canonical/OG/JSON-LD).
     site: 'https://nonnativeworks.com',
 
-    // Pin the existing URL shape — the static default (build.format
-    // 'directory') would 301 /countries to /countries/.
+    // The static default (format 'directory') would 301 /countries to /countries/.
     trailingSlash: 'never',
     build: {
         format: 'file',
@@ -63,16 +59,11 @@ export default defineConfig({
     vite: {
         plugins: [tailwindcss(), liveStaticPathsInDev()],
         optimizeDeps: {
-            // ClientRouter (astro:transitions) is only used by AdminLayout.astro, not any
-            // public page. Vite's dependency crawl runs from the pages it's actually seen,
-            // so on a fresh cache these virtual modules are undiscovered until the first
-            // admin page loads — triggering a disruptive mid-session re-optimization that
-            // can leave an in-flight page's module graph broken (dynamic import errors,
-            // islands stuck mid-hydration). Listing them here pre-bundles them at startup
-            // instead.
+            // A dep found after startup makes Vite re-optimize mid-session, breaking in-flight islands.
             include: [
                 'posthog-js/dist/module.no-external',
                 '@sentry/browser',
+                'zod',
                 'astro/virtual-modules/transitions-events.js',
                 'astro/virtual-modules/transitions-router.js',
                 'astro/virtual-modules/transitions-swap-functions.js',
