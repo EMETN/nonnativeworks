@@ -83,6 +83,7 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
                     class="no-underline block"
                 >
                     {inner}
+                    <span class="sr-only"> (opens in a new tab)</span>
                 </a>
             ) : (
                 inner
@@ -190,6 +191,7 @@ export default function PositionList({
                         class="shrink-0 text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
                     >
                         Report an issue
+                        <span class="sr-only"> (opens in a new tab)</span>
                     </a>
                 )}
             </div>
@@ -241,7 +243,9 @@ export default function PositionList({
                         style={numFont}
                     >
                         All positions
+                        <span class="sr-only"> (opens in a new tab)</span>
                         <svg
+                            aria-hidden="true"
                             class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 inline-block ml-1"
                             width="16"
                             height="16"

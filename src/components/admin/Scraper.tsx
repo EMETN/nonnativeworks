@@ -764,6 +764,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
                         class="hover:underline text-[#0B5E3C]"
                     >
                         {job.title}
+                        <span class="sr-only"> (opens in a new tab)</span>
                     </a>
                 ) : (
                     job.title
