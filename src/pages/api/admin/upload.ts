@@ -117,6 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         country: string;
         positions: number;
         countryCreated?: boolean;
+        unchanged?: boolean;
     }[] = [];
     const errors: { company: string; country: string; error: string }[] = [];
 
@@ -279,8 +280,6 @@ async function upsertEntry(
         throw new Error(`Could not upsert company: ${companyErr?.message}`);
     }
 
-    await supabase.from('positions').delete().eq('company_id', companyRow.id);
-
     const fallbackCategoryId = categoryMap.get('other');
     if (!fallbackCategoryId) {
         throw new Error("Missing seed category 'other' for category fallback");
@@ -302,26 +301,34 @@ async function upsertEntry(
         extracted_at: new Date().toISOString(),
     }));
 
-    const { error: insertErr } = await supabase
-        .from('positions')
-        .insert(positionRows);
-    if (insertErr)
-        throw new Error(`Could not insert positions: ${insertErr.message}`);
-
     const afterState = companyStateHash(
         { career_page_url: career_page_url || null, is_english_company },
         positionRows,
     );
+    const unchanged = existingCompany !== null && beforeState === afterState;
 
-    await recordChange(supabase, {
-        entity_type: 'company',
-        action: existingCompany ? 'updated' : 'created',
-        label: company_name,
-        entity_id: company_name,
-        before_state: beforeState,
-        after_state: afterState,
-        changed_by: changedByArg,
-    });
+    if (!unchanged) {
+        await supabase
+            .from('positions')
+            .delete()
+            .eq('company_id', companyRow.id);
+
+        const { error: insertErr } = await supabase
+            .from('positions')
+            .insert(positionRows);
+        if (insertErr)
+            throw new Error(`Could not insert positions: ${insertErr.message}`);
+
+        await recordChange(supabase, {
+            entity_type: 'company',
+            action: existingCompany ? 'updated' : 'created',
+            label: company_name,
+            entity_id: company_name,
+            before_state: beforeState,
+            after_state: afterState,
+            changed_by: changedByArg,
+        });
+    }
 
     // Daily snapshots — one record per (company, country) per calendar day
     await takeSnapshotIfNeeded(supabase, company_name, countryId, positions);
@@ -334,7 +341,12 @@ async function upsertEntry(
         skillIdMap,
     );
 
-    return { company: company_name, country, positions: positions.length };
+    return {
+        company: company_name,
+        country,
+        positions: positions.length,
+        ...(unchanged && { unchanged: true }),
+    };
 }
 
 async function takeSnapshotIfNeeded(
