@@ -59,6 +59,7 @@ import os
 import re
 import sys
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -242,6 +243,33 @@ def _process_company_timed(
     return entry, f"{output}\n  duration: {_format_duration(elapsed)}"
 
 
+def _run_companies_with_retry(
+    companies: list[dict],
+    process: Callable[[dict], tuple[dict, str]],
+    max_workers: int,
+) -> list[dict]:
+
+    def run(batch: list[dict]) -> list[tuple[dict, dict]]:
+        done: list[tuple[dict, dict]] = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(process, c): c for c in batch}
+            for future in as_completed(futures):
+                entry, output = future.result()
+                print(output, flush=True)
+                done.append((futures[future], entry))
+        return done
+
+    results = run(companies)
+    failed = [company for company, entry in results if entry["status"] == "fail"]
+    if failed:
+        print(f"\nRetrying {len(failed)} failed companies...", flush=True)
+        retried = {id(c): entry for c, entry in run(failed)}
+        results = [(c, retried.get(id(c), entry)) for c, entry in results]
+        for entry in retried.values():
+            entry["retried"] = True
+    return [entry for _, entry in results]
+
+
 def _process_company(
     company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
 ) -> tuple[dict, str]:
@@ -390,6 +418,8 @@ def _summary_row(e: dict) -> str:
         status = "⚠️ 0 positions — verify"
     else:
         status = f"❌ {e.get('error', 'unknown error')[:80]}"
+    if e.get("retried"):
+        status += " (after retry)"
     # Link problem rows (warnings + failures) straight to the career page for verification.
     if e["status"] != "success":
         company = f"[{company}]({e['url']})"
@@ -495,7 +525,6 @@ def main() -> int:
 
     _wait_for_server(args.api_url)
 
-    summary_entries: list[dict] = []
     failures: list[dict] = []
     warnings: list[dict] = []
     successes: list[dict] = []
@@ -508,30 +537,22 @@ def main() -> int:
             file=sys.stderr,
         )
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = {
-            executor.submit(
-                _process_company_timed,
-                company,
-                args.api_url,
-                secret,
-                args.dry_run,
-                SCRAPE_TIMEOUT_S,
-            ): company
-            for company in valid_companies
-        }
-        for future in as_completed(futures):
-            entry, output = future.result()
-            print(output, flush=True)
-            summary_entries.append(entry)
-            if entry["status"] == "success":
-                successes.append(
-                    {"url": entry["url"], "positions": entry["total_positions"]}
-                )
-            elif entry["status"] == "warning":
-                warnings.append({"url": entry["url"], "error": entry["error"]})
-            else:
-                failures.append({"url": entry["url"], "error": entry["error"]})
+    summary_entries = _run_companies_with_retry(
+        valid_companies,
+        lambda company: _process_company_timed(
+            company, args.api_url, secret, args.dry_run, SCRAPE_TIMEOUT_S
+        ),
+        max_workers=3,
+    )
+    for entry in summary_entries:
+        if entry["status"] == "success":
+            successes.append(
+                {"url": entry["url"], "positions": entry["total_positions"]}
+            )
+        elif entry["status"] == "warning":
+            warnings.append({"url": entry["url"], "error": entry["error"]})
+        else:
+            failures.append({"url": entry["url"], "error": entry["error"]})
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'═' * 60}")

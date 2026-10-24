@@ -1,10 +1,17 @@
+import io
 import sys
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from batch_run import _company_urls, _merge_scrape_results  # noqa: E402
+from batch_run import (  # noqa: E402
+    _company_urls,
+    _merge_scrape_results,
+    _run_companies_with_retry,
+    _summary_row,
+)
 
 
 def _job(title: str, *cities: str) -> dict:
@@ -107,3 +114,50 @@ class MergeScrapeResultsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RunCompaniesTest(unittest.TestCase):
+    def _process(self, outcomes: dict[str, list[str]]):
+        calls: list[str] = []
+
+        def process(company: dict) -> tuple[dict, str]:
+            name = company["name"]
+            calls.append(name)
+            status = outcomes[name].pop(0)
+            return {"url": name, "status": status, "error": None}, ""
+
+        return process, calls
+
+    def _by_url(self, entries: list[dict]) -> dict[str, dict]:
+        return {e["url"]: e for e in entries}
+
+    def test_retries_a_failed_company_once(self):
+        process, calls = self._process(
+            {"A": ["fail", "success"], "B": ["fail", "fail"], "C": ["success"]}
+        )
+        companies = [{"name": n} for n in "ABC"]
+        with redirect_stdout(io.StringIO()):
+            entries = self._by_url(
+                _run_companies_with_retry(companies, process, max_workers=2)
+            )
+
+        self.assertEqual(entries["A"]["status"], "success")
+        self.assertTrue(entries["A"]["retried"])
+        self.assertEqual(entries["B"]["status"], "fail")
+        self.assertTrue(entries["B"]["retried"])
+        self.assertEqual(entries["C"]["status"], "success")
+        self.assertNotIn("retried", entries["C"])
+        self.assertEqual(sorted(calls), ["A", "A", "B", "B", "C"])
+
+    def test_does_not_retry_warnings(self):
+        process, calls = self._process({"A": ["warning"]})
+        with redirect_stdout(io.StringIO()):
+            entries = _run_companies_with_retry([{"name": "A"}], process, max_workers=1)
+        self.assertEqual(entries[0]["status"], "warning")
+        self.assertEqual(calls, ["A"])
+
+
+class SummaryRowTest(unittest.TestCase):
+    def test_marks_a_retried_company(self):
+        entry = {"url": "https://a", "status": "success", "retried": True}
+        self.assertIn("ok (after retry)", _summary_row(entry))
