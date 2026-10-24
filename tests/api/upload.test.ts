@@ -47,11 +47,11 @@ function respond(table: string, ops: string[]) {
     return null;
 }
 
-vi.mock('../../../lib/supabase', () => ({
+vi.mock('../../src/lib/supabase', () => ({
     createSupabaseServiceClient: () => ({ from: query }),
 }));
 
-const { POST } = await import('./upload');
+const { POST } = await import('../../src/pages/api/admin/upload');
 
 test('uploads a multi-country company with countries in parallel', async () => {
     const payload = COUNTRIES.map((slug) => ({
