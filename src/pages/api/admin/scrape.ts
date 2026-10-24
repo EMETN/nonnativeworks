@@ -278,11 +278,10 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                         : cause
                           ? String(cause)
                           : '';
-                console.warn(
-                    `Layer 1.5 (company API) failed for ${careerHostname}:`,
-                    err instanceof Error ? err.message : err,
-                    causeDetail ? `(cause: ${causeDetail})` : '',
-                );
+                layer1Error = `Company API failed: ${
+                    err instanceof Error ? err.message : String(err)
+                }${causeDetail ? ` (cause: ${causeDetail})` : ''}`;
+                console.warn(`Layer 1.5 (${careerHostname}): ${layer1Error}`);
             }
         }
     }
