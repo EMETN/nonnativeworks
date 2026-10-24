@@ -22,7 +22,7 @@ interface Props {
 
 const {
     title,
-    description = 'Find companies where English is enough — browse positions by country.',
+    description = 'Find companies where English is enough and browse positions by country.',
     ogImage,
     noindex = false,
     breadcrumbs,
@@ -32,8 +32,8 @@ const {
 
 const siteTitle =
     title === 'Home'
-        ? 'nonnativeworks! — Work abroad in English'
-        : `${title} — nonnativeworks!`;
+        ? 'nonnativeworks! | Work abroad in English'
+        : `${title} | nonnativeworks!`;
 
 // Strip the built .html path so canonical matches the served URL — see url-path.ts.
 const canonical = new URL(cleanPathname(Astro.url), Astro.url).href;
