@@ -6,7 +6,6 @@ import { nameToSlug } from '../lib/country-flags';
 interface SitemapCompany {
     name: string;
     updated_at: string | null;
-    country: { slug: string } | null;
 }
 
 export const GET: APIRoute = async ({ url }) => {
@@ -20,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Paged so the sitemap stays complete past PostgREST's 1000-row cap.
     const companies = await fetchAllCompanies<SitemapCompany>(
-        'name, updated_at, country:countries!inner(slug)',
+        'name, updated_at, country:countries!inner(id)',
         supabase,
     );
 
@@ -44,13 +43,6 @@ export const GET: APIRoute = async ({ url }) => {
         lastmod: c.created_at ? c.created_at.slice(0, 10) : undefined,
     }));
 
-    const companyCountryPages: SitemapPage[] = (companies ?? []).map((c) => ({
-        loc: `${base}/${c.country?.slug}/${nameToSlug(c.name)}`,
-        priority: '0.6',
-        changefreq: 'weekly',
-        lastmod: c.updated_at ? c.updated_at.slice(0, 10) : undefined,
-    }));
-
     const uniqueSlugs = new Set<string>();
     const globalCompanyPages: SitemapPage[] = [];
     for (const c of companies ?? []) {
@@ -58,19 +50,14 @@ export const GET: APIRoute = async ({ url }) => {
         if (uniqueSlugs.has(slug)) continue;
         uniqueSlugs.add(slug);
         globalCompanyPages.push({
-            loc: `${base}/companies/${slug}`,
+            loc: `${base}/${slug}`,
             priority: '0.7',
             changefreq: 'weekly',
             lastmod: c.updated_at ? c.updated_at.slice(0, 10) : undefined,
         });
     }
 
-    const allPages = [
-        ...staticPages,
-        ...countryPages,
-        ...globalCompanyPages,
-        ...companyCountryPages,
-    ];
+    const allPages = [...staticPages, ...countryPages, ...globalCompanyPages];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

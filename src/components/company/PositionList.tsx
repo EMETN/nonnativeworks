@@ -1,16 +1,43 @@
-import { useState, useRef, useMemo } from 'preact/hooks';
-import type { PositionDetail } from '../../lib/types';
+import {
+    useState,
+    useRef,
+    useMemo,
+    useEffect,
+    useLayoutEffect,
+} from 'preact/hooks';
+import type { ListedPosition } from '../../lib/types';
 import { foldText } from '../../lib/text';
+import {
+    DEFAULT_SORT,
+    EMPTY_FILTERS,
+    FACET_LABELS,
+    SORT_LABELS,
+    applyFilters,
+    buildFacets,
+    facetCounts,
+    hasActiveFilters,
+    parseFilters,
+    parseSort,
+    serializeFilters,
+    sortKeysFor,
+    sortPositions,
+    type FacetKey,
+    type FilterState,
+    type PageKind,
+    type SortKey,
+} from '../../lib/position-filters';
+import MultiSelectFilter from '../shared/MultiSelectFilter';
 
 interface Props {
-    positions: PositionDetail[];
-    careerPageUrl: string | null;
-    reportUrl?: string;
+    positions: ListedPosition[];
+    kind: PageKind;
+    report: { company?: string; country?: string; url: string };
 }
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
-function PositionRow({ pos }: { pos: PositionDetail }) {
+function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
+    const context = kind === 'country' ? pos.company_name : pos.country_name;
     const inner = (
         <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
             <div class="min-w-0 flex-1">
@@ -20,30 +47,28 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
                 >
                     {pos.title}
                 </span>
+                <div
+                    class="text-xs sm:text-sm text-gray-500 mt-1.5"
+                    style={numFont}
+                >
+                    <span class="font-medium text-gray-700">{context}</span>
+                    {pos.work_model && (
+                        <span class="capitalize"> · {pos.work_model}</span>
+                    )}
+                    {pos.city && pos.city.length > 0 && (
+                        <span>
+                            {' · '}
+                            {pos.city.length > 1
+                                ? 'Multiple locations'
+                                : pos.city[0]}
+                        </span>
+                    )}
+                </div>
                 {pos.local_language_advantage && (
-                    <div class="leading-none" style={numFont}>
+                    <div class="mt-1 leading-none" style={numFont}>
                         <span class="text-xs sm:text-sm text-amber-700 font-medium">
                             Local language advantage
                         </span>
-                    </div>
-                )}
-                {(pos.work_model || (pos.city && pos.city.length > 0)) && (
-                    <div
-                        class="text-xs sm:text-sm text-gray-500 mt-1.5"
-                        style={numFont}
-                    >
-                        {pos.work_model && (
-                            <span class="capitalize mr-1">
-                                {pos.work_model}
-                            </span>
-                        )}
-                        {pos.work_model &&
-                            pos.city &&
-                            pos.city.length > 0 &&
-                            '· '}
-                        {pos.city && pos.city.length > 1
-                            ? 'Multiple locations'
-                            : pos.city && pos.city.length === 1 && pos.city[0]}
                     </div>
                 )}
             </div>
@@ -92,34 +117,210 @@ function PositionRow({ pos }: { pos: PositionDetail }) {
     );
 }
 
-export default function PositionList({
-    positions,
-    careerPageUrl,
-    reportUrl,
-}: Props) {
+const TALLY_REPORT_URL = 'https://tally.so/r/MeZWEl';
+const PAGE_SIZE = 25;
+
+export default function PositionList({ positions, kind, report }: Props) {
     const [inputValue, setInputValue] = useState('');
     const [search, setSearch] = useState('');
+    const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+    const [sort, setSort] = useState<SortKey | null>(null);
+    const activeSort = sort ?? DEFAULT_SORT;
+    const [ready, setReady] = useState(false);
+    const [shown, setShown] = useState(PAGE_SIZE);
     const debounceRef = useRef(0);
 
-    const nonNativePositions = useMemo(
-        () => positions.filter((p) => !p.requires_native_language),
-        [positions],
+    const facets = useMemo(
+        () => buildFacets(positions, kind),
+        [positions, kind],
     );
+    const facetKeys = Object.keys(facets) as FacetKey[];
+
+    // Layout effect: the URL must be parsed before any input event can write a stale one.
+    useLayoutEffect(() => {
+        setFilters(parseFilters(location.search, facets));
+        setSort(parseSort(location.search, kind));
+        setReady(true);
+    }, [facets, kind]);
+
+    useEffect(() => {
+        if (ready) document.documentElement.dataset.filtersReady = '';
+    }, [ready]);
+
+    const writeUrl = (nextFilters: FilterState, nextSort: SortKey | null) =>
+        history.replaceState(
+            history.state,
+            '',
+            `${location.pathname}${serializeFilters(nextFilters, nextSort)}${location.hash}`,
+        );
+
+    const updateFilters = (next: FilterState) => {
+        setFilters(next);
+        writeUrl(next, sort);
+    };
+
+    const updateSort = (next: SortKey) => {
+        setSort(next);
+        writeUrl(filters, next);
+    };
+
+    const setFacet = (key: FacetKey, values: string[]) =>
+        updateFilters({
+            ...filters,
+            selected: { ...filters.selected, [key]: values },
+        });
+
+    const clearAll = () => {
+        updateFilters(EMPTY_FILTERS);
+        setInputValue('');
+        setSearch('');
+        clearTimeout(debounceRef.current);
+    };
 
     const filtered = useMemo(() => {
-        const q = foldText(search).trim();
-        if (!q) return nonNativePositions;
-        return nonNativePositions.filter(
-            (p) =>
-                foldText(p.title).includes(q) ||
-                foldText(p.category_name).includes(q) ||
-                (p.work_model && foldText(p.work_model).includes(q)) ||
-                (p.city && p.city.some((c) => foldText(c).includes(q))),
+        const narrowed = sortPositions(
+            applyFilters(positions, filters),
+            activeSort,
         );
-    }, [nonNativePositions, search]);
+        const q = foldText(search).trim();
+        if (!q) return narrowed;
+        return narrowed.filter((p) => foldText(p.title).includes(q));
+    }, [positions, filters, sort, search]);
+
+    useEffect(() => setShown(PAGE_SIZE), [filters, sort, search]);
+
+    const careerUrls = new Set(filtered.map((p) => p.career_page_url));
+    const careerPageUrl = careerUrls.size === 1 ? [...careerUrls][0] : null;
+
+    const otherDimension = kind === 'country' ? 'company' : 'country';
+    const narrowedTo = filters.selected[otherDimension];
+    const narrowedLabel =
+        narrowedTo?.length === 1
+            ? facets[otherDimension]?.find((o) => o.value === narrowedTo[0])
+                  ?.label
+            : undefined;
+    const reportParams = new URLSearchParams({
+        company:
+            report.company ?? (kind === 'country' ? (narrowedLabel ?? '') : ''),
+        country:
+            report.country ?? (kind === 'company' ? (narrowedLabel ?? '') : ''),
+        url: `${report.url}${serializeFilters(filters, sort)}`,
+    });
+    const reportUrl = `${TALLY_REPORT_URL}?${reportParams}`;
+
+    const hasLocalAdvantage = positions.some((p) => p.local_language_advantage);
+    const filtersActive = hasActiveFilters(filters);
+    const anythingActive = filtersActive || inputValue !== '';
 
     return (
         <div>
+            <div class="relative flex flex-wrap items-center gap-2 mb-3">
+                {facetKeys.map((key) => (
+                    <MultiSelectFilter
+                        key={key}
+                        id={`filter-${key}`}
+                        label={FACET_LABELS[key]}
+                        options={facets[key]!}
+                        counts={facetCounts(positions, filters, key)}
+                        selected={filters.selected[key] ?? []}
+                        onChange={(values) => setFacet(key, values)}
+                    />
+                ))}
+                {hasLocalAdvantage && (
+                    <button
+                        type="button"
+                        aria-pressed={filters.hideLocalAdvantage}
+                        onClick={() =>
+                            updateFilters({
+                                ...filters,
+                                hideLocalAdvantage: !filters.hideLocalAdvantage,
+                            })
+                        }
+                        class={`text-xs sm:text-sm font-medium px-3 py-1 rounded-full border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 ${filters.hideLocalAdvantage ? 'border-[#0F7A4F] text-[#0F7A4F] bg-[#0F7A4F]/5' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}
+                        style={numFont}
+                    >
+                        Hide local language advantage
+                    </button>
+                )}
+                {anythingActive && (
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        class="inline-flex items-center gap-1 text-xs sm:text-sm font-medium px-2 py-1 text-gray-500 hover:text-[#0F7A4F] transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+                        style={numFont}
+                    >
+                        <svg
+                            aria-hidden="true"
+                            class="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width={2.5}
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                        Clear filters
+                    </button>
+                )}
+                <label
+                    class="w-full sm:w-auto ml-auto flex items-center justify-end gap-1.5 text-xs sm:text-sm text-gray-500 border-t border-gray-200 pt-2 mt-1 sm:border-t-0 sm:pt-0 sm:mt-0"
+                    style={numFont}
+                >
+                    Sort by
+                    <span class="relative inline-flex items-center gap-1 font-medium px-3 py-1 rounded-full border border-gray-300 text-gray-700 hover:border-gray-400 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#12956B] has-[:focus-visible]:ring-offset-2">
+                        <span aria-hidden="true" class="grid">
+                            {sortKeysFor(kind).map((key) => (
+                                <span
+                                    key={key}
+                                    class={`[grid-area:1/1] ${key === activeSort ? '' : 'invisible'}`}
+                                >
+                                    {SORT_LABELS[key]}
+                                </span>
+                            ))}
+                        </span>
+                        <svg
+                            aria-hidden="true"
+                            class="w-3 h-3"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width={2.5}
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 9l6 6 6-6"
+                            />
+                        </svg>
+                        <select
+                            aria-label="Sort by"
+                            value={activeSort}
+                            onChange={(e) =>
+                                updateSort(
+                                    (e.target as HTMLSelectElement)
+                                        .value as SortKey,
+                                )
+                            }
+                            class="absolute inset-0 w-full opacity-0 cursor-pointer"
+                        >
+                            {sortKeysFor(kind).map((key) => (
+                                <option key={key} value={key}>
+                                    {SORT_LABELS[key]}
+                                </option>
+                            ))}
+                        </select>
+                    </span>
+                </label>
+            </div>
+
             {/* Search */}
             <div class="w-full border-b border-gray-200 pb-2 mb-2 flex items-center justify-between gap-3">
                 <div class="relative flex-1 min-w-0 sm:flex-none sm:w-56 md:w-64">
@@ -140,8 +341,8 @@ export default function PositionList({
                     </svg>
                     <input
                         type="text"
-                        aria-label="Search by title, city, or category"
-                        placeholder="Search by title, city, category..."
+                        aria-label="Search by title"
+                        placeholder="Search by title..."
                         value={inputValue}
                         onInput={(e) => {
                             const val = (e.target as HTMLInputElement).value;
@@ -183,33 +384,41 @@ export default function PositionList({
                         </button>
                     )}
                 </div>
-                {reportUrl && (
-                    <a
-                        href={reportUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="shrink-0 text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
-                    >
-                        Report an issue
-                        <span class="sr-only"> (opens in a new tab)</span>
-                    </a>
-                )}
+                <a
+                    href={reportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="shrink-0 text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
+                >
+                    Report an issue
+                    <span class="sr-only"> (opens in a new tab)</span>
+                </a>
             </div>
 
             {/* Position list */}
-            <ul class="hover-hl-list">
+            <ul class="hover-hl-list" data-position-results>
                 {filtered.length === 0 ? (
                     <li class="py-12 text-center text-gray-500">
-                        {search ? (
+                        {search || filtersActive ? (
                             <>
                                 <p
                                     class="text-base sm:text-lg mb-1.5"
                                     style={numFont}
                                 >
-                                    No positions found matching "{inputValue}"
+                                    {search
+                                        ? `No positions found matching "${inputValue}"`
+                                        : 'No positions match these filters'}
                                 </p>
                                 <p class="text-sm text-gray-500">
-                                    Try a different search term.
+                                    Try a different search term or{' '}
+                                    <button
+                                        type="button"
+                                        onClick={clearAll}
+                                        class="font-medium text-[#0F7A4F] hover:underline cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+                                    >
+                                        clear the filters
+                                    </button>
+                                    .
                                 </p>
                             </>
                         ) : (
@@ -220,11 +429,26 @@ export default function PositionList({
                         )}
                     </li>
                 ) : (
-                    filtered.map((pos) => (
-                        <PositionRow key={pos.id} pos={pos} />
-                    ))
+                    filtered
+                        .slice(0, shown)
+                        .map((pos) => (
+                            <PositionRow key={pos.id} pos={pos} kind={kind} />
+                        ))
                 )}
             </ul>
+
+            {filtered.length > shown && (
+                <div class="mt-4 text-center">
+                    <button
+                        type="button"
+                        onClick={() => setShown(shown + PAGE_SIZE)}
+                        class="text-xs sm:text-sm font-medium px-4 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-gray-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+                        style={numFont}
+                    >
+                        Show more
+                    </button>
+                </div>
+            )}
 
             {/* Footer */}
             <div class="mt-4 flex items-center justify-between">
@@ -232,7 +456,8 @@ export default function PositionList({
                     class="text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
                     style={numFont}
                 >
-                    {filtered.length} of {nonNativePositions.length} positions
+                    {Math.min(shown, filtered.length)} of {filtered.length}{' '}
+                    positions
                 </span>
                 {careerPageUrl && (
                     <a

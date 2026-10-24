@@ -79,14 +79,14 @@ const POSITION_COLUMNS = `
     work_model,
     requires_native_language,
     local_language_advantage,
+    skills,
     category:categories(name)
 `;
 
-/**
- * Reads every position in one pass, paged and in parallel;
- * mirrors getPositionsByCompany's row shape.
- */
-export async function fetchAllPositions(): Promise<PositionDetail[]> {
+export type BuildPosition = PositionDetail & { skills: string[] };
+
+/** Reads every position in one pass, paged and in parallel. */
+export async function fetchAllPositions(): Promise<BuildPosition[]> {
     const supabase = createPublicClient();
 
     const { count, error: countError } = await supabase
@@ -128,6 +128,7 @@ export async function fetchAllPositions(): Promise<PositionDetail[]> {
         category_name: row.category?.name ?? 'Other',
         requires_native_language: row.requires_native_language,
         local_language_advantage: row.local_language_advantage ?? false,
+        skills: row.skills ?? [],
     }));
 }
 

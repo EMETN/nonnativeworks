@@ -94,3 +94,8 @@
 [data-list-page]:has([data-empty]) .suggest-cta {
     margin-top: 0;
 }
+
+/* A shared filtered link would otherwise flash the full list before the island applies the query string. */
+html[data-filtered]:not([data-filters-ready]) [data-position-results] {
+    visibility: hidden;
+}
