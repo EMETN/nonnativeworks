@@ -4,23 +4,24 @@ import { cleanPathname } from '../lib/url-path';
 interface Props {
     // Set by pages (e.g. 404) that must not trigger the catch-all isCountries below.
     hideActive?: boolean;
+    // Root-level detail pages (/portugal, /tekever) can't be told apart by path.
+    active?: 'countries' | 'companies';
 }
-const { hideActive = false } = Astro.props;
+const { hideActive = false, active } = Astro.props;
 
 const pathname = cleanPathname(Astro.url);
-const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
 const isHome = pathname === '/';
 const isAdmin = pathname.startsWith('/admin');
-const isCountryCompany =
-    segments.length >= 2 &&
-    segments[0] !== 'companies' &&
-    segments[0] !== 'admin';
 const isCompanies = hideActive
     ? false
-    : pathname === '/companies' ||
-      pathname.startsWith('/companies/') ||
-      isCountryCompany;
-const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
+    : active
+      ? active === 'companies'
+      : pathname === '/companies';
+const isCountries = hideActive
+    ? false
+    : active
+      ? active === 'countries'
+      : !isHome && !isCompanies && !isAdmin;
 ---
 
 <header
@@ -32,7 +33,7 @@ const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
             <a
                 href="/"
                 class="flex items-center"
-                aria-label="nonnativeworks! — home"
+                aria-label="nonnativeworks! home"
             >
                 <img
                     src="/nonnativeworks_logo.svg"

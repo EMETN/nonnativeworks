@@ -19,7 +19,7 @@ const englishPositions = stats.english_positions;
 <BaseLayout
     backToTop
     title="Companies"
-    description="Browse all companies with English-friendly job positions — no local language required."
+    description="Browse all companies with English-friendly job positions, no local language required."
     breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Companies' }]}
 >
     <div
@@ -53,10 +53,11 @@ const englishPositions = stats.english_positions;
         ) : (
             <>
                 <StatsDescription>
+                    Across{' '}
                     <strong class="font-semibold text-gray-900">
                         {companies.length}
                     </strong>{' '}
-                    {companies.length === 1 ? 'company' : 'companies'} —{' '}
+                    {companies.length === 1 ? 'company' : 'companies'},{' '}
                     <strong class="font-semibold text-gray-900">
                         {englishPositions.toLocaleString()}
                     </strong>{' '}

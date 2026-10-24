@@ -10,7 +10,7 @@ export default function AllCompaniesGrid({ companies }: Props) {
     const items: DataGridItem[] = companies.map((c) => ({
         id: c.primary_company_slug,
         name: c.name,
-        href: `/companies/${c.primary_company_slug}`,
+        href: `/${c.primary_company_slug}`,
         english_positions: c.english_positions,
         total_positions: c.total_positions,
         english_percentage: c.english_percentage,

@@ -70,15 +70,6 @@ export default defineConfig({
                 'astro/virtual-modules/transitions-types.js',
             ],
         },
-        server: {
-            proxy: {
-                '/t': {
-                    target: 'https://eu.i.posthog.com',
-                    changeOrigin: true,
-                    rewrite: (path) => path.replace(/^\/t/, ''),
-                },
-            },
-        },
         define: {
             // Stamped at build time so admin can tell how old the live site is.
             __BUILD_TIME__: JSON.stringify(new Date().toISOString()),

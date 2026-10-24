@@ -3,7 +3,7 @@ Creator: EMETN
 Site: https://emetn.com
 
 /* THANKS */
-Flag icons: Flagpedia — https://flagpedia.net
+Flag icons: Flagpedia (https://flagpedia.net)
 
 /* SITE */
 Standards: HTML5, CSS3
