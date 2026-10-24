@@ -122,7 +122,7 @@ const breadcrumbJsonLd =
     >
         <script>
             const key = import.meta.env.PUBLIC_POSTHOG_KEY;
-            if (key) {
+            if (key && import.meta.env.PROD) {
                 // Boot off the critical path, on idle or first interaction
                 // (whichever is first) so early engagement is still captured.
                 const events = [
@@ -147,8 +147,8 @@ const breadcrumbJsonLd =
                             advanced_disable_flags: true,
                             disable_external_dependency_loading: true,
                             disable_session_recording: true,
-                            capture_dead_clicks: !import.meta.env.DEV,
-                            capture_performance: !import.meta.env.DEV,
+                            capture_dead_clicks: true,
+                            capture_performance: true,
                             debug: false,
                         });
                     });
