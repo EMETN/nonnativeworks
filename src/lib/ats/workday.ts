@@ -209,7 +209,7 @@ function delay(ms: number): Promise<void> {
 const MAX_BACKOFF_RETRIES = 3;
 const BASE_BACKOFF_MS = 1000;
 
-function parseRetryAfterMs(header: string | null): number | null {
+export function parseRetryAfterMs(header: string | null): number | null {
     if (!header) return null;
     const asSeconds = Number(header);
     if (!Number.isNaN(asSeconds)) return asSeconds * 1000;

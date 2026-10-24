@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
+import { isHttpUrl } from '../../lib/safe-url';
 import { atsLabel } from '../../lib/ats/detector';
 import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
 import {
@@ -24,15 +25,6 @@ type Phase =
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function isValidUrl(value: string): boolean {
-    try {
-        const p = new URL(value);
-        return p.protocol === 'http:' || p.protocol === 'https:';
-    } catch {
-        return false;
-    }
-}
 
 function totalJobs(countries: ReviewCountryGroup[]): number {
     return countries.reduce((sum, g) => sum + g.jobs.length, 0);
@@ -64,7 +56,7 @@ export default function Scraper() {
             trimmed = `https://${trimmed}`;
             setUrl(trimmed);
         }
-        if (!isValidUrl(trimmed)) {
+        if (!isHttpUrl(trimmed)) {
             setUrlError('Please enter a valid URL (e.g. company.com/careers)');
             return;
         }
@@ -756,7 +748,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
     return (
         <tr class="border-b border-gray-50 last:border-0 bg-white">
             <td class="px-4 py-2 text-gray-800">
-                {job.url ? (
+                {job.url && isHttpUrl(job.url) ? (
                     <a
                         href={job.url}
                         target="_blank"

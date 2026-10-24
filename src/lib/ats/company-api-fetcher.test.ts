@@ -76,4 +76,62 @@ describe('offset pagination — large boards', () => {
         expect(jobs).toHaveLength(TOTAL);
         expect(fetchMock).toHaveBeenCalledTimes(4);
     });
+
+    test('rides out a sustained 429 throttle instead of failing the board', async () => {
+        vi.useFakeTimers();
+        const TOTAL = 386;
+        const SIZE = 10;
+        const okApi = mockOffsetApi(TOTAL, SIZE);
+        const throttledHits = new Map<string, number>();
+        const fetchMock = vi.fn(async (url: string) => {
+            const start = Number(new URL(url).searchParams.get('start'));
+            const hits = throttledHits.get(url) ?? 0;
+            if (start >= 210 && hits < 4) {
+                throttledHits.set(url, hits + 1);
+                return {
+                    ok: false,
+                    status: 429,
+                    headers: new Headers(),
+                    json: async () => ({}),
+                };
+            }
+            return okApi(url);
+        });
+        vi.stubGlobal('fetch', fetchMock);
+
+        const promise = fetchCompanyApiJobs(
+            COMPANY_APIS['explore.jobs.netflix.net'],
+        );
+        await vi.runAllTimersAsync();
+        const jobs = await promise;
+
+        expect(jobs).toHaveLength(TOTAL);
+    });
+
+    test('waits for the Retry-After header on a 429', async () => {
+        vi.useFakeTimers();
+        const okApi = mockOffsetApi(5, 10);
+        let throttled = false;
+        const fetchMock = vi.fn(async (url: string) => {
+            if (!throttled) {
+                throttled = true;
+                return {
+                    ok: false,
+                    status: 429,
+                    headers: new Headers({ 'retry-after': '30' }),
+                    json: async () => ({}),
+                };
+            }
+            return okApi(url);
+        });
+        vi.stubGlobal('fetch', fetchMock);
+
+        const promise = fetchCompanyApiJobs(
+            COMPANY_APIS['explore.jobs.netflix.net'],
+        );
+        await vi.advanceTimersByTimeAsync(29_000);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        await vi.runAllTimersAsync();
+        expect(await promise).toHaveLength(5);
+    });
 });

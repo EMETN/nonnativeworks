@@ -126,12 +126,18 @@ jobs:
             - name: Install Python dependencies
               run: pip install -r scraper/requirements.txt
 
+            # Key on the installed version: requirements.txt only sets a floor, so a newer
+            # Playwright would otherwise restore a stale browser build it can't launch.
+            - name: Get Playwright version
+              id: playwright-version
+              run: echo "version=$(python -c 'import importlib.metadata as m; print(m.version("playwright"))')" >> "$GITHUB_OUTPUT"
+
             - name: Cache Playwright browsers
               id: playwright-cache
               uses: actions/cache@v6
               with:
                   path: ~/.cache/ms-playwright
-                  key: playwright-chromium-${{ runner.os }}-${{ hashFiles('scraper/requirements.txt') }}
+                  key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
             - name: Install Playwright browser (with system deps)
               if: steps.playwright-cache.outputs.cache-hit != 'true'

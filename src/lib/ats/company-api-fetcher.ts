@@ -3,11 +3,16 @@ import type { CompanyApiConfig } from './company-apis';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
+import { parseRetryAfterMs } from './workday';
+import { fetchPublic } from './public-fetch';
 
 // Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
 const MAX_PAGES = 200;
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
 const PAGE_CONCURRENCY = 5; // concurrent page fetches when a paginated total is known upfront
+const FETCH_ATTEMPTS = 3;
+const THROTTLED_FETCH_ATTEMPTS = 6;
+const THROTTLE_BACKOFF_MS = 2000;
 
 /** Decode common HTML entities in a string (e.g. &amp; → &, &lt; → <). */
 function decodeHtmlEntities(str: string): string {
@@ -380,8 +385,15 @@ async function fetchPage(
     }
     let lastStatus = 0;
     let lastError: unknown;
-    for (let attempt = 0; attempt < 3; attempt++) {
-        if (attempt > 0) await sleep(1000 * attempt);
+    let retryWaitMs = 0;
+    for (
+        let attempt = 0;
+        attempt <
+        (lastStatus === 429 ? THROTTLED_FETCH_ATTEMPTS : FETCH_ATTEMPTS);
+        attempt++
+    ) {
+        if (attempt > 0) await sleep(retryWaitMs);
+        retryWaitMs = 1000 * (attempt + 1);
         let res: Response;
         try {
             res = await fetch(url, init);
@@ -410,8 +422,13 @@ async function fetchPage(
         }
         if (res.ok) return res.json();
         lastStatus = res.status;
+        if (res.status === 429) {
+            retryWaitMs =
+                parseRetryAfterMs(res.headers.get('retry-after')) ??
+                THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500;
+        }
         console.warn(
-            `[fetchPage] attempt ${attempt + 1}/3 got ${res.status} for ${url}`,
+            `[fetchPage] attempt ${attempt + 1} got ${res.status} for ${url}`,
         );
     }
     // Retries cover genuine transient failures (5xx, a JSON-formatted error from the
@@ -433,7 +450,7 @@ const GONE_SENTINEL = '\x00GONE';
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
     try {
-        const res = await fetch(url, {
+        const res = await fetchPublic(url, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
         });
         if (res.status === 404 || res.status === 410) {

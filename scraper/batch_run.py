@@ -69,6 +69,7 @@ COMPANIES_FILE = Path(__file__).parent / "companies.yaml"
 
 # Timeout for the scrape call — njoyn scrapes 9 countries sequentially (~10 min).
 SCRAPE_TIMEOUT_S = 700
+UPLOAD_TIMEOUT_S = 300
 
 
 def _load_companies(path: Path | None = None) -> list[dict]:
@@ -206,7 +207,7 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
         f"{api_url}/api/admin/upload",
         json=payload,
         headers={"x-scraper-secret": secret},
-        timeout=60,
+        timeout=UPLOAD_TIMEOUT_S,
     )
     resp.raise_for_status()
     return resp.json()
