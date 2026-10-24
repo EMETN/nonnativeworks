@@ -4,6 +4,7 @@ import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { lookupCountryFromLocation } from './country-lookup';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 import { parseRetryAfterMs } from './workday';
+import { fetchPublic } from './public-fetch';
 
 // Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
 const MAX_PAGES = 200;
@@ -449,7 +450,7 @@ const GONE_SENTINEL = '\x00GONE';
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
     try {
-        const res = await fetch(url, {
+        const res = await fetchPublic(url, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
         });
         if (res.status === 404 || res.status === 410) {
