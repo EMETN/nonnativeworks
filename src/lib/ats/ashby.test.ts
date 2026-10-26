@@ -102,6 +102,26 @@ describe('mapAshbyPosting — multi-country primary attribution', () => {
         expect(fiCount).toBe(1);
         expect(resolvedCodes(posting)).toEqual(['FI', 'NO']);
     });
+
+    test('keeps the primary city when its country is already covered', () => {
+        const posting = {
+            ...base,
+            location: 'Berlin',
+            address: { postalAddress: { addressCountry: 'Germany' } },
+            secondaryLocations: [
+                {
+                    location: 'Munich',
+                    address: { postalAddress: { addressCountry: 'Germany' } },
+                },
+            ],
+        };
+        expect(mapAshbyPosting(posting)).toEqual([
+            expect.objectContaining({
+                location: 'Germany',
+                cities: ['Berlin', 'Munich'],
+            }),
+        ]);
+    });
 });
 
 describe('mapAshbyPosting — single location still works', () => {

@@ -54,9 +54,12 @@ Then update _scrape() and _upload() below to use the right base URL each.
 from __future__ import annotations
 
 import argparse
+import html
 import os
+import re
 import sys
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -67,6 +70,7 @@ COMPANIES_FILE = Path(__file__).parent / "companies.yaml"
 
 # Timeout for the scrape call — njoyn scrapes 9 countries sequentially (~10 min).
 SCRAPE_TIMEOUT_S = 700
+UPLOAD_TIMEOUT_S = 300
 
 
 def _load_companies(path: Path | None = None) -> list[dict]:
@@ -105,6 +109,58 @@ def _scrape(
     )
     resp.raise_for_status()
     return resp.json()
+
+
+def _company_urls(company: dict) -> list[str]:
+    urls = [company.get("url", ""), *(company.get("extra_urls") or [])]
+    return [u.strip() for u in urls if u and u.strip()]
+
+
+def _normalise(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", html.unescape(text).lower()).strip()
+
+
+def _is_cross_source_duplicate(job: dict, earlier_jobs: list[dict]) -> bool:
+    title = _normalise(job["title"])
+    cities = {_normalise(c) for c in job.get("city") or []}
+    for other in earlier_jobs:
+        if _normalise(other["title"]) != title:
+            continue
+        other_cities = {_normalise(c) for c in other.get("city") or []}
+        if not cities or not other_cities or cities & other_cities:
+            return True
+    return False
+
+
+def _merge_scrape_results(results: list[dict]) -> tuple[dict, int]:
+    """Merge one company's per-source results; earlier sources win on duplicates."""
+    if len(results) == 1:
+        return results[0], 0
+    merged = {
+        **results[0],
+        "ats": "+".join(str(r.get("ats")) for r in results),
+        "countries": [],
+        "skipped_unknown_location": 0,
+        "skipped_untracked_country": 0,
+    }
+    groups: dict[str, dict] = {}
+    dropped = 0
+    for result in results:
+        merged["skipped_unknown_location"] += result.get("skipped_unknown_location", 0)
+        merged["skipped_untracked_country"] += result.get(
+            "skipped_untracked_country", 0
+        )
+        # Only check earlier sources: one source's repeats are separate openings.
+        earlier = {slug: list(g["jobs"]) for slug, g in groups.items()}
+        for cg in result.get("countries", []):
+            group = groups.setdefault(cg["country"], {**cg, "jobs": []})
+            for job in cg.get("jobs", []):
+                if _is_cross_source_duplicate(job, earlier.get(cg["country"], [])):
+                    dropped += 1
+                else:
+                    group["jobs"].append(job)
+    merged["countries"] = list(groups.values())
+    return merged, dropped
 
 
 def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list[dict]:
@@ -152,7 +208,7 @@ def _upload(api_url: str, secret: str, payload: list[dict]) -> dict:
         f"{api_url}/api/admin/upload",
         json=payload,
         headers={"x-scraper-secret": secret},
-        timeout=60,
+        timeout=UPLOAD_TIMEOUT_S,
     )
     resp.raise_for_status()
     return resp.json()
@@ -187,19 +243,47 @@ def _process_company_timed(
     return entry, f"{output}\n  duration: {_format_duration(elapsed)}"
 
 
+def _run_companies_with_retry(
+    companies: list[dict],
+    process: Callable[[dict], tuple[dict, str]],
+    max_workers: int,
+) -> list[dict]:
+
+    def run(batch: list[dict]) -> list[tuple[dict, dict]]:
+        done: list[tuple[dict, dict]] = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(process, c): c for c in batch}
+            for future in as_completed(futures):
+                entry, output = future.result()
+                print(output, flush=True)
+                done.append((futures[future], entry))
+        return done
+
+    results = run(companies)
+    failed = [company for company, entry in results if entry["status"] == "fail"]
+    if failed:
+        print(f"\nRetrying {len(failed)} failed companies...", flush=True)
+        retried = {id(c): entry for c, entry in run(failed)}
+        results = [(c, retried.get(id(c), entry)) for c, entry in results]
+        for entry in retried.values():
+            entry["retried"] = True
+    return [entry for _, entry in results]
+
+
 def _process_company(
     company: dict, api_url: str, secret: str, dry_run: bool, scrape_timeout: int
 ) -> tuple[dict, str]:
     """Scrape, validate, and upload one company. Returns (summary_entry, log_output)."""
     out: list[str] = []
 
-    url = company.get("url", "").strip()
+    urls = _company_urls(company)
+    url = urls[0] if urls else ""
     min_positions = company.get("min_positions", 1)
     is_english_company = company.get("is_english_company", False)
     display_name = company.get("name") or url
 
     out.append(f"\n{'─' * 60}")
-    out.append(f"Scraping: {display_name}  ({url})")
+    out.append(f"Scraping: {display_name}  ({', '.join(urls)})")
 
     summary_entry: dict = {
         "url": url,
@@ -215,18 +299,26 @@ def _process_company(
     }
 
     # ── Scrape ────────────────────────────────────────────────────────────
-    try:
-        result = _scrape(api_url, secret, url, scrape_timeout)
-    except requests.HTTPError as e:
-        msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
+    # All or nothing: the upload replaces every position, wiping a failed source's jobs.
+    results: list[dict] = []
+    for source_url in urls:
+        try:
+            results.append(_scrape(api_url, secret, source_url, scrape_timeout))
+        except requests.HTTPError as e:
+            msg = f"HTTP {e.response.status_code}: {e.response.text[:1000]}"
+        except Exception as e:
+            msg = str(e)
+        else:
+            continue
+        if len(urls) > 1:
+            msg = f"{source_url}: {msg}"
         out.append(f"FAIL — scrape error: {msg}")
         summary_entry.update({"status": "fail", "error": msg})
         return summary_entry, "\n".join(out)
-    except Exception as e:
-        msg = str(e)
-        out.append(f"FAIL — scrape error: {msg}")
-        summary_entry.update({"status": "fail", "error": msg})
-        return summary_entry, "\n".join(out)
+
+    result, duplicates_dropped = _merge_scrape_results(results)
+    if duplicates_dropped:
+        out.append(f"  dropped {duplicates_dropped} jobs listed by an earlier source")
 
     # companies.yaml is authoritative for the name; the scrape endpoint only derives
     # one from the URL slug (e.g. "Abb", "Storaenso") which loses correct casing.
@@ -326,6 +418,8 @@ def _summary_row(e: dict) -> str:
         status = "⚠️ 0 positions — verify"
     else:
         status = f"❌ {e.get('error', 'unknown error')[:80]}"
+    if e.get("retried"):
+        status += " (after retry)"
     # Link problem rows (warnings + failures) straight to the career page for verification.
     if e["status"] != "success":
         company = f"[{company}]({e['url']})"
@@ -431,12 +525,11 @@ def main() -> int:
 
     _wait_for_server(args.api_url)
 
-    summary_entries: list[dict] = []
     failures: list[dict] = []
     warnings: list[dict] = []
     successes: list[dict] = []
 
-    valid_companies = [c for c in companies if c.get("url", "").strip()]
+    valid_companies = [c for c in companies if _company_urls(c)]
     skipped = len(companies) - len(valid_companies)
     if skipped:
         print(
@@ -444,30 +537,22 @@ def main() -> int:
             file=sys.stderr,
         )
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = {
-            executor.submit(
-                _process_company_timed,
-                company,
-                args.api_url,
-                secret,
-                args.dry_run,
-                SCRAPE_TIMEOUT_S,
-            ): company
-            for company in valid_companies
-        }
-        for future in as_completed(futures):
-            entry, output = future.result()
-            print(output, flush=True)
-            summary_entries.append(entry)
-            if entry["status"] == "success":
-                successes.append(
-                    {"url": entry["url"], "positions": entry["total_positions"]}
-                )
-            elif entry["status"] == "warning":
-                warnings.append({"url": entry["url"], "error": entry["error"]})
-            else:
-                failures.append({"url": entry["url"], "error": entry["error"]})
+    summary_entries = _run_companies_with_retry(
+        valid_companies,
+        lambda company: _process_company_timed(
+            company, args.api_url, secret, args.dry_run, SCRAPE_TIMEOUT_S
+        ),
+        max_workers=3,
+    )
+    for entry in summary_entries:
+        if entry["status"] == "success":
+            successes.append(
+                {"url": entry["url"], "positions": entry["total_positions"]}
+            )
+        elif entry["status"] == "warning":
+            warnings.append({"url": entry["url"], "error": entry["error"]})
+        else:
+            failures.append({"url": entry["url"], "error": entry["error"]})
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'═' * 60}")

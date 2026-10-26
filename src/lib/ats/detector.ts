@@ -13,6 +13,22 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'alpha-sense.com': { ats: 'greenhouse', slug: 'alphasense' },
     'deptagency.com': { ats: 'greenhouse', slug: 'dept' },
     'thoughtworks.com': { ats: 'greenhouse', slug: 'thoughtworks' },
+    'corporate.trustpilot.com': { ats: 'greenhouse', slug: 'trustpilot' },
+    // Slug probing would hit Greenhouse's "lovable", an unrelated Italian company.
+    'lovable.dev': { ats: 'ashby', slug: 'lovable' },
+    'legora.com': { ats: 'ashby', slug: 'legora' },
+    // Slug probing would hit a stale, empty Workable "iceye" account.
+    'iceye.com': { ats: 'ashby', slug: 'iceye' },
+    // VML kept its pre-merger Wunderman Thompson board; Greenhouse's "vml" is empty.
+    'vml.com': { ats: 'greenhouse', slug: 'wundermanthompson' },
+    'tandemhealth.ai': { ats: 'ashby', slug: 'tandem-health' },
+    'anthropic.com': { ats: 'greenhouse', slug: 'anthropic' },
+    'openai.com': { ats: 'ashby', slug: 'openai' },
+    'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
+    'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
+    // Slug probing would hit Lever's "mistral", an empty board.
+    'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
+    'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
 };
 
 export function detectAts(url: string): AtsDetectionResult {
@@ -95,6 +111,21 @@ export function detectAts(url: string): AtsDetectionResult {
             if (slug) return { ats: 'recruitee', companySlug: slug };
         }
 
+        // SmartRecruiters
+        // Patterns: jobs.smartrecruiters.com/{company}, careers.smartrecruiters.com/{company},
+        //           api.smartrecruiters.com/v1/companies/{company}/postings
+        if (
+            hostname === 'jobs.smartrecruiters.com' ||
+            hostname === 'careers.smartrecruiters.com'
+        ) {
+            const match = pathname.match(/^\/([^/]+)/);
+            if (match) return { ats: 'smartrecruiters', companySlug: match[1] };
+        }
+        if (hostname === 'api.smartrecruiters.com') {
+            const match = pathname.match(/^\/v1\/companies\/([^/]+)/);
+            if (match) return { ats: 'smartrecruiters', companySlug: match[1] };
+        }
+
         // Workday (myworkdayjobs.com)
         // Pattern: {company}.wd{N}.myworkdayjobs.com/{locale}/{site}
         if (hostname.endsWith('.myworkdayjobs.com')) {
@@ -161,6 +192,8 @@ export function atsLabel(ats: string | null): string {
             return 'Workday';
         case 'recruitee':
             return 'Recruitee';
+        case 'smartrecruiters':
+            return 'SmartRecruiters';
         case 'company-api':
             return 'Company API';
         case 'python':

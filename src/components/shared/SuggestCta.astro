@@ -1,0 +1,26 @@
+---
+interface Props {
+    kind: 'company' | 'country';
+    class?: string;
+}
+
+const TALLY_FORMS = {
+    company: 'https://tally.so/r/xXb80y',
+    country: 'https://tally.so/r/xXb80o',
+} as const;
+
+const { kind, class: className } = Astro.props;
+---
+
+<a
+    href={TALLY_FORMS[kind]}
+    target="_blank"
+    rel="noopener noreferrer"
+    class:list={[
+        'inline-block text-sm sm:text-base font-medium text-gray-500 border border-gray-500 hover:text-[#0F7A4F] hover:border-[#0F7A4F] px-5 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2',
+        className,
+    ]}
+>
+    Suggest a {kind}
+    <span class="sr-only"> (opens in a new tab)</span>
+</a>

@@ -1,6 +1,8 @@
-FROM node:24
-
 ARG CLAUDE_CODE_VERSION=latest
+ARG GIT_DELTA_VERSION=0.20.1
+ARG ZSH_IN_DOCKER_VERSION=1.2.1
+
+FROM node:24
 
 # Install Doppler CLI
 RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | gpg --dearmor -o /usr/share/keyrings/doppler-archive-keyring.gpg && \
@@ -48,8 +50,8 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
 ENV DEVCONTAINER=true
 
 # Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/node/.claude /home/node/.doppler && \
-  chown -R node:node /workspace /home/node/.claude /home/node/.doppler
+RUN mkdir -p /workspace /home/node/.claude /home/node/.doppler /home/node/.supabase && \
+  chown -R node:node /workspace /home/node/.claude /home/node/.doppler /home/node/.supabase
 
 WORKDIR /workspace
 
@@ -79,7 +81,7 @@ USER root
 
 # --- END PYTHON SETUP ---
 
-ARG GIT_DELTA_VERSION=0.19.2
+ARG GIT_DELTA_VERSION
 RUN ARCH=$(dpkg --print-architecture) && \
   wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
@@ -106,7 +108,7 @@ ENV EDITOR=nano
 ENV VISUAL=nano
 
 # Default powerline10k theme
-ARG ZSH_IN_DOCKER_VERSION=1.2.1
+ARG ZSH_IN_DOCKER_VERSION
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
   -p git \
   -p fzf \
@@ -119,6 +121,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
 
 # Install Claude (global tool, uses npm intentionally)
+ARG CLAUDE_CODE_VERSION
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 # --- Browser setup for MCP servers (Node Playwright + Chrome DevTools) ---

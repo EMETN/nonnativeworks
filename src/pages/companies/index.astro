@@ -4,6 +4,7 @@ import AllCompaniesGrid from '../../components/company/AllCompaniesGrid.tsx';
 import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
+import SuggestCta from '../../components/shared/SuggestCta.astro';
 import { getTopCompanies, getGlobalStats } from '../../lib/queries';
 
 const [companies, stats] = await Promise.all([
@@ -16,6 +17,7 @@ const englishPositions = stats.english_positions;
 ---
 
 <BaseLayout
+    backToTop
     title="Companies"
     description="Browse all companies with English-friendly job positions — no local language required."
     breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Companies' }]}
@@ -28,67 +30,49 @@ const englishPositions = stats.english_positions;
             items={[{ label: 'Home', href: '/' }, { label: 'Companies' }]}
         />
 
-        <div
-            class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18"
-        >
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
             >
                 Companies
             </h1>
-            {
-                totalPositions > 0 && (
-                    <CompanyGauge
-                        englishPositions={englishPositions}
-                        totalPositions={totalPositions}
-                    />
-                )
-            }
+            {totalPositions > 0 && (
+                <CompanyGauge
+                    englishPositions={englishPositions}
+                    totalPositions={totalPositions}
+                />
+            )}
         </div>
 
-        {
-            companies.length === 0 ? (
-                <div class="text-center py-16 text-gray-500">
-                    <p>No companies tracked yet. Check back soon!</p>
-                    <a
-                        href="/countries"
-                        class="inline-block mt-4 text-sm font-medium text-[#0F7A4F] hover:underline"
-                    >
-                        Browse countries instead
-                    </a>
+        {companies.length === 0 ? (
+            <div class="text-center py-16 text-gray-500">
+                <p>No companies tracked yet. Check back soon!</p>
+                <SuggestCta kind="company" class="mt-6" />
+            </div>
+        ) : (
+            <>
+                <StatsDescription>
+                    <strong class="font-semibold text-gray-900">
+                        {companies.length}
+                    </strong>{' '}
+                    {companies.length === 1 ? 'company' : 'companies'} —{' '}
+                    <strong class="font-semibold text-gray-900">
+                        {englishPositions.toLocaleString()}
+                    </strong>{' '}
+                    of{' '}
+                    <strong class="font-semibold text-gray-900">
+                        {totalPositions.toLocaleString()}
+                    </strong>{' '}
+                    open {totalPositions === 1 ? 'position' : 'positions'}{' '}
+                    {englishPositions === 1 ? "doesn't" : "don't"} require the
+                    local language(s).
+                </StatsDescription>
+                <AllCompaniesGrid companies={companies} client:idle />
+                <div class="mt-6 text-center suggest-cta">
+                    <SuggestCta kind="company" />
                 </div>
-            ) : (
-                <>
-                    <StatsDescription>
-                        <strong class="font-semibold text-gray-900">
-                            {companies.length}
-                        </strong>{' '}
-                        {companies.length === 1 ? 'company' : 'companies'} —{' '}
-                        <strong class="font-semibold text-gray-900">
-                            {englishPositions.toLocaleString()}
-                        </strong>{' '}
-                        of{' '}
-                        <strong class="font-semibold text-gray-900">
-                            {totalPositions.toLocaleString()}
-                        </strong>{' '}
-                        open {totalPositions === 1 ? 'position' : 'positions'}{' '}
-                        {englishPositions === 1 ? "doesn't" : "don't"} require
-                        the local language(s).
-                    </StatsDescription>
-                    <AllCompaniesGrid companies={companies} client:idle />
-                    <div class="mt-6 text-center suggest-cta">
-                        <a
-                            href="https://tally.so/r/xXb80y"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-block text-sm sm:text-base font-medium text-gray-500 border border-gray-500 hover:text-[#0F7A4F] hover:border-[#0F7A4F] px-5 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
-                        >
-                            Suggest a company
-                        </a>
-                    </div>
-                </>
-            )
-        }
+            </>
+        )}
     </div>
 </BaseLayout>

@@ -8,7 +8,7 @@ Before ATS detection, `CAREER_URL_ALIASES` (`src/lib/ats/company-apis.ts`) remap
 
 The scraper runs in three layers, falling through to the next if the previous returns no results:
 
-1. **Layer 1 — ATS API**: Detects ATS from the URL (Greenhouse, Lever, Ashby, Workable, Workday) and calls their public JSON APIs. No browser needed. If no ATS hostname is matched but a company slug is found, it probes all four slug-based ATS APIs speculatively. Description fetching is limited to jobs in tracked countries.
+1. **Layer 1 — ATS API**: Detects ATS from the URL (Greenhouse, Lever, Ashby, Workable, Workday, Recruitee, SmartRecruiters) and calls their public JSON APIs. No browser needed. If no ATS hostname is matched but a company slug is found, it probes all four slug-based ATS APIs speculatively. Description fetching is limited to jobs in tracked countries.
 2. **Layer 1.5 — per-company API**: Falls back to `COMPANY_APIS` config (`src/lib/ats/company-apis.ts`) for companies with custom API endpoints. Fetching logic lives in `src/lib/ats/company-api-fetcher.ts`. Configured companies: OP Financial Group, Nokia, Gofore, Nordea, Accenture.
 3. **Layer 2 — Python scraper**: Falls back to `scraper/main.py` (Playwright-based browser scraper). After the Python scraper returns jobs, `enrichDescriptions()` fetches individual job pages for language classification.
 

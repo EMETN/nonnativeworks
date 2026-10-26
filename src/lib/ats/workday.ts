@@ -59,7 +59,8 @@
  * After jobs are collected, the caller may invoke `enrichWorkdayDescriptions`
  * to attach a description to each job for use in language classification.
  * Only jobs whose titles do not already appear non-English are fetched.
- * Fetches are batched (5 at a time) to avoid overloading the server.
+ * Fetches run in a rolling pool of 5 (the next starts as soon as one finishes),
+ * and a job listed under several countries is fetched once.
  *
  * For multi-location jobs the detail API was already called in Step 3, so
  * `descriptionText` is already populated — `enrichWorkdayDescriptions` skips
@@ -90,16 +91,35 @@
 import type { RawJob } from './types';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
+import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
 import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
     isCountryKey,
 } from './country-lookup';
 
-const DESCRIPTION_BATCH = 5;
-// Pause between concurrent batches so a throttled batch gets breathing room
-// before the next one fires, on top of the per-request 429 backoff.
-const INTER_BATCH_DELAY_MS = 400;
+// No pause between requests: throttled ones back off in fetchWithBackoff.
+const CONCURRENCY = 5;
+
+/** Like Promise.all over `items`, but with at most `limit` in flight. */
+async function mapPool<T, R>(
+    items: readonly T[],
+    limit: number,
+    worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+    const results = new Array<R>(items.length);
+    let next = 0;
+    const run = async () => {
+        while (next < items.length) {
+            const i = next++;
+            results[i] = await worker(items[i]);
+        }
+    };
+    await Promise.all(
+        Array.from({ length: Math.min(limit, items.length) }, run),
+    );
+    return results;
+}
 
 function extractOgDescription(html: string): string | undefined {
     const m =
@@ -189,7 +209,7 @@ function delay(ms: number): Promise<void> {
 const MAX_BACKOFF_RETRIES = 3;
 const BASE_BACKOFF_MS = 1000;
 
-function parseRetryAfterMs(header: string | null): number | null {
+export function parseRetryAfterMs(header: string | null): number | null {
     if (!header) return null;
     const asSeconds = Number(header);
     if (!Number.isNaN(asSeconds)) return asSeconds * 1000;
@@ -296,45 +316,47 @@ export async function enrichWorkdayDescriptions(
     jobs: RawJob[],
     skipUrls?: CachedTitleHashes,
 ): Promise<void> {
-    const targets = jobs.filter(
-        (j) =>
+    // A job listed under several countries shares one URL: fetch it once.
+    const byUrl = new Map<string, RawJob[]>();
+    for (const j of jobs) {
+        if (
             j.url &&
             !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
-            !j.descriptionText,
-    );
+            !j.descriptionText
+        ) {
+            byUrl.set(j.url, [...(byUrl.get(j.url) ?? []), j]);
+        }
+    }
+    const targets = [...byUrl.values()];
     console.log(
         `[workday] enriching descriptions for ${targets.length}/${jobs.length} jobs`,
     );
 
     let failures = 0;
-    for (let i = 0; i < targets.length; i += DESCRIPTION_BATCH) {
-        await Promise.all(
-            targets.slice(i, i + DESCRIPTION_BATCH).map(async (job) => {
-                for (
-                    let attempt = 1;
-                    attempt <= DESCRIPTION_FETCH_ATTEMPTS;
-                    attempt++
-                ) {
-                    try {
-                        await fetchWorkdayDescriptionOnce(job);
-                        return;
-                    } catch (e) {
-                        if (attempt < DESCRIPTION_FETCH_ATTEMPTS) {
-                            await delay(DESCRIPTION_RETRY_DELAY_MS);
-                            continue;
-                        }
-                        failures++;
-                        console.log(
-                            `[workday] description fetch failed for ${job.url}: ${e instanceof Error ? e.message : e}`,
-                        );
-                    }
+    await mapPool(targets, CONCURRENCY, async ([job, ...sameUrl]) => {
+        for (
+            let attempt = 1;
+            attempt <= DESCRIPTION_FETCH_ATTEMPTS;
+            attempt++
+        ) {
+            try {
+                await fetchWorkdayDescriptionOnce(job);
+                for (const other of sameUrl)
+                    other.descriptionText = job.descriptionText;
+                return;
+            } catch (e) {
+                if (attempt < DESCRIPTION_FETCH_ATTEMPTS) {
+                    await delay(DESCRIPTION_RETRY_DELAY_MS);
+                    continue;
                 }
-            }),
-        );
-        if (i + DESCRIPTION_BATCH < targets.length)
-            await delay(INTER_BATCH_DELAY_MS);
-    }
+                failures++;
+                console.log(
+                    `[workday] description fetch failed for ${job.url}: ${e instanceof Error ? e.message : e}`,
+                );
+            }
+        }
+    });
     if (failures > 0) {
         console.log(
             `[workday] description fetch failed for ${failures}/${targets.length} jobs after ${DESCRIPTION_FETCH_ATTEMPTS} attempts`,
@@ -442,9 +464,17 @@ interface WorkdayJobPosting {
     externalPath: string;
 }
 
+interface WorkdayFacet {
+    facetParameter?: string;
+    id?: string;
+    descriptor?: string;
+    values?: WorkdayFacet[];
+}
+
 interface WorkdayResponse {
     total?: number;
     jobPostings?: WorkdayJobPosting[];
+    facets?: WorkdayFacet[];
 }
 
 // Job-detail endpoint. Untrusted external JSON, so leaf fields are `unknown`
@@ -462,7 +492,6 @@ interface WorkdayJobDetailResponse extends WorkdayJobDetailInfo {
 }
 
 const PAGE_SIZE = 20; // Workday rejects limit > 20
-const EXPAND_BATCH = 5;
 const MULTI_LOC_RE = /^\d+ locations?$|^multiple locations?$/i;
 
 /**
@@ -575,42 +604,52 @@ async function fetchJobLocations(
     }
 }
 
-export async function fetchWorkdayJobs(
+async function fetchJobsPage(
     parts: WorkdayUrlParts,
-): Promise<RawJob[]> {
+    appliedFacets: Record<string, string[]>,
+    offset: number,
+    limit = PAGE_SIZE,
+): Promise<WorkdayResponse> {
     const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
+    const origin = `https://${parts.host}`;
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            origin: origin,
+            referer: `${origin}/`,
+            'user-agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        },
+        body: JSON.stringify({
+            appliedFacets,
+            limit,
+            offset,
+            searchText: '',
+        }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(
+            `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
+        );
+    }
+
+    return res.json();
+}
+
+async function fetchPostings(
+    parts: WorkdayUrlParts,
+    appliedFacets: Record<string, string[]>,
+): Promise<WorkdayJobPosting[]> {
     const allPostings: WorkdayJobPosting[] = [];
     let offset = 0;
     let total = Infinity;
 
     while (offset < total) {
-        const origin = `https://${parts.host}`;
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                origin: origin,
-                referer: `${origin}/`,
-                'user-agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            },
-            body: JSON.stringify({
-                appliedFacets: parts.appliedFacets ?? {},
-                limit: PAGE_SIZE,
-                offset,
-                searchText: '',
-            }),
-        });
-
-        if (!res.ok) {
-            const body = await res.text();
-            throw new Error(
-                `Workday API returned ${res.status} for "${parts.company}/${parts.site}": ${body}`,
-            );
-        }
-
-        const data: WorkdayResponse = await res.json();
+        const data = await fetchJobsPage(parts, appliedFacets, offset);
         const postings = data.jobPostings ?? [];
         allPostings.push(...postings);
         if (total === Infinity && data.total != null) total = data.total;
@@ -618,6 +657,148 @@ export async function fetchWorkdayJobs(
         offset += PAGE_SIZE;
         if (postings.length < PAGE_SIZE) break;
     }
+
+    return allPostings;
+}
+
+/** Maps each `locationCountry` facet GUID to its country name, searching nested facet groups. */
+function countryFacetNames(facets: WorkdayFacet[] = []): Map<string, string> {
+    const names = new Map<string, string>();
+    for (const facet of facets) {
+        for (const value of facet.values ?? []) {
+            if (facet.facetParameter === 'locationCountry' && value.id) {
+                names.set(value.id, value.descriptor ?? '');
+            }
+            for (const [id, name] of countryFacetNames([value])) {
+                names.set(id, name);
+            }
+        }
+    }
+    return names;
+}
+
+/**
+ * Tenants whose locationsText and detail locations are internal site codes
+ * (e.g. Siemens Healthineers' "MAD MA" = Madrid, "HEL AA" = Helsinki): the
+ * trailing pair reads as an ISO code (Morocco), and codes in additionalLocations
+ * can't be resolved at all. For these, query one tracked locationCountry facet
+ * at a time and tag every posting with that country instead.
+ */
+const SITE_CODE_TENANTS = new Set(['onehealthineers']);
+
+// The country facet lists postings no detail location names (Dentsu files a
+// "Global" location under France), so only the facet is reliable for country.
+const FACET_COUNTRY_TENANTS = new Set(['dentsuaegis']);
+
+async function fetchWorkdayJobsPerCountry(
+    parts: WorkdayUrlParts,
+    keepLocations: boolean,
+): Promise<RawJob[]> {
+    const { locationCountry: urlCountryIds, ...otherFacets } =
+        parts.appliedFacets ?? {};
+    // One unfiltered request lists every country with openings, so tracked
+    // countries are picked up without hardcoding facet IDs.
+    const { facets } = await fetchJobsPage(parts, otherFacets, 0, 1);
+    const tracked = [...countryFacetNames(facets)].filter(
+        ([id, name]) =>
+            (!urlCountryIds?.length || urlCountryIds.includes(id)) &&
+            lookupCountryFromLocation(name).some((c) =>
+                TRACKED_COUNTRY_CODES.has(c.code),
+            ),
+    );
+    console.log(
+        `[workday] ${parts.company}: fetching ${tracked.length} tracked countries`,
+    );
+
+    const postingsByCountry = await mapPool(tracked, CONCURRENCY, ([id]) =>
+        fetchPostings(parts, { ...otherFacets, locationCountry: [id] }),
+    );
+
+    if (!keepLocations) {
+        return tracked.flatMap(([, country], i) =>
+            postingsByCountry[i].map((posting) => ({
+                title: posting.title,
+                url: buildJobUrl(parts, posting.externalPath),
+                location: country,
+                country_code: country,
+            })),
+        );
+    }
+
+    const multiLocPaths = [
+        ...new Set(
+            postingsByCountry
+                .flat()
+                .filter((p) =>
+                    MULTI_LOC_RE.test((p.locationsText ?? '').trim()),
+                )
+                .map((p) => p.externalPath),
+        ),
+    ];
+    const details = new Map(
+        await mapPool(multiLocPaths, CONCURRENCY, async (path) => {
+            const detail = await fetchJobLocations(
+                parts.host,
+                parts.company,
+                parts.site,
+                path,
+            );
+            return [path, detail] as const;
+        }),
+    );
+
+    return tracked.flatMap(([, country], i) => {
+        const code = lookupCountryFromLocation(country)[0].code;
+        const inCountry = (loc: string) =>
+            lookupCountryFromLocation(loc).some((c) => c.code === code);
+        return postingsByCountry[i].map((posting): RawJob => {
+            const base = {
+                title: posting.title,
+                url: buildJobUrl(parts, posting.externalPath),
+                country_code: country,
+            };
+            const detail = details.get(posting.externalPath);
+            if (!detail) {
+                const loc = posting.locationsText ?? '';
+                const city = inCountry(loc)
+                    ? parseCityFromWorkdayLoc(loc, code)
+                    : undefined;
+                return {
+                    ...base,
+                    location: loc || country,
+                    ...(city && { city }),
+                };
+            }
+            const locs = detail.locations.filter(inCountry);
+            const cities = [
+                ...new Set(
+                    locs
+                        .map((l) => parseCityFromWorkdayLoc(l, code))
+                        .filter((c): c is string => !!c),
+                ),
+            ];
+            return {
+                ...base,
+                location: locs[0] ?? country,
+                ...(cities.length > 0 && { cities }),
+                ...(detail.description && {
+                    descriptionText: detail.description,
+                }),
+            };
+        });
+    });
+}
+
+export async function fetchWorkdayJobs(
+    parts: WorkdayUrlParts,
+): Promise<RawJob[]> {
+    if (SITE_CODE_TENANTS.has(parts.company)) {
+        return fetchWorkdayJobsPerCountry(parts, false);
+    }
+    if (FACET_COUNTRY_TENANTS.has(parts.company)) {
+        return fetchWorkdayJobsPerCountry(parts, true);
+    }
+    const allPostings = await fetchPostings(parts, parts.appliedFacets ?? {});
 
     // Split into single-location, venue-name, multi-location, and unresolvable postings.
     // Unresolvable: locationsText exists but lookupCountryFromLocation can't identify a country.
@@ -659,40 +840,39 @@ export async function fetchWorkdayJobs(
         console.log(
             `[workday] resolving locations for ${venueQueue.length} venue-name postings (of ${allPostings.length} total)`,
         );
-        for (let i = 0; i < venueQueue.length; i += EXPAND_BATCH) {
-            await Promise.all(
-                venueQueue.slice(i, i + EXPAND_BATCH).map(async (posting) => {
-                    const jobUrl = buildJobUrl(parts, posting.externalPath);
-                    const { locations, description } = await fetchJobLocations(
-                        parts.host,
-                        parts.company,
-                        parts.site,
-                        posting.externalPath,
-                    );
-                    // Use the detail location if available; fall back to the original venue string.
-                    const location = locations[0] ?? posting.locationsText;
-                    const resolvedForCity = lookupCountryFromLocation(
-                        location ?? '',
-                    );
-                    const city =
-                        resolvedForCity.length > 0
-                            ? parseCityFromWorkdayLoc(
-                                  location ?? '',
-                                  resolvedForCity[0].code,
-                              )
-                            : undefined;
-                    allJobs.push({
-                        title: posting.title,
-                        url: jobUrl,
-                        location,
-                        ...(city && { city }),
-                        ...(description && { descriptionText: description }),
-                    });
-                }),
-            );
-            if (i + EXPAND_BATCH < venueQueue.length)
-                await delay(INTER_BATCH_DELAY_MS);
-        }
+        const venueJobs = await mapPool(
+            venueQueue,
+            CONCURRENCY,
+            async (posting): Promise<RawJob> => {
+                const jobUrl = buildJobUrl(parts, posting.externalPath);
+                const { locations, description } = await fetchJobLocations(
+                    parts.host,
+                    parts.company,
+                    parts.site,
+                    posting.externalPath,
+                );
+                // Use the detail location if available; fall back to the original venue string.
+                const location = locations[0] ?? posting.locationsText;
+                const resolvedForCity = lookupCountryFromLocation(
+                    location ?? '',
+                );
+                const city =
+                    resolvedForCity.length > 0
+                        ? parseCityFromWorkdayLoc(
+                              location ?? '',
+                              resolvedForCity[0].code,
+                          )
+                        : undefined;
+                return {
+                    title: posting.title,
+                    url: jobUrl,
+                    location,
+                    ...(city && { city }),
+                    ...(description && { descriptionText: description }),
+                };
+            },
+        );
+        allJobs.push(...venueJobs);
     }
 
     // Resolve postings whose locationsText couldn't be mapped to a country.
@@ -703,50 +883,45 @@ export async function fetchWorkdayJobs(
         console.log(
             `[workday] resolving country for ${needsCountryDetail.length} unresolvable-location postings (of ${allPostings.length} total)`,
         );
-        for (let i = 0; i < needsCountryDetail.length; i += EXPAND_BATCH) {
-            await Promise.all(
-                needsCountryDetail
-                    .slice(i, i + EXPAND_BATCH)
-                    .map(async (posting) => {
-                        const jobUrl = buildJobUrl(parts, posting.externalPath);
-                        const { locations, countryDescriptor, description } =
-                            await fetchJobLocations(
-                                parts.host,
-                                parts.company,
-                                parts.site,
-                                posting.externalPath,
-                            );
-                        // Prefer countryDescriptor ("Denmark") for country resolution; fall back to
-                        // locations[0] (venue code like "DKRJZ51 - Tinglev - ...") which resolves via
-                        // leading-code detection, then to the original locationsText as last resort.
-                        const location =
-                            countryDescriptor ??
-                            locations[0] ??
-                            posting.locationsText;
-                        const resolvedForCity = lookupCountryFromLocation(
-                            location ?? '',
-                        );
-                        const city =
-                            locations[0] && resolvedForCity.length > 0
-                                ? parseCityFromWorkdayLoc(
-                                      locations[0],
-                                      resolvedForCity[0].code,
-                                  )
-                                : undefined;
-                        allJobs.push({
-                            title: posting.title,
-                            url: jobUrl,
-                            location,
-                            ...(city && { city }),
-                            ...(description && {
-                                descriptionText: description,
-                            }),
-                        });
+        const detailJobs = await mapPool(
+            needsCountryDetail,
+            CONCURRENCY,
+            async (posting): Promise<RawJob> => {
+                const jobUrl = buildJobUrl(parts, posting.externalPath);
+                const { locations, countryDescriptor, description } =
+                    await fetchJobLocations(
+                        parts.host,
+                        parts.company,
+                        parts.site,
+                        posting.externalPath,
+                    );
+                // Prefer countryDescriptor ("Denmark") for country resolution; fall back to
+                // locations[0] (venue code like "DKRJZ51 - Tinglev - ...") which resolves via
+                // leading-code detection, then to the original locationsText as last resort.
+                const location =
+                    countryDescriptor ?? locations[0] ?? posting.locationsText;
+                const resolvedForCity = lookupCountryFromLocation(
+                    location ?? '',
+                );
+                const city =
+                    locations[0] && resolvedForCity.length > 0
+                        ? parseCityFromWorkdayLoc(
+                              locations[0],
+                              resolvedForCity[0].code,
+                          )
+                        : undefined;
+                return {
+                    title: posting.title,
+                    url: jobUrl,
+                    location,
+                    ...(city && { city }),
+                    ...(description && {
+                        descriptionText: description,
                     }),
-            );
-            if (i + EXPAND_BATCH < needsCountryDetail.length)
-                await delay(INTER_BATCH_DELAY_MS);
-        }
+                };
+            },
+        );
+        allJobs.push(...detailJobs);
     }
 
     // Expand multi-location postings by fetching each job's detail page.
@@ -754,104 +929,101 @@ export async function fetchWorkdayJobs(
         console.log(
             `[workday] expanding ${multiLocQueue.length} multi-location postings (of ${allPostings.length} total)`,
         );
-        for (let i = 0; i < multiLocQueue.length; i += EXPAND_BATCH) {
-            await Promise.all(
-                multiLocQueue
-                    .slice(i, i + EXPAND_BATCH)
-                    .map(async (posting) => {
-                        const jobUrl = buildJobUrl(parts, posting.externalPath);
-                        const { locations, description, countryDescriptor } =
-                            await fetchJobLocations(
-                                parts.host,
-                                parts.company,
-                                parts.site,
-                                posting.externalPath,
-                            );
-                        if (locations.length > 0) {
-                            // Group locations by resolved country code so that multiple cities in
-                            // the same country become one job entry. Using lookupCountryFromLocation
-                            // handles bare city names (e.g. "Espoo", "Turku") correctly — they both
-                            // resolve to "FI" and are merged, rather than being treated as separate
-                            // groups by the last-comma-segment heuristic.
-                            const byCountry = new Map<string, string[]>();
-                            const anyResolved = locations.some(
-                                (l) => lookupCountryFromLocation(l).length > 0,
-                            );
-                            // None of the location strings matched CITY_MAP/COUNTRY_MAP (e.g. small
-                            // towns not yet catalogued). Fall back to the detail API's
-                            // country.descriptor (e.g. "France") — already fetched in this same
-                            // call — instead of grouping under a bogus non-country key derived from
-                            // the raw city string, which would just get dropped again downstream.
-                            const descriptorCountry =
-                                !anyResolved && countryDescriptor
-                                    ? lookupCountryFromLocation(
-                                          countryDescriptor,
-                                      )
-                                    : [];
-                            for (const loc of locations) {
-                                const resolved = lookupCountryFromLocation(loc);
-                                if (resolved.length === 0) {
-                                    // Skip region strings like "Nordic" when other locations in the
-                                    // same posting resolve to a specific country.
-                                    if (anyResolved) continue;
-                                    const groupKey =
-                                        descriptorCountry.length > 0
-                                            ? descriptorCountry[0].code
-                                            : (loc
-                                                  .split(',')
-                                                  .map((p) => p.trim())
-                                                  .pop() ?? loc);
-                                    if (!byCountry.has(groupKey))
-                                        byCountry.set(groupKey, []);
-                                    byCountry.get(groupKey)!.push(loc);
-                                } else {
-                                    const groupKey = resolved[0].code;
-                                    if (!byCountry.has(groupKey))
-                                        byCountry.set(groupKey, []);
-                                    byCountry.get(groupKey)!.push(loc);
-                                }
-                            }
-                            for (const [countryKey, locs] of byCountry) {
-                                const citySet = new Set<string>();
-                                for (const loc of locs) {
-                                    const city = parseCityFromWorkdayLoc(
-                                        loc,
-                                        countryKey,
-                                    );
-                                    if (city) citySet.add(city);
-                                }
-                                // country_code is set whenever resolution came from the descriptor
-                                // fallback rather than a real country/city match on locs[0], since
-                                // locs[0] itself (an uncatalogued city name) won't re-resolve
-                                // downstream in buildScrapeResult otherwise.
-                                allJobs.push({
-                                    title: posting.title,
-                                    url: jobUrl,
-                                    location: locs[0], // first full string drives country resolution
-                                    ...(descriptorCountry.length > 0 && {
-                                        country_code: countryKey,
-                                    }),
-                                    ...(citySet.size > 0 && {
-                                        cities: [...citySet],
-                                    }),
-                                    ...(description && {
-                                        descriptionText: description,
-                                    }),
-                                });
-                            }
+        const expanded = await mapPool(
+            multiLocQueue,
+            CONCURRENCY,
+            async (posting): Promise<RawJob[]> => {
+                const jobs: RawJob[] = [];
+                const jobUrl = buildJobUrl(parts, posting.externalPath);
+                const { locations, description, countryDescriptor } =
+                    await fetchJobLocations(
+                        parts.host,
+                        parts.company,
+                        parts.site,
+                        posting.externalPath,
+                    );
+                if (locations.length > 0) {
+                    // Group locations by resolved country code so that multiple cities in
+                    // the same country become one job entry. Using lookupCountryFromLocation
+                    // handles bare city names (e.g. "Espoo", "Turku") correctly — they both
+                    // resolve to "FI" and are merged, rather than being treated as separate
+                    // groups by the last-comma-segment heuristic.
+                    const byCountry = new Map<string, string[]>();
+                    const anyResolved = locations.some(
+                        (l) => lookupCountryFromLocation(l).length > 0,
+                    );
+                    // None of the location strings matched CITY_MAP/COUNTRY_MAP (e.g. small
+                    // towns not yet catalogued). Fall back to the detail API's
+                    // country.descriptor (e.g. "France") — already fetched in this same
+                    // call — instead of grouping under a bogus non-country key derived from
+                    // the raw city string, which would just get dropped again downstream.
+                    const descriptorCountry =
+                        !anyResolved && countryDescriptor
+                            ? lookupCountryFromLocation(countryDescriptor)
+                            : [];
+                    for (const loc of locations) {
+                        const resolved = lookupCountryFromLocation(loc);
+                        if (resolved.length === 0) {
+                            // Skip region strings like "Nordic" when other locations in the
+                            // same posting resolve to a specific country.
+                            if (anyResolved) continue;
+                            const groupKey =
+                                descriptorCountry.length > 0
+                                    ? descriptorCountry[0].code
+                                    : (loc
+                                          .split(',')
+                                          .map((p) => p.trim())
+                                          .pop() ?? loc);
+                            if (!byCountry.has(groupKey))
+                                byCountry.set(groupKey, []);
+                            byCountry.get(groupKey)!.push(loc);
                         } else {
-                            // Detail fetch failed — keep the original ambiguous locationsText as fallback.
-                            allJobs.push({
-                                title: posting.title,
-                                location: posting.locationsText,
-                                url: jobUrl,
-                            });
+                            const groupKey = resolved[0].code;
+                            if (!byCountry.has(groupKey))
+                                byCountry.set(groupKey, []);
+                            byCountry.get(groupKey)!.push(loc);
                         }
-                    }),
-            );
-            if (i + EXPAND_BATCH < multiLocQueue.length)
-                await delay(INTER_BATCH_DELAY_MS);
-        }
+                    }
+                    for (const [countryKey, locs] of byCountry) {
+                        const citySet = new Set<string>();
+                        for (const loc of locs) {
+                            const city = parseCityFromWorkdayLoc(
+                                loc,
+                                countryKey,
+                            );
+                            if (city) citySet.add(city);
+                        }
+                        // country_code is set whenever resolution came from the descriptor
+                        // fallback rather than a real country/city match on locs[0], since
+                        // locs[0] itself (an uncatalogued city name) won't re-resolve
+                        // downstream in buildScrapeResult otherwise.
+                        jobs.push({
+                            title: posting.title,
+                            url: jobUrl,
+                            location: locs[0], // first full string drives country resolution
+                            ...(descriptorCountry.length > 0 && {
+                                country_code: countryKey,
+                            }),
+                            ...(citySet.size > 0 && {
+                                cities: [...citySet],
+                            }),
+                            ...(description && {
+                                descriptionText: description,
+                            }),
+                        });
+                    }
+                } else {
+                    // Detail fetch failed — keep the original ambiguous locationsText as fallback.
+                    jobs.push({
+                        title: posting.title,
+                        location: posting.locationsText,
+                        url: jobUrl,
+                    });
+                }
+                return jobs;
+            },
+        );
+        allJobs.push(...expanded.flat());
     }
 
     return allJobs;

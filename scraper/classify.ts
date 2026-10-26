@@ -39,7 +39,7 @@ const COUNTRY_NAMES: Record<string, string> = {
     RO: 'Romania',
     BG: 'Bulgaria',
     GR: 'Greece',
-    CZ: 'Czech Republic',
+    CZ: 'Czechia',
 };
 
 interface RawJob {

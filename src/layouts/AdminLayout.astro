@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import PublishButton from '../components/admin/PublishButton.tsx';
+import BackToTop from '../components/shared/BackToTop.astro';
+import { readLocalDataEpoch } from '../../scripts/local-data-epoch.mjs';
 
 interface Props {
     title: string;
@@ -18,10 +20,11 @@ const navItems = [
     { href: '/admin/skills', label: 'Skills' },
 ];
 const path = Astro.url.pathname;
+const localDataEpoch = import.meta.env.DEV ? readLocalDataEpoch() : undefined;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-local-data-epoch={localDataEpoch}>
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,12 +43,17 @@ const path = Astro.url.pathname;
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="text-gray-500 hover:text-gray-900 text-sm"
-                                >← Public site</a
                             >
+                                ← Public site
+                                <span class="sr-only">
+                                    {' '}
+                                    (opens in a new tab)
+                                </span>
+                            </a>
                             <span class="text-gray-500">|</span>
-                            <span class="font-semibold text-gray-900"
-                                >Dashboard</span
-                            >
+                            <span class="font-semibold text-gray-900">
+                                Dashboard
+                            </span>
                         </div>
                         <div class="flex items-center gap-4">
                             <PublishButton client:load />
@@ -70,27 +78,23 @@ const path = Astro.url.pathname;
                 class="bg-white border-b border-gray-200"
                 aria-label="Admin sections"
             >
-                <div
-                    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden"
-                >
-                    {
-                        navItems.map((item) => {
-                            const active = path === item.href;
-                            return (
-                                <a
-                                    href={item.href}
-                                    aria-current={active ? 'page' : undefined}
-                                    class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                                        active
-                                            ? 'border-gray-900 text-gray-900'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    {item.label}
-                                </a>
-                            );
-                        })
-                    }
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-1 overflow-x-auto overflow-y-hidden">
+                    {navItems.map((item) => {
+                        const active = path === item.href;
+                        return (
+                            <a
+                                href={item.href}
+                                aria-current={active ? 'page' : undefined}
+                                class={`px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                                    active
+                                        ? 'border-gray-900 text-gray-900'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                {item.label}
+                            </a>
+                        );
+                    })}
                 </div>
             </nav>
         </div>
@@ -98,56 +102,21 @@ const path = Astro.url.pathname;
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="mb-8">
                 <h1 class="text-2xl font-bold text-gray-900">{title}</h1>
-                {
-                    description && (
-                        <p class="text-sm text-gray-500 mt-1 max-w-3xl">
-                            {description}
-                        </p>
-                    )
-                }
+                {description && (
+                    <p class="text-sm text-gray-500 mt-1 max-w-3xl">
+                        {description}
+                    </p>
+                )}
             </div>
             <slot />
         </main>
 
-        <button
-            type="button"
-            onclick="window.scrollTo({ top: 0 })"
-            aria-label="Back to top"
-            class="back-to-top fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-200 shadow-md text-gray-600 hover:text-gray-900 hover:shadow-lg transition-shadow cursor-pointer"
-        >
-            <svg
-                width="16"
-                height="16"
-                viewBox="0 0 10 6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M1 5l4-4 4 4"></path>
-            </svg>
-        </button>
-
-        <script>
-            const toggleBackToTop = () => {
-                document
-                    .querySelector('.back-to-top')
-                    ?.classList.toggle('is-visible', window.scrollY > 300);
-            };
-            window.addEventListener('scroll', toggleBackToTop, {
-                passive: true,
-            });
-            document.addEventListener('astro:page-load', toggleBackToTop);
-        </script>
+        <BackToTop />
     </body>
 </html>
 
 <style is:global>
     html {
-        scroll-behavior: smooth;
         overflow-y: scroll;
     }
 
@@ -161,23 +130,5 @@ const path = Astro.url.pathname;
         z-index: 10;
         background-color: #f9fafb;
         box-shadow: inset 0 -1px 0 #e5e7eb;
-    }
-
-    .back-to-top {
-        opacity: 0;
-        visibility: hidden;
-        transition:
-            opacity 0.2s ease,
-            visibility 0.2s ease;
-    }
-    .back-to-top.is-visible {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        html {
-            scroll-behavior: auto;
-        }
     }
 </style>

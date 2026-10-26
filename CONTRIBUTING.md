@@ -112,14 +112,14 @@ history. Rewriting history doesn't un-leak a secret that's already been pushed.
 
 ## Where things are
 
-| Path                   | What                                                           |
-| ---------------------- | -------------------------------------------------------------- |
-| `src/pages/`           | Astro routes — public pages, `/admin`, `/api`                  |
-| `src/components/`      | Preact islands and Astro components                            |
-| `src/lib/ats/`         | ATS integrations (Greenhouse, Lever, Ashby, Workable, Workday) |
-| `src/lib/classifiers/` | Language and category classification                           |
-| `scraper/`             | Python/Playwright fallback scraper                             |
-| `supabase/migrations/` | Schema                                                         |
+| Path                   | What                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `src/pages/`           | Astro routes — public pages, `/admin`, `/api`                                   |
+| `src/components/`      | Preact islands and Astro components                                             |
+| `src/lib/ats/`         | ATS integrations (Greenhouse, Lever, Ashby, Workable, Workday, SmartRecruiters) |
+| `src/lib/classifiers/` | Language and category classification                                            |
+| `scraper/`             | Python/Playwright fallback scraper                                              |
+| `supabase/migrations/` | Schema                                                                          |
 
 `scraper/CLAUDE.md` and `scraper/SCRAPING.md` document how the three scraping layers
 fit together — worth reading before changing extraction logic.

@@ -12,7 +12,7 @@ The script mirrors the GitHub Actions workflow: it builds the Astro app, starts 
 
 ### Prerequisites
 
-1. **Doppler CLI** authenticated, with a config (default: `dev_personal`) that contains:
+1. **Doppler CLI** authenticated, with a config (default: `dev_personal`, pointed at the local Supabase stack by `pnpm db:start` then `pnpm db:env`) that contains:
     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — database credentials
     - `SCRAPER_SECRET` — matches the server's auth header
     - `PLAYWRIGHT_CDP_URL` — e.g. `http://192.168.65.254:9222` (see below)
@@ -39,7 +39,7 @@ The script mirrors the GitHub Actions workflow: it builds the Astro app, starts 
 ### Usage
 
 ```bash
-# Scrape into the dev database (default)
+# Scrape into your local Supabase stack (default)
 bash scraper/run-local.sh
 
 # Scrape into production
@@ -151,16 +151,17 @@ There are two main paths:
 
 Configured in `scraper/generic_scrapers.yaml`. Each entry matches a career page URL substring and drives `scraper/platforms/generic_paginated.py` — no new Python code needed to add a company.
 
-Six extraction modes are supported:
+Seven extraction modes are supported:
 
-| Mode                  | Description                                                         | Example companies                                                                                        |
-| --------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Siemens Healthineers, Scout24, WPP, Heineken |
-| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                                                                    |
-| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                                                     |
-| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                                                                  |
-| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                                                               |
-| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                                                              |
+| Mode                  | Description                                                         | Example companies                                                   |
+| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Scout24 |
+| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                               |
+| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                |
+| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                             |
+| `phenom_api`          | Phenom `/widgets` search API, one request per tracked country       | Siemens Healthineers                                                |
+| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                          |
+| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                         |
 
 All modes share a two-phase structure:
 
@@ -169,8 +170,8 @@ All modes share a two-phase structure:
 
 Additional features:
 
-- **Country filtering** (`country_filter_param` + `countries`) — runs one paginated fetch per country and merges results (e.g. SAP, Sweco)
-- **Multi-location fan-out** (`detail_location_selector`) — resolves "Multiple Locations" jobs by fetching the detail page and extracting individual locations (e.g. Siemens Healthineers)
+- **Country filtering** (`country_filter_param` + `countries`) — runs one paginated fetch per country and merges results (e.g. SAP, Sweco). In `phenom_api` mode the countries are the tracked values of the site's country facet
+- **Multi-location fan-out** (`detail_location_selector`) — resolves "Multiple Locations" jobs by fetching the detail page and extracting individual locations. In `script_var_json` and `phenom_api` modes, a `locations` field (e.g. Phenom's `multi_location`) yields one job per country with that country's cities instead (e.g. Siemens Healthineers)
 - **Job function extraction** (`job_function_selector`) — extracts department/function from the detail page for category classification
 - **Composite page parameters** (`pagination.value_template` + `pagination.param_join`) — for sites whose page parameter is not a bare number: Heineken's Drupal multi-pager wants `page=,,2`, and WPP packs the refinement alongside it in `qs_search_job=refine.country=spain&page=2`
 - **Throttling and retry** (`request_delay` + `max_retries`) — spaces requests out and retries 429/5xx responses, for sites that rate-limit (e.g. WPP)

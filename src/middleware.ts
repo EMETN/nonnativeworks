@@ -106,6 +106,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
             return withSecurityHeaders(context.redirect('/admin/login'));
         }
 
+        // app_metadata, not user_metadata: only the service role can write it.
+        // A 403 rather than a redirect, since /admin/login sends signed-in users back here.
+        if (user.app_metadata?.role !== 'admin') {
+            return withSecurityHeaders(
+                new Response(JSON.stringify({ error: 'Forbidden' }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            );
+        }
+
         context.locals.user = user;
     }
 
@@ -119,12 +130,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
     //   - method is not GET/HEAD — unsafe to cache
     //   - a Set-Cookie is present (e.g. Supabase refreshed an auth cookie) — would leak
     //   - handler already set its own Cache-Control (e.g. sitemap.xml)
+    //   - dev server: the browser would keep showing pages from before a new scrape
     const isSafeMethod = request.method === 'GET' || request.method === 'HEAD';
     const alreadyCached = response.headers.has('Cache-Control');
     const hasSetCookie = response.headers.has('Set-Cookie');
     const isAdminArea =
         pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
-    if (!isAdminArea && isSafeMethod && !alreadyCached && !hasSetCookie) {
+    if (
+        !import.meta.env.DEV &&
+        !isAdminArea &&
+        isSafeMethod &&
+        !alreadyCached &&
+        !hasSetCookie
+    ) {
         response.headers.set(
             'Cache-Control',
             'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',

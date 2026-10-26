@@ -5,6 +5,7 @@ export type AtsType =
     | 'workable'
     | 'workday'
     | 'recruitee'
+    | 'smartrecruiters'
     | 'company-api'
     | 'python';
 

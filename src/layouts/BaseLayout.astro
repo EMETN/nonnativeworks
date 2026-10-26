@@ -1,6 +1,7 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import BackToTop from '../components/shared/BackToTop.astro';
 import '../styles/global.css';
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import { cleanPathname } from '../lib/url-path';
@@ -16,6 +17,7 @@ interface Props {
     noindex?: boolean;
     breadcrumbs?: BreadcrumbItem[];
     hideNavActive?: boolean;
+    backToTop?: boolean;
 }
 
 const {
@@ -25,6 +27,7 @@ const {
     noindex = false,
     breadcrumbs,
     hideNavActive = false,
+    backToTop = false,
 } = Astro.props;
 
 const siteTitle =
@@ -96,15 +99,13 @@ const breadcrumbJsonLd =
         />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {
-            breadcrumbJsonLd && (
-                <script
-                    is:inline
-                    type="application/ld+json"
-                    set:html={breadcrumbJsonLd}
-                />
-            )
-        }
+        {breadcrumbJsonLd && (
+            <script
+                is:inline
+                type="application/ld+json"
+                set:html={breadcrumbJsonLd}
+            />
+        )}
 
         <!-- Self-hosted Inter variable font — preload to avoid swap flicker -->
         <link
@@ -181,5 +182,6 @@ const breadcrumbJsonLd =
             <slot />
         </main>
         <Footer />
+        {backToTop && <BackToTop />}
     </body>
 </html>

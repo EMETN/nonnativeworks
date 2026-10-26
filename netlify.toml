@@ -1,11 +1,17 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "PUBLIC_POSTHOG_KEY,PUBLIC_SENTRY_DSN,SENTRY_ORG,SENTRY_PROJECT,SENTRY_DSN,SUPABASE_URL,SUPABASE_ANON_KEY,DOPPLER_PROJECT"
+  SECRETS_SCAN_OMIT_KEYS = "PUBLIC_POSTHOG_KEY,PUBLIC_SENTRY_DSN,SENTRY_ORG,SENTRY_PROJECT,SENTRY_DSN,SUPABASE_URL,SUPABASE_ANON_KEY,DOPPLER_PROJECT,DOPPLER_CONFIG,DOPPLER_ENVIRONMENT"
 
 [[redirects]]
   from = "/t/*"
   to = "https://eu.i.posthog.com/:splat"
   status = 200
   force = true
+
+# Lives here, not in Astro's redirects: Astro can't target the shared /[country]/[company] route.
+[[redirects]]
+  from = "/czech-republic/*"
+  to = "/czechia/:splat"
+  status = 301
 
 # Set at the CDN layer, not middleware: prerendered pages never invoke middleware at request time.
 [[headers]]

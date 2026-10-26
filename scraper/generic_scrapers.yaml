@@ -119,9 +119,11 @@
 #                         (required) e.g. "parsedJobs"
 #   fields.title          Dot-path to job title (default: "title")
 #   fields.url            Dot-path to job URL (relative URLs are resolved)
+#   url_template          Builds the URL from top-level item keys instead of
+#                         fields.url, e.g. "/acme/job-details/{id}/overview"
 #   fields.locations      Dot-path to array of location objects
-#   fields.location_subfield  Key within each location object for city/location string
-#   fields.country_subfield   Key within each location object for country code
+#   fields.location_subfield  Dot-path within each location object for city/location string
+#   fields.country_subfield   Dot-path within each location object for country code
 #                             One job is created per location object (fan-out).
 #   fields.job_function   Dot-path to job function/department string
 #   url_template          (script_var_json) Job URL built from payload fields with
@@ -138,6 +140,9 @@
 #                         embedded JSON, for sites that render the posting
 #                         client-side so no CSS selector can reach it. Tried only
 #                         when description_selector yields too little text.
+#                         (numeric parts index into arrays, e.g. "depts.0.name")
+#   fields.description    Dot-path to the description HTML; "$78"-style RSC
+#                         references are resolved. Skips the detail page fetch.
 
 # ── extract_mode: teamtailor ──────────────────────────────────────────────────
 #
@@ -252,10 +257,10 @@ scrapers:
       job_function_selector: "[data-careersite-propertyid='department']"
 
     # ── SAP ──────────────────────────────────────────────────────────────────────
-    # Taleo instance that only accepts one country per request. country_filter_param
+    # SuccessFactors site that only accepts one country per request. country_filter_param
     # + countries makes the scraper iterate one paginated fetch per country and
-    # merge results before description enrichment.
-    - match: 'jobs.sap.com'
+    # merge results before description enrichment. Not jobs.sap.com: Cloudflare-challenged.
+    - match: 'careers.sap.com'
       name: SAP
       country_filter_param: 'optionsFacetsDD_country'
       countries:
@@ -389,32 +394,27 @@ scrapers:
       location_selector: 'em.vacancy__location'
       url_selector: 'a.js-vacancy-link'
 
-    # ── Siemens Healthineers ─────────────────────────────────────────────────────
-    # Avature portal, same tenant and markup as Siemens below. The 42420 param is
-    # the country facet (numeric option IDs), folderRecordsPerPage the page size.
-    # The facet field number differs per portal (42420 here, 42414 for Siemens) but
-    # the option IDs behind it are tenant-wide, so both lists are the same 25 IDs,
-    # in the order of the table in scraper/country-filters.md.
-    # This used to list only 9 countries, which left 41 of 93 postings visible:
-    # single-country roles in the other 16 were dropped outright, and the only
-    # reason any Portuguese or Spanish job showed up was a multi-location posting
-    # that happened to also touch a listed country.
-    - match: 'jobs.siemens-healthineers.com'
+    # ── Siemens Healthineers (Phenom) ────────────────────────────────────────────
+    # phenom_api queries one tracked country at a time (discovered from the
+    # country facet). url_template, not applyUrl: SuccessFactors (P-) reqs have
+    # no applyUrl.
+    - match: 'careers.siemens-healthineers.com/global/en/search-results'
       name: Siemens Healthineers
-      extra_params:
-          '42420': '[812123,812131,812009,812145,812141,812124,812008,812020,812134,812132,811990,812024,812126,812120,812010,812011,812133,812130,812027,812023,812097,812022,812119,812013,812129]'
-          '42420_format': '17573'
-          listFilterMode: '1'
-          folderRecordsPerPage: '6'
+      extract_mode: phenom_api
+      api_body:
+          refNum: SHDSHWUS
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
       pagination:
           type: offset
-          param: folderOffset
-          page_size: 6
-      card_selector: 'article.article--result'
-      title_selector: 'h3.article__header__text__title a.link'
-      location_selector: 'span.list-item-location'
-      description_selector: '#section1__content .article__content__view__field__value'
-      detail_location_selector: 'ul.list--locations li'
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
 
     # ── Siemens ──────────────────────────────────────────────────────────────────
     # Avature portal, same markup family as Siemens Healthineers above — but a far
@@ -709,3 +709,18 @@ scrapers:
       location_selector: '.job-location .nation'
       description_selector: '.job-fields'
       job_function_selector: '.job-meta-grid .function'
+    # ── Klarna ─────────────────────────────────────────────────────────────────────
+    # Detail pages render client-side, so descriptions come from the listing payload.
+    - match: 'jobs.deel.com/klarna'
+      name: Klarna
+      extract_mode: script_json
+      script_key: jobPostings
+      url_template: '/klarna/job-details/{id}/overview'
+      pagination:
+          type: none
+      fields:
+          title: title
+          locations: job.jobLocations
+          location_subfield: location.name
+          job_function: job.jobDepartments.0.department.name
+          description: richtextDescription

@@ -51,13 +51,17 @@ const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
                 <a
                     href="/countries"
                     class={`text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                    aria-current={isCountries ? 'true' : undefined}>Countries</a
+                    aria-current={isCountries ? 'true' : undefined}
                 >
+                    Countries
+                </a>
                 <a
                     href="/companies"
                     class={`text-sm font-medium px-2.5 py-1.5 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                    aria-current={isCompanies ? 'true' : undefined}>Companies</a
+                    aria-current={isCompanies ? 'true' : undefined}
                 >
+                    Companies
+                </a>
             </nav>
 
             <!-- Mobile hamburger -->
@@ -79,14 +83,16 @@ const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M4 6h16M4 12h16M4 18h16"></path>
+                        d="M4 6h16M4 12h16M4 18h16"
+                    ></path>
                     <path
                         id="close-icon"
                         class="hidden"
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"></path>
+                        d="M6 18L18 6M6 6l12 12"
+                    ></path>
                 </svg>
             </button>
         </div>
@@ -103,13 +109,17 @@ const isCountries = hideActive ? false : !isHome && !isCompanies && !isAdmin;
                 <a
                     href="/countries"
                     class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCountries ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                    aria-current={isCountries ? 'true' : undefined}>Countries</a
+                    aria-current={isCountries ? 'true' : undefined}
                 >
+                    Countries
+                </a>
                 <a
                     href="/companies"
                     class={`block text-base font-medium px-3 py-2 rounded-md transition-colors ${isCompanies ? 'text-[#0F7A4F]' : 'text-gray-900 hover:bg-gray-100'}`}
-                    aria-current={isCompanies ? 'true' : undefined}>Companies</a
+                    aria-current={isCompanies ? 'true' : undefined}
                 >
+                    Companies
+                </a>
             </div>
         </nav>
     </div>

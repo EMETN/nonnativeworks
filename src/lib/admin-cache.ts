@@ -1,8 +1,5 @@
-// Client-only sessionStorage cache for admin data, so navigating between admin
-// pages doesn't refetch (and re-hit Supabase) when nothing changed. Entries expire
-// after TTL_MS as a safety net for server-side changes (the scheduled scrape) the
-// client can't observe; UI mutations invalidate explicitly. Never touches the
-// network or any shared cache — it only holds data the operator already fetched.
+// Saves admin pages refetching on every navigation. TTL_MS covers server-side changes the
+// client can't see (the scheduled scrape); UI mutations invalidate explicitly.
 
 const TTL_MS = 5 * 60 * 1000;
 const PREFIX = 'admin:';
@@ -12,8 +9,18 @@ interface Entry<T> {
     ts: number;
 }
 
+const EPOCH_KEY = PREFIX + 'epoch';
+
+function dropCacheOnNewEpoch(): void {
+    const epoch = document.documentElement.dataset.localDataEpoch;
+    if (!epoch || sessionStorage.getItem(EPOCH_KEY) === epoch) return;
+    invalidateCachePrefix('');
+    sessionStorage.setItem(EPOCH_KEY, epoch);
+}
+
 export function readCache<T>(key: string): T | null {
     try {
+        dropCacheOnNewEpoch();
         const raw = sessionStorage.getItem(PREFIX + key);
         if (!raw) return null;
         const entry = JSON.parse(raw) as Entry<T>;
@@ -29,6 +36,7 @@ export function readCache<T>(key: string): T | null {
 
 export function writeCache<T>(key: string, data: T): void {
     try {
+        dropCacheOnNewEpoch();
         sessionStorage.setItem(
             PREFIX + key,
             JSON.stringify({ data, ts: Date.now() }),

@@ -22,6 +22,10 @@ import {
 } from '../../../lib/ats/workday';
 import { fetchRecruiteeJobs } from '../../../lib/ats/recruitee';
 import {
+    fetchSmartRecruitersJobs,
+    enrichSmartRecruitersDescriptions,
+} from '../../../lib/ats/smartrecruiters';
+import {
     lookupCountryFromLocation,
     extractCitiesForCountry,
     extractWorkModelFromLocation,
@@ -206,6 +210,15 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                     detection.companySlug,
                 ));
                 ats = 'recruitee';
+            } else if (resolvedAts === 'smartrecruiters') {
+                ({ jobs: rawJobs, companyName } =
+                    await fetchSmartRecruitersJobs(detection.companySlug));
+                await enrichSmartRecruitersDescriptions(
+                    rawJobs,
+                    detection.companySlug,
+                    getCachedOutcomes(),
+                );
+                ats = 'smartrecruiters';
             } else if (resolvedAts === 'workable') {
                 const [jobs, name] = await Promise.all([
                     fetchWorkableJobs(detection.companySlug),
@@ -265,11 +278,10 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                         : cause
                           ? String(cause)
                           : '';
-                console.warn(
-                    `Layer 1.5 (company API) failed for ${careerHostname}:`,
-                    err instanceof Error ? err.message : err,
-                    causeDetail ? `(cause: ${causeDetail})` : '',
-                );
+                layer1Error = `Company API failed: ${
+                    err instanceof Error ? err.message : String(err)
+                }${causeDetail ? ` (cause: ${causeDetail})` : ''}`;
+                console.warn(`Layer 1.5 (${careerHostname}): ${layer1Error}`);
             }
         }
     }
@@ -650,7 +662,14 @@ function runPythonScraper(
             cleanupSkipFile();
             console.log('[python-scraper] exit code:', code);
             console.log('[python-scraper] stderr:', stderr.trim() || '(empty)');
-            console.log('[python-scraper] stdout:', stdout.trim() || '(empty)');
+            // Full stdout can be one multi-MB line; it times out CI log matchers.
+            const out = stdout.trim();
+            console.log(
+                `[python-scraper] stdout (${out.length} chars):`,
+                out.length > 2000
+                    ? `${out.slice(0, 2000)}… [truncated]`
+                    : out || '(empty)',
+            );
 
             if (code !== 0) {
                 reject(

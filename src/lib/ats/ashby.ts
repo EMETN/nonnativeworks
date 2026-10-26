@@ -182,6 +182,9 @@ export function mapAshbyPosting(
     ).map((c) => c.code);
     if (primaryCodes.some((code) => !secondaryCodes.has(code))) {
         addLocation(primaryCountry, primaryLoc);
+    } else if (primaryCountry && primaryLoc) {
+        const cities = byCountry.get(primaryCountry);
+        if (cities && !cities.includes(primaryLoc)) cities.unshift(primaryLoc);
     }
 
     const jobs: RawJob[] = Array.from(byCountry.entries()).map(

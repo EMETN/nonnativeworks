@@ -59,6 +59,7 @@ environment variable. Keep the secret out of version control.
 
 from __future__ import annotations
 
+import hmac
 import os
 import subprocess
 import sys
@@ -89,7 +90,9 @@ app = FastAPI(title="nonnativeworks! scraper service", docs_url=None, redoc_url=
 def _verify_secret(x_scraper_secret: str | None) -> None:
     if not SCRAPER_SECRET:
         raise HTTPException(500, "SCRAPER_SECRET not configured on this server")
-    if x_scraper_secret != SCRAPER_SECRET:
+    if not hmac.compare_digest(
+        (x_scraper_secret or "").encode(), SCRAPER_SECRET.encode()
+    ):
         raise HTTPException(401, "Invalid or missing X-Scraper-Secret header")
 
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
+import { isHttpUrl } from '../../lib/safe-url';
 import {
     readCache,
     writeCache,
@@ -483,7 +484,8 @@ export default function PositionEditor() {
 
                                                 {/* Title */}
                                                 <td class="px-4 py-2.5">
-                                                    {pos.url ? (
+                                                    {pos.url &&
+                                                    isHttpUrl(pos.url) ? (
                                                         <a
                                                             href={pos.url}
                                                             target="_blank"
@@ -491,6 +493,11 @@ export default function PositionEditor() {
                                                             class="text-[#0F7A4F] hover:underline font-medium line-clamp-2"
                                                         >
                                                             {pos.title}
+                                                            <span class="sr-only">
+                                                                {' '}
+                                                                (opens in a new
+                                                                tab)
+                                                            </span>
                                                         </a>
                                                     ) : (
                                                         <span class="font-medium text-gray-800">

@@ -1,0 +1,46 @@
+name: Database check
+
+# Applies every migration to a fresh local Supabase and runs the database tests.
+on:
+    pull_request:
+        paths:
+            - 'supabase/**'
+            - 'tests/local-db.test.ts'
+            - 'package.json' # Supabase CLI version pin
+            - '.github/workflows/db-check.yml'
+
+permissions:
+    contents: read
+
+jobs:
+    db-check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup pnpm and Node
+              uses: pnpm/setup@v3
+              with:
+                  node-version-file: '.node-version'
+                  cache: true
+                  install: false
+
+            - name: Install Node dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Cache Supabase native runtime
+              uses: actions/cache@v6
+              with:
+                  path: ~/.supabase/cache/stack
+                  key: supabase-native-${{ runner.os }}-${{ runner.arch }}-2.121.0
+
+            - name: Start local Supabase
+              run: |
+                  pnpm db:start
+                  pnpm db:env:file
+                  cat .env.supabase >> "$GITHUB_ENV"
+
+            - name: Database tests
+              run: pnpm test:db
