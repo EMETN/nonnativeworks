@@ -1104,6 +1104,26 @@ function windowOversizedChunk(chunk: string): string[] {
 }
 
 /**
+ * tinyld weights diacritic n-grams so heavily that a single accented proper
+ * noun can flip an otherwise-English paragraph to the noun's language — e.g. an
+ * English ad opening "Țiriac Asigurări offers a full range of protection…"
+ * scores "ro" (0.59) against "en" (0.03), and "en" outright once the name is
+ * taken out. So a Romanian verdict is re-checked with diacritics folded to
+ * ASCII: genuinely Romanian text keeps its language, while a verdict that rested
+ * on a few accented words collapses back to English and is discarded.
+ *
+ * Deliberately limited to Romanian for now; other languages are untested against
+ * this recheck and keep tinyld's raw verdict.
+ */
+function detectWindowLanguage(text: string): string {
+    const code = detect(text);
+    if (code !== 'ro') return code;
+    const folded = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (folded !== text && detect(folded) === 'en') return 'en';
+    return code;
+}
+
+/**
  * Detects the language of `chunk`, using majority vote across its windows when
  * it was split by windowOversizedChunk. A 500-char window is short enough that
  * tinyld regularly misfires on ONE window even for genuinely English text (e.g.
@@ -1116,10 +1136,10 @@ function windowOversizedChunk(chunk: string): string[] {
  */
 function detectChunkLanguage(chunk: string): string {
     const windows = windowOversizedChunk(chunk);
-    if (windows.length <= 1) return detect(chunk);
+    if (windows.length <= 1) return detectWindowLanguage(chunk);
     const counts = new Map<string, number>();
     for (const window of windows) {
-        const code = detect(window);
+        const code = detectWindowLanguage(window);
         counts.set(code, (counts.get(code) ?? 0) + 1);
     }
     let winner = '';

@@ -94,6 +94,15 @@ do
     ipset add allowed-domains "$cidr" -exist
 done
 
+# CloudFront rotates edge IPs per resolver and over time, so the per-domain snapshot below
+# misses addresses (careers.allianz.com). Every IP it has answered with is in 65.9.0.0/16.
+echo "Adding CloudFront edge IP ranges..."
+for cidr in \
+    65.9.0.0/16
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
 # Fetch GitHub meta information and aggregate + add their IP ranges
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta)

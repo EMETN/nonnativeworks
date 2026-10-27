@@ -47,12 +47,11 @@ from tracked_countries import is_tracked_location
 
 LIST_URL = "https://www.bmwgroup.jobs/en.html"
 
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
+# Deliberately not a full Chrome UA: Akamai tarpits requests that claim to be
+# Chrome but don't present a Chrome TLS fingerprint (the connection completes,
+# then the response never arrives and the read times out). A bare "Mozilla/5.0"
+# is served normally.
+_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # The posting body. Everything else on the page is site chrome in the page's
 # language, which must not reach the language classifier.

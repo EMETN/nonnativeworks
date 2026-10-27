@@ -1477,4 +1477,20 @@ export const CASES: FixtureCase[] = [
         requires: false,
         advantage: true,
     },
+    {
+        label: '1c — English ad opening with the diacritic company name "Țiriac Asigurări" → not required (tinyld alone scores this paragraph "ro" on the name; the diacritic-folded recheck restores "en")',
+        title: 'Chief Claims Officer',
+        desc: 'Țiriac Asigurări offers a full range of protection and financial products and services for individuals and companies, backed by a strong network of agents and brokers and by the expertise of a leading insurance group.',
+        country: 'RO',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '1c — genuine Romanian ad opening with "Țiriac Asigurări" → requires (the diacritic-folded recheck must not clear real Romanian text)',
+        title: 'Specialist dezvoltare produse',
+        desc: 'Țiriac Asigurări oferă o gamă completă de produse și servicii de protecție și financiare pentru persoane fizice și companii, sprijinită de o rețea puternică de agenți și brokeri și de experiența unui grup de asigurări de top.',
+        country: 'RO',
+        requires: true,
+        advantage: false,
+    },
 ];

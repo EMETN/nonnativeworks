@@ -1498,6 +1498,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'academicwork.', name: 'Academic Work' },
     { urlSubstring: 'ag.wd3.myworkdayjobs.com', name: 'Airbus' },
     { urlSubstring: 'cgi.njoyn.com', name: 'CGI' },
+    { urlSubstring: 'bmwgroup.jobs', name: 'BMW Group' },
     { urlSubstring: 'jobs.arla.com', name: 'Arla' },
     { urlSubstring: 'careers.sap.com', name: 'SAP' },
     { urlSubstring: 'smartrecruiters.com/sapitbusinesssysteme', name: 'SAP' },

@@ -807,15 +807,6 @@ def _jobs_from_items(
     locations_field = fields.get("locations")
     jf_field = fields.get("job_function")
     desc_field = fields.get("description")
-    url_template = cfg.get("url_template")
-
-    items = _find_jobs_payload(html)
-
-    if not items:
-        print("generic: jobs payload not found", file=sys.stderr)
-        return []
-
-    print(f"generic: found jobs payload ({len(items)} items)", file=sys.stderr)
 
     jobs = []
     for item in items:
@@ -830,29 +821,52 @@ def _jobs_from_items(
             # Built from payload fields rather than read from one, for sites whose
             # listing carries no link to the job page (Allianz's only URL field is
             # its SuccessFactors application form, not the posting itself).
-            job_url = re.sub(
-                r"\{([\w.]+)\}",
-                lambda m, it=item: str(_get_nested(it, m.group(1)) or ""),
-                url_template,
-            )
+            try:
+                raw_url = url_template.format_map(item)
+            except KeyError:
+                raw_url = None
         else:
             raw_url = _get_nested(item, url_field)
-            job_url = urljoin(base_url, raw_url) if raw_url else None
+        job_url = urljoin(base_url, raw_url) if raw_url else None
 
         jf = _get_nested(item, jf_field) if jf_field else None
-
-        job = build_job(title, job_url, location)
-
-        if jf:
-            job["jobFunction"] = jf
 
         # A description carried in the listing payload (e.g. Allianz's
         # descriptionTeaser) is written straight onto the job, which lets the
         # enrichment phase below skip the detail page entirely.
-        if desc_field and (desc := _get_nested(item, desc_field)):
-            job["descriptionText"] = desc
+        desc = _get_nested(item, desc_field) if desc_field else None
 
-        jobs.append(job)
+        locations = _get_nested(item, locations_field) if locations_field else None
+        if not isinstance(locations, list) or not locations:
+            job = build_job(
+                title,
+                job_url,
+                _get_nested(item, location_field) if location_field else None,
+            )
+            if jf:
+                job["jobFunction"] = jf
+            if desc:
+                job["descriptionText"] = desc
+            jobs.append(job)
+            continue
+
+        # One job per country, not per location: a posting listed at two sites in
+        # the same country is still one opening.
+        groups = _group_locations_by_country(locations)
+        if country:
+            groups = {
+                c: locs for c, locs in groups.items() if c.lower() == country.lower()
+            } or {country: []}
+        for ctry, locs in groups.items():
+            job = build_job(title, job_url, "; ".join(locs) or ctry)
+            cities = list(dict.fromkeys(filter(None, map(_city_from_location, locs))))
+            if cities:
+                job["cities"] = cities
+            if jf:
+                job["jobFunction"] = jf
+            if desc:
+                job["descriptionText"] = desc
+            jobs.append(job)
 
     return jobs
 
@@ -1025,6 +1039,21 @@ def _extract_json_description(raw_html: str, key: str) -> str:
     with contextlib.suppress(Exception):
         best = json_mod.loads(f'"{best}"')
     return unescape(best)
+
+
+def _extract_phenom_description(raw_html: str) -> str:
+    """Fallback for Phenom job pages, which render the description client-side
+    from the phApp.ddo jobDetail payload rather than shipping it in the DOM."""
+    idx = raw_html.find('"jobDetail"')
+    if idx == -1:
+        return ""
+    start = raw_html.find("{", idx)
+    try:
+        payload, _ = json_mod.JSONDecoder().raw_decode(raw_html, start)
+    except ValueError:
+        return ""
+    desc = _get_nested(payload, "data.job.description")
+    return desc if isinstance(desc, str) else ""
 
 
 def _fetch_detail_page(
