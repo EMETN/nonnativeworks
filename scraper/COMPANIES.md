@@ -15,7 +15,7 @@
 - Autodesk
 - Barona (local script)
 - Bayer
-- BMW Group
+- BMW Group (local script)
 - Bolt
 - Booking.com
 - Capgemini
@@ -105,7 +105,7 @@
 - Volvo Group
 - Wise
 - Wolt
-- WPP
+- WPP (local script)
 - Wärtsilä
 - Yousician
 - Zalando

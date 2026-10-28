@@ -87,10 +87,6 @@ companies:
       url: https://bayer.eightfold.ai/careers
       min_positions: 10
 
-    - name: BMW Group
-      url: https://www.bmwgroup.jobs/en.html
-      min_positions: 50
-
     - name: Bolt
       url: https://bolt.eu/en/careers/positions
       min_positions: 10
@@ -449,10 +445,6 @@ companies:
     - name: Wärtsilä
       url: https://careers.wartsila.com/search
       min_positions: 5
-
-    - name: WPP
-      url: https://wpp.careersitecloud.com/search
-      min_positions: 10
 
     - name: Yousician
       url: https://yousician.com/careers

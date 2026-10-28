@@ -27,6 +27,13 @@ companies:
       url: https://www.barona.fi/en/jobs/
       min_positions: 10
 
+    # Akamai holds the connection open without answering requests from GitHub
+    # Actions runner IPs: the TLS handshake completes, then the read times out
+    # (the scheduled and preview runs both hit this; it works from other IPs).
+    - name: BMW Group
+      url: https://www.bmwgroup.jobs/en.html
+      min_positions: 50
+
     - name: CGI
       url: https://cgi.njoyn.com
       min_positions: 10
@@ -48,3 +55,11 @@ companies:
     - name: Siemens
       url: https://jobs.siemens.com/en_US/externaljobs/SearchJobs/
       min_positions: 30
+
+    # wpp.careersitecloud.com answers GitHub Actions runner IPs with
+    # 403 Forbidden on the first request, so the preview and the scheduled run
+    # cannot scrape it. From elsewhere a full run takes ~7 minutes (it is
+    # throttled to one request per second).
+    - name: WPP
+      url: https://wpp.careersitecloud.com/search
+      min_positions: 10
