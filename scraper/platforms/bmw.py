@@ -41,7 +41,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import build_job, is_cached_job
+from extract import build_job, describe_response, is_cached_job
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import is_tracked_location
 
@@ -223,6 +223,7 @@ def scrape_bmw_static(url: str) -> list[dict]:
     city_to_country = _location_map(soup)
     fragment_url = _fragment_url(LIST_URL, soup)
     if not fragment_url:
+        print(f"bmw: landing page — {describe_response(resp)}", file=sys.stderr)
         return []
     print(
         f"bmw: {len(city_to_country)} cities in the location filter; "
@@ -238,5 +239,7 @@ def scrape_bmw_static(url: str) -> list[dict]:
 
     jobs = _parse_jobs(fragment.content, LIST_URL, city_to_country)
     print(f"bmw: parsed {len(jobs)} jobs", file=sys.stderr)
+    if not jobs:
+        print(f"bmw: fragment — {describe_response(fragment)}", file=sys.stderr)
     _enrich_descriptions(session, jobs)
     return jobs

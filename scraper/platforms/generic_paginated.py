@@ -63,7 +63,13 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from extract import LOCATION_CLASS_PATTERNS, build_job, is_cached_job, job_key
+from extract import (
+    LOCATION_CLASS_PATTERNS,
+    build_job,
+    describe_response,
+    is_cached_job,
+    job_key,
+)
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import TRACKED_NAMES, is_tracked_location
 
@@ -119,6 +125,11 @@ _MAX_BACKOFF_SECONDS = 60
 # every fetch in a run — listing pages and detail pages alike.
 _last_request_at = 0.0
 
+# Most recent response from _get, so a listing page that yields no jobs can say
+# what the server actually sent. Best-effort under concurrency > 1, where the
+# last response to arrive may belong to a neighbouring page.
+_last_response: requests.Response | None = None
+
 
 def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.Response:
     """``session.get()`` with the config's request_delay and max_retries applied.
@@ -131,7 +142,7 @@ def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.R
     their own status handling (detail pages, for one, read 404/410 as a posting
     that no longer exists rather than as a failure).
     """
-    global _last_request_at
+    global _last_request_at, _last_response
     delay = cfg.get("request_delay", 0)
     retries = cfg.get("max_retries", 0)
 
@@ -150,6 +161,7 @@ def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.R
                 raise
         else:
             if last_attempt or resp.status_code not in _RETRY_STATUSES:
+                _last_response = resp
                 return resp
             print(
                 f"generic: HTTP {resp.status_code} on {url} — retrying "
@@ -1279,6 +1291,11 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         if ptype == "none":
             jobs = fetch_page(session, list_url, base_params, cfg)
             print(f"{prefix}: single page → {len(jobs)} jobs", file=sys.stderr)
+            if not jobs and _last_response is not None:
+                print(
+                    f"{prefix}:   empty page — {describe_response(_last_response)}",
+                    file=sys.stderr,
+                )
             new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
             for j in new_jobs:
                 seen_keys.add(job_key(j))
@@ -1329,6 +1346,11 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
                         f" → {len(jobs)} jobs",
                         file=sys.stderr,
                     )
+                    if not jobs and _last_response is not None:
+                        print(
+                            f"{prefix}:   empty page — {describe_response(_last_response)}",
+                            file=sys.stderr,
+                        )
                     new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
                     for j in new_jobs:
                         seen_keys.add(job_key(j))

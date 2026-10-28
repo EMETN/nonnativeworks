@@ -15,6 +15,24 @@ from urllib.parse import urljoin, urlparse
 _cached_title_hashes: dict[str, str] | None = None
 
 
+def describe_response(resp, limit: int = 150) -> str:
+    """One-line summary of an HTTP response for diagnosing an empty result.
+
+    A block or bot-challenge page usually comes back as a 200 with no job markup,
+    which a bare "0 jobs" log line can't tell apart from a genuinely empty board.
+    Status, size and the start of the visible text usually can.
+    """
+    try:
+        text = re.sub(r"(?is)<(script|style)\b.*?</\1>|<[^>]+>", " ", resp.text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return (
+            f"HTTP {resp.status_code}, {len(resp.content)} bytes, "
+            f"text: {text[:limit]!r}" + ("…" if len(text) > limit else "")
+        )
+    except Exception as e:
+        return f"unreadable response ({e})"
+
+
 def title_hash(title: str) -> str:
     """Same as titleHash() in src/lib/outcome-cache.ts: first 8 hex chars of md5(title)."""
     return hashlib.md5(title.encode("utf-8")).hexdigest()[:8]

@@ -198,6 +198,29 @@ jobs:
                     --dry-run \
                     2>&1 | tee /tmp/scrape_output.txt
 
+            # The Python scraper's stderr (per-page job counts, fetch errors, and what
+            # an empty page actually contained) is logged by the Astro server, not by
+            # batch_run.py, so it never reaches the dry-run output or the PR comment.
+            # Printed whether or not the scrape failed: a company can "succeed" with
+            # far fewer jobs than expected and still need explaining.
+            - name: Show scraper diagnostics
+              if: always() && steps.diff.outputs.count != '0'
+              run: |
+                  echo "::group::Astro server log (last 400 lines)"
+                  tail -n 400 /tmp/astro-server.log | cut -c1-400 || echo "(no server log)"
+                  echo "::endgroup::"
+
+            - name: Upload scrape logs
+              if: always() && steps.diff.outputs.count != '0'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: scrape-preview-logs
+                  path: |
+                      /tmp/astro-server.log
+                      /tmp/scrape_output.txt
+                  if-no-files-found: ignore
+                  retention-days: 14
+
             - name: Post result
               if: steps.diff.outputs.count != '0'
               uses: actions/github-script@v9
