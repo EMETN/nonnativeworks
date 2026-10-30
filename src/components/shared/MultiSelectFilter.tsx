@@ -5,12 +5,14 @@ import {
     useLayoutEffect,
     useMemo,
 } from 'preact/hooks';
-import { foldText } from '../../lib/text';
+import { foldText, formatCount } from '../../lib/text';
 import type { FacetOption } from '../../lib/position-filters';
 
 interface Props {
     id: string;
     label: string;
+    plural: string;
+    summary: string;
     options: FacetOption[];
     counts: Map<string, number>;
     selected: string[];
@@ -23,6 +25,8 @@ const SEARCHABLE_FROM = 8;
 export default function MultiSelectFilter({
     id,
     label,
+    plural,
+    summary,
     options,
     counts,
     selected,
@@ -72,12 +76,10 @@ export default function MultiSelectFilter({
                 : [...selected, value],
         );
 
-    const active = selected.length > 0;
-
     return (
         <div
             ref={rootRef}
-            class="sm:relative"
+            class="inline-block sm:relative"
             onKeyDown={(e) => {
                 if (e.key === 'Escape' && open) {
                     // BaseLayout blurs the focused element on Escape; keep focus on the trigger.
@@ -93,51 +95,72 @@ export default function MultiSelectFilter({
                 aria-expanded={open}
                 aria-controls={panelId}
                 onClick={() => setOpen(!open)}
-                class={`inline-flex items-center gap-1 text-xs sm:text-sm font-medium px-3 py-1 rounded-full border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 ${active ? 'border-[#0F7A4F] text-[#0F7A4F] bg-[#0F7A4F]/5' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}
-                style={numFont}
+                class="text-left font-bold text-[#0F7A4F] cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
             >
-                {label}
-                {active && <span>({selected.length})</span>}
-                <svg
-                    aria-hidden="true"
-                    class={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`}
-                    width="12"
-                    height="12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width={2.5}
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 9l6 6 6-6"
-                    />
-                </svg>
+                <span class="icon-link">
+                    {summary}
+                    <svg
+                        aria-hidden="true"
+                        class={`inline-block w-[0.7em] h-[0.7em] ml-1 align-baseline ${open ? '-scale-y-100' : ''}`}
+                        width="12"
+                        height="12"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width={3}
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 9l6 6 6-6"
+                        />
+                    </svg>
+                </span>
             </button>
             <div
                 ref={panelRef}
                 id={panelId}
                 hidden={!open}
-                class={`absolute left-0 right-0 sm:w-72 ${alignRight ? 'sm:left-auto' : 'sm:right-auto'} top-full mt-2 z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-2`}
+                class={`absolute left-0 right-0 sm:w-64 ${alignRight ? 'sm:left-auto' : 'sm:right-auto'} top-full mt-2 z-20 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-[0_8px_24px_rgba(17,24,39,0.12)] font-normal`}
             >
                 {options.length >= SEARCHABLE_FROM && (
-                    <input
-                        type="text"
-                        aria-label={`Search ${label.toLowerCase()}`}
-                        placeholder={`Search ${label.toLowerCase()}...`}
-                        value={query}
-                        onInput={(e) =>
-                            setQuery((e.target as HTMLInputElement).value)
-                        }
-                        class="w-full text-xs sm:text-sm border-b border-gray-200 px-1 py-1.5 mb-1 outline-none focus-visible:border-[#12956B]"
-                        style={numFont}
-                    />
+                    <div class="flex items-center gap-2 px-3 border-b border-gray-200 focus-within:border-[#12956B] transition-colors">
+                        <svg
+                            aria-hidden="true"
+                            class="w-4 h-4 shrink-0 text-gray-500"
+                            width="16"
+                            height="16"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width={2}
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                            />
+                        </svg>
+                        <input
+                            type="text"
+                            aria-label={`Search ${plural}`}
+                            placeholder={`Search ${plural}`}
+                            value={query}
+                            onInput={(e) =>
+                                setQuery((e.target as HTMLInputElement).value)
+                            }
+                            class="flex-1 min-w-0 py-2 text-base sm:text-sm text-gray-900 placeholder:text-gray-500 bg-transparent outline-none"
+                            style={numFont}
+                        />
+                    </div>
                 )}
-                <fieldset class="max-h-64 overflow-y-auto overscroll-contain">
+                <fieldset class="max-h-52 overflow-y-auto overscroll-contain p-1 [scrollbar-width:thin]">
                     <legend class="sr-only">Filter by {label}</legend>
                     {visible.length === 0 && (
-                        <p class="text-xs sm:text-sm text-gray-500 px-1 py-2">
+                        <p
+                            class="text-sm text-gray-500 px-2 py-2"
+                            style={numFont}
+                        >
                             No matches
                         </p>
                     )}
@@ -148,7 +171,7 @@ export default function MultiSelectFilter({
                         return (
                             <label
                                 key={o.value}
-                                class={`flex items-center gap-2 px-1 py-1.5 rounded text-xs sm:text-sm ${disabled ? 'text-gray-400' : 'text-gray-900 hover:bg-gray-50 cursor-pointer'}`}
+                                class={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${disabled ? 'text-gray-400' : `cursor-pointer hover:bg-[#0F7A4F]/5 ${checked ? 'text-[#0F7A4F] font-semibold' : 'text-gray-900'}`}`}
                                 style={numFont}
                             >
                                 <input
@@ -156,24 +179,34 @@ export default function MultiSelectFilter({
                                     checked={checked}
                                     disabled={disabled}
                                     onChange={() => toggle(o.value)}
-                                    class="accent-[#0F7A4F] shrink-0"
+                                    class="filter-check shrink-0"
                                 />
-                                <span class="flex-1 min-w-0 truncate">
-                                    {o.label}
-                                </span>
+                                <span class="min-w-0 truncate">{o.label}</span>
                                 <span
-                                    class={
-                                        disabled
-                                            ? 'text-gray-400'
-                                            : 'text-gray-500'
-                                    }
+                                    class={`shrink-0 -ml-1 font-normal ${disabled ? 'text-gray-400' : 'text-gray-500'}`}
                                 >
-                                    {count}
+                                    ({formatCount(count)})
                                 </span>
                             </label>
                         );
                     })}
                 </fieldset>
+                {selected.length > 0 && (
+                    <div class="p-1 border-t border-gray-200">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onChange([]);
+                                // The button unmounts, which would drop focus out of the panel.
+                                buttonRef.current?.focus();
+                            }}
+                            class="w-full text-left text-sm font-medium px-2 py-1 rounded-md text-gray-500 hover:text-[#0F7A4F] hover:bg-[#0F7A4F]/5 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B]"
+                            style={numFont}
+                        >
+                            Clear all
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

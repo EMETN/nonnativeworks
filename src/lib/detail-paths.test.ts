@@ -6,8 +6,7 @@ import {
     type CompanyPage,
     type CountryPage,
 } from './detail-paths';
-import type { BuildPosition } from './build-queries';
-import type { CompanyStats, CountryStats } from './types';
+import type { CompanyStats, CountryStats, PositionDetail } from './types';
 
 const country = (id: string, name: string, total = 10) =>
     ({
@@ -34,7 +33,7 @@ const position = (
     id: string,
     companyId: string,
     title = id,
-): BuildPosition => ({
+): PositionDetail => ({
     id,
     company_id: companyId,
     title,
@@ -44,7 +43,6 @@ const position = (
     local_language_advantage: false,
     city: null,
     work_model: null,
-    skills: [],
 });
 
 const countries = [country('pt', 'Portugal'), country('fr', 'France')];
@@ -58,7 +56,6 @@ test('emits a country page with every position in that country, across companies
 
     const portugal = pages.find((p) => p.slug === 'portugal') as CountryPage;
     expect(portugal.kind).toBe('country');
-    expect(portugal.companyCount).toBe(2);
     expect(portugal.positions.map((p) => [p.company_name, p.title])).toEqual([
         ['Feedzai', 'Alpha'],
         ['Tekever', 'Zed'],

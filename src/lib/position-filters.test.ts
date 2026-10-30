@@ -3,6 +3,8 @@ import {
     applyFilters,
     buildFacets,
     facetCounts,
+    facetOptions,
+    facetSummary,
     hasActiveFilters,
     parseFilters,
     parseSort,
@@ -22,7 +24,6 @@ const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
     local_language_advantage: false,
     city: null,
     work_model: null,
-    skills: [],
     company_name: 'Tekever',
     company_slug: 'tekever',
     country_name: 'Portugal',
@@ -31,40 +32,15 @@ const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
 });
 
 const positions = [
-    pos({
-        id: '1',
-        city: ['Lisbon'],
-        work_model: 'remote',
-        skills: ['Python'],
-    }),
-    pos({
-        id: '2',
-        city: ['Porto'],
-        work_model: 'hybrid',
-        category_name: 'Design',
-        skills: ['Figma'],
-    }),
-    pos({
-        id: '3',
-        company_name: 'Feedzai',
-        company_slug: 'feedzai',
-        city: ['Lisbon', 'Porto'],
-        work_model: 'remote',
-        local_language_advantage: true,
-        skills: ['Python', 'Go'],
-    }),
+    pos({ id: '1' }),
+    pos({ id: '2', category_name: 'Design' }),
+    pos({ id: '3', company_name: 'Feedzai', company_slug: 'feedzai' }),
 ];
 
 const facets = buildFacets(positions, 'country');
 
 test('facets exclude the page dimension and single-option facets', () => {
-    expect(Object.keys(facets)).toEqual([
-        'company',
-        'category',
-        'work_model',
-        'city',
-        'skills',
-    ]);
+    expect(Object.keys(facets)).toEqual(['company', 'category']);
     expect(buildFacets(positions, 'company').country).toBeUndefined();
 });
 
@@ -73,41 +49,43 @@ test('facet options are slugged, labelled and alphabetical', () => {
         { value: 'feedzai', label: 'Feedzai' },
         { value: 'tekever', label: 'Tekever' },
     ]);
-    expect(facets.work_model).toEqual([
-        { value: 'hybrid', label: 'Hybrid' },
-        { value: 'remote', label: 'Remote' },
+});
+
+test('facetOptions keeps a single option so it can be named in the sentence', () => {
+    expect(facetOptions(positions, 'country')).toEqual([
+        { value: 'portugal', label: 'Portugal' },
     ]);
 });
 
 test('parses comma-separated values, dropping unknown and duplicate ones', () => {
-    const state = parseFilters(
-        '?company=tekever,nope,TEKEVER&city=lisbon,&local_advantage=hide&q=x',
-        facets,
-    );
+    const state = parseFilters('?company=tekever,nope,TEKEVER&q=x', facets);
 
-    expect(state).toEqual({
-        selected: { company: ['tekever'], city: ['lisbon'] },
-        hideLocalAdvantage: true,
-    });
+    expect(state).toEqual({ selected: { company: ['tekever'] } });
 });
 
 test('ignores a param for a facet the page does not offer', () => {
     expect(parseFilters('?country=portugal', facets)).toEqual(EMPTY_FILTERS);
 });
 
+test('ignores params from retired filters in old shared links', () => {
+    expect(
+        parseFilters(
+            '?city=lisbon&work_model=remote&skills=python&local_advantage=hide',
+            facets,
+        ),
+    ).toEqual(EMPTY_FILTERS);
+});
+
 test('serializes with literal commas in a stable key order and drops empty keys', () => {
     const query = serializeFilters({
         selected: {
-            skills: ['python'],
+            category: ['design'],
             company: ['tekever', 'feedzai'],
-            city: [],
+            country: [],
         },
-        hideLocalAdvantage: true,
     });
 
-    expect(query).toBe(
-        '?company=tekever,feedzai&skills=python&local_advantage=hide',
-    );
+    expect(query).toBe('?company=tekever,feedzai&category=design');
 });
 
 test('serializes no filters to an empty string', () => {
@@ -117,30 +95,22 @@ test('serializes no filters to an empty string', () => {
 test('round-trips through the URL', () => {
     const state = {
         selected: { company: ['feedzai'], category: ['design', 'engineering'] },
-        hideLocalAdvantage: false,
     };
 
     expect(parseFilters(serializeFilters(state), facets)).toEqual(state);
 });
 
 test('ORs within a facet and ANDs across facets', () => {
-    const ids = (
-        selected: Record<string, string[]>,
-        hideLocalAdvantage = false,
-    ) =>
-        applyFilters(positions, { selected, hideLocalAdvantage }).map(
-            (p) => p.id,
-        );
+    const ids = (selected: Record<string, string[]>) =>
+        applyFilters(positions, { selected }).map((p) => p.id);
 
-    expect(ids({ city: ['lisbon', 'porto'] })).toEqual(['1', '2', '3']);
-    expect(ids({ city: ['porto'], work_model: ['remote'] })).toEqual(['3']);
-    expect(ids({ skills: ['python'] }, true)).toEqual(['1']);
+    expect(ids({ company: ['tekever', 'feedzai'] })).toEqual(['1', '2', '3']);
+    expect(ids({ company: ['tekever'], category: ['design'] })).toEqual(['2']);
 });
 
 test('counts each option against every other active filter', () => {
     const state = {
-        selected: { company: ['tekever'], city: ['porto'] },
-        hideLocalAdvantage: false,
+        selected: { company: ['feedzai'], category: ['engineering'] },
     };
 
     expect(facetCounts(positions, state, 'company')).toEqual(
@@ -149,22 +119,48 @@ test('counts each option against every other active filter', () => {
             ['feedzai', 1],
         ]),
     );
-    expect(facetCounts(positions, state, 'city')).toEqual(
-        new Map([
-            ['lisbon', 1],
-            ['porto', 1],
-        ]),
+    expect(facetCounts(positions, state, 'category')).toEqual(
+        new Map([['engineering', 1]]),
     );
 });
 
 test('reports whether any filter is active', () => {
     expect(hasActiveFilters(EMPTY_FILTERS)).toBe(false);
-    expect(
-        hasActiveFilters({ selected: { city: [] }, hideLocalAdvantage: false }),
-    ).toBe(false);
-    expect(hasActiveFilters({ selected: {}, hideLocalAdvantage: true })).toBe(
-        true,
+    expect(hasActiveFilters({ selected: { company: [] } })).toBe(false);
+    expect(hasActiveFilters({ selected: { company: ['tekever'] } })).toBe(true);
+});
+
+test('summarises a facet by what the results actually cover', () => {
+    const options = facetOptions(positions, 'company');
+    const summary = (selected: string[], results = positions) =>
+        facetSummary('company', options, selected, results);
+
+    expect(summary([])).toBe('2 companies');
+    expect(summary([], [positions[0]])).toBe('1 company');
+    expect(summary(['feedzai'])).toBe('Feedzai');
+    expect(summary(['feedzai', 'tekever'])).toBe('2 companies');
+});
+
+test('category summary defaults to all categories', () => {
+    const options = facetOptions(positions, 'category');
+
+    expect(facetSummary('category', options, [], positions)).toBe(
+        'all categories',
     );
+    expect(facetSummary('category', options, ['design'], positions)).toBe(
+        'Design',
+    );
+});
+
+test('a facet with one option is named outright', () => {
+    const options = facetOptions(positions, 'country');
+
+    expect(facetSummary('country', options, [], positions)).toBe('Portugal');
+});
+
+test('a page with no listed positions still reads as a sentence', () => {
+    expect(facetSummary('country', [], [], [])).toBe('0 countries');
+    expect(facetSummary('category', [], [], [])).toBe('all categories');
 });
 
 test('sort is unset unless the URL names one the page offers', () => {
@@ -179,11 +175,8 @@ test('an explicitly chosen sort is always in the URL, including title', () => {
     expect(serializeFilters(EMPTY_FILTERS)).toBe('');
     expect(serializeFilters(EMPTY_FILTERS, 'title')).toBe('?sort=title');
     expect(
-        serializeFilters(
-            { selected: { city: ['porto'] }, hideLocalAdvantage: false },
-            'category',
-        ),
-    ).toBe('?city=porto&sort=category');
+        serializeFilters({ selected: { company: ['tekever'] } }, 'category'),
+    ).toBe('?company=tekever&sort=category');
 });
 
 test('sorts alphabetically, case-insensitively, with title as the tie-breaker', () => {

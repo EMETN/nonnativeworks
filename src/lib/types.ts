@@ -21,7 +21,6 @@ export interface PositionDetail {
 }
 
 export interface ListedPosition extends PositionDetail {
-    skills: string[];
     company_name: string;
     company_slug: string;
     country_name: string;

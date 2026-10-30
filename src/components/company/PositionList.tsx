@@ -6,15 +6,18 @@ import {
     useLayoutEffect,
 } from 'preact/hooks';
 import type { ListedPosition } from '../../lib/types';
-import { foldText } from '../../lib/text';
+import { foldText, formatCount } from '../../lib/text';
 import {
     DEFAULT_SORT,
     EMPTY_FILTERS,
     FACET_LABELS,
+    FACET_PLURALS,
     SORT_LABELS,
     applyFilters,
     buildFacets,
     facetCounts,
+    facetOptions,
+    facetSummary,
     hasActiveFilters,
     parseFilters,
     parseSort,
@@ -22,6 +25,7 @@ import {
     sortKeysFor,
     sortPositions,
     type FacetKey,
+    type FacetOption,
     type FilterState,
     type PageKind,
     type SortKey,
@@ -42,7 +46,7 @@ function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
         <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
             <div class="min-w-0 flex-1">
                 <span
-                    class="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-tight line-clamp-2"
+                    class="text-sm sm:text-base font-semibold text-gray-900 leading-tight line-clamp-2"
                     style={numFont}
                 >
                     {pos.title}
@@ -126,6 +130,8 @@ export default function PositionList({ positions, kind, report }: Props) {
     const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
     const [sort, setSort] = useState<SortKey | null>(null);
     const activeSort = sort ?? DEFAULT_SORT;
+    // Some browsers keep a select :focus-visible after a mouse pick, so the ring is keyboard-only by hand.
+    const [sortByPointer, setSortByPointer] = useState(false);
     const [ready, setReady] = useState(false);
     const [shown, setShown] = useState(PAGE_SIZE);
     const debounceRef = useRef(0);
@@ -134,7 +140,15 @@ export default function PositionList({ positions, kind, report }: Props) {
         () => buildFacets(positions, kind),
         [positions, kind],
     );
-    const facetKeys = Object.keys(facets) as FacetKey[];
+    const placeKey: FacetKey = kind === 'country' ? 'company' : 'country';
+    const placeOptions = useMemo(
+        () => facetOptions(positions, placeKey),
+        [positions, placeKey],
+    );
+    const categoryOptions = useMemo(
+        () => facetOptions(positions, 'category'),
+        [positions],
+    );
 
     // Layout effect: the URL must be parsed before any input event can write a stale one.
     useLayoutEffect(() => {
@@ -189,12 +203,10 @@ export default function PositionList({ positions, kind, report }: Props) {
 
     useEffect(() => setShown(PAGE_SIZE), [filters, sort, search]);
 
-    const otherDimension = kind === 'country' ? 'company' : 'country';
-    const narrowedTo = filters.selected[otherDimension];
+    const narrowedTo = filters.selected[placeKey];
     const narrowedLabel =
         narrowedTo?.length === 1
-            ? facets[otherDimension]?.find((o) => o.value === narrowedTo[0])
-                  ?.label
+            ? facets[placeKey]?.find((o) => o.value === narrowedTo[0])?.label
             : undefined;
     const reportParams = new URLSearchParams({
         company:
@@ -205,52 +217,81 @@ export default function PositionList({ positions, kind, report }: Props) {
     });
     const reportUrl = `${TALLY_REPORT_URL}?${reportParams}`;
 
-    const hasLocalAdvantage = positions.some((p) => p.local_language_advantage);
     const filtersActive = hasActiveFilters(filters);
-    const anythingActive = filtersActive || inputValue !== '';
+
+    const renderFacet = (key: FacetKey, options: FacetOption[]) => {
+        const selected = filters.selected[key] ?? [];
+        const summary = facetSummary(key, options, selected, filtered);
+        return options.length < 2 ? (
+            summary
+        ) : (
+            <MultiSelectFilter
+                id={`filter-${key}`}
+                label={FACET_LABELS[key]}
+                plural={FACET_PLURALS[key]}
+                summary={summary}
+                options={options}
+                counts={facetCounts(positions, filters, key)}
+                selected={selected}
+                onChange={(values) => setFacet(key, values)}
+            />
+        );
+    };
+
+    const namedCategory =
+        categoryOptions.length === 1 || filters.selected.category?.length === 1;
 
     return (
         <div>
-            <div class="relative flex flex-wrap items-center gap-2 mb-3">
-                {facetKeys.map((key) => (
-                    <MultiSelectFilter
-                        key={key}
-                        id={`filter-${key}`}
-                        label={FACET_LABELS[key]}
-                        options={facets[key]!}
-                        counts={facetCounts(positions, filters, key)}
-                        selected={filters.selected[key] ?? []}
-                        onChange={(values) => setFacet(key, values)}
+            <div class="flex items-center gap-3 mb-5 sm:mb-6 px-4 bg-white border border-gray-200 rounded-lg shadow-[0_2px_12px_rgba(17,24,39,0.08)] focus-within:border-[#12956B] focus-within:ring-1 focus-within:ring-[#12956B] transition-colors">
+                <svg
+                    aria-hidden="true"
+                    class="w-5 h-5 shrink-0 text-gray-500"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width={2}
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
                     />
-                ))}
-                {hasLocalAdvantage && (
+                </svg>
+                <input
+                    type="text"
+                    aria-label="Search positions"
+                    placeholder="Search positions"
+                    value={inputValue}
+                    onInput={(e) => {
+                        const val = (e.target as HTMLInputElement).value;
+                        setInputValue(val);
+                        clearTimeout(debounceRef.current);
+                        debounceRef.current = window.setTimeout(() => {
+                            setSearch(val);
+                        }, 500);
+                    }}
+                    class="flex-1 min-w-0 py-3.5 text-base text-gray-900 placeholder:text-gray-500 bg-transparent outline-none"
+                    style={numFont}
+                />
+                {inputValue && (
                     <button
                         type="button"
-                        aria-pressed={filters.hideLocalAdvantage}
-                        onClick={() =>
-                            updateFilters({
-                                ...filters,
-                                hideLocalAdvantage: !filters.hideLocalAdvantage,
-                            })
-                        }
-                        class={`text-xs sm:text-sm font-medium px-3 py-1 rounded-full border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 ${filters.hideLocalAdvantage ? 'border-[#0F7A4F] text-[#0F7A4F] bg-[#0F7A4F]/5' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}
-                        style={numFont}
-                    >
-                        Hide local language advantage
-                    </button>
-                )}
-                {anythingActive && (
-                    <button
-                        type="button"
-                        onClick={clearAll}
-                        class="inline-flex items-center gap-1 text-xs sm:text-sm font-medium px-2 py-1 text-gray-500 hover:text-[#0F7A4F] transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
-                        style={numFont}
+                        onClick={() => {
+                            setInputValue('');
+                            setSearch('');
+                            clearTimeout(debounceRef.current);
+                        }}
+                        class="shrink-0 w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B]"
+                        aria-label="Clear search"
                     >
                         <svg
                             aria-hidden="true"
-                            class="w-3 h-3 sm:w-3.5 sm:h-3.5"
-                            width="12"
-                            height="12"
+                            class="w-4 h-4"
+                            width="16"
+                            height="16"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -262,129 +303,93 @@ export default function PositionList({ positions, kind, report }: Props) {
                                 d="M6 18L18 6M6 6l12 12"
                             />
                         </svg>
-                        Clear filters
                     </button>
                 )}
-                <label
-                    class="w-full sm:w-auto ml-auto flex items-center justify-end gap-1.5 text-xs sm:text-sm text-gray-500 border-t border-gray-200 pt-2 mt-1 sm:border-t-0 sm:pt-0 sm:mt-0"
-                    style={numFont}
-                >
-                    Sort by
-                    <span class="relative inline-flex items-center gap-1 font-medium px-3 py-1 rounded-full border border-gray-300 text-gray-700 hover:border-gray-400 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#12956B] has-[:focus-visible]:ring-offset-2">
-                        <span aria-hidden="true" class="grid">
-                            {sortKeysFor(kind).map((key) => (
-                                <span
-                                    key={key}
-                                    class={`[grid-area:1/1] ${key === activeSort ? '' : 'invisible'}`}
-                                >
-                                    {SORT_LABELS[key]}
-                                </span>
-                            ))}
-                        </span>
-                        <svg
-                            aria-hidden="true"
-                            class="w-3 h-3"
-                            width="12"
-                            height="12"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width={2.5}
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M6 9l6 6 6-6"
-                            />
-                        </svg>
-                        <select
-                            aria-label="Sort by"
-                            value={activeSort}
-                            onChange={(e) =>
-                                updateSort(
-                                    (e.target as HTMLSelectElement)
-                                        .value as SortKey,
-                                )
-                            }
-                            class="absolute inset-0 w-full opacity-0 cursor-pointer"
-                        >
-                            {sortKeysFor(kind).map((key) => (
-                                <option key={key} value={key}>
-                                    {SORT_LABELS[key]}
-                                </option>
-                            ))}
-                        </select>
-                    </span>
-                </label>
             </div>
 
-            {/* Search */}
-            <div class="w-full border-b border-gray-200 pb-2 mb-2 flex items-center">
-                <div class="relative flex-1 min-w-0 sm:flex-none sm:w-56 md:w-64">
-                    <svg
-                        class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width={2}
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-                        />
-                    </svg>
-                    <input
-                        type="text"
-                        aria-label="Search by title"
-                        placeholder="Search by title..."
-                        value={inputValue}
-                        onInput={(e) => {
-                            const val = (e.target as HTMLInputElement).value;
-                            setInputValue(val);
-                            clearTimeout(debounceRef.current);
-                            debounceRef.current = window.setTimeout(() => {
-                                setSearch(val);
-                            }, 200);
-                        }}
-                        class={`w-full text-xs sm:text-sm bg-transparent pl-5 sm:pl-6 ${inputValue ? 'pr-6' : 'pr-1'} py-1 outline-none`}
+            <div class="mb-4">
+                <div
+                    class="relative min-w-0 text-xl sm:text-2xl md:text-[1.625rem] leading-snug font-bold text-gray-900"
+                    style={numFont}
+                    data-position-results
+                >
+                    <span role="status">
+                        {formatCount(filtered.length)}{' '}
+                        {filtered.length === 1 ? 'position' : 'positions'}
+                    </span>{' '}
+                    {kind === 'country' ? 'at' : 'in'}{' '}
+                    {renderFacet(placeKey, placeOptions)}{' '}
+                    {namedCategory ? 'in' : 'across'}{' '}
+                    {renderFacet('category', categoryOptions)}
+                    {filtersActive && (
+                        <>
+                            {' '}
+                            <button
+                                type="button"
+                                onClick={() => updateFilters(EMPTY_FILTERS)}
+                                class="align-[0.16em] sm:align-[0.18em] md:align-[0.22em] text-sm sm:text-base font-normal text-gray-500 hover:text-gray-700 hover:underline transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
+                            >
+                                Clear filters
+                            </button>
+                        </>
+                    )}
+                </div>
+                <div class="flex justify-end mt-2">
+                    <label
+                        class="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500"
                         style={numFont}
-                    />
-                    {inputValue && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setInputValue('');
-                                setSearch('');
-                                clearTimeout(debounceRef.current);
-                            }}
-                            class="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-600 transition-colors cursor-pointer"
-                            aria-label="Clear search"
+                    >
+                        Sort by
+                        <span
+                            class={`icon-link relative inline-flex items-center gap-1 font-semibold text-[#0F7A4F] rounded ${sortByPointer ? '' : 'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#12956B] has-[:focus-visible]:ring-offset-2'}`}
                         >
+                            <span aria-hidden="true">
+                                {SORT_LABELS[activeSort]}
+                            </span>
                             <svg
-                                class="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                                aria-hidden="true"
+                                class="w-3 h-3"
                                 width="12"
                                 height="12"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
-                                stroke-width={2.5}
+                                stroke-width={3}
                             >
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                    d="M6 18L18 6M6 6l12 12"
+                                    d="M6 9l6 6 6-6"
                                 />
                             </svg>
-                        </button>
-                    )}
+                            <select
+                                aria-label="Sort by"
+                                value={activeSort}
+                                onPointerDown={() => setSortByPointer(true)}
+                                onBlur={() => setSortByPointer(false)}
+                                onChange={(e) =>
+                                    updateSort(
+                                        (e.target as HTMLSelectElement)
+                                            .value as SortKey,
+                                    )
+                                }
+                                class="absolute inset-0 w-full opacity-0 cursor-pointer"
+                            >
+                                {sortKeysFor(kind).map((key) => (
+                                    <option key={key} value={key}>
+                                        {SORT_LABELS[key]}
+                                    </option>
+                                ))}
+                            </select>
+                        </span>
+                    </label>
                 </div>
             </div>
 
-            {/* Position list */}
-            <ul class="hover-hl-list" data-position-results>
+            <ul
+                class="hover-hl-list border-t border-gray-200"
+                data-position-results
+            >
                 {filtered.length === 0 ? (
                     <li class="py-12 text-center text-gray-500">
                         {search || filtersActive ? (
@@ -425,13 +430,13 @@ export default function PositionList({ positions, kind, report }: Props) {
                 )}
             </ul>
 
-            {/* Footer */}
             <div class="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
                 <span
                     class="text-center xs:text-left text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
                     style={numFont}
                 >
-                    {Math.min(shown, filtered.length)} of {filtered.length}{' '}
+                    {formatCount(Math.min(shown, filtered.length))} of{' '}
+                    {formatCount(filtered.length)}{' '}
                     <span class="max-xs:block">positions</span>
                 </span>
                 {filtered.length > shown && (

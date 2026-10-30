@@ -1,7 +1,12 @@
-import { groupBy, type BuildPosition } from './build-queries';
+import { groupBy } from './build-queries';
 import { nameToSlug } from './country-flags';
 import { DEFAULT_SORT, sortPositions } from './position-filters';
-import type { CompanyStats, CountryStats, ListedPosition } from './types';
+import type {
+    CompanyStats,
+    CountryStats,
+    ListedPosition,
+    PositionDetail,
+} from './types';
 
 /** Top-level routes, public/ entries and redirect sources; detail-paths.test.ts keeps it complete. */
 export const RESERVED_SLUGS = new Set([
@@ -20,7 +25,6 @@ export interface CountryPage {
     kind: 'country';
     slug: string;
     country: CountryStats;
-    companyCount: number;
     positions: ListedPosition[];
 }
 
@@ -40,7 +44,7 @@ export type DetailPage = CountryPage | CompanyPage;
 export function buildDetailPages(
     countries: CountryStats[],
     companies: CompanyStats[],
-    positions: BuildPosition[],
+    positions: PositionDetail[],
 ): DetailPage[] {
     const countriesById = new Map(countries.map((c) => [c.country_id, c]));
     const countriesBySlug = new Map(countries.map((c) => [c.slug, c]));
@@ -90,7 +94,6 @@ export function buildDetailPages(
 
     const positionsByCountry = groupBy(listed, (p) => p.country_slug);
     const positionsByCompany = groupBy(listed, (p) => p.company_slug);
-    const companyCountByCountry = groupBy(listedCompanies, (c) => c.country_id);
 
     const countryPages: CountryPage[] = countries
         .filter((country) => country.total_positions > 0)
@@ -98,8 +101,6 @@ export function buildDetailPages(
             kind: 'country',
             slug: country.slug,
             country,
-            companyCount:
-                companyCountByCountry.get(country.country_id)?.length ?? 0,
             positions: sortPositions(
                 positionsByCountry.get(country.slug) ?? [],
                 DEFAULT_SORT,

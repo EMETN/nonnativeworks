@@ -84,7 +84,7 @@ Company slugs are derived at runtime via `nameToSlug()` — no slug column in th
 
 - Country and company detail pages share the root: `/portugal`, `/tekever` (one route, `src/pages/[slug].astro`, built by `src/lib/detail-paths.ts`). `/countries` and `/companies` are the list pages.
 - A company slug matching a country slug or a `RESERVED_SLUGS` entry fails the build; rename the company in admin.
-- Position filters live in the query string, comma-separated: `/portugal?company=tekever,feedzai&category=engineering-it&local_advantage=hide&sort=company` (`src/lib/position-filters.ts`). `sort` is only written once a visitor picks one.
+- Position filters live in the query string, comma-separated: `/portugal?company=tekever,feedzai&category=engineering-it&sort=company` (`src/lib/position-filters.ts`). `sort` is only written once a visitor picks one.
 
 ## Potential next improvements
 

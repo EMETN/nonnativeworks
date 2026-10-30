@@ -105,6 +105,52 @@
     margin-top: 0;
 }
 
+/* text-decoration skips inline SVGs, so a background draws the underline beneath the icon too. */
+.icon-link {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0 0.08em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+@media (hover: hover) {
+    :hover > .icon-link,
+    .icon-link:hover {
+        background-size: 100% 0.08em;
+    }
+}
+
+.filter-check {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 1.5px solid var(--color-gray-400);
+    border-radius: 0.25rem;
+    background: #fff center / 100% no-repeat;
+    cursor: inherit;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.filter-check:checked {
+    border-color: #0f7a4f;
+    background-color: #0f7a4f;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6.5'/%3E%3C/svg%3E");
+}
+
+.filter-check:disabled {
+    border-color: var(--color-gray-200);
+    background-color: var(--color-gray-50);
+}
+
+.filter-check:focus-visible {
+    outline: 2px solid #12956b;
+    outline-offset: 2px;
+}
+
 /* A shared filtered link would otherwise flash the full list before the island applies the query string. */
 html[data-filtered]:not([data-filters-ready]) [data-position-results] {
     visibility: hidden;

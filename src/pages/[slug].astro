@@ -3,18 +3,14 @@ import { createHash } from 'node:crypto';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CompanyGauge from '../components/company/CompanyGauge.astro';
 import PositionList from '../components/company/PositionList.tsx';
-import StatsDescription from '../components/shared/StatsDescription.astro';
 import Breadcrumb from '../components/shared/Breadcrumb.astro';
 import TimeAgo from '../components/shared/TimeAgo';
 import { getCountryStats } from '../lib/queries';
 import { flagWidth, FLAG_HEIGHT } from '../lib/flag-dimensions';
 import { fetchAllCompanyStats, fetchAllPositions } from '../lib/build-queries';
 import { buildDetailPages, type DetailPage } from '../lib/detail-paths';
-import {
-    FACET_KEYS,
-    LOCAL_ADVANTAGE_PARAM,
-    SORT_PARAM,
-} from '../lib/position-filters';
+import { FACET_KEYS, SORT_PARAM } from '../lib/position-filters';
+import { formatCount } from '../lib/text';
 import { cleanPathname } from '../lib/url-path';
 
 export async function getStaticPaths() {
@@ -48,13 +44,11 @@ const listName = isCountry ? 'Countries' : 'Companies';
 const listHref = isCountry ? '/countries' : '/companies';
 
 const description = isCountry
-    ? `Browse ${totalPositions} open positions in ${name}. ${englishPositions} can be done in English without knowing the local language.`
-    : `${name} has ${totalPositions} open positions across ${page.country_count} ${page.country_count === 1 ? 'country' : 'countries'}, and ${englishPositions} don't require the local language(s).`;
+    ? `Browse ${formatCount(totalPositions)} open positions in ${name}. ${formatCount(englishPositions)} can be done in English without knowing the local language.`
+    : `${name} has ${formatCount(totalPositions)} open positions across ${page.country_count} ${page.country_count === 1 ? 'country' : 'countries'}, and ${formatCount(englishPositions)} don't require the local language(s).`;
 
 const cleanUrl = new URL(cleanPathname(Astro.url), Astro.url).href;
-const filterParams = [...FACET_KEYS, LOCAL_ADVANTAGE_PARAM, SORT_PARAM].join(
-    ',',
-);
+const filterParams = [...FACET_KEYS, SORT_PARAM].join(',');
 // Astro doesn't CSP-hash is:inline scripts, so this pre-paint script's hash is added by hand.
 const filterFlagScript = `const params = new URLSearchParams(location.search);
 if (document.currentScript.dataset.params.split(',').some((k) => params.has(k))) {
@@ -88,7 +82,7 @@ Astro.csp?.insertScriptHash(
             ]}
         />
 
-        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 md:mb-4 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="flex items-center gap-2 sm:gap-3 md:gap-4 text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
@@ -112,41 +106,6 @@ Astro.csp?.insertScriptHash(
             )}
         </div>
 
-        {totalPositions > 0 && (
-            <StatsDescription>
-                {isCountry ? (
-                    <>
-                        Across{' '}
-                        <strong class="font-semibold text-gray-900">
-                            {page.companyCount}
-                        </strong>{' '}
-                        {page.companyCount === 1 ? 'company' : 'companies'}
-                        ,{' '}
-                    </>
-                ) : null}
-                <strong class="font-semibold text-gray-900">
-                    {englishPositions.toLocaleString()}
-                </strong>{' '}
-                of{' '}
-                <strong class="font-semibold text-gray-900">
-                    {totalPositions.toLocaleString()}
-                </strong>{' '}
-                open {totalPositions === 1 ? 'position' : 'positions'}{' '}
-                {!isCountry && (
-                    <>
-                        across{' '}
-                        <strong class="font-semibold text-gray-900">
-                            {page.country_count}
-                        </strong>{' '}
-                        {page.country_count === 1
-                            ? 'country'
-                            : 'countries'}{' '}
-                    </>
-                )}
-                {englishPositions === 1 ? "doesn't" : "don't"} require the local
-                language(s).
-            </StatsDescription>
-        )}
         {totalPositions === 0 ? (
             <div class="text-center py-16 text-gray-500">
                 <p>
