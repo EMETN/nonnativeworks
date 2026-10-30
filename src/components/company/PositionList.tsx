@@ -189,9 +189,6 @@ export default function PositionList({ positions, kind, report }: Props) {
 
     useEffect(() => setShown(PAGE_SIZE), [filters, sort, search]);
 
-    const careerUrls = new Set(filtered.map((p) => p.career_page_url));
-    const careerPageUrl = careerUrls.size === 1 ? [...careerUrls][0] : null;
-
     const otherDimension = kind === 'country' ? 'company' : 'country';
     const narrowedTo = filters.selected[otherDimension];
     const narrowedLabel =
@@ -322,7 +319,7 @@ export default function PositionList({ positions, kind, report }: Props) {
             </div>
 
             {/* Search */}
-            <div class="w-full border-b border-gray-200 pb-2 mb-2 flex items-center justify-between gap-3">
+            <div class="w-full border-b border-gray-200 pb-2 mb-2 flex items-center">
                 <div class="relative flex-1 min-w-0 sm:flex-none sm:w-56 md:w-64">
                     <svg
                         class="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 pointer-events-none"
@@ -384,15 +381,6 @@ export default function PositionList({ positions, kind, report }: Props) {
                         </button>
                     )}
                 </div>
-                <a
-                    href={reportUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="shrink-0 text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
-                >
-                    Report an issue
-                    <span class="sr-only"> (opens in a new tab)</span>
-                </a>
             </div>
 
             {/* Position list */}
@@ -437,8 +425,16 @@ export default function PositionList({ positions, kind, report }: Props) {
                 )}
             </ul>
 
-            {filtered.length > shown && (
-                <div class="mt-4 text-center">
+            {/* Footer */}
+            <div class="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+                <span
+                    class="text-center xs:text-left text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
+                    style={numFont}
+                >
+                    {Math.min(shown, filtered.length)} of {filtered.length}{' '}
+                    <span class="max-xs:block">positions</span>
+                </span>
+                {filtered.length > shown && (
                     <button
                         type="button"
                         onClick={() => setShown(shown + PAGE_SIZE)}
@@ -446,46 +442,16 @@ export default function PositionList({ positions, kind, report }: Props) {
                     >
                         Show more
                     </button>
-                </div>
-            )}
-
-            {/* Footer */}
-            <div class="mt-4 flex items-center justify-between">
-                <span
-                    class="text-[0.6rem] sm:text-xs text-gray-500 font-semibold tracking-wider uppercase"
-                    style={numFont}
-                >
-                    {Math.min(shown, filtered.length)} of {filtered.length}{' '}
-                    positions
-                </span>
-                {careerPageUrl && (
-                    <a
-                        href={careerPageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-[0.65rem] sm:text-xs text-[#0F7A4F] hover:text-[#084A2F] font-semibold tracking-wider uppercase"
-                        style={numFont}
-                    >
-                        All positions
-                        <span class="sr-only"> (opens in a new tab)</span>
-                        <svg
-                            aria-hidden="true"
-                            class="w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5 inline-block ml-1"
-                            width="16"
-                            height="16"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width={1.5}
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M10.0002 5H8.2002C7.08009 5 6.51962 5 6.0918 5.21799C5.71547 5.40973 5.40973 5.71547 5.21799 6.0918C5 6.51962 5 7.08009 5 8.2002V15.8002C5 16.9203 5 17.4801 5.21799 17.9079C5.40973 18.2842 5.71547 18.5905 6.0918 18.7822C6.5192 19 7.07899 19 8.19691 19H15.8031C16.921 19 17.48 19 17.9074 18.7822C18.2837 18.5905 18.5905 18.2839 18.7822 17.9076C19 17.4802 19 16.921 19 15.8031V14M20 9V4M20 4H15M20 4L13 11"
-                            />
-                        </svg>
-                    </a>
                 )}
+                <a
+                    href={reportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="col-start-3 text-center xs:text-right text-xs sm:text-sm font-medium text-gray-500 hover:text-[#0F7A4F] hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2 rounded"
+                >
+                    Report <span class="max-xs:block">an issue</span>
+                    <span class="sr-only"> (opens in a new tab)</span>
+                </a>
             </div>
         </div>
     );

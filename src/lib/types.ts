@@ -26,7 +26,6 @@ export interface ListedPosition extends PositionDetail {
     company_slug: string;
     country_name: string;
     country_slug: string;
-    career_page_url: string | null;
 }
 
 export interface GlobalStats {

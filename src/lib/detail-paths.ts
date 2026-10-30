@@ -63,7 +63,6 @@ export function buildDetailPages(
                 company_slug: nameToSlug(company.name),
                 country_name: country.name,
                 country_slug: country.slug,
-                career_page_url: company.career_page_url,
             },
         ];
     });
