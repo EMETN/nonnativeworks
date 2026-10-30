@@ -55,6 +55,10 @@ companies:
       url: https://aiven.io/careers/job
       min_positions: 10
 
+    - name: Allianz
+      url: https://careers.allianz.com/global/en/search-results
+      min_positions: 10
+
     - name: AlphaSense
       url: https://www.alpha-sense.com/careers
       min_positions: 1
@@ -77,6 +81,10 @@ companies:
 
     - name: Autodesk
       url: https://autodesk.wd1.myworkdayjobs.com/Ext?locationCountry=6a800a4736884df5826858d435650f45&locationCountry=bd34c524a6a04ae6915f5d96fa086199&locationCountry=f2e609fe92974a55a05fc1cdc2852122&locationCountry=2e8c5034deb045d49315417c347472ca&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8cd04a563fd94da7b06857a79faaf815&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=fc078443155c4ad294201ecf5a61a499&locationCountry=1face6f426c14de9979a134697da0db3&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=d004c0d1a6c84511ab048669fcdf9fd7
+      min_positions: 10
+
+    - name: Bayer
+      url: https://bayer.eightfold.ai/careers
       min_positions: 10
 
     - name: Bolt
@@ -167,6 +175,10 @@ companies:
       url: https://happeo.recruitee.com
       min_positions: 1
 
+    - name: Heineken
+      url: https://careers.theheinekencompany.com/Job-Listing
+      min_positions: 10
+
     - name: Hiab
       url: https://careers.hiab.com/search
       min_positions: 3
@@ -202,6 +214,10 @@ companies:
     - name: Lovable
       url: https://lovable.dev/careers
       min_positions: 10
+
+    - name: Lufthansa Group
+      url: https://apply.lufthansagroup.careers/index.php?ac=search_result&search_criterion_channel%5B%5D=12&language=2
+      min_positions: 30
 
     - name: Maersk
       url: https://www.maersk.com/careers
@@ -330,6 +346,8 @@ companies:
       url: https://jobs.eu.lever.co/seb
       min_positions: 5
 
+    # 111 positions across 13 tracked countries once the country facet was
+    # widened from 9 countries to all 25; it was 41 before, hence the old floor of 5.
     - name: Siemens Healthineers
       url: https://careers.siemens-healthineers.com/global/en/search-results
       extra_urls:

@@ -68,7 +68,15 @@ do
 done
 
 # Akamai edge (AS20940) rotates IPs across a large pool on a ~20-77s TTL, so an init-time
-# snapshot goes stale before the scraper connects (www.novonordisk.com).
+# snapshot goes stale before the scraper connects (www.novonordisk.com, www.bmwgroup.jobs).
+#
+# www.bmwgroup.jobs (CNAME grpw-ion.bmw.com.edgekey.net -> e26981.dsca.akamaiedge.net)
+# is answered from two clusters, and which one DNS hands out changes minute to minute:
+#   95.100.0.0/15    — every IP reverse-resolves to akamaitechnologies.com
+#   80.239.128.0/17  — Akamai nodes deployed inside Telia's network, so they carry no
+#                      akamaitechnologies.com PTR; reached through the same
+#                      akamaiedge.net CNAME, which is what identifies them.
+# Without both, the scrape fails whenever DNS lands on the cluster that isn't covered.
 echo "Adding Akamai edge IP ranges..."
 for cidr in \
     2.16.0.0/13 \
@@ -76,10 +84,21 @@ for cidr in \
     23.32.0.0/11 \
     23.192.0.0/11 \
     72.246.0.0/15 \
+    80.239.128.0/17 \
     88.221.0.0/16 \
+    95.100.0.0/15 \
     96.6.0.0/15 \
     104.64.0.0/10 \
     184.24.0.0/13
+do
+    ipset add allowed-domains "$cidr" -exist
+done
+
+# CloudFront rotates edge IPs per resolver and over time, so the per-domain snapshot below
+# misses addresses (careers.allianz.com). Every IP it has answered with is in 65.9.0.0/16.
+echo "Adding CloudFront edge IP ranges..."
+for cidr in \
+    65.9.0.0/16
 do
     ipset add allowed-domains "$cidr" -exist
 done
@@ -145,10 +164,16 @@ ats_domains=(
 # CDN/multi-node hosts — each edge answers with a different slice of the IP pool, so these
 # are resolved separately below via several DNS resolvers (not the single-resolver loop).
 cdn_domains=(
+    "careers.allianz.com"  # Allianz — CloudFront, rotates IPs
+    # BMW — Akamai, rotates IPs. Both names are needed: the apex 302s to www, and
+    # www is a separate edgekey CNAME that resolves to its own pool.
+    "bmwgroup.jobs"  # BMW
+    "www.bmwgroup.jobs"  # BMW
     "jobs.booking.com"  # Booking.com
     "careers.futurice.com"  # Futurice
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Orkla, Nokia)
+    "careers.theheinekencompany.com"  # Heineken (Cloudflare-fronted)
     "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
     "upcloud.teamtailor.com"  # UpCloud
@@ -166,7 +191,6 @@ company_domains=(
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
     "akqa.com"  # AKQA
-    "careers.allianz.com"  # Allianz
     "alpha-sense.com"  # AlphaSense
     "careers.amd.com"  # AMD
     "www.anthropic.com"  # Anthropic
@@ -175,7 +199,6 @@ company_domains=(
     "autodesk.wd1.myworkdayjobs.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
-    "bmwgroup.jobs"  # BMW
     "bolt.eu"  # Bolt
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
@@ -201,7 +224,6 @@ company_domains=(
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo
-    "careers.theheinekencompany.com"  # Heineken
     "careers.hiab.com"  # Hiab
     "www.iceye.com"  # ICEYE
     "if.wd3.myworkdayjobs.com"  # If
@@ -277,6 +299,7 @@ company_domains=(
     "careers.wartsila.com"  # Wärtsilä
     "wise.jobs"  # Wise
     "careers.wolt.com"  # Wolt
+    "wpp.careersitecloud.com"  # WPP
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando
 )

@@ -5,6 +5,10 @@
 # GitHub Actions runner IPs. Run this locally (or from a VPS with a
 # residential proxy) instead of the scheduled GitHub Actions workflow.
 #
+# A company also belongs here when its board is simply too big to crawl on the
+# scheduled run's budget: batch_run.py allows 700s per company and the workflow
+# 45 minutes for the whole list, while run-local.sh allows 3600s per company.
+#
 # ─── Fields ───────────────────────────────────────────────────────────────────
 #   name            Display name — for readability only, not used by the scraper
 #   url             Career page URL passed to the scraper (required)
@@ -23,6 +27,39 @@ companies:
       url: https://www.barona.fi/en/jobs/
       min_positions: 10
 
+    # Akamai holds the connection open without answering requests from GitHub
+    # Actions runner IPs: the TLS handshake completes, then the read times out
+    # (the scheduled and preview runs both hit this; it works from other IPs).
+    - name: BMW Group
+      url: https://www.bmwgroup.jobs/en.html
+      min_positions: 50
+
     - name: CGI
       url: https://cgi.njoyn.com
+      min_positions: 10
+
+    # Here for volume, not for a residential IP. ~1,270 postings across the 25
+    # tracked-country facets, served 6 to a page, so a full run is ~212 listing
+    # pages plus a detail fetch per English-titled job — ~45 minutes serially,
+    # past both scheduled-run budgets but comfortably inside run-local.sh's hour.
+    #
+    # Keep it serial. Five requests in flight cuts the run to ~11 minutes, but a
+    # sustained run at that rate drew nginx 406s partway through and then a
+    # tenant-wide IP block that also took out Siemens Healthineers. If you do set
+    # `concurrency` in generic_scrapers.yaml, watch a whole run before trusting it.
+    #
+    # min_positions guards the listing phase: a block during pagination collapses
+    # the count. It cannot catch a block that starts during detail enrichment —
+    # that leaves the count intact while jobs silently keep "Multiple Locations"
+    # and lose their descriptions, so skim the run's stderr for 406s.
+    - name: Siemens
+      url: https://jobs.siemens.com/en_US/externaljobs/SearchJobs/
+      min_positions: 30
+
+    # wpp.careersitecloud.com answers GitHub Actions runner IPs with
+    # 403 Forbidden on the first request, so the preview and the scheduled run
+    # cannot scrape it. From elsewhere a full run takes ~7 minutes (it is
+    # throttled to one request per second).
+    - name: WPP
+      url: https://wpp.careersitecloud.com/search
       min_positions: 10

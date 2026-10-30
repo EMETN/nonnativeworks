@@ -18,6 +18,18 @@
 #                         string value is used as the HTML to extract cards from.
 #                         Use when the endpoint wraps HTML inside a JSON envelope
 #                         (e.g. { "results": "<ul>...</ul>" }).
+#   request_delay         Minimum seconds between the starts of two requests, for
+#                         sites that rate-limit (WPP's nginx 429s above ~1/sec).
+#                         Applies to listing and detail-page fetches alike.
+#                         Default: 0 (no throttling)
+#   concurrency           Requests in flight at once, for listing pages and detail
+#                         pages alike. Default: 1 (one at a time; forced to 1
+#                         whenever request_delay is set). Raising it is the single
+#                         biggest speed-up available on a slow-rendering site, but
+#                         verify against a FULL run first — five in flight over
+#                         ~1,000 Siemens pages earned a tenant-wide IP block.
+#   max_retries           Retries for a 429 or 5xx response, with exponential
+#                         backoff. Default: 0
 #   description_selector  CSS selector for the job description on the detail page
 #                         Used for language classification (English-titled jobs only).
 #                         Default: tries .jobdescription, .job-description,
@@ -33,6 +45,15 @@
 #   pagination.param      Query-parameter name (e.g. "startrow", "page", "i")
 #   pagination.page_size  Expected results per page; stop when fewer are returned
 #   pagination.max_pages  Safety ceiling (default: 200)
+#   pagination.value_template
+#                         Format string wrapping the computed page value, with a
+#                         {page} placeholder. Use when the site wants more than a
+#                         bare number in the parameter (e.g. "page={page}").
+#   pagination.param_join Separator used to append the page value to a value the
+#                         country filter already set on the same parameter,
+#                         instead of overwriting it. Use when a site packs its
+#                         refinement and page number into one parameter — e.g.
+#                         "&" yields qs_search_job=refine.country=spain&page=2.
 #
 # ── extract_mode: css_cards (default) ────────────────────────────────────────
 #
@@ -105,6 +126,20 @@
 #   fields.country_subfield   Dot-path within each location object for country code
 #                             One job is created per location object (fan-out).
 #   fields.job_function   Dot-path to job function/department string
+#   url_template          (script_var_json) Job URL built from payload fields with
+#                         {field} placeholders, e.g.
+#                         'https://example.com/job/{jobId}'. Use instead of
+#                         fields.url when the listing carries no link to the posting.
+#   fields.description    (script_var_json) Key holding description text already in
+#                         the listing payload. Used as a fallback when the detail
+#                         page yields nothing — it never replaces that fetch. A
+#                         listing teaser is usually too short to classify language
+#                         from, so treating one as sufficient silently marks
+#                         local-language postings as English-friendly.
+#   description_json_key  Key to read the description from in the detail page's
+#                         embedded JSON, for sites that render the posting
+#                         client-side so no CSS selector can reach it. Tried only
+#                         when description_selector yields too little text.
 #                         (numeric parts index into arrays, e.g. "depts.0.name")
 #   fields.description    Dot-path to the description HTML; "$78"-style RSC
 #                         references are resolved. Skips the detail page fetch.
@@ -155,8 +190,24 @@ scrapers:
           job_function: header.teamTitle
 
     # ── Allianz ────────────────────────────────────────────────────────────────────
+    # Phenom People site fronted by CloudFront; jobs come from the phApp payload.
+    # location uses cityStateCountry, not city: the bare city resolves to a country
+    # for barely half the board (COQUELLES, LOGROÑO, TRIESTE, "Upcountry" and the
+    # like are not in the city map), while "WARSZAWA, Poland" resolves every time.
+    # Every job fetches its detail page. descriptionTeaser is kept only as a
+    # fallback for when that fetch yields nothing — it is far too short to decide
+    # the language question on its own: a ~300-char German teaser carries too few
+    # umlauts for the classifier's character count and reads as English to it.
+    # The posting's description lives in a script payload rather than the DOM,
+    # hence description_json_key instead of a CSS selector.
+    # The payload has no link to the posting itself — applyUrl and imApplyUrl both
+    # point at the SuccessFactors application form — so url_template rebuilds the
+    # real job page from jobId. The trailing title slug the site puts on its own
+    # links is decorative: the id alone serves the right posting.
+    # multi_location_array, not multi_location: the flat strings end in a postcode.
     - match: 'careers.allianz.com/global/en/search-results'
       name: Allianz
+      max_retries: 3
       extract_mode: script_var_json
       var_name: phApp
       data_path: data.jobs
@@ -166,10 +217,15 @@ scrapers:
           page_size: 10
       extra_params:
           s: 1
+      url_template: 'https://careers.allianz.com/global/en/job/{jobId}'
+      description_json_key: description
       fields:
           title: title
-          url: applyUrl
-          location: city
+          location: cityStateCountry
+          locations: multi_location_array
+          location_subfield: cityStateCountry
+          job_function: category
+          description: descriptionTeaser
 
       # ── Metso ────────────────────────────────────────────────────────────────────
     - match: 'metso.com/corporate/careers/open-jobs'
@@ -363,6 +419,44 @@ scrapers:
           location: location
           locations: multi_location
 
+    # ── Siemens ──────────────────────────────────────────────────────────────────
+    # Avature portal, same markup family as Siemens Healthineers above — but a far
+    # bigger board: ~1,270 postings across the 25 tracked-country facets, served 6
+    # to a page (folderRecordsPerPage is capped server-side; 25/50/100 all return 6).
+    # That is ~212 listing pages plus a detail fetch per English-titled job: ~45
+    # minutes, which is why Siemens lives in companies-local.yaml rather than the
+    # scheduled companies.yaml. Leave it serial — see the note there before setting
+    # `concurrency`, which is fast but is what earned a tenant-wide IP block.
+    # list_url pins the bare search URL so extra_params is the only source of truth —
+    # the facet-filtered URL an operator pastes into the admin tab would otherwise be
+    # appended to these params, sending 42414 twice.
+    # The 42414 facet is the country refinement — one numeric option ID per country,
+    # all 25 tracked ones listed here in the same order as the table in
+    # scraper/country-filters.md. 42414_format and listFilterMode come from the
+    # site's own filtered URL and are required — dropping them drops the filter.
+    # About 28% of cards read "Multiple Locations" rather than a city, so
+    # detail_location_selector resolves those from the detail page and fans them out
+    # into one entry per country they cover.
+    - match: 'jobs.siemens.com'
+      name: Siemens
+      list_url: https://jobs.siemens.com/en_US/externaljobs/SearchJobs/
+      extra_params:
+          '42414': '[812123,812131,812009,812145,812141,812124,812008,812020,812134,812132,811990,812024,812126,812120,812010,812011,812133,812130,812027,812023,812097,812022,812119,812013,812129]'
+          '42414_format': '17570'
+          listFilterMode: '1'
+          folderRecordsPerPage: '6'
+      pagination:
+          type: offset
+          param: folderOffset
+          page_size: 6
+          # ~212 pages today; the 200 default would silently cut the tail.
+          max_pages: 300
+      card_selector: 'article.article--result'
+      title_selector: 'h3.article__header__text__title a.link'
+      location_selector: 'span.list-item-location'
+      description_selector: '#section1__content .article__content__view__field__value'
+      detail_location_selector: 'ul.list--locations li'
+
     # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
     - match: 'career.nordnetab.com'
       name: Nordnet
@@ -493,6 +587,131 @@ scrapers:
       location_selector: 'div[id$="-desktop-section-location-value"]'
       description_selector: '.jobdescription'
 
+    # ── WPP ────────────────────────────────────────────────────────────────────
+    # CareerSiteCloud. Server-rendered HTML — no browser needed. Every refinement
+    # and the page number are packed into one query parameter as an inner
+    # querystring (qs_search_job=refine.country=spain&page=2), which is what
+    # value_template + param_join build. Without a country filter the full list
+    # is ~2,400 jobs over 119 pages, so filtering per tracked country cuts the
+    # run to a fraction of that and tags every job with an authoritative country.
+    # The site's nginx 429s above roughly one request per second — hence
+    # request_delay; max_retries covers the occasional 429 that still slips
+    # through. The listing card's description is the same boilerplate blurb on
+    # every job, so language classification depends on the detail page.
+    # Country values are the site's own facet slugs ("+" is its space).
+    # Countries with no postings today are kept in the list so new ones get
+    # picked up; each costs one request.
+    - match: 'wpp.careersitecloud.com'
+      name: WPP
+      request_delay: 1
+      max_retries: 3
+      country_filter_param: 'qs_search_job'
+      countries:
+          - FI
+          - SE
+          - 'NO'
+          - DK
+          - IS
+          - NL
+          - DE
+          - EE
+          - LV
+          - LT
+          - PL
+          - FR
+          - BE
+          - LU
+          - CH
+          - ES
+          - PT
+          - AT
+          - IT
+          - HU
+          - HR
+          - RO
+          - BG
+          - GR
+          - CZ
+      country_values:
+          FI: 'refine.country=finland'
+          SE: 'refine.country=sweden'
+          'NO': 'refine.country=norway'
+          DK: 'refine.country=denmark'
+          IS: 'refine.country=iceland'
+          NL: 'refine.country=netherlands'
+          DE: 'refine.country=germany'
+          EE: 'refine.country=estonia'
+          LV: 'refine.country=latvia'
+          LT: 'refine.country=lithuania'
+          PL: 'refine.country=poland'
+          FR: 'refine.country=france'
+          BE: 'refine.country=belgium'
+          LU: 'refine.country=luxembourg'
+          CH: 'refine.country=switzerland'
+          ES: 'refine.country=spain'
+          PT: 'refine.country=portugal'
+          AT: 'refine.country=austria'
+          IT: 'refine.country=italy'
+          HU: 'refine.country=hungary'
+          HR: 'refine.country=croatia'
+          RO: 'refine.country=romania'
+          BG: 'refine.country=bulgaria'
+          GR: 'refine.country=greece'
+          CZ: 'refine.country=czech+republic'
+      pagination:
+          type: index
+          param: 'qs_search_job'
+          page_size: 20
+          value_template: 'page={page}'
+          param_join: '&'
+      card_selector: '.job-listing-full li'
+      title_selector: 'h3 a'
+      location_selector: '.category-location .city'
+      description_selector: '.description-info'
+      job_function_selector: 'tr:has(td.job-field:-soup-contains("Category")) td.job-field-value'
+
+    # ── Heineken ───────────────────────────────────────────────────────────────
+    # Drupal Views listing, server-rendered. Two quirks:
+    #  • The view sits on pager element 2, so Drupal wants the multi-pager form
+    #    "page=,,N" — a plain "page=N" is silently ignored and every request
+    #    returns page 1. value_template builds it.
+    #  • The page is wired for infinite scroll, but the same markup comes back
+    #    from a plain paginated GET, so no browser is needed.
+    # list_url pins the bare listing URL so the country filter below is the only
+    # source of truth — pasting an already-filtered URL into the admin tab can't
+    # double up the params. The 16 countries are every tracked country Heineken's
+    # own filter offers; it has no FI/SE/NO/DK/IS/EE/LV/LT/LU option at all.
+    - match: 'careers.theheinekencompany.com'
+      name: Heineken
+      list_url: https://careers.theheinekencompany.com/Job-Listing
+      extra_params:
+          field_location_country_code_1[]:
+              - AT
+              - BE
+              - BG
+              - CH
+              - CZ
+              - DE
+              - ES
+              - FR
+              - GR
+              - HR
+              - HU
+              - IT
+              - NL
+              - PL
+              - PT
+              - RO
+      pagination:
+          type: index
+          param: page
+          page_size: 10
+          value_template: ',,{page}'
+      card_selector: '.job-list-item'
+      title_selector: '.job-title a'
+      location_selector: '.job-location .nation'
+      description_selector: '.job-fields'
+      job_function_selector: '.job-meta-grid .function'
     # ── Klarna ─────────────────────────────────────────────────────────────────────
     # Detail pages render client-side, so descriptions come from the listing payload.
     - match: 'jobs.deel.com/klarna'
