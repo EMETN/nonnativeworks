@@ -25,6 +25,41 @@ def _listing_html(*jobs: dict) -> str:
 
 
 class ExtractScriptVarJsonTest(unittest.TestCase):
+    def test_location_subfield_groups_by_country_past_a_trailing_postcode(self):
+        cfg = {
+            "fields": {
+                "title": "title",
+                "url": "url",
+                "location": "cityStateCountry",
+                "locations": "multi_location_array",
+                "location_subfield": "cityStateCountry",
+            },
+        }
+        item = {
+            "title": "Head of Invoicing",
+            "url": "/job/1",
+            "cityStateCountry": "Munich, Germany",
+            "multi_location": ["Munich, Germany, 80333"],
+            "multi_location_array": [
+                {"cityStateCountry": "Munich, Germany"},
+                {"cityStateCountry": "Saint-Ouen, Seine-Saint-Denis, France"},
+                {"cityStateCountry": "Paris, France"},
+            ],
+        }
+
+        jobs = _jobs_from_items([item], cfg, BASE_URL)
+
+        self.assertEqual(
+            [(j["location"], j.get("cities")) for j in jobs],
+            [
+                ("Munich, Germany", ["Munich"]),
+                (
+                    "Saint-Ouen, Seine-Saint-Denis, France; Paris, France",
+                    ["Saint-Ouen", "Paris"],
+                ),
+            ],
+        )
+
     def test_url_template_and_one_job_per_country(self):
         cfg = {
             "url_template": "/global/en/job/{jobId}",

@@ -817,6 +817,7 @@ def _jobs_from_items(
     url_template = cfg.get("url_template")
     location_field = fields.get("location")
     locations_field = fields.get("locations")
+    location_subfield = fields.get("location_subfield")
     jf_field = fields.get("job_function")
     desc_field = fields.get("description")
 
@@ -843,12 +844,13 @@ def _jobs_from_items(
 
         jf = _get_nested(item, jf_field) if jf_field else None
 
-        # A description carried in the listing payload (e.g. Allianz's
-        # descriptionTeaser) is written straight onto the job, which lets the
-        # enrichment phase below skip the detail page entirely.
         desc = _get_nested(item, desc_field) if desc_field else None
 
         locations = _get_nested(item, locations_field) if locations_field else None
+        if location_subfield and isinstance(locations, list):
+            locations = list(
+                filter(None, (_get_nested(x, location_subfield) for x in locations))
+            )
         if not isinstance(locations, list) or not locations:
             job = build_job(
                 title,

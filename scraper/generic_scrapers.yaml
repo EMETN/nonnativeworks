@@ -204,6 +204,7 @@ scrapers:
     # point at the SuccessFactors application form — so url_template rebuilds the
     # real job page from jobId. The trailing title slug the site puts on its own
     # links is decorative: the id alone serves the right posting.
+    # multi_location_array, not multi_location: the flat strings end in a postcode.
     - match: 'careers.allianz.com/global/en/search-results'
       name: Allianz
       max_retries: 3
@@ -221,6 +222,8 @@ scrapers:
       fields:
           title: title
           location: cityStateCountry
+          locations: multi_location_array
+          location_subfield: cityStateCountry
           job_function: category
           description: descriptionTeaser
 
