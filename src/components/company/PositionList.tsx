@@ -442,8 +442,7 @@ export default function PositionList({ positions, kind, report }: Props) {
                     <button
                         type="button"
                         onClick={() => setShown(shown + PAGE_SIZE)}
-                        class="text-xs sm:text-sm font-medium px-4 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-gray-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12956B] focus-visible:ring-offset-2"
-                        style={numFont}
+                        class="btn"
                     >
                         Show more
                     </button>
