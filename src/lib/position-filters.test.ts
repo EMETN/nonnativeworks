@@ -27,7 +27,6 @@ const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
     company_slug: 'tekever',
     country_name: 'Portugal',
     country_slug: 'portugal',
-    career_page_url: null,
     ...overrides,
 });
 
