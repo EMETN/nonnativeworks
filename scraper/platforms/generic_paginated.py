@@ -55,12 +55,21 @@ import contextlib
 import json as json_mod
 import re
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+from html import unescape
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
-from extract import LOCATION_CLASS_PATTERNS, build_job, is_cached_job, job_key
+from extract import (
+    LOCATION_CLASS_PATTERNS,
+    build_job,
+    describe_response,
+    is_cached_job,
+    job_key,
+)
 from title_language import _title_appears_non_english_excluding_cities
 from tracked_countries import TRACKED_NAMES, is_tracked_location
 
@@ -75,6 +84,27 @@ _HEADERS = {
 
 _DEFAULT_MAX_PAGES = 200
 
+# Pages fetched at once, per config. These sites spend seconds rendering a page
+# server-side, so fetching one at a time makes the wall clock a multiple of the
+# work — Siemens measured 3.3s per listing page serially against 0.7s at five in
+# flight, and Neste's board came back identical in half the time.
+#
+# The default is nevertheless 1, i.e. exactly the behaviour every config had
+# before this knob existed. Concurrency is opt-in per config because the cost of
+# guessing wrong is not a slow scrape but a ban: a sustained ~1,000-page run
+# against jobs.siemens.com at five in flight drew nginx 406s partway through and
+# then a blanket IP block across the whole Avature tenant, taking Siemens
+# Healthineers offline with it. Raise this only for a site you have watched hold
+# up under a full run.
+#
+# A config that sets request_delay is throttled on purpose and always stays
+# serial, whatever this says.
+_DEFAULT_CONCURRENCY = 1
+
+# Breather between batches, mirroring enrichDescriptions: sustained bursts with
+# no pacing at all are what trips WAFs, not the concurrency itself.
+_BATCH_PAUSE_SECONDS = 0.5
+
 _DESCRIPTION_SELECTOR_FALLBACKS = [
     ".jobdescription",
     ".job-description",
@@ -83,18 +113,83 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
     "main",
 ]
 
+# Statuses worth a retry: a rate-limit or a transient server/proxy error. A 404
+# or 410 is deliberately absent — that is a deleted posting, not a blip.
+_RETRY_STATUSES = {429, 500, 502, 503, 504}
+
+# Ceiling for the retry backoff, so a large max_retries cannot stall a run.
+_MAX_BACKOFF_SECONDS = 60
+
+# Start time of the most recent request, used to space requests out when a
+# config sets request_delay. Module-level because the spacing has to hold across
+# every fetch in a run — listing pages and detail pages alike.
+_last_request_at = 0.0
+
+# Most recent response from _get, so a listing page that yields no jobs can say
+# what the server actually sent. Best-effort under concurrency > 1, where the
+# last response to arrive may belong to a neighbouring page.
+_last_response: requests.Response | None = None
+
+
+def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.Response:
+    """``session.get()`` with the config's request_delay and max_retries applied.
+
+    request_delay is the minimum gap between the *starts* of two requests, so a
+    slow response doesn't stack extra waiting on top of it. A response with a
+    retryable status is retried with exponential backoff.
+
+    The response is returned as-is, without raise_for_status() — callers keep
+    their own status handling (detail pages, for one, read 404/410 as a posting
+    that no longer exists rather than as a failure).
+    """
+    global _last_request_at, _last_response
+    delay = cfg.get("request_delay", 0)
+    retries = cfg.get("max_retries", 0)
+
+    for attempt in range(retries + 1):
+        if delay:
+            pending = delay - (time.monotonic() - _last_request_at)
+            if pending > 0:
+                time.sleep(pending)
+        _last_request_at = time.monotonic()
+
+        last_attempt = attempt == retries
+        try:
+            resp = session.get(url, **kwargs)
+        except Exception:
+            if last_attempt:
+                raise
+        else:
+            if last_attempt or resp.status_code not in _RETRY_STATUSES:
+                _last_response = resp
+                return resp
+            print(
+                f"generic: HTTP {resp.status_code} on {url} — retrying "
+                f"({attempt + 1}/{retries})",
+                file=sys.stderr,
+            )
+        # Capped: an uncapped doubling reaches tens of minutes on a config with
+        # a generous max_retries, which stalls a run rather than recovering it.
+        time.sleep(min(max(delay, 1) * 2**attempt, _MAX_BACKOFF_SECONDS))
+
 
 # ── css_cards helpers ─────────────────────────────────────────────────────────
 
 
-def _page_param_value(pagination: dict, page_number: int) -> int:
+def _page_param_value(pagination: dict, page_number: int) -> int | str:
     ptype = pagination.get("type", "offset")
     page_size = pagination.get("page_size", 25)
     if ptype == "offset":
-        return page_number * page_size
-    if ptype == "page":
-        return page_number + 1
-    return page_number  # index
+        value = page_number * page_size
+    elif ptype == "page":
+        value = page_number + 1
+    else:
+        value = page_number  # index
+    # value_template wraps the number when the site expects more than a bare
+    # digit in the parameter — e.g. WPP packs "page=3" inside qs_search_job.
+    if template := pagination.get("value_template"):
+        return template.format(page=value)
+    return value
 
 
 def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
@@ -154,6 +249,50 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
     return build_job(title, job_url, location)
 
 
+def _concurrency(cfg: dict) -> int:
+    """How many requests this config may have in flight at once."""
+    if cfg.get("request_delay"):
+        return 1
+    return max(1, int(cfg.get("concurrency", _DEFAULT_CONCURRENCY)))
+
+
+def _map_concurrently(fn, items: list, workers: int, pool: list) -> list:
+    """Run fn(item, session) over items, `workers` at a time, preserving order.
+    Falls back to a plain serial loop when workers == 1."""
+    if workers == 1 or len(items) <= 1:
+        return [fn(item, pool[0]) for item in items]
+    results: list = []
+    for start in range(0, len(items), workers):
+        chunk = items[start : start + workers]
+        with ThreadPoolExecutor(max_workers=len(chunk)) as ex:
+            results.extend(
+                ex.map(lambda p: fn(p[1], pool[p[0] % workers]), enumerate(chunk))
+            )
+        if start + workers < len(items):
+            time.sleep(_BATCH_PAUSE_SECONDS)
+    return results
+
+
+# Longest first so "czech republic" wins over "czech" and the key stays stable.
+_COUNTRY_NAMES_BY_LENGTH = sorted(TRACKED_NAMES, key=len, reverse=True)
+
+
+def _country_key(location: str) -> str:
+    """Group key for a detail-page location string such as "Zuerich - Zuerich -
+    Switzerland". Returns the tracked country name it mentions, or the string
+    itself when none is recognised (so it groups only with identical entries)."""
+    loc = location.lower()
+    for name in _COUNTRY_NAMES_BY_LENGTH:
+        if name in loc:
+            return name
+    return loc
+
+
+def _city_of(location: str) -> str:
+    """First segment of a "City - State - Country" detail-page location."""
+    return location.split(" - ")[0].strip()
+
+
 def _fetch_css_cards_page(
     session: requests.Session,
     list_url: str,
@@ -161,7 +300,7 @@ def _fetch_css_cards_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
@@ -269,7 +408,7 @@ def _fetch_attribute_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -425,7 +564,7 @@ def _fetch_script_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -492,7 +631,7 @@ def _fetch_teamtailor_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
@@ -597,7 +736,7 @@ def _extract_xml_feed(content: bytes, cfg: dict, base_url: str) -> list[dict]:
 
 def _fetch_xml_feed(session: requests.Session, url: str, cfg: dict) -> list[dict]:
     try:
-        resp = session.get(url, timeout=30, headers=_HEADERS)
+        resp = _get(session, url, cfg, timeout=30, headers=_HEADERS)
         resp.raise_for_status()
         return _extract_xml_feed(resp.content, cfg, url)
     except Exception as e:
@@ -678,7 +817,9 @@ def _jobs_from_items(
     url_template = cfg.get("url_template")
     location_field = fields.get("location")
     locations_field = fields.get("locations")
+    location_subfield = fields.get("location_subfield")
     jf_field = fields.get("job_function")
+    desc_field = fields.get("description")
 
     jobs = []
     for item in items:
@@ -690,6 +831,9 @@ def _jobs_from_items(
             continue
 
         if url_template:
+            # Built from payload fields rather than read from one, for sites whose
+            # listing carries no link to the job page (Allianz's only URL field is
+            # its SuccessFactors application form, not the posting itself).
             try:
                 raw_url = url_template.format_map(item)
             except KeyError:
@@ -700,7 +844,13 @@ def _jobs_from_items(
 
         jf = _get_nested(item, jf_field) if jf_field else None
 
+        desc = _get_nested(item, desc_field) if desc_field else None
+
         locations = _get_nested(item, locations_field) if locations_field else None
+        if location_subfield and isinstance(locations, list):
+            locations = list(
+                filter(None, (_get_nested(x, location_subfield) for x in locations))
+            )
         if not isinstance(locations, list) or not locations:
             job = build_job(
                 title,
@@ -709,6 +859,8 @@ def _jobs_from_items(
             )
             if jf:
                 job["jobFunction"] = jf
+            if desc:
+                job["descriptionText"] = desc
             jobs.append(job)
             continue
 
@@ -726,6 +878,8 @@ def _jobs_from_items(
                 job["cities"] = cities
             if jf:
                 job["jobFunction"] = jf
+            if desc:
+                job["descriptionText"] = desc
             jobs.append(job)
 
     return jobs
@@ -752,7 +906,7 @@ def _fetch_script_var_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = session.get(list_url, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
@@ -869,6 +1023,38 @@ def _extract_rsc_description(raw_html: str) -> str:
     return "<div>" + "".join(str(p) for p in parts) + "</div>"
 
 
+def _extract_json_description(raw_html: str, key: str) -> str:
+    """Longest string value stored under ``key`` in a page's embedded JSON.
+
+    Some career sites render the posting client-side, so the description never
+    reaches the DOM and no CSS selector can see it — it exists only inside a
+    script payload (Allianz's Phenom People pages are the case this was written
+    for). The longest match wins because such payloads usually repeat the field,
+    once HTML-escaped and once not, alongside shorter teaser variants.
+    """
+    best = ""
+    for m in re.finditer(re.escape(f'"{key}"') + r'\s*:\s*"', raw_html):
+        i = m.end()
+        buf: list[str] = []
+        while i < len(raw_html):
+            char = raw_html[i]
+            if char == "\\":
+                buf.append(raw_html[i : i + 2])
+                i += 2
+                continue
+            if char == '"':
+                break
+            buf.append(char)
+            i += 1
+        if len(buf) > len(best):
+            best = "".join(buf)
+    if not best:
+        return ""
+    with contextlib.suppress(Exception):
+        best = json_mod.loads(f'"{best}"')
+    return unescape(best)
+
+
 def _extract_phenom_description(raw_html: str) -> str:
     """Fallback for Phenom job pages, which render the description client-side
     from the phApp.ddo jobDetail payload rather than shipping it in the DOM."""
@@ -887,9 +1073,11 @@ def _extract_phenom_description(raw_html: str) -> str:
 def _fetch_detail_page(
     session: requests.Session,
     job_url: str,
+    cfg: dict,
     desc_sel: str | None,
     jf_sel: str | None,
     detail_loc_sel: str | None = None,
+    json_desc_key: str | None = None,
 ) -> tuple[str, str | None, list[str] | None, bool]:
     """Fetch a job detail page and return (description_html, job_function, locations, gone).
 
@@ -897,7 +1085,7 @@ def _fetch_detail_page(
     locations is a list of location strings when detail_loc_sel is set and matches.
     """
     try:
-        resp = session.get(job_url, timeout=20, headers=_HEADERS)
+        resp = _get(session, job_url, cfg, timeout=20, headers=_HEADERS)
         if resp.status_code in _GONE_STATUSES:
             print(
                 f"generic: detail page gone (HTTP {resp.status_code}): {job_url}",
@@ -943,6 +1131,10 @@ def _fetch_detail_page(
             rsc_html = _extract_rsc_description(raw_html)
             if rsc_html:
                 desc_html = rsc_html
+            elif json_desc_key:
+                json_desc = _extract_json_description(raw_html, json_desc_key)
+                if json_desc:
+                    desc_html = json_desc
 
         job_function = None
         if jf_sel:
@@ -1014,6 +1206,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     desc_sel = cfg.get("description_selector")
     jf_sel = cfg.get("job_function_selector")
     detail_loc_sel = cfg.get("detail_location_selector")
+    json_desc_key = cfg.get("description_json_key")
     list_url = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
     country_filter_param: str | None = cfg.get("country_filter_param")
@@ -1022,7 +1215,10 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     locale_param: str | None = cfg.get("locale_param")
     locales: list[str] = cfg.get("locales", [])
 
-    session = requests.Session()
+    # One Session per worker — a Session is not meant to be shared across threads.
+    # sessions[0] is the one used wherever a fetch stays serial.
+    sessions = [requests.Session() for _ in range(_concurrency(cfg))]
+    session = sessions[0]
 
     country_from_select = cfg.get("country_from_select")
     if country_from_select and country_filter_param:
@@ -1073,6 +1269,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # leaving per-job location text to resolve the country as usual.
     all_jobs: list[dict] = []
     seen_keys: set[str] = set()
+    workers = len(sessions)
 
     if country_filter_param and countries:
         param_sets: list[tuple[dict, str | None]] = [
@@ -1096,6 +1293,11 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         if ptype == "none":
             jobs = fetch_page(session, list_url, base_params, cfg)
             print(f"{prefix}: single page → {len(jobs)} jobs", file=sys.stderr)
+            if not jobs and _last_response is not None:
+                print(
+                    f"{prefix}:   empty page — {describe_response(_last_response)}",
+                    file=sys.stderr,
+                )
             new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
             for j in new_jobs:
                 seen_keys.add(job_key(j))
@@ -1104,25 +1306,64 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             all_jobs.extend(new_jobs)
         else:
             param_name = pagination["param"]
-            for page_num in range(max_pages):
-                params = {
-                    **base_params,
-                    param_name: _page_param_value(pagination, page_num),
-                }
-                jobs = fetch_page(session, list_url, params, cfg)
-                print(
-                    f"{prefix}: {param_name}={params[param_name]} → {len(jobs)} jobs",
-                    file=sys.stderr,
+            param_join = pagination.get("param_join")
+
+            def _params_for(
+                page_num: int,
+                base_params: dict = base_params,
+                param_name: str = param_name,
+                param_join: str | None = param_join,
+            ) -> dict:
+                page_value = _page_param_value(pagination, page_num)
+                # Some sites pack the refinement and the page number into one
+                # parameter (WPP: qs_search_job=refine.country=spain&page=2).
+                # param_join appends the page value to whatever the country
+                # filter already put there instead of overwriting it.
+                if param_join and (refinement := base_params.get(param_name)):
+                    page_value = f"{refinement}{param_join}{page_value}"
+                return {**base_params, param_name: page_value}
+
+            # Pages come in batches of `workers`. The end of the list is still a
+            # page that returns fewer than page_size rows, and results are
+            # consumed in order, so a batch that overshoots the last page is
+            # simply discarded — the job set is identical to fetching serially.
+            # (Overshooting is harmless even where a past-the-end page wraps back
+            # to page 1, as Carlsberg's does: those rows are dropped here anyway.)
+            done = False
+            for batch_start in range(0, max_pages, workers):
+                page_nums = list(
+                    range(batch_start, min(batch_start + workers, max_pages))
                 )
+                pages = _map_concurrently(
+                    lambda n, sess, _p=_params_for: fetch_page(
+                        sess, list_url, _p(n), cfg
+                    ),
+                    page_nums,
+                    workers,
+                    sessions,
+                )
+                for page_num, jobs in zip(page_nums, pages, strict=True):
+                    print(
+                        f"{prefix}: {param_name}={_params_for(page_num)[param_name]}"
+                        f" → {len(jobs)} jobs",
+                        file=sys.stderr,
+                    )
+                    if not jobs and _last_response is not None:
+                        print(
+                            f"{prefix}:   empty page — {describe_response(_last_response)}",
+                            file=sys.stderr,
+                        )
+                    new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
+                    for j in new_jobs:
+                        seen_keys.add(job_key(j))
+                        if country_code:
+                            j["country_code"] = country_code
+                    all_jobs.extend(new_jobs)
 
-                new_jobs = [j for j in jobs if job_key(j) not in seen_keys]
-                for j in new_jobs:
-                    seen_keys.add(job_key(j))
-                    if country_code:
-                        j["country_code"] = country_code
-                all_jobs.extend(new_jobs)
-
-                if len(jobs) < page_size:
+                    if len(jobs) < page_size:
+                        done = True
+                        break
+                if done:
                     break
 
     print(f"generic [{name}]: collected {len(all_jobs)} jobs", file=sys.stderr)
@@ -1148,6 +1389,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # and the TS-side fallback then does an unfiltered full-page fetch instead —
     # picking up local-language nav/cookie-consent/footer text and producing
     # false native-language-requirement signals on an English-language posting.
+    # Every English-titled job in a tracked country fetches its detail page, even
+    # when the listing already carried a description. A listing teaser cannot
+    # stand in for the real posting: the Python-side language heuristic here
+    # fires on a single non-ASCII character, while the classifier downstream
+    # counts native characters and needs far more of them. Allianz's ~300-char
+    # German teasers sit between the two, so short-circuiting on them silently
+    # classified plainly German postings as English-friendly.
     english_jobs = [
         j
         for j in all_jobs
@@ -1182,15 +1430,17 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         file=sys.stderr,
     )
 
-    detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = {}
-    for i, job_url in enumerate(unique_urls):
-        result = _fetch_detail_page(session, job_url, desc_sel, jf_sel, detail_loc_sel)
-        detail_cache[job_url] = result
-        if (i + 1) % 10 == 0:
-            print(
-                f"generic [{name}]: enriched {i + 1}/{len(unique_urls)}",
-                file=sys.stderr,
-            )
+    detail_results = _map_concurrently(
+        lambda job_url, sess: _fetch_detail_page(
+            sess, job_url, cfg, desc_sel, jf_sel, detail_loc_sel, json_desc_key
+        ),
+        unique_urls,
+        workers,
+        sessions,
+    )
+    detail_cache: dict[str, tuple[str, str | None, list[str] | None, bool]] = dict(
+        zip(unique_urls, detail_results, strict=True)
+    )
 
     gone_urls: set[str] = {u for u, (_, _, _, gone) in detail_cache.items() if gone}
     if gone_urls:
@@ -1211,7 +1461,13 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         if job_function and not job.get("jobFunction"):
             job["jobFunction"] = job_function
 
-    # Fan out multi-location jobs into one entry per resolved location
+    # Fan out multi-location jobs into one entry per resolved COUNTRY — not one
+    # per location. A posting open in five Swiss cities is one position offered in
+    # Switzerland, and emitting a row per city inflated the country's count
+    # fivefold. The extra cities ride along in job["cities"], which the TypeScript
+    # side uses verbatim instead of re-deriving them from the location string.
+    # Locations whose country can't be identified keep the old one-row-each
+    # behaviour, since there is nothing to group them by.
     if detail_loc_sel:
         expanded: list[dict] = []
         for job in all_jobs:
@@ -1225,9 +1481,15 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
             if not locations:
                 expanded.append(job)
                 continue
+            grouped: dict[str, list[str]] = {}
             for loc in locations:
+                grouped.setdefault(_country_key(loc), []).append(loc)
+            for locs in grouped.values():
                 copy = dict(job)
-                copy["location"] = loc
+                copy["location"] = locs[0]
+                cities = [c for c in (_city_of(loc) for loc in locs) if c]
+                if cities:
+                    copy["cities"] = cities
                 expanded.append(copy)
         if len(expanded) != len(all_jobs):
             print(

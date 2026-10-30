@@ -171,8 +171,10 @@ All modes share a two-phase structure:
 Additional features:
 
 - **Country filtering** (`country_filter_param` + `countries`) — runs one paginated fetch per country and merges results (e.g. SAP, Sweco). In `phenom_api` mode the countries are the tracked values of the site's country facet
-- **Multi-location fan-out** (`detail_location_selector`) — resolves "Multiple Locations" jobs by fetching the detail page and extracting individual locations. In `script_var_json` and `phenom_api` modes, a `locations` field (e.g. Phenom's `multi_location`) yields one job per country with that country's cities instead (e.g. Siemens Healthineers)
+- **Multi-location fan-out** (`detail_location_selector`) — resolves "Multiple Locations" jobs by fetching the detail page and extracting individual locations. In `script_var_json` and `phenom_api` modes, a `locations` field (e.g. Phenom's `multi_location`) yields one job per country with that country's cities instead (e.g. Siemens Healthineers); add `location_subfield` when the array holds objects (e.g. Allianz)
 - **Job function extraction** (`job_function_selector`) — extracts department/function from the detail page for category classification
+- **Composite page parameters** (`pagination.value_template` + `pagination.param_join`) — for sites whose page parameter is not a bare number: Heineken's Drupal multi-pager wants `page=,,2`, and WPP packs the refinement alongside it in `qs_search_job=refine.country=spain&page=2`
+- **Throttling and retry** (`request_delay` + `max_retries`) — spaces requests out and retries 429/5xx responses, for sites that rate-limit (e.g. WPP)
 
 ### Platform-specific scrapers
 
