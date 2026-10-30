@@ -7,6 +7,7 @@ import {
     getGlobalStats,
     getTopCompanies,
 } from '../lib/queries';
+import { formatCount } from '../lib/text';
 import type { CountryStats } from '../lib/types';
 
 const [allCountries, stats, topCompanies] = await Promise.all([
@@ -74,7 +75,7 @@ const companyItems = topCompanies.map((c) => ({
                 <div class="grid grid-cols-2 gap-x-8 gap-y-0 md:flex-1">
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                            {totalPositions.toLocaleString()}
+                            {formatCount(totalPositions)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             positions tracked
@@ -82,7 +83,7 @@ const companyItems = topCompanies.map((c) => ({
                     </div>
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-[#0F7A4F]">
-                            {englishPositions.toLocaleString()}
+                            {formatCount(englishPositions)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             English-friendly
@@ -92,7 +93,7 @@ const companyItems = topCompanies.map((c) => ({
                     <div class="border-t border-gray-200" />
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                            {totalCompanies.toLocaleString()}
+                            {formatCount(totalCompanies)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             {totalCompanies === 1 ? 'company' : 'companies'}
