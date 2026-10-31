@@ -187,6 +187,12 @@ def _scrape_njoyn_playwright_inner(url: str) -> list[dict]:
             else:
                 countries_to_scrape = [None]  # None = no filter, scrape all
                 print("njoyn: no country filter found — scraping all", file=sys.stderr)
+                with contextlib.suppress(Exception):
+                    body = " ".join(pw_page.inner_text("body").split())[:200]
+                    print(
+                        f"njoyn: on {pw_page.url} title={pw_page.title()!r} body={body!r}",
+                        file=sys.stderr,
+                    )
 
             for country_code in countries_to_scrape:
                 if country_code:
