@@ -199,6 +199,10 @@ companies:
       url: https://if.wd502.myworkdayjobs.com/Careers
       min_positions: 5
 
+    - name: IKEA
+      url: https://jobs.ikea.com/en/search-jobs
+      min_positions: 10
+
     - name: ING
       url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5

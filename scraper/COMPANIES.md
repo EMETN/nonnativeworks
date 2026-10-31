@@ -44,6 +44,7 @@
 - Hoxhunt
 - ICEYE
 - If
+- IKEA
 - ING
 - Klarna
 - Kone
@@ -211,6 +212,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
 | Munich Re | `careers.munichre.com/en/search-jobs` | `css_cards - json_html_key` | Paginated; CurrentPage |
+| IKEA | `jobs.ikea.com/en/search-jobs` | `css_cards - json_html_key` | TalentBrew `/results`, unfiltered; CurrentPage, 100 per page |
 | Carlsberg | `careers.carlsberg.com/search` | `css_cards` | SuccessFactors; fetches and merges every site locale (each serves a distinct slice of jobs) |
 | Sweco Group | `swecogroup.com/careers/vacancies` | `css_cards` | Recruitee-backed; per-country facet IDs read live from the country `<select>`; `description_selector` avoids local-language form fields |
 | Klarna | `jobs.deel.com/klarna` | `script_json` | Deel-hosted board; no pagination; descriptions read from the listing's RSC text rows (detail pages render client-side) |

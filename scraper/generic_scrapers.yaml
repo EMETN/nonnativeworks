@@ -551,6 +551,35 @@ scrapers:
       location_selector: 'li.job-list-01-list__job-info--location span'
       job_function_selector: 'li.job-list-01-list__job-info--category span'
 
+    # ── IKEA ─────────────────────────────────────────────────────────────────
+    # Same TalentBrew /results endpoint as Munich Re, but unfiltered: the whole
+    # board (~1,450 jobs across all countries) pages cleanly at 100 per request;
+    # untracked countries are dropped downstream. Unlike Munich Re, the minimal
+    # param set below is enough — the endpoint still returns the HTML envelope.
+    - match: 'jobs.ikea.com'
+      name: IKEA
+      list_url: https://jobs.ikea.com/en/search-jobs/results
+      extra_params:
+          RecordsPerPage: 100
+          SearchResultsModuleName: 'Search Results'
+          SearchFiltersModuleName: 'Search Filters'
+          SortCriteria: 0
+          SortDirection: 0
+          SearchType: 5
+          ResultsType: 0
+      json_html_key: results
+      pagination:
+          type: page
+          param: CurrentPage
+          page_size: 100
+      card_selector: 'li.job-list__item'
+      title_selector: 'span.job-list__title'
+      url_selector: 'a.job-list__anchor'
+      location_selector: 'span.job-list__location'
+      # The default `.job-description` matches the page's top banner (English UI
+      # text: "Save", "Apply"...), not the posting, so every job looked English.
+      description_selector: '.jd-desc-section__ats-description'
+
     # ── Carlsberg ──────────────────────────────────────────────────────────────
     # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no
     # browser needed. startrow doesn't return an empty page past the last one —
