@@ -882,6 +882,19 @@ function _buildRequirementSignals(lang: string): string[] {
         `${lang} as second language`,
         // "either X or Y as a secondary language" — lang appears before "or" in an either/or
         `either ${lang}`,
+        // Label-style: "Italian Language: Native or C2", "German language: fluent"
+        ...[
+            'native',
+            'fluent',
+            'proficient',
+            'business level',
+            'a1',
+            'a2',
+            'b1',
+            'b2',
+            'c1',
+            'c2',
+        ].flatMap((lvl) => [`${lang} language: ${lvl}`, `${lang}: ${lvl}`]),
         // CEFR-style level descriptors
         `full professional proficiency in ${lang}`,
         `professional proficiency in ${lang}`,
@@ -1059,6 +1072,24 @@ function requirementNegatedByContext(
     // e.g. "bonus points if you speak German" where "speak german" is the signal.
     const before = combined.slice(Math.max(0, idx - 80), idx);
     return REQUIREMENT_ADVANTAGE_PREFIX_RE.test(before) ? 'advantage' : false;
+}
+
+// "Fluency in the local market language" / "fluent in the local country
+// language" — names no language, so the per-language signals miss it. Counts as
+// a requirement unless an advantage word follows in the same clause
+// ("... is a plus", "... is an asset", "... nice to have").
+const LOCAL_MARKET_LANGUAGE_RE =
+    /\b(?:fluency|fluent|proficiency|proficient|command|knowledge)\s+(?:in|of|with)\s+(?:the\s+|your\s+)?(?:local|country|home|regional)(?:\s+(?:market|country))?\s+languages?\b|\b(?:local|country)\s+market\s+languages?\b/;
+const LOCAL_MARKET_ADVANTAGE_AFTER_RE =
+    /^[^.;]{0,60}\b(?:plus|advantage|asset|bonus|nice to have|desirable|preferred|beneficial|welcome|not (?:required|necessary|mandatory))\b/;
+
+function matchLocalMarketLanguageRequirement(
+    combined: string,
+): RegExpMatchArray | null {
+    const m = LOCAL_MARKET_LANGUAGE_RE.exec(combined);
+    if (!m) return null;
+    const after = combined.slice(m.index! + m[0].length);
+    return LOCAL_MARKET_ADVANTAGE_AFTER_RE.test(after) ? null : m;
 }
 
 // ---------------------------------------------------------------------------
@@ -1739,9 +1770,9 @@ export function detectNativeLanguage(
     // but clearly means native fluency in the local language is required.
     const genericMatch =
         languages.length > 0
-            ? combined.match(
+            ? (combined.match(
                   /native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)|in addition to the local language|as well as (?:the )?local languages?\b/,
-              )
+              ) ?? matchLocalMarketLanguageRequirement(combined))
             : null;
     if (genericMatch) {
         return {
