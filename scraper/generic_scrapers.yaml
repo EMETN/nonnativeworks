@@ -419,6 +419,28 @@ scrapers:
           location: location
           locations: multi_location
 
+    # ── Bending Spoons (Next.js) ─────────────────────────────────────────────────
+    # All ~50 postings, with their full text, sit in the page's __NEXT_DATA__, so
+    # full_description skips the per-job detail fetch. Job pages are
+    # /positions/{id}. The description is the summary, requirements and
+    # responsibilities; officeLocations gives a city and a country per office.
+    - match: 'jobs.bendingspoons.com'
+      name: Bending Spoons
+      extract_mode: next_data
+      data_path: props.pageProps.list
+      full_description: true
+      url_template: '/positions/{id}'
+      fields:
+          title: jobTitle
+          locations: officeLocations
+          location_subfield: title
+          country_subfield: country.name
+          job_function: typesOfWork.0
+          description:
+              - highLevelDescription
+              - requirements
+              - responsibilities
+
     # ── GE Healthcare (Phenom) ───────────────────────────────────────────────────
     # Same Phenom /widgets API as Siemens Healthineers. applyUrl points at the
     # Workday tenant, so url_template keeps links on the careers site instead.

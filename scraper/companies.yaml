@@ -91,6 +91,10 @@ companies:
       url: https://bayer.eightfold.ai/careers
       min_positions: 10
 
+    - name: Bending Spoons
+      url: https://jobs.bendingspoons.com/
+      min_positions: 10
+
     - name: Bolt
       url: https://bolt.eu/en/careers/positions
       min_positions: 10

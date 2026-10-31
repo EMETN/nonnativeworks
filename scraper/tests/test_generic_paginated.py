@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from platforms.generic_paginated import (  # noqa: E402
+    _extract_next_data,
     _extract_phenom_description,
     _extract_script_json,
     _extract_script_var_json,
@@ -318,6 +319,59 @@ class _FakeResponse:
 
     def json(self):
         return self.payload
+
+
+class ExtractNextDataTest(unittest.TestCase):
+    CFG = {
+        "data_path": "props.pageProps.list",
+        "full_description": True,
+        "url_template": "/positions/{id}",
+        "fields": {
+            "title": "jobTitle",
+            "locations": "officeLocations",
+            "location_subfield": "title",
+            "country_subfield": "country.name",
+            "job_function": "typesOfWork.0",
+            "description": ["highLevelDescription", "requirements", "responsibilities"],
+        },
+    }
+
+    @staticmethod
+    def _page(items):
+        data = {"props": {"pageProps": {"list": items}}}
+        return f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'
+
+    def test_builds_one_job_per_country_with_full_description(self):
+        item = {
+            "id": "abc",
+            "jobTitle": "Product manager",
+            "typesOfWork": ["Product & Marketing"],
+            "officeLocations": [
+                {"title": "Milan (Italy)", "country": {"name": "Italy"}},
+                {"title": "Madrid (Spain)", "country": {"name": "Spain"}},
+            ],
+            "highLevelDescription": "<span>About us</span>",
+            "requirements": [{"title": "Reasoning", "description": "Solve problems"}],
+            "responsibilities": ["<span>Investigate</span>"],
+        }
+
+        jobs = _extract_next_data(self._page([item]), self.CFG, "https://x.example/")
+
+        self.assertEqual(
+            [j["location"] for j in jobs], ["Milan, Italy", "Madrid, Spain"]
+        )
+        self.assertEqual(jobs[0]["url"], "https://x.example/positions/abc")
+        self.assertEqual(jobs[0]["jobFunction"], "Product & Marketing")
+        # Stored as descriptionHtml so the per-job detail fetch is skipped.
+        self.assertNotIn("descriptionText", jobs[0])
+        for part in ("About us", "Reasoning", "Solve problems", "Investigate"):
+            self.assertIn(part, jobs[0]["descriptionHtml"])
+
+    def test_returns_empty_without_payload_or_array(self):
+        self.assertEqual(
+            _extract_next_data("<main>none</main>", self.CFG, "https://x/"), []
+        )
+        self.assertEqual(_extract_next_data(self._page({}), self.CFG, "https://x/"), [])
 
 
 class ExtractPhenomDescriptionTest(unittest.TestCase):

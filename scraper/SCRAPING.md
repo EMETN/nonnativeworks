@@ -153,15 +153,16 @@ Configured in `scraper/generic_scrapers.yaml`. Each entry matches a career page 
 
 Seven extraction modes are supported:
 
-| Mode                  | Description                                                         | Example companies                                                   |
-| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Scout24 |
-| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                               |
-| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                |
-| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                             |
-| `phenom_api`          | Phenom `/widgets` search API, one request per tracked country       | Siemens Healthineers                                                |
-| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                          |
-| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                         |
+| Mode                  | Description                                                                    | Example companies                                                   |
+| --------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors                     | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Scout24 |
+| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute                  | Metso                                                               |
+| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                           | Bolt                                                                |
+| `script_var_json`     | Jobs in a plain JavaScript variable assignment                                 | Allianz                                                             |
+| `next_data`           | Jobs in a Next.js `__NEXT_DATA__` payload; full text can come from the listing | Bending Spoons                                                      |
+| `phenom_api`          | Phenom `/widgets` search API, one request per tracked country                  | Siemens Healthineers                                                |
+| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                                  | Nordnet, UpCloud, Futurice                                          |
+| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed)            | Volvo Group                                                         |
 
 All modes share a two-phase structure:
 
