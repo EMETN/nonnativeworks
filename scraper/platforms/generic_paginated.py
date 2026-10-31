@@ -1057,17 +1057,26 @@ def _extract_json_description(raw_html: str, key: str) -> str:
 
 def _extract_phenom_description(raw_html: str) -> str:
     """Fallback for Phenom job pages, which render the description client-side
-    from the phApp.ddo jobDetail payload rather than shipping it in the DOM."""
-    idx = raw_html.find('"jobDetail"')
-    if idx == -1:
-        return ""
-    start = raw_html.find("{", idx)
-    try:
-        payload, _ = json_mod.JSONDecoder().raw_decode(raw_html, start)
-    except ValueError:
-        return ""
-    desc = _get_nested(payload, "data.job.description")
-    return desc if isinstance(desc, str) else ""
+    from the phApp.ddo jobDetail payload rather than shipping it in the DOM.
+
+    "jobDetail" appears several times in the page (widget config strings, the
+    payload itself), and on some tenants (e.g. GE HealthCare) the config
+    mentions come first. Try every occurrence until one decodes to a payload
+    carrying data.job.description."""
+    decoder = json_mod.JSONDecoder()
+    pos = raw_html.find('"jobDetail"')
+    while pos != -1:
+        start = raw_html.find("{", pos)
+        if start != -1:
+            try:
+                payload, _ = decoder.raw_decode(raw_html, start)
+            except ValueError:
+                payload = None
+            desc = _get_nested(payload, "data.job.description")
+            if isinstance(desc, str) and desc:
+                return desc
+        pos = raw_html.find('"jobDetail"', pos + 1)
+    return ""
 
 
 def _fetch_detail_page(

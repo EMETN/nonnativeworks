@@ -36,6 +36,7 @@
 - Fiskars
 - Fortum
 - Futurice
+- GE Healthcare
 - GetYourGuide
 - Gofore
 - Happeo
@@ -211,6 +212,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
 | Nordnet | `career.nordnetab.com/jobs` | teamtailor |
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
+| GE Healthcare | `careers.gehealthcare.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Job links use `url_template` (applyUrl points at Workday) |
 | Siemens Healthineers | `careers.siemens-healthineers.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Workday tenant merged in as `extra_urls` |
 | Siemens | `jobs.siemens.com/en_US/externaljobs/SearchJobs` | `css_cards` | Local run only; ~212 pages at 6 rows/page. Host rate-limits under load |
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |

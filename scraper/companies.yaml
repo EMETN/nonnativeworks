@@ -167,6 +167,10 @@ companies:
       url: https://careers.futurice.com/en-GB/jobs
       min_positions: 1
 
+    - name: GE Healthcare
+      url: https://careers.gehealthcare.com/global/en/search-results
+      min_positions: 5
+
     - name: GetYourGuide
       url: https://www.getyourguide.careers/open-roles
       min_positions: 10

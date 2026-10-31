@@ -327,6 +327,17 @@ class ExtractPhenomDescriptionTest(unittest.TestCase):
 
         self.assertEqual(_extract_phenom_description(html), "<p>Hello</p>")
 
+    def test_skips_earlier_job_detail_config_mentions(self):
+        # GE HealthCare pages mention "jobDetail" in widget config before the
+        # real payload; the first mention must not end the search.
+        detail = {"status": 200, "data": {"job": {"description": "<p>Real</p>"}}}
+        html = (
+            '<script>cfg = {"jobDetail":"data.job"},{"other":{"trait14":"key"}};'
+            f'phApp.ddo = {{"jobDetail":{json.dumps(detail)}}};</script>'
+        )
+
+        self.assertEqual(_extract_phenom_description(html), "<p>Real</p>")
+
     def test_returns_empty_without_payload(self):
         self.assertEqual(_extract_phenom_description("<main>No payload</main>"), "")
 

@@ -419,6 +419,27 @@ scrapers:
           location: location
           locations: multi_location
 
+    # ── GE Healthcare (Phenom) ───────────────────────────────────────────────────
+    # Same Phenom /widgets API as Siemens Healthineers. applyUrl points at the
+    # Workday tenant, so url_template keeps links on the careers site instead.
+    - match: 'careers.gehealthcare.com/global/en/search-results'
+      name: GE Healthcare
+      extract_mode: phenom_api
+      api_body:
+          refNum: GEVGHLGLOBAL
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
+      pagination:
+          type: offset
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
+
     # ── Siemens ──────────────────────────────────────────────────────────────────
     # Avature portal, same markup family as Siemens Healthineers above — but a far
     # bigger board: ~1,270 postings across the 25 tracked-country facets, served 6

@@ -1622,6 +1622,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
         urlSubstring: 'onehealthineers.wd3.myworkdayjobs.com',
         name: 'Siemens Healthineers',
     },
+    { urlSubstring: 'careers.gehealthcare.com', name: 'GE Healthcare' },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
