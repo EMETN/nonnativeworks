@@ -417,6 +417,33 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         descriptionFields: ['description'],
     },
 
+    // Stellantis runs on a Madgex/CWS career site whose search widget calls Google
+    // Cloud Talent Solution through jobsapi-google.m-cloud.io (the org id and endpoint
+    // are in the page's cws_opts). ~750 jobs, each with its description inline and an
+    // ISO2 primary_country, so nothing else needs fetching. pageSize caps at 100 —
+    // asking for 200 silently returns only 10 — and offset is 0-based.
+    'careers.stellantis.com': {
+        url: 'https://jobsapi-google.m-cloud.io/api/job/search?pageSize=100&companyName=companies/16115603-6c1b-4c45-b544-238a4e6c51b3',
+        method: 'GET',
+        pagination: {
+            type: 'offset',
+            param: 'offset',
+            pageSize: 100,
+            totalCountPath: 'totalHits',
+        },
+        itemsPath: 'searchResults',
+        companyName: 'Stellantis',
+        fields: {
+            title: 'job.title',
+            location: 'job.primary_city',
+            country: 'job.primary_country',
+            url: 'job.url',
+            jobFunction: 'job.primary_category',
+            id: 'job.id',
+        },
+        descriptionFields: ['job.description'],
+    },
+
     // Spotify's WordPress "animal" jobs API. The search endpoint returns the whole
     // job list in one response (the SPA filters client-side), so pagination is 'none'.
     'lifeatspotify.com': {

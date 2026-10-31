@@ -382,6 +382,10 @@ companies:
       url: https://lifeatspotify.com/jobs
       min_positions: 10
 
+    - name: Stellantis
+      url: https://careers.stellantis.com/job-search-results/
+      min_positions: 5
+
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
