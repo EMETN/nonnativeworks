@@ -104,6 +104,13 @@ def _block_unnecessary_resources(page) -> None:
     page.route("**/*", _handle)
 
 
+def _subprocess_worker(fn, args: tuple, result_q: multiprocessing.Queue) -> None:
+    try:
+        result_q.put(("ok", fn(*args)))
+    except Exception as e:
+        result_q.put(("err", str(e)))
+
+
 def _run_in_subprocess(
     fn, *args, timeout: int = PLAYWRIGHT_TIMEOUT_SECONDS
 ) -> list[dict]:
@@ -115,14 +122,9 @@ def _run_in_subprocess(
     """
     result_q: multiprocessing.Queue = multiprocessing.Queue()
 
-    def worker():
-        try:
-            jobs = fn(*args)
-            result_q.put(("ok", jobs))
-        except Exception as e:
-            result_q.put(("err", str(e)))
-
-    proc = multiprocessing.Process(target=worker, daemon=True)
+    proc = multiprocessing.Process(
+        target=_subprocess_worker, args=(fn, args, result_q), daemon=True
+    )
     _log(
         f"[subprocess] starting {fn.__name__} (available RAM: {_mem_mb()} MB, timeout: {timeout}s)"
     )
