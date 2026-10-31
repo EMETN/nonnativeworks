@@ -822,6 +822,49 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
     },
 
+    // Uber's careers site (jobs.uber.com) sits behind a Cloudflare challenge, but its
+    // Apply button lands on this Oracle HCM tenant, whose REST API answers plain
+    // requests. Same structure as Danske Bank; the site is addressed by name
+    // (siteNumber=UberCareers) rather than a CX_ number. ~770 jobs worldwide.
+    // The posting body is ExternalDescriptionStr (+ ExternalResponsibilitiesStr on
+    // some postings); CorporateDescriptionStr is the same Uber boilerplate on every job.
+    'iaziqy.fa.ocs.oraclecloud.com': {
+        url: 'https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=UberCareers,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+        method: 'GET',
+        headers: {
+            accept: '*/*',
+            'accept-language': 'en',
+            'content-type':
+                'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+            'ora-irc-language': 'en',
+        },
+        pagination: { type: 'finder-offset', pageSize: 200 },
+        itemsPath: 'items.0.requisitionList',
+        fields: {
+            title: 'Title',
+            location: 'PrimaryLocation',
+            id: 'Id',
+            country: 'PrimaryLocationCountry',
+        },
+        urlTemplate:
+            'https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/job/{Id}',
+        companyName: 'Uber',
+        descriptionApiUrl:
+            'https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=UberCareers',
+        descriptionApiFields: [
+            'ExternalDescriptionStr',
+            'ExternalResponsibilitiesStr',
+        ],
+        descriptionApiLocationField: 'workLocation.0.TownOrCity',
+        descriptionApiJobFunctionField: 'JobFunction',
+        descriptionApiWorkModelField: 'WorkplaceType',
+        expandSecondaryLocations: {
+            path: 'secondaryLocations',
+            cityField: 'Name',
+            countryCodeField: 'CountryCode',
+        },
+    },
+
     'gofore.com': {
         // WordPress REST API with Polylang. gofore.com/tyopaikat/ (lang=fi) and
         // gofore.com/en/careers/ (lang=en) are two separate, non-overlapping job

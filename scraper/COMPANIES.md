@@ -100,6 +100,7 @@
 - Thoughtworks
 - Tieto
 - Trustpilot
+- Uber
 - Uniper
 - UpCloud
 - Vaisala
@@ -156,6 +157,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                                                                           |
 | Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                                                                        |
 | Stellantis         | `careers.stellantis.com`                     | CWS site backed by Google Talent API (`jobsapi-google.m-cloud.io`); descriptions inline, pageSize capped at 100      |
+| Uber               | `iaziqy.fa.ocs.oraclecloud.com`              | Oracle HCM (site `UberCareers`; jobs.uber.com itself is behind Cloudflare, the Apply button goes here)               |
 | Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings)                                                    |
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                                                                |
 | Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                                                                  |

@@ -426,6 +426,10 @@ companies:
       url: https://corporate.trustpilot.com/careers
       min_positions: 5
 
+    - name: Uber
+      url: https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/jobs
+      min_positions: 5
+
     - name: Uniper
       url: https://careers.uniper.energy
       min_positions: 5

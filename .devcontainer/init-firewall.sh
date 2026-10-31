@@ -176,6 +176,7 @@ cdn_domains=(
     "careers.theheinekencompany.com"  # Heineken (Cloudflare-fronted)
     "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
+    "iaziqy.fa.ocs.oraclecloud.com" # Uber
     "upcloud.teamtailor.com"  # UpCloud
 )
 company_domains=(
