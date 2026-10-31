@@ -365,6 +365,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         method: 'GET',
         pagination: { type: 'none' },
         companyName: 'Deel',
+        // external_link points at the application form; the overview page is the job posting.
+        urlPlaceholders: { '/application': '/overview' },
         fields: {
             title: 'attributes.title',
             location: 'attributes.location_name',
@@ -374,7 +376,15 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             // (same role in multiple locations) and would collapse them during dedup.
             id: 'attributes.ashby_id',
         },
+        // full_job_description is empty for every posting now (it was populated when
+        // this was added), so the language requirement ("Fluent Swedish speaker…") never
+        // reached the classifier. Keep reading it in case it comes back, and otherwise
+        // fetch the job page and cut out its JSON-LD JobPosting description — the rest of
+        // the page is site chrome and a 200 KB script payload.
         descriptionFields: ['attributes.full_job_description'],
+        fetchDescription: true,
+        descriptionFromHtml:
+            '"@type":"JobPosting".*?"description":"((?:[^"\\\\]|\\\\.)*)"',
         expandSecondaryLocations: {
             path: 'attributes.locations_list',
             countryName: 'location',
