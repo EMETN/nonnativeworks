@@ -64,9 +64,13 @@ jobs:
                   all_list = head.get("companies") or []
 
                   if company_url:
-                      selected = [c for c in all_list if c["url"] == company_url]
+                      with open("scraper/companies-local.yaml") as f:
+                          local_list = (yaml.safe_load(f) or {}).get("companies") or []
+                      selected = [c for c in all_list + local_list if c["url"] == company_url]
                       if not selected:
-                          raise SystemExit(f"No company in companies.yaml with url {company_url}")
+                          raise SystemExit(
+                              f"No company in companies.yaml or companies-local.yaml with url {company_url}"
+                          )
                   elif all_companies:
                       selected = all_list
                   else:
