@@ -57,7 +57,7 @@ bash scraper/run-local.sh --rebuild
 Edit `scraper/companies-local.yaml`. The format is the same as `scraper/companies.yaml`. Add a company here (instead of the main file) when:
 
 - The career site uses Cloudflare or bot protection that blocks GitHub Actions IPs
-- The scraper requires a Playwright browser session (njoyn, Barona Phase 2)
+- The scraper requires a Playwright browser session (njoyn)
 
 Test the company via the admin scraper tab first, then add it here.
 
@@ -185,7 +185,6 @@ For career sites that need dedicated logic beyond what the generic config suppor
 | Academic Work | `platforms/academicwork.py` | URL contains `academicwork.fi/.se/.no/.dk/.de/.ch` |
 | Arla          | `platforms/arla.py`         | URL contains `jobs.arla.com`                       |
 | Attrax        | `platforms/attrax.py`       | HTML contains `attrax-vacancy-tile`                |
-| Barona        | `platforms/barona.py`       | URL contains `baronacareers.com` or `barona.fi`    |
 | Njoyn         | `platforms/njoyn.py`        | URL contains `njoyn.com`                           |
 | Rovio         | `platforms/rovio.py`        | URL contains `rovio.com`                           |
 | Zalando       | `platforms/zalando.py`      | URL contains `jobs.zalando.com`                    |

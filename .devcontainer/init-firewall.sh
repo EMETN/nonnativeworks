@@ -192,7 +192,7 @@ company_domains=(
     "aiven.io"  # Aiven
     "akqa.com"  # AKQA
     "alpha-sense.com"  # AlphaSense
-    "www.alten.com/careers" # Alten
+    "www.alten.com" # Alten
     "www.alten.be" # Alten Belgium
     "www.alten.fi"  # Alten Finland
     "www.alten.fr"  # Alten France
@@ -279,7 +279,6 @@ company_domains=(
     "careers.publicisgroupe.com"  # Publicis Groupe
     "www.randstad.com"  # Randstad
     "www.reorbit.space" # Reorbit
-    "careers.reborbit.space" # Reorbit
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma

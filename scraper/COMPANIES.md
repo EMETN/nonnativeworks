@@ -13,7 +13,7 @@
 - Arla
 - ASML
 - Autodesk
-- Barona (local script)
+- Barona
 - Bayer
 - BMW Group (local script)
 - Bolt
@@ -136,33 +136,34 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostname.
 
-| Company            | Hostname                                     | API type                                                                  |
-| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------- |
-| OP Financial Group | `op-careers.fi`                              | Custom recruiting API (POST, Polylang locale)                             |
-| Nokia              | `jobs.nokia.com`                             | Oracle HCM Recruiting Cloud                                               |
-| Nets/Nexi          | `fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                               |
-| Orion              | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                               |
-| Gofore             | `gofore.com`                                 | WordPress REST API (Polylang)                                             |
-| Nordea             | `nordea.com`                                 | Custom Nordea API                                                         |
-| Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                              |
-| Accenture          | `accenture.com`                              | Custom API                                                                |
-| Booking.com        | `jobs.booking.com`                           | Custom API                                                                |
-| Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                         |
-| Capgemini          | `capgemini.com/careers`                      | Custom API                                                                |
-| Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                                |
-| Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                                |
-| Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                             |
-| Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings)         |
-| E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                     |
-| Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                       |
-| Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions) |
-| Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)       |     |
-| Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                                      |
-| Netflix            | `explore.jobs.netflix.net`                   | Eightfold API (offset pagination)                                         |
-| Danske Bank        | `ejqi.fa.ocs.oraclecloud.eu`                 | Oracle HCM Recruiting Cloud                                               |
-| ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)                      |
-| AMD                | `careers.amd.com`                            | Jibe jobs API                                                             |
-| Ericsson           | `jobs.ericsson.com`                          | Eightfold PCSX search API                                                 |
+| Company            | Hostname                                     | API type                                                                                                             |
+| ------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| OP Financial Group | `op-careers.fi`                              | Custom recruiting API (POST, Polylang locale)                                                                        |
+| Nokia              | `jobs.nokia.com`                             | Oracle HCM Recruiting Cloud                                                                                          |
+| Nets/Nexi          | `fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                                                                          |
+| Orion              | `fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com` | Oracle HCM Recruiting Cloud                                                                                          |
+| Gofore             | `gofore.com`                                 | WordPress REST API (Polylang)                                                                                        |
+| Nordea             | `nordea.com`                                 | Custom Nordea API                                                                                                    |
+| Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                                                                         |
+| Accenture          | `accenture.com`                              | Custom API                                                                                                           |
+| Booking.com        | `jobs.booking.com`                           | Custom API                                                                                                           |
+| Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                                                                    |
+| Capgemini          | `capgemini.com/careers`                      | Custom API                                                                                                           |
+| Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                                                                           |
+| Novo Nordisk       | `novonordisk.com/careers`                    | Custom API                                                                                                           |
+| Randstad           | `randstad.com/jobs/careers-at-randstad`      | Customer API`                                                                                                        |
+| Deel               | `deel.com`                                   | Self-hosted `deel-ats` API (Ashby-backed; multi-country postings)                                                    |
+| E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                                                                |
+| Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                                                                  |
+| Barona             | `barona.fi`                                  | WordPress AJAX feed (1-based pages, inline descriptions, ISO2 country); no per-job language data, classifier decides |
+| Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions)                                            |
+| Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)                                                  |     |
+| Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                                                                                 |
+| Netflix            | `explore.jobs.netflix.net`                   | Eightfold API (offset pagination)                                                                                    |
+| Danske Bank        | `ejqi.fa.ocs.oraclecloud.eu`                 | Oracle HCM Recruiting Cloud                                                                                          |
+| ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)                                                                 |
+| AMD                | `careers.amd.com`                            | Jibe jobs API                                                                                                        |
+| Ericsson           | `jobs.ericsson.com`                          | Eightfold PCSX search API                                                                                            |
 
 ---
 
@@ -222,7 +223,6 @@ Dedicated per-platform Python modules for sites with non-standard structures.
 | Academic Work | `academicwork.fi/.se/.no/.dk/.de/.ch` | Staffing agency; one companies.yaml entry fans out to all six country sites per run; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions fetched from English URL (`/en/jobs/j/â€¦?lang=en`) to avoid local-site boilerplate; jobs stamped with country_code explicitly per site                  |
 | Aiven         | `aiven.io/careers/job`                | Static single page; JSON-LD `JobPosting` list paired with job-card links for URLs                                                                                                                                                                                                                                                       |
 | Arla          | `jobs.arla.com`                       | Jobs JSON embedded in a `<script>` block (`phApp.ddo`); paginated `?from=N`; descriptions enriched via static fetch                                                                                                                                                                                                                     |
-| Barona        | `barona.fi`                           | Hybrid: Phase 1 fetches full listing via barona.fi WP AJAX API (plain requests); Phase 2 uses Playwright on baronacareers.com to read `requirements.languages` and `requirements.education` for English-titled jobs                                                                                                                     |
 | BMW Group     | `bmwgroup.jobs`                       | AEM; the whole board arrives as one server-rendered jobfinder fragment (path read from the page's own `data-jobfinder-path`), fields in `data-*` attributes; rows carry a bare city, so the country comes from the page's location filter (`DE/Munich` values) joined on a normalised city name; descriptions enriched via static fetch |
 | CGI           | `cgi.njoyn.com`                       | Njoyn ATS; Playwright                                                                                                                                                                                                                                                                                                                   |
 | Rovio         | `rovio.com`                           | Custom `c-open-po-card` HTML; descriptions enriched via static fetch                                                                                                                                                                                                                                                                    |

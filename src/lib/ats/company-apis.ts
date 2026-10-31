@@ -381,6 +381,32 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         },
     },
 
+    // Barona's WordPress AJAX feed on barona.fi (no Cloudflare, unlike baronacareers.com
+    // where the job pages live). Pages are 1-based; an out-of-range page returns []. Each
+    // item carries its description inline plus an ISO2 country, so no enrichment is
+    // needed. `cities` is a Python-repr string, not JSON — use the single `city` field.
+    // requirements.languages is only exposed behind baronacareers.com's Cloudflare
+    // challenge, so the classifier decides requires_native_language from the text.
+    'barona.fi': {
+        url: 'https://www.barona.fi/wp-admin/admin-ajax.php?action=barona_job_feed&per_page=100&lang=en&keyword=&published=&search=',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: '*/*',
+            Referer: 'https://www.barona.fi/en/jobs/',
+        },
+        pagination: { type: 'page', param: 'page', startPage: 1 },
+        companyName: 'Barona',
+        fields: {
+            title: 'title',
+            location: 'city',
+            country: 'country',
+            url: 'applyUrl',
+            id: 'id',
+        },
+        descriptionFields: ['description'],
+    },
+
     // Spotify's WordPress "animal" jobs API. The search endpoint returns the whole
     // job list in one response (the SPA filters client-side), so pagination is 'none'.
     'lifeatspotify.com': {
