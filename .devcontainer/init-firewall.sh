@@ -192,6 +192,18 @@ company_domains=(
     "aiven.io"  # Aiven
     "akqa.com"  # AKQA
     "alpha-sense.com"  # AlphaSense
+    "www.alten.com/careers" # Alten
+    "www.alten.be" # Alten Belgium
+    "www.alten.fi"  # Alten Finland
+    "www.alten.fr"  # Alten France
+    "www.alten-germany.de" # Alten Germany
+    "www.alten.it"  # Alten Italy
+    "www.alten.nl"  # Alten Netherlands
+    "www.alten.pt"  # Alten Portugal
+    "careers.altenromania.ro" # Alten Romania
+    "www.alten.es"  # Alten Spain
+    "www.alten.se"  # Alten Sweden
+    "www.alten.ch"  # Alten Switzerland
     "careers.amd.com"  # AMD
     "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
@@ -199,6 +211,7 @@ company_domains=(
     "autodesk.wd1.myworkdayjobs.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
+    "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
@@ -220,6 +233,7 @@ company_domains=(
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
+    "careers.gehealthcare.com" # GE Healthcare
     "www.getyourguide.careers"  # GetYourGuide
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
@@ -264,6 +278,8 @@ company_domains=(
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
     "www.randstad.com"  # Randstad
+    "www.reorbit.space" # Reorbit
+    "careers.reborbit.space" # Reorbit
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
@@ -291,6 +307,7 @@ company_domains=(
     "careers.tieto.com"  # Tietoevry
     "corporate.trustpilot.com"  # Trustpilot
     "uber.com"  # Uber
+    "jobs.uber.com" # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
     "www.vml.com"  # VML
