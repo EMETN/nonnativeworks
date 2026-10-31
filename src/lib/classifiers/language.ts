@@ -609,7 +609,9 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
     const advantageSuffix =
         `\\s+(?:considered\\s+)?` +
         `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
-        `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
+        // The gap words must not include "speaker"/"speaking": in "Swedish speaker
+        // (plus English required)" the "plus" opens a new clause, it doesn't rate Swedish.
+        `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
 }
 
@@ -765,6 +767,13 @@ function _buildRequirementSignals(lang: string): string[] {
         `b2 level of ${lang}`,
         `c1 level of ${lang}`,
         `c2 level of ${lang}`,
+        // ...with a skill modifier: "Minimum B2 level of spoken German"
+        ...['a1', 'a2', 'b1', 'b2', 'c1', 'c2'].flatMap((lvl) => [
+            `${lvl} level of spoken ${lang}`,
+            `${lvl} level of written ${lang}`,
+        ]),
+        `level of spoken ${lang}`,
+        `level of written ${lang}`,
         // Generic level-of-language phrasing without a CEFR code: "a very good level of Dutch"
         `level of ${lang}`,
         // Level descriptors
