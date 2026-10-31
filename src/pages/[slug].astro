@@ -1,0 +1,140 @@
+---
+import { createHash } from 'node:crypto';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CompanyGauge from '../components/company/CompanyGauge.astro';
+import PositionList from '../components/company/PositionList.tsx';
+import Breadcrumb from '../components/shared/Breadcrumb.astro';
+import TimeAgo from '../components/shared/TimeAgo';
+import { getCountryStats } from '../lib/queries';
+import { flagWidth, FLAG_HEIGHT } from '../lib/flag-dimensions';
+import { fetchAllCompanyStats, fetchAllPositions } from '../lib/build-queries';
+import { buildDetailPages, type DetailPage } from '../lib/detail-paths';
+import { FACET_KEYS, SORT_PARAM } from '../lib/position-filters';
+import { formatCount } from '../lib/text';
+import { cleanPathname } from '../lib/url-path';
+
+export async function getStaticPaths() {
+    const [countries, companies, positions] = await Promise.all([
+        getCountryStats(undefined, undefined),
+        fetchAllCompanyStats(),
+        fetchAllPositions(),
+    ]);
+
+    return buildDetailPages(countries, companies, positions).map((page) => ({
+        params: { slug: page.slug },
+        props: { page },
+    }));
+}
+
+interface Props {
+    page: DetailPage;
+}
+
+const { page } = Astro.props as Props;
+
+const isCountry = page.kind === 'country';
+const name = isCountry ? page.country.name : page.name;
+const totalPositions = isCountry
+    ? page.country.total_positions
+    : page.total_positions;
+const englishPositions = isCountry
+    ? page.country.english_positions
+    : page.english_positions;
+const listName = isCountry ? 'Countries' : 'Companies';
+const listHref = isCountry ? '/countries' : '/companies';
+
+const description = isCountry
+    ? `Browse ${formatCount(totalPositions)} open positions in ${name}. ${formatCount(englishPositions)} can be done in English without knowing the local language.`
+    : `${name} has ${formatCount(totalPositions)} open positions across ${page.country_count} ${page.country_count === 1 ? 'country' : 'countries'}, and ${formatCount(englishPositions)} don't require the local language(s).`;
+
+const cleanUrl = new URL(cleanPathname(Astro.url), Astro.url).href;
+const filterParams = [...FACET_KEYS, SORT_PARAM].join(',');
+// Astro doesn't CSP-hash is:inline scripts, so this pre-paint script's hash is added by hand.
+const filterFlagScript = `const params = new URLSearchParams(location.search);
+if (document.currentScript.dataset.params.split(',').some((k) => params.has(k))) {
+    const root = document.documentElement;
+    root.dataset.filtered = '';
+    setTimeout(() => (root.dataset.filtersReady = ''), 3000);
+}`;
+Astro.csp?.insertScriptHash(
+    `sha256-${createHash('sha256').update(filterFlagScript).digest('base64')}`,
+);
+---
+
+<BaseLayout
+    backToTop
+    title={name}
+    description={description}
+    nav={isCountry ? 'countries' : 'companies'}
+    breadcrumbs={[
+        { name: 'Home', href: '/' },
+        { name: listName, href: listHref },
+        { name },
+    ]}
+>
+    <script is:inline data-params={filterParams} set:html={filterFlagScript} />
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 md:pt-12 pb-16">
+        <Breadcrumb
+            items={[
+                { label: 'Home', href: '/' },
+                { label: listName, href: listHref },
+                { label: name },
+            ]}
+        />
+
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 md:mb-4 sm:pr-8 md:pr-12 xl:pr-18">
+            <h1
+                class="flex items-center gap-2 sm:gap-3 md:gap-4 text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
+                style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
+            >
+                {name}
+                {isCountry && (
+                    <img
+                        src={`/flags/${page.country.code.toLowerCase()}.png`}
+                        alt={`${name} flag`}
+                        width={flagWidth(page.country.code)}
+                        height={FLAG_HEIGHT}
+                        class="h-[1.4rem] sm:h-[1.4rem] md:h-[2.1rem] w-auto shadow-[0_0_10px_0_rgba(100,115,139,0.4)]"
+                    />
+                )}
+            </h1>
+            {totalPositions > 0 && (
+                <CompanyGauge
+                    englishPositions={englishPositions}
+                    totalPositions={totalPositions}
+                />
+            )}
+        </div>
+
+        {totalPositions === 0 ? (
+            <div class="text-center py-16 text-gray-500">
+                <p>
+                    No positions tracked yet for <strong>{name}</strong>. Check
+                    back soon!
+                </p>
+                <a href={listHref} class="btn mt-4">
+                    Browse all {listName.toLowerCase()}
+                </a>
+            </div>
+        ) : (
+            <>
+                <PositionList
+                    positions={page.positions}
+                    kind={page.kind}
+                    report={{
+                        ...(isCountry ? { country: name } : { company: name }),
+                        url: cleanUrl,
+                    }}
+                    client:load
+                />
+                {!isCountry && (
+                    <TimeAgo
+                        date={page.updated_at}
+                        class="text-xs sm:text-sm text-gray-500 mt-4"
+                        client:load
+                    />
+                )}
+            </>
+        )}
+    </div>
+</BaseLayout>

@@ -17,23 +17,25 @@ interface Props {
     noindex?: boolean;
     breadcrumbs?: BreadcrumbItem[];
     hideNavActive?: boolean;
+    nav?: 'countries' | 'companies';
     backToTop?: boolean;
 }
 
 const {
     title,
-    description = 'Find companies where English is enough — browse positions by country.',
+    description = 'Find companies where English is enough and browse positions by country.',
     ogImage,
     noindex = false,
     breadcrumbs,
     hideNavActive = false,
+    nav,
     backToTop = false,
 } = Astro.props;
 
 const siteTitle =
     title === 'Home'
-        ? 'nonnativeworks! — Work abroad in English'
-        : `${title} — nonnativeworks!`;
+        ? 'nonnativeworks! | Work abroad in English'
+        : `${title} | nonnativeworks!`;
 
 // Strip the built .html path so canonical matches the served URL — see url-path.ts.
 const canonical = new URL(cleanPathname(Astro.url), Astro.url).href;
@@ -122,7 +124,7 @@ const breadcrumbJsonLd =
     >
         <script>
             const key = import.meta.env.PUBLIC_POSTHOG_KEY;
-            if (key) {
+            if (key && import.meta.env.PROD) {
                 // Boot off the critical path, on idle or first interaction
                 // (whichever is first) so early engagement is still captured.
                 const events = [
@@ -147,8 +149,8 @@ const breadcrumbJsonLd =
                             advanced_disable_flags: true,
                             disable_external_dependency_loading: true,
                             disable_session_recording: true,
-                            capture_dead_clicks: !import.meta.env.DEV,
-                            capture_performance: !import.meta.env.DEV,
+                            capture_dead_clicks: true,
+                            capture_performance: true,
                             debug: false,
                         });
                     });
@@ -177,7 +179,7 @@ const breadcrumbJsonLd =
                     (document.activeElement as HTMLElement)?.blur();
             });
         </script>
-        <Header hideActive={hideNavActive} />
+        <Header hideActive={hideNavActive} active={nav} />
         <main id="main-content" class="flex-1 flex flex-col">
             <slot />
         </main>

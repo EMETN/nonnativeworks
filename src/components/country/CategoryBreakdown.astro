@@ -1,4 +1,5 @@
 ---
+import { formatCount } from '../../lib/text';
 import type { CategoryBreakdown } from '../../lib/types';
 
 interface Props {
@@ -23,10 +24,12 @@ const numFont = "font-family: 'Inter', 'Inter Fallback', sans-serif";
                 <span class="font-bold tabular-nums" style={numFont}>
                     <>
                         <span class="text-[#0F7A4F] ml-0.5">
-                            {cat.english_positions}
+                            {formatCount(cat.english_positions)}
                         </span>
                         <span class="text-gray-500">/</span>
-                        <span class="text-gray-900">{cat.total_positions}</span>
+                        <span class="text-gray-900">
+                            {formatCount(cat.total_positions)}
+                        </span>
                     </>
                 </span>
                 {i < categories.length - 1 && (

@@ -31,6 +31,11 @@ test('no page is emitted as a trailing-slash directory index', () => {
     expect(nested).toEqual([]);
 });
 
+test('country and company pages are emitted at the root, not nested', () => {
+    expect(pages).toContain('portugal.html');
+    expect(pages.filter((p) => p.includes('/'))).toEqual([]);
+});
+
 test('the build emits a substantial number of pages', () => {
     expect(pages.length).toBeGreaterThan(50);
 });

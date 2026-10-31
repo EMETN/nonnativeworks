@@ -7,6 +7,7 @@ import {
     getGlobalStats,
     getTopCompanies,
 } from '../lib/queries';
+import { formatCount } from '../lib/text';
 import type { CountryStats } from '../lib/types';
 
 const [allCountries, stats, topCompanies] = await Promise.all([
@@ -39,7 +40,7 @@ const countryItems = topCountries.map((c) => ({
 }));
 
 const companyItems = topCompanies.map((c) => ({
-    href: `/companies/${c.primary_company_slug}`,
+    href: `/${c.primary_company_slug}`,
     name: c.name,
     english: c.english_positions,
     total: c.total_positions,
@@ -49,7 +50,7 @@ const companyItems = topCompanies.map((c) => ({
 
 <BaseLayout
     title="Home"
-    description="nonnativeworks! tracks open positions where English is enough — no local language required. Browse by country to find your next opportunity abroad."
+    description="nonnativeworks! tracks open positions where English is enough, no local language required. Browse by country to find your next opportunity abroad."
 >
     <div class="max-w-screen-lg w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12">
         <!-- Intro -->
@@ -74,7 +75,7 @@ const companyItems = topCompanies.map((c) => ({
                 <div class="grid grid-cols-2 gap-x-8 gap-y-0 md:flex-1">
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                            {totalPositions.toLocaleString()}
+                            {formatCount(totalPositions)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             positions tracked
@@ -82,7 +83,7 @@ const companyItems = topCompanies.map((c) => ({
                     </div>
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-[#0F7A4F]">
-                            {englishPositions.toLocaleString()}
+                            {formatCount(englishPositions)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             English-friendly
@@ -92,7 +93,7 @@ const companyItems = topCompanies.map((c) => ({
                     <div class="border-t border-gray-200" />
                     <div class="text-center py-3">
                         <span class="block text-2xl sm:text-3xl font-bold text-gray-900">
-                            {totalCompanies.toLocaleString()}
+                            {formatCount(totalCompanies)}
                         </span>
                         <span class="text-xs sm:text-sm text-gray-500">
                             {totalCompanies === 1 ? 'company' : 'companies'}
@@ -126,7 +127,7 @@ const companyItems = topCompanies.map((c) => ({
             <div class="text-center py-8 text-gray-500">
                 <p class="text-lg mb-2">No positions tracked yet.</p>
                 <p class="text-sm">
-                    Check back soon — we're adding new countries and companies
+                    Check back soon. We're adding new countries and companies
                     regularly.
                 </p>
                 <SuggestCta kind="company" class="mt-6" />

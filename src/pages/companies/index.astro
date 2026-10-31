@@ -6,6 +6,7 @@ import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import SuggestCta from '../../components/shared/SuggestCta.astro';
 import { getTopCompanies, getGlobalStats } from '../../lib/queries';
+import { formatCount } from '../../lib/text';
 
 const [companies, stats] = await Promise.all([
     getTopCompanies(undefined, undefined, 0),
@@ -19,7 +20,7 @@ const englishPositions = stats.english_positions;
 <BaseLayout
     backToTop
     title="Companies"
-    description="Browse all companies with English-friendly job positions — no local language required."
+    description="Browse all companies with English-friendly job positions, no local language required."
     breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Companies' }]}
 >
     <div
@@ -30,7 +31,7 @@ const englishPositions = stats.english_positions;
             items={[{ label: 'Home', href: '/' }, { label: 'Companies' }]}
         />
 
-        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 sm:mb-6 sm:pr-8 md:pr-12 xl:pr-18">
+        <div class="flex items-center justify-between gap-4 sm:gap-6 mb-2 md:mb-4 sm:pr-8 md:pr-12 xl:pr-18">
             <h1
                 class="text-4xl sm:text-4xl md:text-6xl font-bold text-gray-900 leading-tight"
                 style="font-family: 'Inter', 'Inter Fallback', sans-serif;"
@@ -53,20 +54,19 @@ const englishPositions = stats.english_positions;
         ) : (
             <>
                 <StatsDescription>
-                    <strong class="font-semibold text-gray-900">
-                        {companies.length}
-                    </strong>{' '}
-                    {companies.length === 1 ? 'company' : 'companies'} —{' '}
-                    <strong class="font-semibold text-gray-900">
-                        {englishPositions.toLocaleString()}
-                    </strong>{' '}
-                    of{' '}
-                    <strong class="font-semibold text-gray-900">
-                        {totalPositions.toLocaleString()}
-                    </strong>{' '}
-                    open {totalPositions === 1 ? 'position' : 'positions'}{' '}
-                    {englishPositions === 1 ? "doesn't" : "don't"} require the
-                    local language(s).
+                    <span class="text-[#0F7A4F]">
+                        {formatCount(englishPositions)}
+                    </span>{' '}
+                    of {formatCount(totalPositions)}{' '}
+                    {totalPositions === 1 ? 'position' : 'positions'} at{' '}
+                    <span class="text-[#0F7A4F]">
+                        {companies.length}{' '}
+                        {companies.length === 1 ? 'company' : 'companies'}
+                    </span>{' '}
+                    <span class="xs:block xs:leading-tight text-sm lg:text-base font-normal text-gray-500">
+                        {englishPositions === 1 ? "doesn't" : "don't"} require
+                        the local language(s)
+                    </span>
                 </StatsDescription>
                 <AllCompaniesGrid companies={companies} client:idle />
                 <div class="mt-6 text-center suggest-cta">

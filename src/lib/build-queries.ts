@@ -82,10 +82,7 @@ const POSITION_COLUMNS = `
     category:categories(name)
 `;
 
-/**
- * Reads every position in one pass, paged and in parallel;
- * mirrors getPositionsByCompany's row shape.
- */
+/** Reads every position in one pass, paged and in parallel. */
 export async function fetchAllPositions(): Promise<PositionDetail[]> {
     const supabase = createPublicClient();
 

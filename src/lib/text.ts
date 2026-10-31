@@ -5,3 +5,5 @@ export function foldText(value: string): string {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 }
+
+export const formatCount = (n: number) => n.toLocaleString('de-DE');

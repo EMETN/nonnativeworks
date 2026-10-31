@@ -1,4 +1,6 @@
 ---
+import { formatCount } from '../../lib/text';
+
 interface Props {
     englishPositions: number;
     totalPositions: number;
@@ -9,6 +11,8 @@ const pct =
     totalPositions > 0
         ? Math.round((englishPositions / totalPositions) * 100)
         : 0;
+const englishLabel = formatCount(englishPositions);
+const totalLabel = formatCount(totalPositions);
 const r = 38;
 const circumference = 2 * Math.PI * r;
 const offset = circumference * (1 - pct / 100);
@@ -19,7 +23,7 @@ const offset = circumference * (1 - pct / 100);
         viewBox="0 0 100 100"
         class="w-[75px] sm:w-[75px] md:w-[100px]"
         role="img"
-        aria-label={`${englishPositions} of ${totalPositions} positions are English-friendly`}
+        aria-label={`${englishLabel} of ${totalLabel} positions are English-friendly`}
     >
         <circle
             cx="50"
@@ -48,12 +52,12 @@ const offset = circumference * (1 - pct / 100);
                 x="50"
                 y="46"
                 text-anchor="middle"
-                font-size="20"
+                font-size={englishLabel.length > 4 ? 16 : 20}
                 font-weight="700"
                 fill="#0F7A4F"
                 font-family="'Inter', sans-serif"
             >
-                {englishPositions}
+                {englishLabel}
             </text>
             <line
                 x1="35"
@@ -67,12 +71,12 @@ const offset = circumference * (1 - pct / 100);
                 x="50"
                 y="66"
                 text-anchor="middle"
-                font-size="14"
+                font-size={totalLabel.length > 5 ? 12 : 14}
                 font-weight="500"
                 fill="#6b7280"
                 font-family="'Inter', sans-serif"
             >
-                {totalPositions}
+                {totalLabel}
             </text>
         </g>
         <text

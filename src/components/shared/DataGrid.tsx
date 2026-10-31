@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'preact/hooks';
-import { foldText } from '../../lib/text';
+import { foldText, formatCount } from '../../lib/text';
 import { flagWidth, FLAG_HEIGHT } from '../../lib/flag-dimensions';
 
 export interface DataGridItem {
@@ -24,10 +24,6 @@ interface Props {
 
 type SortField = 'positions' | 'total' | 'companies';
 type SortDir = 'desc' | 'asc';
-
-function formatNumber(n: number): string {
-    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
@@ -76,10 +72,10 @@ function SizingRow({
         (a, b) => b.total_positions - a.total_positions,
     )[0];
     if (!widest) return null;
-    const ts = 'text-xl md:text-lg lg:text-2xl';
-    const ss = 'text-sm md:text-xs lg:text-base';
-    const ys = 'text-sm md:text-xs lg:text-base';
-    const as = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
+    const ts = 'text-xl lg:text-2xl';
+    const ss = 'text-sm lg:text-base';
+    const ys = 'text-sm lg:text-base';
+    const as = 'w-4 h-4 lg:w-5 lg:h-5';
     const maxCompanies = compact
         ? Math.max(...items.map((i) => i.company_count ?? 0))
         : 0;
@@ -95,12 +91,12 @@ function SizingRow({
                 <>
                     <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
                         <span class={`${ts} tabular-nums`} style={numFont}>
-                            {formatNumber(maxCompanies)}
+                            {formatCount(maxCompanies)}
                         </span>
                     </div>
                     <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6 flex items-baseline gap-0.5 sm:gap-1">
                         <span class={`${ts} tabular-nums`} style={numFont}>
-                            {formatNumber(widest.english_positions)}
+                            {formatCount(widest.english_positions)}
                         </span>
                         <span
                             class={`${ss} font-light text-gray-500`}
@@ -109,14 +105,14 @@ function SizingRow({
                             /
                         </span>
                         <span class={`${ys} tabular-nums`} style={numFont}>
-                            {formatNumber(widest.total_positions)}
+                            {formatCount(widest.total_positions)}
                         </span>
                     </div>
                 </>
             ) : (
                 <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6 flex items-baseline gap-0.5 sm:gap-1">
                     <span class={`${ts} tabular-nums`} style={numFont}>
-                        {formatNumber(widest.english_positions)}
+                        {formatCount(widest.english_positions)}
                     </span>
                     <span
                         class={`${ss} font-light text-gray-500`}
@@ -125,7 +121,7 @@ function SizingRow({
                         /
                     </span>
                     <span class={`${ys} tabular-nums`} style={numFont}>
-                        {formatNumber(widest.total_positions)}
+                        {formatCount(widest.total_positions)}
                     </span>
                 </div>
             )}
@@ -137,10 +133,10 @@ function SizingRow({
 }
 
 function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
-    const textSize = 'text-xl md:text-lg lg:text-2xl';
-    const slashSize = 'text-sm md:text-xs lg:text-base';
-    const totalSize = 'text-sm md:text-xs lg:text-base';
-    const arrowSize = 'w-4 h-4 md:w-3.5 md:h-3.5 lg:w-5 lg:h-5';
+    const textSize = 'text-xl lg:text-2xl';
+    const slashSize = 'text-sm lg:text-base';
+    const totalSize = 'text-sm lg:text-base';
+    const arrowSize = 'w-4 h-4 lg:w-5 lg:h-5';
     const rowPy = 'py-3.5 sm:py-4';
 
     const noPositions = item.english_positions === 0;
@@ -195,19 +191,19 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                 class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`}
                                 style={numFont}
                             >
-                                {formatNumber(item.company_count ?? 0)}
+                                {formatCount(item.company_count ?? 0)}
                             </span>
                         </div>
                         <div
                             class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
-                            title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
-                            aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                            title={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
+                            aria-label={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
                         >
                             <span
                                 class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                                 style={numFont}
                             >
-                                {formatNumber(item.english_positions)}
+                                {formatCount(item.english_positions)}
                             </span>
                             <span
                                 class={`${slashSize} font-light text-gray-500 leading-none`}
@@ -220,21 +216,21 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                 class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                                 style={numFont}
                             >
-                                {formatNumber(item.total_positions)}
+                                {formatCount(item.total_positions)}
                             </span>
                         </div>
                     </>
                 ) : (
                     <div
                         class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
-                        title={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
-                        aria-label={`${item.english_positions} English-friendly of ${item.total_positions} total positions`}
+                        title={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
+                        aria-label={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
                     >
                         <span
                             class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                             style={numFont}
                         >
-                            {formatNumber(item.english_positions)}
+                            {formatCount(item.english_positions)}
                         </span>
                         <span
                             class={`${slashSize} font-light text-gray-500 leading-none`}
@@ -247,7 +243,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                             class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                             style={numFont}
                         >
-                            {formatNumber(item.total_positions)}
+                            {formatCount(item.total_positions)}
                         </span>
                     </div>
                 )}

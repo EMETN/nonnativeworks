@@ -20,6 +20,13 @@ export interface PositionDetail {
     work_model: 'remote' | 'hybrid' | 'on-site' | null;
 }
 
+export interface ListedPosition extends PositionDetail {
+    company_name: string;
+    company_slug: string;
+    country_name: string;
+    country_slug: string;
+}
+
 export interface GlobalStats {
     total_positions: number;
     english_positions: number;
