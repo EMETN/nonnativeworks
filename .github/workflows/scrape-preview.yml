@@ -57,7 +57,7 @@ jobs:
                   import yaml, os
 
                   all_companies = os.environ.get("ALL_COMPANIES") == "true"
-                  company_url = (os.environ.get("COMPANY_URL") or "").strip()
+                  company_url = (os.environ.get("COMPANY_URL") or "").strip().rstrip("/")
 
                   with open("scraper/companies.yaml") as f:
                       head = yaml.safe_load(f) or {}
@@ -66,7 +66,9 @@ jobs:
                   if company_url:
                       with open("scraper/companies-local.yaml") as f:
                           local_list = (yaml.safe_load(f) or {}).get("companies") or []
-                      selected = [c for c in all_list + local_list if c["url"] == company_url]
+                      selected = [
+                          c for c in all_list + local_list if c["url"].rstrip("/") == company_url
+                      ]
                       if not selected:
                           raise SystemExit(
                               f"No company in companies.yaml or companies-local.yaml with url {company_url}"
