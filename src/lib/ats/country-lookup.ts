@@ -1697,6 +1697,14 @@ export function toEnglishCityNames(cities: string[]): string[] {
  * Country names and cities from other countries are discarded.
  * Returns an empty array when no matching cities are found.
  */
+function unwrapCityAfterCountry(location: string): string {
+    return location.replace(
+        /^([^,(]+?)\s*\(([^)]+)\)$/,
+        (whole, country: string, city: string) =>
+            COUNTRY_MAP[normalizeKey(country)] ? `${country}, ${city}` : whole,
+    );
+}
+
 export function extractCitiesForCountry(
     location: string,
     countryCode: string,
@@ -1711,7 +1719,7 @@ export function extractCitiesForCountry(
             .trim()
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
-        const segments = stripped
+        const segments = unwrapCityAfterCountry(stripped)
             .split(',')
             .map((s) => s.trim().replace(HEADQUARTERS_SUFFIX_RE, ''))
             .filter(Boolean);

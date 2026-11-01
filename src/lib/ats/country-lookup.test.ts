@@ -223,6 +223,31 @@ test('resolves Campobasso without a country in the location', () => {
 });
 
 describe('extractCitiesForCountry', () => {
+    test('reads the city from "Country (City)"', () => {
+        expect(extractCitiesForCountry('Norway (Oslo)', 'NO')).toEqual([
+            'Oslo',
+        ]);
+        expect(
+            extractCitiesForCountry(
+                'England, United Kingdom; Germany; Norway (Oslo)',
+                'NO',
+            ),
+        ).toEqual(['Oslo']);
+    });
+
+    test('takes no city from a work mode in parentheses', () => {
+        expect(extractCitiesForCountry('Norway (remote)', 'NO')).toEqual([]);
+    });
+
+    test('takes no city from a venue in parentheses', () => {
+        expect(
+            extractCitiesForCountry(
+                'KQB (Amsterdam - Herengracht 578-58)',
+                'NL',
+            ),
+        ).toEqual([]);
+    });
+
     test('keeps every city of a multi-location posting', () => {
         expect(
             extractCitiesForCountry(
