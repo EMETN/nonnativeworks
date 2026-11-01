@@ -267,6 +267,10 @@ companies:
       url: https://careers.munichre.com/en/search-jobs
       min_positions: 10
 
+    - name: N26
+      url: https://n26.com/en-eu/careers
+      min_positions: 10
+
     - name: Nebius
       url: https://careers.nebius.com/
       min_positions: 50
