@@ -199,7 +199,7 @@ company_domains=(
     "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
-    "autodesk.wd1.myworkdayjobs.com"  # Autodesk
+    "jobs.autodesk.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "bolt.eu"  # Bolt
