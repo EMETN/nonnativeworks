@@ -192,6 +192,7 @@ company_domains=(
     "careers.adyen.com"  # Adyen
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
+    "careers.aiven.io"  # Aiven
     "akqa.com"  # AKQA
     "alpha-sense.com"  # AlphaSense
     "careers.amd.com"  # AMD
