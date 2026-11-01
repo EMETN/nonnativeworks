@@ -37,6 +37,7 @@
 - Fortum
 - Futurice
 - GetYourGuide
+- GitLab
 - Gofore
 - Happeo
 - Heineken
@@ -125,7 +126,7 @@ Detected automatically from the career page URL. No per-company config needed â€
 
 | ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
 | --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy, Vinted (`vinteden` + language boards), Monks, SumUp                                                                  |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy, Vinted (`vinteden` + language boards), Monks, SumUp, GitLab                                                          |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
 | Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), OpenAI, Supercell, Mapbox, Mistral (`mistral.ai`)                                                                                                                                                           |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | â€” (none currently tracked)                                                                                                                                                                                                                                                            |

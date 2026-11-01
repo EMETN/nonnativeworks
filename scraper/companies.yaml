@@ -167,6 +167,10 @@ companies:
       url: https://www.getyourguide.careers/open-roles
       min_positions: 10
 
+    - name: GitLab
+      url: https://about.gitlab.com/jobs/all-jobs/
+      min_positions: 10
+
     - name: Gofore
       url: https://gofore.com/en/careers
       min_positions: 0

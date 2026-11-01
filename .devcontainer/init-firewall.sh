@@ -222,6 +222,7 @@ company_domains=(
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
     "www.getyourguide.careers"  # GetYourGuide
+    "about.gitlab.com"  # GitLab
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo
