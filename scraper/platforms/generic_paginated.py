@@ -597,7 +597,7 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
 
     location = None
     department = None
-    meta_div = card.select_one("div.text-md")
+    meta_div = card.select_one("div.text-md, span.text-base")
     if meta_div:
         parts = [
             p.strip()

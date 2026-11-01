@@ -178,6 +178,7 @@ cdn_domains=(
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
     "iaziqy.fa.ocs.oraclecloud.com" # Uber
     "upcloud.teamtailor.com"  # UpCloud
+    "iqm.teamtailor.com"  # IQM
 )
 company_domains=(
     "abb.wd3.myworkdayjobs.com"  # ABB
@@ -327,7 +328,6 @@ company_domains=(
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando
     "zuehlke.wd3.myworkdayjobs.com"  # Zühlke
-"
 )
 for domain in "${tool_domains[@]}" "${ats_domains[@]}" "${company_domains[@]}"; do
     echo "Resolving $domain..."

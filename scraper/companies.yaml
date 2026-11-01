@@ -215,6 +215,10 @@ companies:
       url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5
 
+    - name: IQM
+      url: https://iqm.teamtailor.com/jobs
+      min_positions: 1
+
     - name: Klarna
       url: https://jobs.deel.com/klarna
       min_positions: 10
