@@ -189,6 +189,7 @@ company_domains=(
     "academicwork.de"
     "academicwork.ch"
     "www.accenture.com"  # Accenture
+    "careers.adyen.com"  # Adyen
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
     "akqa.com"  # AKQA
