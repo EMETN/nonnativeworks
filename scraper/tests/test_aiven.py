@@ -26,7 +26,7 @@ LISTING_HTML = """
   </a></div></li>
 </ul>
 </body></html>
-""".encode("utf-8")
+""".encode()
 
 
 class ScrapeAivenStaticTest(unittest.TestCase):
