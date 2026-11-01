@@ -232,6 +232,12 @@ describe('extractCitiesForCountry', () => {
         ).toEqual(['Agen', 'Arcachon']);
     });
 
+    test('drops the HQ suffix from a city', () => {
+        expect(extractCitiesForCountry('Dublin; Helsinki HQ', 'FI')).toEqual([
+            'Helsinki',
+        ]);
+    });
+
     test('keeps unknown cities alongside known ones', () => {
         expect(
             extractCitiesForCountry(

@@ -290,6 +290,7 @@ company_domains=(
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
     "www.sumup.com"  # SumUp
     "supercell.com"  # Supercell
+    "supermetrics.com"  # Supermetrics
     "swecogroup.com"  # Sweco
     "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever

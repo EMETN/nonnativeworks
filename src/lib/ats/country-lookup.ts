@@ -1613,6 +1613,8 @@ const WORK_MODE_RE = /^(remote|hybrid|on-?site|in-?office)$/i;
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
 const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
 
+const HEADQUARTERS_SUFFIX_RE = /\s+HQ$/i;
+
 /**
  * Extract a work model from a raw location string by looking for prefixes like
  * "Hybrid - ", "Remote - ", "On-site - ".
@@ -1711,7 +1713,7 @@ export function extractCitiesForCountry(
             .replace(LOCATION_SUFFIX_RE, '');
         const segments = stripped
             .split(',')
-            .map((s) => s.trim())
+            .map((s) => s.trim().replace(HEADQUARTERS_SUFFIX_RE, ''))
             .filter(Boolean);
         const matching = (find: (key: string) => CountryInfo | undefined) =>
             segments.filter(
