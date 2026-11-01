@@ -99,6 +99,10 @@ companies:
       url: https://jobs.booking.com
       min_positions: 10
 
+    - name: Cabify
+      url: https://cabify.careers/en/jobs
+      min_positions: 5
+
     - name: Capgemini
       url: https://careers.capgemini.com
       min_positions: 10

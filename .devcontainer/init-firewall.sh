@@ -202,6 +202,7 @@ company_domains=(
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "bolt.eu"  # Bolt
+    "cabify.careers"  # Cabify
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
     "careers.carlsberg.com"  # Carlsberg
