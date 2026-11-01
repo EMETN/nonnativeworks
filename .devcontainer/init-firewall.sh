@@ -174,6 +174,7 @@ cdn_domains=(
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Orkla, Nokia)
     "careers.theheinekencompany.com"  # Heineken (Cloudflare-fronted)
+    "mcp.plane.so"  # Plane MCP (AWS ELB, rotates IPs)
     "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
     "upcloud.teamtailor.com"  # UpCloud
