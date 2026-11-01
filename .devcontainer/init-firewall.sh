@@ -247,6 +247,7 @@ company_domains=(
     "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
+    "www.mews.com"  # Mews
     "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft

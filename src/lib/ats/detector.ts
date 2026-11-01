@@ -31,6 +31,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'jobs.picnic.app': { ats: 'greenhouse', slug: 'teampicnic' },
     'relexsolutions.com': { ats: 'greenhouse', slug: 'relex' },
     'supermetrics.com': { ats: 'greenhouse', slug: 'supermetricsoy' },
+    'mews.com': { ats: 'greenhouse', slug: 'mewssystems' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
     // Slug probing would hit Doctolib's stale Greenhouse board.

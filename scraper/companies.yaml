@@ -247,6 +247,10 @@ companies:
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
 
+    - name: Mews
+      url: https://www.mews.com/en/careers
+      min_positions: 10
+
     - name: Mistral
       url: https://jobs.ashbyhq.com/mistral.ai
       min_positions: 10
