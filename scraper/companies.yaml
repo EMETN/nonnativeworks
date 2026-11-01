@@ -107,6 +107,10 @@ companies:
       url: https://careers.carlsberg.com/search/?createNewAlert=false&q=&locationsearch=&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield3=&optionsFacetsDD_customfield2=
       min_positions: 10
 
+    - name: Celonis
+      url: https://careers.celonis.com/join-us/open-positions
+      min_positions: 30
+
     - name: Cognite
       url: https://www.cognite.com/en/company/careers
       min_positions: 5

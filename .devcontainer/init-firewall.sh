@@ -205,6 +205,7 @@ company_domains=(
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
     "careers.carlsberg.com"  # Carlsberg
+    "careers.celonis.com"  # Celonis
     "cgi.njoyn.com"  # CGI
     "www.cognite.com"  # Cognite
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
