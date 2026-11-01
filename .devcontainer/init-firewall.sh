@@ -295,6 +295,7 @@ company_domains=(
     "supercell.com"  # Supercell
     "supermetrics.com"  # Supermetrics
     "swecogroup.com"  # Sweco
+    "careers.talkdesk.com"  # Talkdesk
     "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever
     "www.teliacompany.com"  # Telia

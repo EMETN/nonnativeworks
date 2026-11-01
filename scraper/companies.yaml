@@ -430,6 +430,10 @@ companies:
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1
 
+    - name: Talkdesk
+      url: https://careers.talkdesk.com/all-open-positions
+      min_positions: 5
+
     - name: Tandem Health
       url: https://tandemhealth.ai/about/careers
       min_positions: 10

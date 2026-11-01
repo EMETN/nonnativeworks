@@ -32,6 +32,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'relexsolutions.com': { ats: 'greenhouse', slug: 'relex' },
     'supermetrics.com': { ats: 'greenhouse', slug: 'supermetricsoy' },
     'mews.com': { ats: 'greenhouse', slug: 'mewssystems' },
+    'careers.talkdesk.com': { ats: 'greenhouse', slug: 'talkdesk2' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
     // Slug probing would hit Doctolib's stale Greenhouse board.
