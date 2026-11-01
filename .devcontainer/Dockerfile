@@ -78,6 +78,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     /opt/scraper-venv/bin/pip install -r /workspace/requirements.txt && \
     /opt/scraper-venv/bin/pip install --group /workspace/pyproject.toml:dev
 
+# Let node update ruff in the venv from pnpm deps:update
+RUN chown -R node:node /opt/scraper-venv
+
 # Make venv the default Python
 ENV PATH="/opt/scraper-venv/bin:$PATH"
 
