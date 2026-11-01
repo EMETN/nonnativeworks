@@ -229,6 +229,7 @@ company_domains=(
     "careers.dhl.com"  # DHL
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
+    "elisa.com"  # Elisa
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "finnair.wd103.myworkdayjobs.com"  # Finnair
@@ -245,10 +246,12 @@ company_domains=(
     "if.wd502.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING
+    "iqm.tech" # IQM
     "kesko.fi"  # Kesko
     "jobs.deel.com"  # Klarna
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
+    "www.kraken.com"  # Kraken/Payward
     "legora.com"  # Legora
     "lovable.dev"  # Lovable
     "api-apply.lufthansagroup.careers"  # Lufthansa
@@ -260,7 +263,9 @@ company_domains=(
     "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft
+    "www.monks.com"  # Monks
     "careers.munichre.com"  # Munich Re
+    "www.nestai.com"  #NestAI
     "jobs.neste.com"  # Neste
     "explore.jobs.netflix.net"  # Netflix
     "nexigroup.com"  # Nexi
@@ -268,6 +273,7 @@ company_domains=(
     "jobs.nokia.com"  # Nokia
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
+    "jobs.nvidia.com"  # Nvidia
     "nxp.wd3.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
@@ -310,6 +316,7 @@ company_domains=(
     "jobs.uber.com" # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
+    "careers.vinted.com"  # Vinted
     "www.vml.com"  # VML
     "jobs.volkswagen-group.com"  # Volkswagen
     "jobs.volvogroup.com"  # Volvo Group
@@ -319,6 +326,8 @@ company_domains=(
     "wpp.careersitecloud.com"  # WPP
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando
+    "zuehlke.wd3.myworkdayjobs.com"  # Zühlke
+"
 )
 for domain in "${tool_domains[@]}" "${ats_domains[@]}" "${company_domains[@]}"; do
     echo "Resolving $domain..."
