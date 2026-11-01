@@ -1635,6 +1635,49 @@ export function extractWorkModelFromLocation(
     return null;
 }
 
+const ENGLISH_CITY_NAMES: Record<string, string> = {
+    antwerpen: 'Antwerp',
+    braunschweig: 'Brunswick',
+    'braunschweig/brunswick': 'Brunswick',
+    brussel: 'Brussels',
+    bruxelles: 'Brussels',
+    bucurești: 'Bucharest',
+    'den haag': 'The Hague',
+    geneve: 'Geneva',
+    genève: 'Geneva',
+    goteborg: 'Gothenburg',
+    göteborg: 'Gothenburg',
+    hannover: 'Hanover',
+    kobenhavn: 'Copenhagen',
+    koeln: 'Cologne',
+    koln: 'Cologne',
+    köln: 'Cologne',
+    københavn: 'Copenhagen',
+    lisboa: 'Lisbon',
+    milano: 'Milan',
+    muenchen: 'Munich',
+    münchen: 'Munich',
+    napoli: 'Naples',
+    nuernberg: 'Nuremberg',
+    nurnberg: 'Nuremberg',
+    nürnberg: 'Nuremberg',
+    padova: 'Padua',
+    praha: 'Prague',
+    roma: 'Rome',
+    sevilla: 'Seville',
+    torino: 'Turin',
+    warszawa: 'Warsaw',
+    wien: 'Vienna',
+    zürich: 'Zurich',
+};
+
+export function toEnglishCityNames(cities: string[]): string[] {
+    const names = cities.map(
+        (city) => ENGLISH_CITY_NAMES[normalizeKey(city)] ?? city,
+    );
+    return [...new Set(names)];
+}
+
 /**
  * From a raw location string (e.g. "Hybrid - Helsinki, Uusimaa; Hybrid - Tallinn, Estonia"),
  * extract only the city names that belong to the given ISO alpha-2 country code.
@@ -1742,21 +1785,19 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     const seen = new Set<string>();
     const results: CountryInfo[] = [];
     for (const group of segmentGroups) {
-        // A bare 2-letter code counts only if nothing else resolved: "San Francisco, CA" isn't Canada.
+        // Weaker matches need no stronger one: "Porto Seguro, Brazil" isn't Portugal, "SF, CA" isn't Canada.
         const keys = group.map(normalizeKey);
         const isCode = (key: string) => /^[a-z]{2}$/.test(key);
-        const lookup = (key: string) =>
-            COUNTRY_MAP[key] ?? CITY_MAP[key] ?? lookupCityByPrefix(key);
-        let infos = keys
-            .filter((key) => !isCode(key))
-            .map(lookup)
-            .filter((info): info is CountryInfo => !!info);
-        if (infos.length === 0) {
-            infos = keys
-                .filter(isCode)
-                .map(lookup)
-                .filter((info): info is CountryInfo => !!info);
-        }
+        const names = keys.filter((key) => !isCode(key));
+        const codes = keys.filter(isCode);
+        const exact = (key: string) => COUNTRY_MAP[key] ?? CITY_MAP[key];
+        const resolve = (
+            candidates: string[],
+            find: (key: string) => CountryInfo | undefined,
+        ) => candidates.map(find).filter((info): info is CountryInfo => !!info);
+        let infos = resolve(names, exact);
+        if (infos.length === 0) infos = resolve(names, lookupCityByPrefix);
+        if (infos.length === 0) infos = resolve(codes, exact);
         for (const info of infos) {
             if (!seen.has(info.code)) {
                 seen.add(info.code);

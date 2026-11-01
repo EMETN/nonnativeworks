@@ -2,7 +2,10 @@
 // Watch mode: pnpm test:watch
 
 import { test, expect, describe } from 'vitest';
-import { lookupCountryFromLocation } from './country-lookup';
+import {
+    lookupCountryFromLocation,
+    toEnglishCityNames,
+} from './country-lookup';
 
 const codes = (loc: string) =>
     lookupCountryFromLocation(loc)
@@ -158,5 +161,41 @@ describe('lookupCountryFromLocation — Czechia', () => {
                 { name: 'Czechia', code: 'CZ', slug: 'czechia' },
             ]);
         }
+    });
+});
+
+describe('toEnglishCityNames', () => {
+    test('replaces a local name with its English name', () => {
+        expect(toEnglishCityNames(['München', 'Wien'])).toEqual([
+            'Munich',
+            'Vienna',
+        ]);
+    });
+
+    test('merges a local and English name for the same city', () => {
+        expect(toEnglishCityNames(['Antwerpen', 'Antwerp'])).toEqual([
+            'Antwerp',
+        ]);
+    });
+
+    test('leaves other cities unchanged', () => {
+        expect(toEnglishCityNames(['Mo i Rana'])).toEqual(['Mo i Rana']);
+    });
+});
+
+describe('lookupCountryFromLocation — city prefix matches', () => {
+    test('ignores a city prefix when the location names its country', () => {
+        expect(codes('Porto Seguro, Bahia, Brazil')).toEqual(['BR']);
+    });
+
+    test('keeps a city prefix when nothing else resolves', () => {
+        expect(codes('Riga Central')).toEqual(['LV']);
+    });
+
+    test('resolves each semicolon-separated location on its own', () => {
+        expect(codes('Porto Seguro, Brazil; Riga Central')).toEqual([
+            'BR',
+            'LV',
+        ]);
     });
 });
