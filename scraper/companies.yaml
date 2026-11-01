@@ -378,6 +378,10 @@ companies:
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
 
+    - name: SumUp
+      url: https://www.sumup.com/careers/positions/
+      min_positions: 30
+
     - name: Supercell
       url: https://supercell.com/en/careers/
       min_positions: 10

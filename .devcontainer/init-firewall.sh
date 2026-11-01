@@ -282,6 +282,7 @@ company_domains=(
     "www.lifeatspotify.com"  # Spotify — job detail pages (description enrichment fetches these)
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
+    "www.sumup.com"  # SumUp
     "supercell.com"  # Supercell
     "swecogroup.com"  # Sweco
     "tandemhealth.ai"  # Tandem Health
