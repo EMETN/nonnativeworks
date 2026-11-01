@@ -246,6 +246,7 @@ company_domains=(
     "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft
+    "www.monks.com"  # Monks
     "careers.munichre.com"  # Munich Re
     "jobs.neste.com"  # Neste
     "explore.jobs.netflix.net"  # Netflix

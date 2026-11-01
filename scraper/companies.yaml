@@ -235,6 +235,10 @@ companies:
       url: https://jobs.ashbyhq.com/mistral.ai
       min_positions: 10
 
+    - name: Monks
+      url: https://www.monks.com/careers
+      min_positions: 5
+
     - name: Munich Re
       url: https://careers.munichre.com/en/search-jobs
       min_positions: 10
