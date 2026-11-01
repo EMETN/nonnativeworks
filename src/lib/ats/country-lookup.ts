@@ -1028,6 +1028,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     cork: { name: 'Ireland', code: 'IE', slug: 'ireland' },
     dublin: { name: 'Ireland', code: 'IE', slug: 'ireland' },
     // Italy
+    campobasso: { name: 'Italy', code: 'IT', slug: 'italy' },
     ferrara: { name: 'Italy', code: 'IT', slug: 'italy' },
     melfi: { name: 'Italy', code: 'IT', slug: 'italy' },
     milan: { name: 'Italy', code: 'IT', slug: 'italy' },
@@ -1498,6 +1499,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     ljubljana: { name: 'Slovenia', code: 'SI', slug: 'slovenia' },
     nairobi: { name: 'Kenya', code: 'KE', slug: 'kenya' },
     zagreb: { name: 'Croatia', code: 'HR', slug: 'croatia' },
+    luxembourg: { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
 };
 
 // Companies that only operate in one country — keyed by a substring of their career page URL.
@@ -1602,6 +1604,8 @@ function lookupCityByPrefix(key: string): CountryInfo | undefined {
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
+const WORK_MODE_RE = /^(remote|hybrid|on-?site|in-?office)$/i;
+
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
 const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
 
@@ -1621,7 +1625,9 @@ export function extractWorkModelFromLocation(
         .filter(Boolean);
     const models = new Set<string>();
     for (const part of parts) {
-        const match = part.match(LOCATION_PREFIX_RE);
+        const match =
+            part.match(LOCATION_PREFIX_RE) ??
+            part.split(',')[0].trim().match(WORK_MODE_RE);
         if (match) {
             const raw = match[1].toLowerCase().replace(/-/g, '');
             if (raw === 'remote') models.add('remote');
@@ -1689,47 +1695,38 @@ export function extractCitiesForCountry(
     countryCode: string,
 ): string[] {
     if (!location?.trim()) return [];
-    const parts = location
-        .split(';')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    const segments = parts.flatMap((part) => {
+    const results: string[] = [];
+    const add = (city: string) => {
+        if (!results.includes(city)) results.push(city);
+    };
+    for (const part of location.split(';')) {
         const stripped = part
+            .trim()
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
-        return stripped
+        const segments = stripped
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-    });
-    const results: string[] = [];
-    const seen = new Set<string>();
-    for (const segment of segments) {
-        const key = normalizeKey(segment);
-        const info = CITY_MAP[key] ?? lookupCityByPrefix(key);
-        if (info && info.code === countryCode) {
-            if (!seen.has(key)) {
-                seen.add(key);
-                results.push(segment);
-            }
-        }
-    }
-    if (results.length === 0) {
-        // No known city matched. When the whole location belongs to just this country,
-        // fall back to its leading place-name segment so small cities missing from
-        // CITY_MAP (e.g. "Mo i Rana, Norway") still show instead of no location at all.
-        const locCountries = lookupCountryFromLocation(location);
-        if (locCountries.length === 1 && locCountries[0].code === countryCode) {
-            for (const segment of segments) {
-                const resolved = lookupCountryFromLocation(segment);
-                // Skip the segment that is itself the country/region name.
-                if (resolved.length > 0 && !CITY_MAP[normalizeKey(segment)]) {
-                    continue;
-                }
-                results.push(segment);
-                break;
-            }
-        }
+        const matching = (find: (key: string) => CountryInfo | undefined) =>
+            segments.filter(
+                (segment) => find(normalizeKey(segment))?.code === countryCode,
+            );
+        const exact = matching((key) => CITY_MAP[key]);
+        const known = exact.length > 0 ? exact : matching(lookupCityByPrefix);
+        known.forEach(add);
+        if (known.length > 0) continue;
+
+        // Cities missing from CITY_MAP (e.g. "Mo i Rana, Norway") still show via the leading segment.
+        const partCountries = lookupCountryFromLocation(stripped);
+        if (partCountries.length !== 1 || partCountries[0].code !== countryCode)
+            continue;
+        const place = segments.find(
+            (segment) =>
+                lookupCountryFromLocation(segment).length === 0 &&
+                !WORK_MODE_RE.test(segment),
+        );
+        if (place) add(place);
     }
     return results;
 }

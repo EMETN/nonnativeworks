@@ -3,6 +3,8 @@
 
 import { test, expect, describe } from 'vitest';
 import {
+    extractCitiesForCountry,
+    extractWorkModelFromLocation,
     lookupCountryFromLocation,
     toEnglishCityNames,
 } from './country-lookup';
@@ -198,4 +200,54 @@ describe('lookupCountryFromLocation — city prefix matches', () => {
             'LV',
         ]);
     });
+});
+
+test('resolves Campobasso without a country in the location', () => {
+    expect(codes('Campobasso')).toEqual(['IT']);
+});
+
+describe('extractCitiesForCountry', () => {
+    test('keeps every city of a multi-location posting', () => {
+        expect(
+            extractCitiesForCountry(
+                'Agen, Lot-et-Garonne, France; Arcachon, Gironde, France',
+                'FR',
+            ),
+        ).toEqual(['Agen', 'Arcachon']);
+    });
+
+    test('keeps unknown cities alongside known ones', () => {
+        expect(
+            extractCitiesForCountry(
+                'Bordeaux, Gironde, France; Niort, Deux-Sèvres, France',
+                'FR',
+            ),
+        ).toEqual(['Bordeaux', 'Niort']);
+    });
+
+    test('ignores cities in other countries', () => {
+        expect(
+            extractCitiesForCountry('Agen, France; Berlin, Germany', 'FR'),
+        ).toEqual(['Agen']);
+    });
+
+    test('does not treat a work mode as a city', () => {
+        expect(
+            extractCitiesForCountry('Berlin, Germany; Remote, Germany', 'DE'),
+        ).toEqual(['Berlin']);
+    });
+
+    test('reads Luxembourg as a city in its own country', () => {
+        expect(
+            extractCitiesForCountry('Luxembourg, Luxembourg, Luxembourg', 'LU'),
+        ).toEqual(['Luxembourg']);
+    });
+
+    test('finds no city in a bare country', () => {
+        expect(extractCitiesForCountry('Netherlands', 'NL')).toEqual([]);
+    });
+});
+
+test('reads the work model from a leading comma segment', () => {
+    expect(extractWorkModelFromLocation('Remote, Germany')).toBe('remote');
 });
