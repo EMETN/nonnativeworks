@@ -33,7 +33,8 @@
         "db:env:file": "node scripts/local-supabase-env.mjs",
         "db:seed": "node scripts/seed-local.mjs",
         "db:copy-prod": "node scripts/copy-public-data.mjs",
-        "db:clear": "node scripts/clear-local-data.mjs"
+        "db:clear": "node scripts/clear-local-data.mjs",
+        "deps:update": "node scripts/update-deps.mjs"
     },
     "simple-git-hooks": {
         "pre-commit": "npx --no-install lint-staged"

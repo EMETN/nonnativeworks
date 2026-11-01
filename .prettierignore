@@ -4,4 +4,5 @@ dist
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .agents
+.superpowers
 skills-lock.json

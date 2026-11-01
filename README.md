@@ -112,6 +112,7 @@ pnpm dev        # Doppler route (maintainers)
 | `pnpm db:copy-prod` | Copy prod's public data locally (maintainers)   |
 | `pnpm db:clear`     | Empty the local database's data                 |
 | `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
+| `pnpm deps:update`  | Update all deps; CI runs the checks on the PR   |
 | `pnpm format`       | Format with Prettier                            |
 | `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
 | `pnpm lint:secrets` | Scan the repo for credentials (Secretlint)      |
