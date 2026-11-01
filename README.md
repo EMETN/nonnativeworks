@@ -4,7 +4,7 @@ Discover companies that welcome non-native language speakers. Track open positio
 
 ## Stack
 
-- **Astro 7** — full SSR (`output: 'server'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
+- **Astro 7** — prerendered pages with on-demand admin and API routes (`output: 'static'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)

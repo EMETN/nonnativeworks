@@ -6,7 +6,7 @@ A website that tracks open job positions at companies where English is enough �
 
 ## Stack
 
-- **Astro 7** — `output: 'server'` (full SSR; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
+- **Astro 7** — `output: 'static'` (prerendered pages, with on-demand admin and API routes; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin (no `tailwind.config.js`)
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)
