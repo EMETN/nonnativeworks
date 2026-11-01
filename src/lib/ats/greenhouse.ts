@@ -1,9 +1,11 @@
+import { lookupCountryFromLocation } from './country-lookup';
 import type { RawJob } from './types';
 
 interface GreenhouseJob {
     id: number;
     title: string;
     location: { name: string };
+    offices?: { name: string }[];
     content: string; // HTML
     departments: { name: string }[];
     absolute_url: string;
@@ -62,13 +64,21 @@ async function fetchBoardJobs(slug: string): Promise<RawJob[]> {
     return (data.jobs ?? []).map((job) => ({
         title: job.title,
         descriptionHtml: job.content,
-        location: job.location?.name,
+        location: locationWithOfficeFallback(job),
         url: descriptionDomain
             ? `https://${descriptionDomain}/jobs/${job.id}`
             : job.absolute_url,
         department: job.departments?.[0]?.name,
         jobFunction: job.departments?.[0]?.name,
     }));
+}
+
+function locationWithOfficeFallback(job: GreenhouseJob): string | undefined {
+    const location = job.location?.name;
+    if (lookupCountryFromLocation(location ?? '').length > 0) return location;
+    const offices = (job.offices ?? []).map((office) => office.name);
+    if (offices.length === 0) return location;
+    return [location, ...offices].filter(Boolean).join('; ');
 }
 
 function formatSlug(slug: string): string {

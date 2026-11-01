@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+    extractCitiesForCountry,
+    extractWorkModelFromLocation,
+    lookupCountryFromLocation,
+} from './country-lookup';
 import { fetchGreenhouseJobs } from './greenhouse';
 
 function stubBoards(jobsByBoard: Record<string, string[]>) {
@@ -21,8 +26,58 @@ function stubBoards(jobsByBoard: Record<string, string[]>) {
     return fetchMock;
 }
 
+function stubBoardJob(location: string, offices?: string[]) {
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+            Response.json({
+                jobs: [
+                    {
+                        id: 1,
+                        title: 'Role',
+                        location: { name: location },
+                        offices: offices?.map((name) => ({ name })),
+                        content: '',
+                        departments: [],
+                        absolute_url: 'https://example.com/1',
+                    },
+                ],
+            }),
+        ),
+    );
+}
+
 describe('fetchGreenhouseJobs', () => {
     afterEach(() => vi.unstubAllGlobals());
+
+    it('takes the country from the office when the location names none', async () => {
+        stubBoardJob('Remote', ['Poland']);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Remote; Poland');
+        expect(lookupCountryFromLocation(job.location!)).toMatchObject([
+            { code: 'PL' },
+        ]);
+        expect(extractCitiesForCountry(job.location!, 'PL')).toEqual([]);
+        expect(extractWorkModelFromLocation(job.location!)).toBe('remote');
+    });
+
+    it('keeps a location that names a country, whatever the office', async () => {
+        stubBoardJob('Remote, Germany; Remote, Poland', ['United Kingdom']);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Remote, Germany; Remote, Poland');
+    });
+
+    it('leaves the location alone when the job has no office', async () => {
+        stubBoardJob('Remote');
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Remote');
+    });
 
     it('merges the language boards into the main board', async () => {
         stubBoards({
