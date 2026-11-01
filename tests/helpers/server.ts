@@ -15,7 +15,7 @@ export async function startServer(): Promise<{
         stdio: 'ignore',
     });
 
-    const baseUrl = `http://127.0.0.1:${PORT}`;
+    const baseUrl = `http://localhost:${PORT}`;
 
     for (let attempt = 0; attempt < 60; attempt += 1) {
         try {

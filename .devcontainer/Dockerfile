@@ -55,12 +55,21 @@ RUN mkdir -p /workspace /home/node/.claude /home/node/.doppler /home/node/.supab
 
 WORKDIR /workspace
 
+# Install Firefox and WebKit system libraries via the MCP's Playwright so revisions match
+# Above the scraper manifests so editing those keeps this layer cached
+RUN npx -y -p @playwright/mcp@latest playwright install-deps firefox webkit && \
+  rm -rf /root/.npm /root/.cache/ms-playwright
+USER node
+# Install Firefox and WebKit binaries for the Playwright MCP, into node's cache
+RUN npx -y -p @playwright/mcp@latest playwright install firefox webkit
+USER root
+
 # --- PYTHON SETUP (venv) ---
 
 # Copy dependency manifests first for better caching
 COPY ./scraper/requirements.txt ./scraper/pyproject.toml /workspace/
 
-# Create virtual environment outside /workspace so the bind mount doesn't shadow it
+# Create venv outside /workspace so the bind mount doesn't shadow it
 RUN python3 -m venv /opt/scraper-venv
 
 # Install Python dependencies into venv (runtime deps + dev tooling group: ruff)
@@ -69,12 +78,15 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     /opt/scraper-venv/bin/pip install -r /workspace/requirements.txt && \
     /opt/scraper-venv/bin/pip install --group /workspace/pyproject.toml:dev
 
+# Let node update ruff in the venv from pnpm deps:update
+RUN chown -R node:node /opt/scraper-venv
+
 # Make venv the default Python
 ENV PATH="/opt/scraper-venv/bin:$PATH"
 
-# Deps need root; the browser binary must install as node so it lands in node's
-# cache (~/.cache/ms-playwright) where the scraper looks, not root's.
+# Install Chromium system libraries (needs root/apt)
 RUN /opt/scraper-venv/bin/playwright install-deps chromium
+# Install the scraper's Chromium as node so it lands in node's cache
 USER node
 RUN /opt/scraper-venv/bin/playwright install chromium
 USER root
@@ -96,8 +108,6 @@ ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
 # Install pnpm globally
 RUN npm install -g pnpm
-
-# Verify pnpm installation
 RUN pnpm -v
 
 # Set the default shell to zsh rather than sh
@@ -124,29 +134,11 @@ RUN echo 'source /opt/scraper-venv/bin/activate' >> /home/node/.zshrc
 ARG CLAUDE_CODE_VERSION
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
-# --- Browser setup for MCP servers (Node Playwright + Chrome DevTools) ---
-# Bakes browsers into the image so both MCP servers survive container rebuilds.
-# Browsers are installed via the exact Playwright bundled inside @playwright/mcp,
-# so their revisions always match the MCP that runs them (bump by rebuilding).
-
-# System libraries for Chromium, Firefox and WebKit (needs root/apt)
-USER root
-RUN npx -y -p @playwright/mcp@latest playwright install-deps chromium firefox webkit && \
-  rm -rf /root/.npm /root/.cache/ms-playwright
-USER node
-
-# Browser binaries for the Playwright MCP, into node's cache
-RUN npx -y -p @playwright/mcp@latest playwright install chromium firefox webkit
-
-# chrome-devtools-mcp shares the Playwright Chromium via a resolver shim placed at
-# the executablePath its plugin hardcodes (.../chromium-arm64/chrome-linux/chrome).
-# The shim resolves the newest installed chromium-<rev> at launch and exec's it, so
-# a future browser upgrade (new revision dir) can never orphan it. exec replaces the
-# process image, so Chromium still finds its own resources next to the real binary.
+# Shim at chrome-devtools-mcp's hardcoded path; runs the newest Playwright Chromium
 RUN mkdir -p /home/node/.cache/chrome-devtools-mcp/chromium-arm64/chrome-linux && \
   printf '%s\n' \
     '#!/bin/sh' \
-    'bin=$(ls -d /home/node/.cache/ms-playwright/chromium-[0-9]*/chrome-linux/chrome 2>/dev/null | sort -V | tail -1)' \
+    'bin=$(ls -d /home/node/.cache/ms-playwright/chromium-[0-9]*/chrome-linux*/chrome 2>/dev/null | sort -V | tail -1)' \
     '[ -x "$bin" ] || { echo "no Playwright chromium found under ~/.cache/ms-playwright" >&2; exit 1; }' \
     'exec "$bin" "$@"' \
     > /home/node/.cache/chrome-devtools-mcp/chromium-arm64/chrome-linux/chrome && \
