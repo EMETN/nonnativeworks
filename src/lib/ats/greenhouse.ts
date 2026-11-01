@@ -1,4 +1,8 @@
-import { lookupCountryFromLocation } from './country-lookup';
+import {
+    extractCitiesForCountry,
+    extractWorkModelFromLocation,
+    lookupCountryFromLocation,
+} from './country-lookup';
 import { fetchPicnicSiteJobs } from './picnic';
 import { withRelexSiteLocations } from './relex';
 import type { RawJob } from './types';
@@ -7,8 +11,8 @@ interface GreenhouseJob {
     id: number;
     title: string;
     location: { name: string };
-    offices?: { name: string }[];
-    content: string; // HTML
+    offices?: { name: string; location?: string | null }[];
+    content: string;
     departments: { name: string }[];
     absolute_url: string;
 }
@@ -17,10 +21,11 @@ interface GreenhouseBoard {
     name: string;
 }
 
-// absolute_url has no description here: GetYourGuide's is apply-only, Nebius's the job list.
+// absolute_url shows no description on these boards: apply form only, or the job list.
 const DESCRIPTION_PAGE_URLS: Record<string, (jobId: number) => string> = {
     getyourguide: (jobId) => `https://www.getyourguide.careers/jobs/${jobId}`,
     nebius: (jobId) => `https://careers.nebius.com/job?gh_jid=${jobId}`,
+    truecaller: (jobId) => `https://www.truecaller.com/careers/jobs/${jobId}`,
 };
 
 const LANGUAGE_BOARDS: Record<string, string[]> = {
@@ -90,11 +95,29 @@ const REGION_LOCATION_RE =
 
 function locationWithOfficeFallback(job: GreenhouseJob): string | undefined {
     const location = job.location?.name;
-    if (lookupCountryFromLocation(location ?? '').length > 0) return location;
+    if (location && lookupCountryFromLocation(location).length > 0) {
+        return [location, ...officeCities(job, location)].join('; ');
+    }
     if (REGION_LOCATION_RE.test(location?.trim() ?? '')) return location;
     const offices = (job.offices ?? []).map((office) => office.name);
     if (offices.length === 0) return location;
     return [location, ...offices].filter(Boolean).join('; ');
+}
+
+function officeCities(job: GreenhouseJob, location: string): string[] {
+    if (extractWorkModelFromLocation(location) === 'remote') return [];
+    const countriesWithoutCity = lookupCountryFromLocation(location).filter(
+        ({ code }) => extractCitiesForCountry(location, code).length === 0,
+    );
+    const officeLocations = (job.offices ?? []).map(
+        (office) => office.location ?? office.name,
+    );
+    return [...new Set(officeLocations)].filter((officeLocation) =>
+        countriesWithoutCity.some(
+            ({ code }) =>
+                extractCitiesForCountry(officeLocation, code).length > 0,
+        ),
+    );
 }
 
 function formatSlug(slug: string): string {

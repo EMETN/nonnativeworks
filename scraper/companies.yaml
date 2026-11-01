@@ -466,6 +466,10 @@ companies:
       url: https://careers.tieto.com
       min_positions: 10
 
+    - name: Truecaller
+      url: https://www.truecaller.com/careers/jobs
+      min_positions: 5
+
     - name: Trustpilot
       url: https://corporate.trustpilot.com/careers
       min_positions: 5

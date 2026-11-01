@@ -26,7 +26,10 @@ function stubBoards(jobsByBoard: Record<string, string[]>) {
     return fetchMock;
 }
 
-function stubBoardJob(location: string, offices?: string[]) {
+function stubBoardJob(
+    location: string,
+    offices?: (string | { name: string; location: string | null })[],
+) {
     vi.stubGlobal(
         'fetch',
         vi.fn(async () =>
@@ -36,7 +39,11 @@ function stubBoardJob(location: string, offices?: string[]) {
                         id: 1,
                         title: 'Role',
                         location: { name: location },
-                        offices: offices?.map((name) => ({ name })),
+                        offices: offices?.map((office) =>
+                            typeof office === 'string'
+                                ? { name: office }
+                                : office,
+                        ),
                         content: '',
                         departments: [],
                         absolute_url: 'https://example.com/1',
@@ -69,6 +76,62 @@ describe('fetchGreenhouseJobs', () => {
         const [job] = await fetchGreenhouseJobs('acme');
 
         expect(job.location).toBe('Remote, Germany; Remote, Poland');
+    });
+
+    it('takes the city from the office when the location only names the country', async () => {
+        stubBoardJob('Sweden', [
+            { name: 'Sweden', location: 'Stockholm, Sweden' },
+        ]);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(lookupCountryFromLocation(job.location!)).toMatchObject([
+            { code: 'SE' },
+        ]);
+        expect(extractCitiesForCountry(job.location!, 'SE')).toEqual([
+            'Stockholm',
+        ]);
+    });
+
+    it('takes the city from the office name when the office has no location', async () => {
+        stubBoardJob('Finland', ['Helsinki', 'Tampere']);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(extractCitiesForCountry(job.location!, 'FI')).toEqual([
+            'Helsinki',
+            'Tampere',
+        ]);
+    });
+
+    it('ignores offices in other countries when adding a city', async () => {
+        stubBoardJob('Sweden', [
+            { name: 'Berlin', location: 'Berlin, Germany' },
+        ]);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Sweden');
+    });
+
+    it('gives remote jobs no office city', async () => {
+        stubBoardJob('Remote, Sweden', [
+            { name: 'Sweden', location: 'Stockholm, Sweden' },
+        ]);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Remote, Sweden');
+    });
+
+    it('keeps the city a location already has', async () => {
+        stubBoardJob('Gothenburg, Sweden', [
+            { name: 'Sweden', location: 'Stockholm, Sweden' },
+        ]);
+
+        const [job] = await fetchGreenhouseJobs('acme');
+
+        expect(job.location).toBe('Gothenburg, Sweden');
     });
 
     it('leaves the location alone when the job has no office', async () => {
@@ -113,6 +176,14 @@ describe('fetchGreenhouseJobs', () => {
         const [job] = await fetchGreenhouseJobs('nebius');
 
         expect(job.url).toBe('https://careers.nebius.com/job?gh_jid=0');
+    });
+
+    it('links Truecaller jobs to the page showing their description', async () => {
+        stubBoards({ truecaller: ['Role'] });
+
+        const [job] = await fetchGreenhouseJobs('truecaller');
+
+        expect(job.url).toBe('https://www.truecaller.com/careers/jobs/0');
     });
 
     it('only fetches the requested board otherwise', async () => {
