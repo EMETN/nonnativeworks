@@ -7,6 +7,7 @@ import {
     ScrapeResponseSchema,
     UploadResultSchema,
     ErrorResponseSchema,
+    sortCountriesByName,
     type ReviewJob,
     type ReviewCountryGroup,
     type ReviewData,
@@ -100,7 +101,7 @@ export default function Scraper() {
                     skipped_untracked_country:
                         data.skipped_untracked_country ?? 0,
                     is_english_company: false,
-                    countries,
+                    countries: sortCountriesByName(countries),
                 },
             });
         } catch {
