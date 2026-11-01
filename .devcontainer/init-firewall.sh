@@ -251,6 +251,7 @@ company_domains=(
     "careers.microsoft.com"  # Microsoft
     "www.monks.com"  # Monks
     "careers.munichre.com"  # Munich Re
+    "careers.nebius.com"  # Nebius
     "jobs.neste.com"  # Neste
     "explore.jobs.netflix.net"  # Netflix
     "nexigroup.com"  # Nexi

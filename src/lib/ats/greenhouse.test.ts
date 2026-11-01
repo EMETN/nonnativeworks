@@ -95,6 +95,26 @@ describe('fetchGreenhouseJobs', () => {
         ]);
     });
 
+    it.each(['Remote - Europe', 'Europe', 'Remote – EMEA'])(
+        'keeps the region %s instead of narrowing it to an office',
+        async (location) => {
+            stubBoardJob(location, ['Amsterdam']);
+
+            const [job] = await fetchGreenhouseJobs('acme');
+
+            expect(job.location).toBe(location);
+            expect(lookupCountryFromLocation(job.location!)).toEqual([]);
+        },
+    );
+
+    it('links Nebius jobs to the page showing their description', async () => {
+        stubBoards({ nebius: ['Role'] });
+
+        const [job] = await fetchGreenhouseJobs('nebius');
+
+        expect(job.url).toBe('https://careers.nebius.com/job?gh_jid=0');
+    });
+
     it('only fetches the requested board otherwise', async () => {
         const fetchMock = stubBoards({ acme: ['Role'] });
 

@@ -15,14 +15,10 @@ interface GreenhouseBoard {
     name: string;
 }
 
-/**
- * Some companies' Greenhouse boards serve an apply-only page at absolute_url —
- * no job description, just the application form (e.g. GetYourGuide). They have
- * their own branded career site that renders the description around the same
- * embedded form, at the same job id path. Prefer that URL when known.
- */
-const DESCRIPTION_PAGE_DOMAINS: Record<string, string> = {
-    getyourguide: 'www.getyourguide.careers',
+// absolute_url has no description here: GetYourGuide's is apply-only, Nebius's the job list.
+const DESCRIPTION_PAGE_URLS: Record<string, (jobId: number) => string> = {
+    getyourguide: (jobId) => `https://www.getyourguide.careers/jobs/${jobId}`,
+    nebius: (jobId) => `https://careers.nebius.com/job?gh_jid=${jobId}`,
 };
 
 const LANGUAGE_BOARDS: Record<string, string[]> = {
@@ -60,22 +56,24 @@ async function fetchBoardJobs(slug: string): Promise<RawJob[]> {
         );
     }
     const data: { jobs: GreenhouseJob[] } = await res.json();
-    const descriptionDomain = DESCRIPTION_PAGE_DOMAINS[slug];
+    const descriptionPageUrl = DESCRIPTION_PAGE_URLS[slug];
     return (data.jobs ?? []).map((job) => ({
         title: job.title,
         descriptionHtml: job.content,
         location: locationWithOfficeFallback(job),
-        url: descriptionDomain
-            ? `https://${descriptionDomain}/jobs/${job.id}`
-            : job.absolute_url,
+        url: descriptionPageUrl?.(job.id) ?? job.absolute_url,
         department: job.departments?.[0]?.name,
         jobFunction: job.departments?.[0]?.name,
     }));
 }
 
+const REGION_LOCATION_RE =
+    /^(remote\s*[-–]\s*)?(europe|emea|apac|latam|americas)$/i;
+
 function locationWithOfficeFallback(job: GreenhouseJob): string | undefined {
     const location = job.location?.name;
     if (lookupCountryFromLocation(location ?? '').length > 0) return location;
+    if (REGION_LOCATION_RE.test(location?.trim() ?? '')) return location;
     const offices = (job.offices ?? []).map((office) => office.name);
     if (offices.length === 0) return location;
     return [location, ...offices].filter(Boolean).join('; ');
