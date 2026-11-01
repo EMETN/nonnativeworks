@@ -23,6 +23,10 @@ const DESCRIPTION_PAGE_DOMAINS: Record<string, string> = {
     getyourguide: 'www.getyourguide.careers',
 };
 
+const LANGUAGE_BOARDS: Record<string, string[]> = {
+    vinteden: ['vintedfr', 'vintedde', 'vintedes'],
+};
+
 export async function fetchGreenhouseCompanyName(
     slug: string,
 ): Promise<string> {
@@ -40,6 +44,11 @@ export async function fetchGreenhouseCompanyName(
 }
 
 export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
+    const boards = [slug, ...(LANGUAGE_BOARDS[slug] ?? [])];
+    return (await Promise.all(boards.map(fetchBoardJobs))).flat();
+}
+
+async function fetchBoardJobs(slug: string): Promise<RawJob[]> {
     const res = await fetch(
         `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(slug)}/jobs?content=true`,
     );

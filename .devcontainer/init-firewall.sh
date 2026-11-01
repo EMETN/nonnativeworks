@@ -294,6 +294,7 @@ company_domains=(
     "uber.com"  # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
+    "careers.vinted.com"  # Vinted
     "www.vml.com"  # VML
     "jobs.volkswagen-group.com"  # Volkswagen
     "jobs.volvogroup.com"  # Volvo Group

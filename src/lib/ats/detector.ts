@@ -26,6 +26,7 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'openai.com': { ats: 'ashby', slug: 'openai' },
     'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
     'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
+    'careers.vinted.com': { ats: 'greenhouse', slug: 'vinteden' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
     'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
