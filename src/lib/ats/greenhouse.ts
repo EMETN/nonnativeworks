@@ -1,4 +1,5 @@
 import { lookupCountryFromLocation } from './country-lookup';
+import { fetchPicnicSiteJobs } from './picnic';
 import type { RawJob } from './types';
 
 interface GreenhouseJob {
@@ -25,6 +26,10 @@ const LANGUAGE_BOARDS: Record<string, string[]> = {
     vinteden: ['vintedfr', 'vintedde', 'vintedes'],
 };
 
+const OFF_BOARD_JOBS: Record<string, () => Promise<RawJob[]>> = {
+    teampicnic: fetchPicnicSiteJobs,
+};
+
 export async function fetchGreenhouseCompanyName(
     slug: string,
 ): Promise<string> {
@@ -43,7 +48,11 @@ export async function fetchGreenhouseCompanyName(
 
 export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
     const boards = [slug, ...(LANGUAGE_BOARDS[slug] ?? [])];
-    return (await Promise.all(boards.map(fetchBoardJobs))).flat();
+    const [boardJobs, offBoardJobs] = await Promise.all([
+        Promise.all(boards.map(fetchBoardJobs)),
+        OFF_BOARD_JOBS[slug]?.() ?? [],
+    ]);
+    return [...boardJobs.flat(), ...offBoardJobs];
 }
 
 async function fetchBoardJobs(slug: string): Promise<RawJob[]> {

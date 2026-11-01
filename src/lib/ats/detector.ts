@@ -27,6 +27,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
     'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
     'careers.vinted.com': { ats: 'greenhouse', slug: 'vinteden' },
+    // Slug probing would hit a stale, empty Workable "picnic" account.
+    'jobs.picnic.app': { ats: 'greenhouse', slug: 'teampicnic' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
     // Slug probing would hit Doctolib's stale Greenhouse board.

@@ -266,6 +266,7 @@ company_domains=(
     "careers.orkla.com"  # Orkla
     "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
     "philips.wd3.myworkdayjobs.com"  # Philips
+    "jobs.picnic.app"  # Picnic
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
