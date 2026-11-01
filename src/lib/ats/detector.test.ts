@@ -67,6 +67,13 @@ describe('detectAts — hostname slug overrides', () => {
         });
     });
 
+    test('https://careers.doctolib.fr/jobs/ → ashby board "doctolib"', () => {
+        expect(detectAts('https://careers.doctolib.fr/jobs/')).toEqual({
+            ats: 'ashby',
+            companySlug: 'doctolib',
+        });
+    });
+
     test('https://wise.jobs/jobs → smartrecruiters board "Wise"', () => {
         expect(detectAts('https://wise.jobs/jobs')).toEqual({
             ats: 'smartrecruiters',

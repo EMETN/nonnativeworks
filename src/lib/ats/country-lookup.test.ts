@@ -87,6 +87,16 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
         expect(codes('Vila Real')).toEqual(['PT']);
         expect(codes('Guarda')).toEqual(['PT']);
     });
+
+    test('a repeated bare city resolves once', () => {
+        expect(codes('Niort; Niort')).toEqual(['FR']);
+    });
+
+    test('Doctolib locations resolve', () => {
+        expect(codes('Wuppertal')).toEqual(['DE']);
+        expect(codes('Ile-de-France')).toEqual(['FR']);
+        expect(codes('Île-de-France')).toEqual(['FR']);
+    });
 });
 
 describe('lookupCountryFromLocation — "City, XX" code qualifies the city', () => {
@@ -177,6 +187,12 @@ describe('toEnglishCityNames', () => {
     test('merges a local and English name for the same city', () => {
         expect(toEnglishCityNames(['Antwerpen', 'Antwerp'])).toEqual([
             'Antwerp',
+        ]);
+    });
+
+    test('drops a team suffix from the city', () => {
+        expect(toEnglishCityNames(['Berlin Tech', 'Berlin'])).toEqual([
+            'Berlin',
         ]);
     });
 

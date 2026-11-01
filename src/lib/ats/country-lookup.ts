@@ -731,6 +731,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     wipfeld: { name: 'Germany', code: 'DE', slug: 'germany' },
     wolfsburg: { name: 'Germany', code: 'DE', slug: 'germany' },
     wunstorf: { name: 'Germany', code: 'DE', slug: 'germany' },
+    wuppertal: { name: 'Germany', code: 'DE', slug: 'germany' },
     würzburg: { name: 'Germany', code: 'DE', slug: 'germany' },
     // ── Netherlands ──────────────────────────────────────────────────────────
     aalten: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
@@ -959,6 +960,8 @@ const CITY_MAP: Record<string, CountryInfo> = {
     gennevilliers: { name: 'France', code: 'FR', slug: 'france' },
     grenoble: { name: 'France', code: 'FR', slug: 'france' },
     guipavas: { name: 'France', code: 'FR', slug: 'france' },
+    'ile-de-france': { name: 'France', code: 'FR', slug: 'france' },
+    'île-de-france': { name: 'France', code: 'FR', slug: 'france' },
     'issy-les-moulineaux': { name: 'France', code: 'FR', slug: 'france' },
     'la chapel saint aubin': { name: 'France', code: 'FR', slug: 'france' },
     'la ciotat': { name: 'France', code: 'FR', slug: 'france' },
@@ -984,6 +987,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     nantes: { name: 'France', code: 'FR', slug: 'france' },
     narbonne: { name: 'France', code: 'FR', slug: 'france' },
     nice: { name: 'France', code: 'FR', slug: 'france' },
+    niort: { name: 'France', code: 'FR', slug: 'france' },
     'noicy le sec': { name: 'France', code: 'FR', slug: 'france' },
     noyarey: { name: 'France', code: 'FR', slug: 'france' },
     olemps: { name: 'France', code: 'FR', slug: 'france' },
@@ -1643,6 +1647,7 @@ export function extractWorkModelFromLocation(
 
 const ENGLISH_CITY_NAMES: Record<string, string> = {
     antwerpen: 'Antwerp',
+    'berlin tech': 'Berlin',
     braunschweig: 'Brunswick',
     'braunschweig/brunswick': 'Brunswick',
     brussel: 'Brussels',

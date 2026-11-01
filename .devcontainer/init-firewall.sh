@@ -214,6 +214,7 @@ company_domains=(
     "careers.telekom.com"  # Deutsche Telekom
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
     "careers.dhl.com"  # DHL
+    "careers.doctolib.fr"  # Doctolib
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
     "equinor.wd3.myworkdayjobs.com"  # Equinor

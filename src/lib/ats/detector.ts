@@ -29,6 +29,8 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'careers.vinted.com': { ats: 'greenhouse', slug: 'vinteden' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
+    // Slug probing would hit Doctolib's stale Greenhouse board.
+    'careers.doctolib.fr': { ats: 'ashby', slug: 'doctolib' },
     'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
 };
 
