@@ -1,5 +1,6 @@
 import { lookupCountryFromLocation } from './country-lookup';
 import { fetchPicnicSiteJobs } from './picnic';
+import { withRelexSiteLocations } from './relex';
 import type { RawJob } from './types';
 
 interface GreenhouseJob {
@@ -30,6 +31,13 @@ const OFF_BOARD_JOBS: Record<string, () => Promise<RawJob[]>> = {
     teampicnic: fetchPicnicSiteJobs,
 };
 
+const LOCATION_ENRICHERS: Record<
+    string,
+    (jobs: RawJob[]) => Promise<RawJob[]>
+> = {
+    relex: withRelexSiteLocations,
+};
+
 export async function fetchGreenhouseCompanyName(
     slug: string,
 ): Promise<string> {
@@ -52,7 +60,8 @@ export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
         Promise.all(boards.map(fetchBoardJobs)),
         OFF_BOARD_JOBS[slug]?.() ?? [],
     ]);
-    return [...boardJobs.flat(), ...offBoardJobs];
+    const jobs = [...boardJobs.flat(), ...offBoardJobs];
+    return LOCATION_ENRICHERS[slug]?.(jobs) ?? jobs;
 }
 
 async function fetchBoardJobs(slug: string): Promise<RawJob[]> {

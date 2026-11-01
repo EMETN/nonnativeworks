@@ -271,6 +271,7 @@ company_domains=(
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
     "www.randstad.com"  # Randstad
+    "www.relexsolutions.com"  # RELEX Solutions
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
