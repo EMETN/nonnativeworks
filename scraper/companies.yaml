@@ -159,6 +159,10 @@ companies:
       url: https://jobs.ericsson.com/careers
       min_positions: 10
 
+    - name: Feedzai
+      url: https://careers.feedzai.com/all-jobs/
+      min_positions: 3
+
     - name: Finnair
       url: https://finnair.wd103.myworkdayjobs.com/en-US/finnair
       min_positions: 1

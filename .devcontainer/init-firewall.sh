@@ -221,6 +221,7 @@ company_domains=(
     "elekta.wd3.myworkdayjobs.com"  # Elekta
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
+    "careers.feedzai.com"  # Feedzai
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
