@@ -731,6 +731,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     wipfeld: { name: 'Germany', code: 'DE', slug: 'germany' },
     wolfsburg: { name: 'Germany', code: 'DE', slug: 'germany' },
     wunstorf: { name: 'Germany', code: 'DE', slug: 'germany' },
+    wuppertal: { name: 'Germany', code: 'DE', slug: 'germany' },
     würzburg: { name: 'Germany', code: 'DE', slug: 'germany' },
     // ── Netherlands ──────────────────────────────────────────────────────────
     aalten: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
@@ -959,6 +960,8 @@ const CITY_MAP: Record<string, CountryInfo> = {
     gennevilliers: { name: 'France', code: 'FR', slug: 'france' },
     grenoble: { name: 'France', code: 'FR', slug: 'france' },
     guipavas: { name: 'France', code: 'FR', slug: 'france' },
+    'ile-de-france': { name: 'France', code: 'FR', slug: 'france' },
+    'île-de-france': { name: 'France', code: 'FR', slug: 'france' },
     'issy-les-moulineaux': { name: 'France', code: 'FR', slug: 'france' },
     'la chapel saint aubin': { name: 'France', code: 'FR', slug: 'france' },
     'la ciotat': { name: 'France', code: 'FR', slug: 'france' },
@@ -984,6 +987,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     nantes: { name: 'France', code: 'FR', slug: 'france' },
     narbonne: { name: 'France', code: 'FR', slug: 'france' },
     nice: { name: 'France', code: 'FR', slug: 'france' },
+    niort: { name: 'France', code: 'FR', slug: 'france' },
     'noicy le sec': { name: 'France', code: 'FR', slug: 'france' },
     noyarey: { name: 'France', code: 'FR', slug: 'france' },
     olemps: { name: 'France', code: 'FR', slug: 'france' },
@@ -1028,6 +1032,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     cork: { name: 'Ireland', code: 'IE', slug: 'ireland' },
     dublin: { name: 'Ireland', code: 'IE', slug: 'ireland' },
     // Italy
+    campobasso: { name: 'Italy', code: 'IT', slug: 'italy' },
     ferrara: { name: 'Italy', code: 'IT', slug: 'italy' },
     melfi: { name: 'Italy', code: 'IT', slug: 'italy' },
     milan: { name: 'Italy', code: 'IT', slug: 'italy' },
@@ -1498,6 +1503,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     ljubljana: { name: 'Slovenia', code: 'SI', slug: 'slovenia' },
     nairobi: { name: 'Kenya', code: 'KE', slug: 'kenya' },
     zagreb: { name: 'Croatia', code: 'HR', slug: 'croatia' },
+    luxembourg: { name: 'Luxembourg', code: 'LU', slug: 'luxembourg' },
 };
 
 // Companies that only operate in one country — keyed by a substring of their career page URL.
@@ -1602,8 +1608,12 @@ function lookupCityByPrefix(key: string): CountryInfo | undefined {
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
+const WORK_MODE_RE = /^(remote|hybrid|on-?site|in-?office)$/i;
+
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
 const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
+
+const HEADQUARTERS_SUFFIX_RE = /\s+HQ$/i;
 
 /**
  * Extract a work model from a raw location string by looking for prefixes like
@@ -1621,7 +1631,9 @@ export function extractWorkModelFromLocation(
         .filter(Boolean);
     const models = new Set<string>();
     for (const part of parts) {
-        const match = part.match(LOCATION_PREFIX_RE);
+        const match =
+            part.match(LOCATION_PREFIX_RE) ??
+            part.split(',')[0].trim().match(WORK_MODE_RE);
         if (match) {
             const raw = match[1].toLowerCase().replace(/-/g, '');
             if (raw === 'remote') models.add('remote');
@@ -1635,58 +1647,101 @@ export function extractWorkModelFromLocation(
     return null;
 }
 
+const ENGLISH_CITY_NAMES: Record<string, string> = {
+    antwerpen: 'Antwerp',
+    'berlin tech': 'Berlin',
+    braunschweig: 'Brunswick',
+    'braunschweig/brunswick': 'Brunswick',
+    brussel: 'Brussels',
+    bruxelles: 'Brussels',
+    bucurești: 'Bucharest',
+    'den haag': 'The Hague',
+    geneve: 'Geneva',
+    genève: 'Geneva',
+    goteborg: 'Gothenburg',
+    göteborg: 'Gothenburg',
+    hannover: 'Hanover',
+    kobenhavn: 'Copenhagen',
+    koeln: 'Cologne',
+    koln: 'Cologne',
+    köln: 'Cologne',
+    københavn: 'Copenhagen',
+    lisboa: 'Lisbon',
+    milano: 'Milan',
+    muenchen: 'Munich',
+    münchen: 'Munich',
+    napoli: 'Naples',
+    nuernberg: 'Nuremberg',
+    nurnberg: 'Nuremberg',
+    nürnberg: 'Nuremberg',
+    padova: 'Padua',
+    praha: 'Prague',
+    roma: 'Rome',
+    sevilla: 'Seville',
+    torino: 'Turin',
+    warszawa: 'Warsaw',
+    wien: 'Vienna',
+    zürich: 'Zurich',
+};
+
+export function toEnglishCityNames(cities: string[]): string[] {
+    const names = cities.map(
+        (city) => ENGLISH_CITY_NAMES[normalizeKey(city)] ?? city,
+    );
+    return [...new Set(names)];
+}
+
 /**
  * From a raw location string (e.g. "Hybrid - Helsinki, Uusimaa; Hybrid - Tallinn, Estonia"),
  * extract only the city names that belong to the given ISO alpha-2 country code.
  * Country names and cities from other countries are discarded.
  * Returns an empty array when no matching cities are found.
  */
+function unwrapCityAfterCountry(location: string): string {
+    return location.replace(
+        /^([^,(]+?)\s*\(([^)]+)\)$/,
+        (whole, country: string, city: string) =>
+            COUNTRY_MAP[normalizeKey(country)] ? `${country}, ${city}` : whole,
+    );
+}
+
 export function extractCitiesForCountry(
     location: string,
     countryCode: string,
 ): string[] {
     if (!location?.trim()) return [];
-    const parts = location
-        .split(';')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    const segments = parts.flatMap((part) => {
+    const results: string[] = [];
+    const add = (city: string) => {
+        if (!results.includes(city)) results.push(city);
+    };
+    for (const part of location.split(';')) {
         const stripped = part
+            .trim()
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
-        return stripped
+        const segments = unwrapCityAfterCountry(stripped)
             .split(',')
-            .map((s) => s.trim())
+            .map((s) => s.trim().replace(HEADQUARTERS_SUFFIX_RE, ''))
             .filter(Boolean);
-    });
-    const results: string[] = [];
-    const seen = new Set<string>();
-    for (const segment of segments) {
-        const key = normalizeKey(segment);
-        const info = CITY_MAP[key] ?? lookupCityByPrefix(key);
-        if (info && info.code === countryCode) {
-            if (!seen.has(key)) {
-                seen.add(key);
-                results.push(segment);
-            }
-        }
-    }
-    if (results.length === 0) {
-        // No known city matched. When the whole location belongs to just this country,
-        // fall back to its leading place-name segment so small cities missing from
-        // CITY_MAP (e.g. "Mo i Rana, Norway") still show instead of no location at all.
-        const locCountries = lookupCountryFromLocation(location);
-        if (locCountries.length === 1 && locCountries[0].code === countryCode) {
-            for (const segment of segments) {
-                const resolved = lookupCountryFromLocation(segment);
-                // Skip the segment that is itself the country/region name.
-                if (resolved.length > 0 && !CITY_MAP[normalizeKey(segment)]) {
-                    continue;
-                }
-                results.push(segment);
-                break;
-            }
-        }
+        const matching = (find: (key: string) => CountryInfo | undefined) =>
+            segments.filter(
+                (segment) => find(normalizeKey(segment))?.code === countryCode,
+            );
+        const exact = matching((key) => CITY_MAP[key]);
+        const known = exact.length > 0 ? exact : matching(lookupCityByPrefix);
+        known.forEach(add);
+        if (known.length > 0) continue;
+
+        // Cities missing from CITY_MAP (e.g. "Mo i Rana, Norway") still show via the leading segment.
+        const partCountries = lookupCountryFromLocation(stripped);
+        if (partCountries.length !== 1 || partCountries[0].code !== countryCode)
+            continue;
+        const place = segments.find(
+            (segment) =>
+                lookupCountryFromLocation(segment).length === 0 &&
+                !WORK_MODE_RE.test(segment),
+        );
+        if (place) add(place);
     }
     return results;
 }
@@ -1742,21 +1797,19 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     const seen = new Set<string>();
     const results: CountryInfo[] = [];
     for (const group of segmentGroups) {
-        // A bare 2-letter code counts only if nothing else resolved: "San Francisco, CA" isn't Canada.
+        // Weaker matches need no stronger one: "Porto Seguro, Brazil" isn't Portugal, "SF, CA" isn't Canada.
         const keys = group.map(normalizeKey);
         const isCode = (key: string) => /^[a-z]{2}$/.test(key);
-        const lookup = (key: string) =>
-            COUNTRY_MAP[key] ?? CITY_MAP[key] ?? lookupCityByPrefix(key);
-        let infos = keys
-            .filter((key) => !isCode(key))
-            .map(lookup)
-            .filter((info): info is CountryInfo => !!info);
-        if (infos.length === 0) {
-            infos = keys
-                .filter(isCode)
-                .map(lookup)
-                .filter((info): info is CountryInfo => !!info);
-        }
+        const names = keys.filter((key) => !isCode(key));
+        const codes = keys.filter(isCode);
+        const exact = (key: string) => COUNTRY_MAP[key] ?? CITY_MAP[key];
+        const resolve = (
+            candidates: string[],
+            find: (key: string) => CountryInfo | undefined,
+        ) => candidates.map(find).filter((info): info is CountryInfo => !!info);
+        let infos = resolve(names, exact);
+        if (infos.length === 0) infos = resolve(names, lookupCityByPrefix);
+        if (infos.length === 0) infos = resolve(codes, exact);
         for (const info of infos) {
             if (!seen.has(info.code)) {
                 seen.add(info.code);

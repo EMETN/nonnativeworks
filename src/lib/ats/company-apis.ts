@@ -125,6 +125,7 @@ export interface CompanyApiConfig {
     fields: {
         title: string;
         location?: string;
+        standardizedLocations?: string;
         /**
          * Dot-path to an array or object of city name strings (e.g. sfstd_jobLocation_obj).
          * Populates job.cities with all city strings found. Takes priority over location-derived
@@ -937,6 +938,36 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         companyName: 'Ericsson',
         descriptionApiUrl:
             'https://jobs.ericsson.com/api/pcsx/position_details?position_id={sourceId}&domain=ericsson.com&hl=en',
+        descriptionApiItemsPath: 'data',
+        descriptionApiFields: ['jobDescription'],
+        descriptionApiWorkModelField: 'workLocationOption',
+    },
+
+    'jobs.autodesk.com': {
+        url: 'https://jobs.autodesk.com/api/pcsx/search?domain=autodesk.com&query=&sort_by=hot',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: 'application/json',
+            Referer: 'https://jobs.autodesk.com/careers',
+        },
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'data.count',
+        },
+        itemsPath: 'data.positions',
+        fields: {
+            title: 'name',
+            standardizedLocations: 'standardizedLocations',
+            id: 'id',
+            department: 'department',
+        },
+        urlTemplate: 'https://jobs.autodesk.com{positionUrl}',
+        companyName: 'Autodesk',
+        descriptionApiUrl:
+            'https://jobs.autodesk.com/api/pcsx/position_details?position_id={sourceId}&domain=autodesk.com&hl=en',
         descriptionApiItemsPath: 'data',
         descriptionApiFields: ['jobDescription'],
         descriptionApiWorkModelField: 'workLocationOption',

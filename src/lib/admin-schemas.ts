@@ -77,6 +77,14 @@ export type ReviewCountryGroup = z.infer<typeof ReviewCountryGroupSchema>;
 // Fields are optional because the scrape endpoint omits them freely; the
 // component fills defaults. Separate from `ReviewData`, which is the fully
 // populated model the editor then mutates.
+export function sortCountriesByName(
+    countries: ReviewCountryGroup[],
+): ReviewCountryGroup[] {
+    return countries.toSorted((a, b) =>
+        a.country_name.localeCompare(b.country_name, 'en'),
+    );
+}
+
 export const ScrapeResponseSchema = z.object({
     ats: z.string().nullable().optional(),
     company_name: z.string().optional(),
