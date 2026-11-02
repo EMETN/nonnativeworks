@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
 import { isHttpUrl } from '../../lib/safe-url';
+import { formatCount } from '../../lib/text';
 import {
     readCache,
     writeCache,
@@ -13,9 +14,18 @@ import {
     type AdminCompany as CompanyOption,
     type AdminPosition as PositionRow,
 } from '../../lib/admin-schemas';
+import {
+    ALL_COMPANIES,
+    ALL_COUNTRIES,
+    catalogSummary,
+    companyOptions,
+    countryOptions,
+    positionSummary,
+    resolveScope,
+} from '../../lib/admin-position-scope';
 
-const ALL = '__all__';
-const COUNTRY_PREFIX = '__country__:';
+const filterSelectClass = (value: string) =>
+    `admin-select flex-1 min-w-0 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B] [&>option:enabled]:text-gray-900 [&>option:disabled]:text-gray-400 ${value ? '' : 'text-gray-500'}`;
 
 const EDUCATION_OPTIONS = [
     { value: '', label: '— not specified —' },
@@ -85,7 +95,8 @@ function SortArrow({ dir, active }: { dir: 'asc' | 'desc'; active: boolean }) {
 
 export default function PositionEditor() {
     const [companies, setCompanies] = useState<CompanyOption[]>([]);
-    const [selectedId, setSelectedId] = useState('');
+    const [selectedCompany, setSelectedCompany] = useState('');
+    const [selectedCountryId, setSelectedCountryId] = useState('');
     const [positions, setPositions] = useState<PositionRow[]>([]);
     const [loadingCompanies, setLoadingCompanies] = useState(true);
     const [loadingPositions, setLoadingPositions] = useState(false);
@@ -99,9 +110,11 @@ export default function PositionEditor() {
 
     function loadCompanies(force = false) {
         if (!force) {
-            const cached = readCache<CompanyOption[]>('companies');
-            if (cached) {
-                setCompanies(cached);
+            const cached = AdminCompanyListSchema.safeParse(
+                readCache('companies'),
+            );
+            if (cached.success) {
+                setCompanies(cached.data);
                 setLoadingCompanies(false);
                 return;
             }
@@ -122,19 +135,21 @@ export default function PositionEditor() {
         loadCompanies();
     }, []);
 
-    // Load positions when a company is selected
+    const scope = resolveScope(companies, selectedCompany, selectedCountryId);
+    const scopeQuery = scope?.query ?? null;
+    const showCompanyColumn = scope?.multiCompany ?? false;
+
     useEffect(() => {
-        if (!selectedId) {
+        if (scopeQuery === null) {
             setPositions([]);
+            setLoadingPositions(false);
             return;
         }
         setError('');
         // Match the order the API returns rows in, so the sorted column loads active.
-        const multi =
-            selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
-        setSort({ key: multi ? 'company' : 'title', dir: 'asc' });
+        setSort({ key: showCompanyColumn ? 'company' : 'title', dir: 'asc' });
 
-        const cacheKey = `positions:${selectedId}`;
+        const cacheKey = `positions:${scopeQuery}`;
         const cached = readCache<PositionRow[]>(cacheKey);
         if (cached) {
             setPositions(cached);
@@ -142,23 +157,25 @@ export default function PositionEditor() {
             return;
         }
 
+        let superseded = false;
         setLoadingPositions(true);
-        let query = '';
-        if (selectedId.startsWith(COUNTRY_PREFIX)) {
-            query = `?country_id=${encodeURIComponent(selectedId.slice(COUNTRY_PREFIX.length))}`;
-        } else if (selectedId !== ALL) {
-            query = `?company_id=${encodeURIComponent(selectedId)}`;
-        }
-        fetch(`/api/admin/positions${query}`)
+        fetch(`/api/admin/positions${scopeQuery}`)
             .then((r) => r.json())
             .then((raw) => {
                 const rows = AdminPositionListSchema.parse(raw);
-                setPositions(rows);
                 writeCache(cacheKey, rows);
+                if (!superseded) setPositions(rows);
             })
-            .catch(() => setError('Could not load positions.'))
-            .finally(() => setLoadingPositions(false));
-    }, [selectedId, reloadKey]);
+            .catch(() => {
+                if (!superseded) setError('Could not load positions.');
+            })
+            .finally(() => {
+                if (!superseded) setLoadingPositions(false);
+            });
+        return () => {
+            superseded = true;
+        };
+    }, [scopeQuery, reloadKey]);
 
     function refresh() {
         invalidateCache('companies');
@@ -167,26 +184,20 @@ export default function PositionEditor() {
         setReloadKey((k) => k + 1);
     }
 
-    const showCompanyColumn =
-        selectedId === ALL || selectedId.startsWith(COUNTRY_PREFIX);
-    const totalPositions = companies.reduce(
-        (sum, c) => sum + c.total_positions,
-        0,
-    );
+    function selectCompany(company: string) {
+        setSelectedCompany(company);
+        setSelectedCountryId((country) => country || ALL_COUNTRIES);
+    }
 
-    const countryGroups = Array.from(
-        companies
-            .reduce((map, c) => {
-                const g = map.get(c.country_id) ?? {
-                    country_id: c.country_id,
-                    country_name: c.country_name,
-                    total: 0,
-                };
-                g.total += c.total_positions;
-                return map.set(c.country_id, g);
-            }, new Map<string, { country_id: string; country_name: string; total: number }>())
-            .values(),
-    ).sort((a, b) => a.country_name.localeCompare(b.country_name));
+    function selectCountry(countryId: string) {
+        setSelectedCountryId(countryId);
+        setSelectedCompany((company) => company || ALL_COMPANIES);
+    }
+
+    function clearFilters() {
+        setSelectedCompany('');
+        setSelectedCountryId('');
+    }
 
     function toggleSort(key: 'company' | 'title') {
         setSort((prev) =>
@@ -221,7 +232,9 @@ export default function PositionEditor() {
     ) {
         setPositions((prev) => {
             const next = updater(prev);
-            if (selectedId) writeCache(`positions:${selectedId}`, next);
+            if (scopeQuery !== null) {
+                writeCache(`positions:${scopeQuery}`, next);
+            }
             return next;
         });
     }
@@ -301,6 +314,13 @@ export default function PositionEditor() {
     // which would omit categories not yet used by this company.
     const knownCategories = CATEGORIES;
 
+    const summary = scope
+        ? positionSummary(positions)
+        : catalogSummary(companies);
+    const showSummary = scope
+        ? !loadingPositions && positions.length > 0
+        : companies.length > 0;
+
     if (loadingCompanies) {
         return (
             <div class="text-sm text-gray-500 py-1.5 border border-transparent">
@@ -314,59 +334,138 @@ export default function PositionEditor() {
     }
 
     return (
-        <div class="space-y-4">
-            {/* Company selector */}
-            <div class="flex items-center gap-3">
-                <label
-                    class="text-sm font-medium text-gray-700 whitespace-nowrap"
-                    for="company-select"
-                >
-                    Company
-                </label>
-                <select
-                    id="company-select"
-                    class="admin-select flex-1 max-w-sm text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#12956B]"
-                    value={selectedId}
-                    onChange={(e) =>
-                        setSelectedId((e.target as HTMLSelectElement).value)
-                    }
-                >
-                    <option value="">— select a company —</option>
-                    {companies.length > 0 && (
-                        <option value={ALL}>
-                            All companies · {totalPositions} positions
-                        </option>
+        <div class="space-y-4 md:[--sticky-head-offset:8.75rem] lg:[--sticky-head-offset:5.875rem]">
+            <div class="flex flex-col gap-3 md:justify-center md:sticky md:top-(--admin-sticky-top) md:z-20 md:h-(--sticky-head-offset) md:-mt-3 md:mb-1 bg-white">
+                <p class="min-h-5 text-center text-sm font-bold text-gray-900">
+                    {showSummary && (
+                        <>
+                            <span class="text-[#0F7A4F]">
+                                {formatCount(summary.english)}
+                            </span>{' '}
+                            of {formatCount(summary.total)}{' '}
+                            {summary.total === 1 ? 'position' : 'positions'}{' '}
+                            <span
+                                aria-hidden="true"
+                                class="font-normal text-gray-500"
+                            >
+                                |
+                            </span>{' '}
+                            <span class="text-[#0F7A4F]">
+                                {formatCount(summary.companies)}
+                            </span>{' '}
+                            {summary.companies === 1 ? 'company' : 'companies'}{' '}
+                            <span
+                                aria-hidden="true"
+                                class="font-normal text-gray-500"
+                            >
+                                |
+                            </span>{' '}
+                            <span class="text-[#0F7A4F]">
+                                {formatCount(summary.countries)}
+                            </span>{' '}
+                            {summary.countries === 1 ? 'country' : 'countries'}
+                        </>
                     )}
-                    {countryGroups.map((g) => (
-                        <option
-                            key={g.country_id}
-                            value={`${COUNTRY_PREFIX}${g.country_id}`}
+                </p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-3 grow basis-64 min-w-0 max-w-64 sm:max-w-[29rem]">
+                        <label
+                            class="w-17 shrink-0 text-sm font-medium text-gray-700 whitespace-nowrap"
+                            for="company-select"
                         >
-                            All {g.country_name} companies · {g.total} positions
-                        </option>
-                    ))}
-                    {companies.length > 0 && (
-                        <option disabled>────────────────</option>
-                    )}
-                    {companies.map((c) => (
-                        <option key={c.company_id} value={c.company_id}>
-                            {c.name} ({c.country_name}) · {c.total_positions}{' '}
-                            positions
-                        </option>
-                    ))}
-                </select>
-                <button
-                    onClick={refresh}
-                    class="ml-auto bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
-                >
-                    Refresh
-                </button>
+                            Company
+                        </label>
+                        <select
+                            id="company-select"
+                            class={filterSelectClass(selectedCompany)}
+                            value={selectedCompany}
+                            onChange={(e) =>
+                                selectCompany(
+                                    (e.target as HTMLSelectElement).value,
+                                )
+                            }
+                        >
+                            <option value="" disabled hidden>
+                                Select a company
+                            </option>
+                            {companies.length > 0 && (
+                                <option value={ALL_COMPANIES}>
+                                    All companies
+                                </option>
+                            )}
+                            {companyOptions(
+                                companies,
+                                selectedCompany,
+                                selectedCountryId,
+                            ).map((o) => (
+                                <option
+                                    key={o.value}
+                                    value={o.value}
+                                    disabled={!o.available}
+                                >
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3 grow basis-64 min-w-0 max-w-64 sm:max-w-[29rem]">
+                        <label
+                            class="w-17 shrink-0 text-sm font-medium text-gray-700 whitespace-nowrap"
+                            for="country-select"
+                        >
+                            Country
+                        </label>
+                        <select
+                            id="country-select"
+                            class={filterSelectClass(selectedCountryId)}
+                            value={selectedCountryId}
+                            onChange={(e) =>
+                                selectCountry(
+                                    (e.target as HTMLSelectElement).value,
+                                )
+                            }
+                        >
+                            <option value="" disabled hidden>
+                                Select a country
+                            </option>
+                            <option value={ALL_COUNTRIES}>All countries</option>
+                            {countryOptions(
+                                companies,
+                                selectedCompany,
+                                selectedCountryId,
+                            ).map((o) => (
+                                <option
+                                    key={o.value}
+                                    value={o.value}
+                                    disabled={!o.available}
+                                >
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div class="ml-auto flex items-center gap-3 md:max-lg:w-full md:max-lg:justify-end">
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            class="border border-gray-300 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        >
+                            Clear filters
+                        </button>
+                        <button
+                            onClick={refresh}
+                            class="bg-[#0F7A4F] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#0B5E3C] transition-colors whitespace-nowrap"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {error && <p class="text-sm text-red-600">{error}</p>}
 
             {/* Positions table */}
-            {selectedId && (
+            {scope && (
                 <div>
                     {loadingPositions ? (
                         <div class="text-sm text-gray-500 py-4">
@@ -379,8 +478,8 @@ export default function PositionEditor() {
                                 : 'No positions found for this company.'}
                         </div>
                     ) : (
-                        <div class="overflow-x-auto md:overflow-visible rounded-xl border border-gray-200">
-                            <table class="sticky-head w-full text-sm">
+                        <div class="relative overflow-x-auto md:max-lg:overflow-auto md:max-lg:max-h-[calc(100dvh-19rem)] md:max-lg:[--admin-sticky-top:0px] md:max-lg:[--sticky-head-offset:0px] lg:overflow-visible rounded-xl border border-gray-200">
+                            <table class="md:sticky-head w-full text-sm">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-200 text-left">
                                         {showCompanyColumn && (
@@ -408,7 +507,7 @@ export default function PositionEditor() {
                                                 </button>
                                             </th>
                                         )}
-                                        <th class="px-4 py-2.5 font-medium text-gray-600 w-1/2">
+                                        <th class="px-4 py-2.5 font-medium text-gray-600 min-w-40 xl:w-1/2">
                                             <button
                                                 type="button"
                                                 class="inline-flex items-center gap-1 hover:text-gray-900 cursor-pointer"
@@ -463,27 +562,16 @@ export default function PositionEditor() {
                                             >
                                                 {/* Company */}
                                                 {showCompanyColumn && (
-                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                    <td class="px-4 py-2.5 xl:whitespace-nowrap">
                                                         <span class="font-medium text-gray-800">
                                                             {pos.company
                                                                 ?.name ?? '—'}
                                                         </span>
-                                                        {pos.company
-                                                            ?.country_name && (
-                                                            <span class="text-gray-500">
-                                                                {' '}
-                                                                ·{' '}
-                                                                {
-                                                                    pos.company
-                                                                        .country_name
-                                                                }
-                                                            </span>
-                                                        )}
                                                     </td>
                                                 )}
 
                                                 {/* Title */}
-                                                <td class="px-4 py-2.5">
+                                                <td class="px-4 py-2.5 min-w-40 [overflow-wrap:anywhere]">
                                                     {pos.url &&
                                                     isHttpUrl(pos.url) ? (
                                                         <a
@@ -509,6 +597,8 @@ export default function PositionEditor() {
                                                 {/* Category */}
                                                 <td class="px-4 py-2.5">
                                                     <select
+                                                        name={`category-${pos.id}`}
+                                                        aria-label={`Category for ${pos.title}`}
                                                         class="admin-select text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                                                         value={
                                                             pos.category
@@ -595,6 +685,8 @@ export default function PositionEditor() {
                                                 {/* Education */}
                                                 <td class="px-4 py-2.5">
                                                     <select
+                                                        name={`education-${pos.id}`}
+                                                        aria-label={`Education for ${pos.title}`}
                                                         class="admin-select text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#12956B] bg-white"
                                                         value={
                                                             pos.required_education ??
