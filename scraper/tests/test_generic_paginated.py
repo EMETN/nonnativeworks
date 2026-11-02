@@ -6,13 +6,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bs4 import BeautifulSoup  # noqa: E402
+
 from platforms.generic_paginated import (  # noqa: E402
     _extract_card,
-    _extract_teamtailor_card,
     _extract_next_data,
     _extract_phenom_description,
     _extract_script_json,
     _extract_script_var_json,
+    _extract_teamtailor_card,
     _fetch_phenom_api_page,
     _jobs_from_items,
     _phenom_tracked_countries,
