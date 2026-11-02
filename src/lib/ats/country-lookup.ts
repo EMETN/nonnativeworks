@@ -1,3 +1,6 @@
+import { CITY_SPELLINGS } from './city-spellings';
+import { foldText } from '../text';
+
 export interface CountryInfo {
     name: string;
     code: string;
@@ -1648,14 +1651,20 @@ export function extractWorkModelFromLocation(
 }
 
 const ENGLISH_CITY_NAMES: Record<string, string> = {
+    'amersfoort cdi': 'Amersfoort',
+    'avljouret 63 braine l_alleud': "Braine-l'Alleud",
     antwerpen: 'Antwerp',
+    århus: 'Aarhus',
     'berlin tech': 'Berlin',
     braunschweig: 'Brunswick',
     'braunschweig/brunswick': 'Brunswick',
     brussel: 'Brussels',
     bruxelles: 'Brussels',
     bucurești: 'Bucharest',
+    'chemnitz kone garant gmbh': 'Chemnitz',
     'den haag': 'The Hague',
+    frankfurt: 'Frankfurt am Main',
+    'frankfurt am main': 'Frankfurt am Main',
     geneve: 'Geneva',
     genève: 'Geneva',
     goteborg: 'Gothenburg',
@@ -1663,6 +1672,7 @@ const ENGLISH_CITY_NAMES: Record<string, string> = {
     hannover: 'Hanover',
     kobenhavn: 'Copenhagen',
     koeln: 'Cologne',
+    'kone suisse genève': 'Geneva',
     koln: 'Cologne',
     köln: 'Cologne',
     københavn: 'Copenhagen',
@@ -1676,6 +1686,8 @@ const ENGLISH_CITY_NAMES: Record<string, string> = {
     nürnberg: 'Nuremberg',
     padova: 'Padua',
     praha: 'Prague',
+    rīga: 'Riga',
+    'rīga central': 'Riga',
     roma: 'Rome',
     sevilla: 'Seville',
     torino: 'Turin',
@@ -1684,11 +1696,124 @@ const ENGLISH_CITY_NAMES: Record<string, string> = {
     zürich: 'Zurich',
 };
 
-export function toEnglishCityNames(cities: string[]): string[] {
-    const names = cities.map(
-        (city) => ENGLISH_CITY_NAMES[normalizeKey(city)] ?? city,
+const cityKey = (name: string) =>
+    foldText(name)
+        .replace(/[-\s]+/g, ' ')
+        .trim();
+
+const ENGLISH_NAME_BY_KEY = new Map(
+    Object.entries(ENGLISH_CITY_NAMES).map(([name, english]) => [
+        cityKey(name),
+        english,
+    ]),
+);
+
+const SPELLING_BY_KEY = new Map(
+    CITY_SPELLINGS.map((name) => [cityKey(name), name]),
+);
+
+const CITY_NAME_PARENTHESES_RE = /\((saale|oder|rheinland)\)$/i;
+const LOCATION_SEPARATOR_RE = /\s*[/,]\s*|\s[-–]\s+|-\s+/;
+const STREET_ONLY_RE = /^\S*(?:straße|strasse|str\.)(?:\s\d+)?$/i;
+const NON_PLACE_RE = /^(?:\d|flexible location$|home based$|województwo\b)/i;
+const VENUE_CODE_RE = /^[A-Z]{2,4}$/;
+
+function isBareCountry(segment: string): boolean {
+    const key = normalizeKey(segment);
+    return key in COUNTRY_MAP && !(key in CITY_MAP);
+}
+
+function withoutTrailingCountry(segment: string): string {
+    const words = segment.split(' ');
+    for (let n = Math.min(3, words.length - 1); n >= 1; n--) {
+        const tail = words.slice(-n).join(' ');
+        if (tail.length >= 4 && isBareCountry(tail))
+            return words.slice(0, -n).join(' ');
+    }
+    return segment;
+}
+
+function isPlace(segment: string): boolean {
+    return (
+        !NON_PLACE_RE.test(segment) &&
+        !STREET_ONLY_RE.test(segment) &&
+        !WORK_MODE_RE.test(segment) &&
+        !isBareCountry(segment)
     );
-    return [...new Set(names)];
+}
+
+function cityFromLabel(raw: string): string {
+    let label = raw
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/^PB_[^_]+_/, '')
+        .replace(/^Mapbox /, '')
+        .replace(/^\d{4,5}\s+/, '')
+        .replace(/_[A-Z]+$/, '')
+        .replace(/\s*\/\s*main$/i, ' am Main');
+    label = label.match(/\b\d{2}-\d{3} (.+)$/)?.[1] ?? label;
+    label = label.match(/^[A-Z]{2,4} \((.+?)(?: - .*)?\)$/)?.[1] ?? label;
+    if (!CITY_NAME_PARENTHESES_RE.test(label))
+        label = label.replace(/\s*\(.*$/, '');
+
+    const segments = label
+        .split(LOCATION_SEPARATOR_RE)
+        .map((segment) => withoutTrailingCountry(segment.trim()))
+        .filter(Boolean)
+        .filter(isPlace);
+    const place =
+        segments.find((segment) => !VENUE_CODE_RE.test(segment)) ?? segments[0];
+    if (!place) return '';
+
+    const city = place
+        .replace(/\s+(?:eller|tai|und|&|med omnejd)(?:\s.*)?$/i, '')
+        .replace(
+            /\s+(?:\S*(?:str\.|straße|strasse)|rue|avenue|av\.?|ul\.)(?:\s.*)?$/i,
+            '',
+        )
+        .replace(/\s+(?:cedex(?:\s+\d+)?|\d+(?:er|e|ème|eme)?)$/i, '')
+        .replace(/\s+(?:cedex|metropolitan area|area|office)$/i, '')
+        .replace(/\s+[A-ZÆØÅ]$/, '');
+    return isPlace(city) ? city : '';
+}
+
+function toTitleCase(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(
+            /(^|[\s-])(\p{L})/gu,
+            (_, gap, letter) => gap + letter.toUpperCase(),
+        )
+        .replace(/ (Am|An|De|Der|Du|Di|En|La|Le|Les|Sur)(?= )/g, (word) =>
+            word.toLowerCase(),
+        );
+}
+
+function spellCityName(name: string): string {
+    const key = cityKey(name);
+    const known = ENGLISH_NAME_BY_KEY.get(key) ?? SPELLING_BY_KEY.get(key);
+    if (known) return known;
+    const singleCase =
+        name === name.toUpperCase() || name === name.toLowerCase();
+    return singleCase ? toTitleCase(name) : name;
+}
+
+const KNOWN_CITY_KEYS = new Set([
+    ...Object.keys(CITY_MAP).map(cityKey),
+    ...SPELLING_BY_KEY.keys(),
+    ...Object.values(ENGLISH_CITY_NAMES).map(cityKey),
+]);
+
+export function isKnownCity(name: string): boolean {
+    return KNOWN_CITY_KEYS.has(cityKey(name));
+}
+
+export function canonicalCityNames(cities: string[]): string[] {
+    const names = new Set(
+        cities.map(cityFromLabel).filter(Boolean).map(spellCityName),
+    );
+    if (names.size > 1) names.delete('Offshore');
+    return [...names];
 }
 
 /**
@@ -1744,6 +1869,22 @@ export function extractCitiesForCountry(
         if (place) add(place);
     }
     return results;
+}
+
+export function resolveJobCities(
+    job: { city?: string; cities?: string[]; location?: string },
+    countryCode: string,
+): string[] {
+    const supplied = job.cities ?? (job.city ? [job.city] : []);
+    const local = canonicalCityNames(supplied).filter((city) => {
+        const home = CITY_MAP[normalizeKey(city)];
+        return !home || home.code === countryCode;
+    });
+    return local.length > 0
+        ? local
+        : canonicalCityNames(
+              extractCitiesForCountry(job.location ?? '', countryCode),
+          );
 }
 
 export function lookupCountryFromLocation(location: string): CountryInfo[] {

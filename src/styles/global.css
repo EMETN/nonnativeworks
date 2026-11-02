@@ -78,6 +78,32 @@
 }
 
 /* Custom dropdown chevron so the arrow keeps a comfortable margin from the edge */
+@utility sticky-head {
+    & thead th {
+        position: sticky;
+        top: calc(var(--admin-sticky-top) + var(--sticky-head-offset, 0px));
+        z-index: 10;
+        background-color: #f9fafb;
+        box-shadow: inset 0 -1px 0 #e5e7eb;
+    }
+
+    & tbody th[data-group-depth] {
+        position: sticky;
+        top: calc(
+            var(--admin-sticky-top) + var(--sticky-head-offset, 0px) + 3.75rem
+        );
+        z-index: 5;
+        box-shadow: inset 0 -1px 0 #e5e7eb;
+    }
+
+    & tbody th[data-group-depth='1'] {
+        top: calc(
+            var(--admin-sticky-top) + var(--sticky-head-offset, 0px) + 6.4375rem
+        );
+        z-index: 4;
+    }
+}
+
 .admin-select {
     appearance: none;
     -webkit-appearance: none;

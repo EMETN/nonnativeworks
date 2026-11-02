@@ -6,7 +6,7 @@ import {
     useLayoutEffect,
 } from 'preact/hooks';
 import type { ListedPosition } from '../../lib/types';
-import { foldText, formatCount } from '../../lib/text';
+import { formatCount } from '../../lib/text';
 import {
     DEFAULT_SORT,
     EMPTY_FILTERS,
@@ -23,6 +23,7 @@ import {
     parseSort,
     serializeFilters,
     sortKeysFor,
+    searchPositions,
     sortPositions,
     type FacetKey,
     type FacetOption,
@@ -196,9 +197,7 @@ export default function PositionList({ positions, kind, report }: Props) {
             applyFilters(positions, filters),
             activeSort,
         );
-        const q = foldText(search).trim();
-        if (!q) return narrowed;
-        return narrowed.filter((p) => foldText(p.title).includes(q));
+        return searchPositions(narrowed, search);
     }, [positions, filters, sort, search]);
 
     useEffect(() => setShown(PAGE_SIZE), [filters, sort, search]);
@@ -261,9 +260,10 @@ export default function PositionList({ positions, kind, report }: Props) {
                     />
                 </svg>
                 <input
+                    name="search-positions"
                     type="text"
-                    aria-label="Search positions"
-                    placeholder="Search positions"
+                    aria-label="Search positions or cities"
+                    placeholder="Search positions or cities"
                     value={inputValue}
                     onInput={(e) => {
                         const val = (e.target as HTMLInputElement).value;
@@ -363,6 +363,7 @@ export default function PositionList({ positions, kind, report }: Props) {
                                 />
                             </svg>
                             <select
+                                name="sort"
                                 aria-label="Sort by"
                                 value={activeSort}
                                 onPointerDown={() => setSortByPointer(true)}

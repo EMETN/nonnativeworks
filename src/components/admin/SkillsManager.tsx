@@ -242,6 +242,7 @@ export default function SkillsManager() {
                                 Canonical name
                             </label>
                             <input
+                                name="canonical-name"
                                 type="text"
                                 required
                                 placeholder="e.g. Node.js"
@@ -265,6 +266,7 @@ export default function SkillsManager() {
                                 </span>
                             </label>
                             <input
+                                name="aliases"
                                 type="text"
                                 placeholder="e.g. node, nodejs, node.js"
                                 value={addDraft.aliases}
@@ -283,6 +285,7 @@ export default function SkillsManager() {
                                 Category
                             </label>
                             <select
+                                name="category"
                                 value={addDraft.category}
                                 onChange={(e) =>
                                     setAddDraft((d) => ({
@@ -304,6 +307,7 @@ export default function SkillsManager() {
                     </div>
                     <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
                         <input
+                            name="is-legacy"
                             type="checkbox"
                             checked={addDraft.is_legacy}
                             onChange={(e) =>
@@ -363,8 +367,8 @@ export default function SkillsManager() {
             )}
 
             {selectedCategory && !loading && skills.length > 0 && (
-                <div class="overflow-x-auto md:overflow-visible rounded-xl border border-gray-200">
-                    <table class="sticky-head w-full text-sm">
+                <div class="overflow-x-auto lg:overflow-clip rounded-xl border border-gray-200">
+                    <table class="lg:sticky-head w-full text-sm">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200 text-left">
                                 <th class="px-4 py-2.5 font-medium text-gray-600 w-1/4">
@@ -406,6 +410,7 @@ export default function SkillsManager() {
                                                                 Canonical name
                                                             </label>
                                                             <input
+                                                                name="edit-canonical-name"
                                                                 type="text"
                                                                 required
                                                                 value={
@@ -437,6 +442,7 @@ export default function SkillsManager() {
                                                                 </span>
                                                             </label>
                                                             <input
+                                                                name="edit-aliases"
                                                                 type="text"
                                                                 placeholder="e.g. node, nodejs, node.js"
                                                                 value={
@@ -464,6 +470,7 @@ export default function SkillsManager() {
                                                                 Category
                                                             </label>
                                                             <select
+                                                                name="edit-category"
                                                                 value={
                                                                     editDraft.category
                                                                 }
@@ -504,6 +511,7 @@ export default function SkillsManager() {
                                                     </div>
                                                     <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
                                                         <input
+                                                            name="edit-is-legacy"
                                                             type="checkbox"
                                                             checked={
                                                                 editDraft.is_legacy
