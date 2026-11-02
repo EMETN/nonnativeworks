@@ -8,6 +8,7 @@ import {
     hasActiveFilters,
     parseFilters,
     parseSort,
+    searchPositions,
     serializeFilters,
     sortPositions,
     EMPTY_FILTERS,
@@ -220,4 +221,23 @@ test('sorting ignores leading punctuation', () => {
         'b',
         'a',
     ]);
+});
+
+test('search finds positions by title or city, ignoring accents', () => {
+    const positions = [
+        { title: 'Engineer', city: ['Łódź'] },
+        { title: 'Lodz Sales Lead', city: null },
+        { title: 'Designer', city: ['Warsaw'] },
+    ] as ListedPosition[];
+
+    expect(searchPositions(positions, ' lodz ').map((p) => p.title)).toEqual([
+        'Engineer',
+        'Lodz Sales Lead',
+    ]);
+});
+
+test('an empty search keeps every position', () => {
+    const positions = [{ title: 'Engineer', city: null }] as ListedPosition[];
+
+    expect(searchPositions(positions, '  ')).toEqual(positions);
 });
