@@ -212,6 +212,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
 | Nordnet | `career.nordnetab.com/jobs` | teamtailor |
+| NestAI | `careers.nestai.com/jobs` | teamtailor | Marketing page `nestai.com/open-positions` is a Webflow list of the same jobs; 20 per page |
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |
 | Bending Spoons | `jobs.bendingspoons.com` | `next_data` | All postings and their full text are in the page's `__NEXT_DATA__`; no detail fetches. One job per office country |

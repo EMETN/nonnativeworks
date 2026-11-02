@@ -610,6 +610,14 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
         elif len(parts) == 1:
             location = parts[0]
 
+        # Multi-location postings render a "Multiple locations" label whose
+        # title attribute holds the real comma-separated city list.
+        for span in meta_div.select("span[title]"):
+            full = span["title"].strip()
+            if full and span.get_text(strip=True) == location:
+                location = full
+                break
+
     # TeamTailor sites often prefix each city with the company/office name,
     # e.g. "Futurice Helsinki, Futurice Tampere". Strip the prefix so the
     # country lookup can match the bare city names.

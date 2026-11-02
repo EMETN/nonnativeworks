@@ -552,6 +552,17 @@ scrapers:
           param: page
           page_size: 20
 
+    # ── NestAI (TeamTailor) ──────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length).
+    - match: 'careers.nestai.com'
+      name: NestAI
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
     # ── Volvo Group ──────────────────────────────────────────────────────────────
     # SuccessFactors XML job feed. Contains all fields inline (title, city,
     # 2-letter country code, department, HTML description) — no detail page

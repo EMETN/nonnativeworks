@@ -5,7 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from bs4 import BeautifulSoup  # noqa: E402
 from platforms.generic_paginated import (  # noqa: E402
+    _extract_teamtailor_card,
     _extract_next_data,
     _extract_phenom_description,
     _extract_script_json,
@@ -394,6 +396,33 @@ class ExtractPhenomDescriptionTest(unittest.TestCase):
 
     def test_returns_empty_without_payload(self):
         self.assertEqual(_extract_phenom_description("<main>No payload</main>"), "")
+
+
+class ExtractTeamtailorCardTest(unittest.TestCase):
+    def _card(self, location_span: str):
+        html = (
+            '<li><a href="/jobs/1-dev">Dev</a><div class="text-md mt-4">'
+            "<span>Engineering</span><span>&middot;</span>"
+            f"{location_span}</div></li>"
+        )
+        return BeautifulSoup(html, "html.parser").li
+
+    def test_multiple_locations_label_uses_title_attribute(self):
+        card = self._card(
+            '<span title="Helsinki, Oulu, Tampere">Multiple locations</span>'
+        )
+
+        job = _extract_teamtailor_card(card, "https://careers.example.com/jobs", {})
+
+        self.assertEqual(job["location"], "Helsinki, Oulu, Tampere")
+        self.assertEqual(job["jobFunction"], "Engineering")
+
+    def test_single_location_is_unchanged(self):
+        job = _extract_teamtailor_card(
+            self._card("<span>Stockholm</span>"), "https://careers.example.com/jobs", {}
+        )
+
+        self.assertEqual(job["location"], "Stockholm")
 
 
 if __name__ == "__main__":
