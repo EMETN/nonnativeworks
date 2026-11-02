@@ -464,6 +464,28 @@ scrapers:
           location: location
           locations: multi_location
 
+    # ── DHL Group (Phenom) ───────────────────────────────────────────────────────
+    # Same shape as GE Healthcare above: one /widgets query per tracked country (from
+    # the country facet). ~8,800 postings worldwide; applyUrl points at Avature, so
+    # url_template keeps links on the careers site.
+    - match: 'careers.dhl.com/global/en/search-results'
+      name: DHL
+      extract_mode: phenom_api
+      api_body:
+          refNum: DPDHGLOBAL
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
+      pagination:
+          type: offset
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
+
     # ── Siemens ──────────────────────────────────────────────────────────────────
     # Avature portal, same markup family as Siemens Healthineers above — but a far
     # bigger board: ~1,270 postings across the 25 tracked-country facets, served 6

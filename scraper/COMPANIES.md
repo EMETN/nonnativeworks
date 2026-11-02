@@ -218,6 +218,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |
 | Bending Spoons | `jobs.bendingspoons.com` | `next_data` | All postings and their full text are in the page's `__NEXT_DATA__`; no detail fetches. One job per office country |
 | GE Healthcare | `careers.gehealthcare.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Job links use `url_template` (applyUrl points at Workday) |
+| DHL | `careers.dhl.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. ~5,200 postings, ~85% in Germany; descriptions are fetched for the ~840 English-titled ones, so a run takes ~8 min. Job links use `url_template` (applyUrl points at Avature) |
 | Siemens Healthineers | `careers.siemens-healthineers.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Workday tenant merged in as `extra_urls` |
 | Siemens | `jobs.siemens.com/en_US/externaljobs/SearchJobs` | `css_cards` | Local run only; ~212 pages at 6 rows/page. Host rate-limits under load |
 | Scout24 | `scout24.com/en/career/jobs` | `css_cards` | no pagination |

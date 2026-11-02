@@ -135,6 +135,10 @@ companies:
       url: https://www.deptagency.com/careers/roles
       min_positions: 5
 
+    - name: DHL
+      url: https://careers.dhl.com/global/en/search-results
+      min_positions: 500
+
     - name: Edenred
       url: https://wd3.myworkdaysite.com/en-US/recruiting/edenpeople/Edenred_Careers
       min_positions: 3

@@ -1617,6 +1617,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'iqm.teamtailor.com', name: 'IQM' },
     { urlSubstring: 'careers.nestai.com', name: 'NestAI' },
     { urlSubstring: 'nitor.com', name: 'Nitor' },
+    { urlSubstring: 'careers.dhl.com', name: 'DHL' },
     {
         urlSubstring: 'careers.siemens-healthineers.com',
         name: 'Siemens Healthineers',
