@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
     const { data, error } = await supabase
         .from('company_stats')
         .select(
-            'company_id, name, country_id, career_page_url, total_positions, updated_at',
+            'company_id, name, country_id, career_page_url, total_positions, english_positions, updated_at',
         )
         .order('name');
 
@@ -36,6 +36,7 @@ export const GET: APIRoute = async () => {
         country_name: countryMap.get(co.country_id) ?? '—',
         career_page_url: co.career_page_url ?? null,
         total_positions: co.total_positions,
+        english_positions: co.english_positions,
         updated_at: co.updated_at,
     }));
 

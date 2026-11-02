@@ -14,6 +14,7 @@ export const AdminCompanySchema = z.object({
     country_name: z.string(),
     career_page_url: z.string().nullable(),
     total_positions: z.number(),
+    english_positions: z.number(),
     updated_at: z.string(),
 });
 export type AdminCompany = z.infer<typeof AdminCompanySchema>;
@@ -25,8 +26,6 @@ const CategoryInfoSchema = z.object({
     slug: z.string(),
 });
 
-// `company` is absent on the lean (per-company) query and present on the
-// enriched one, hence optional.
 export const AdminPositionSchema = z.object({
     id: z.string(),
     title: z.string(),
@@ -37,8 +36,7 @@ export const AdminPositionSchema = z.object({
     category: CategoryInfoSchema.nullable(),
     company: z
         .object({ name: z.string(), country_name: z.string() })
-        .nullable()
-        .optional(),
+        .nullable(),
 });
 export type AdminPosition = z.infer<typeof AdminPositionSchema>;
 export const AdminPositionListSchema = z.array(AdminPositionSchema);
