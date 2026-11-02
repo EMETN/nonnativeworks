@@ -45,6 +45,13 @@ describe('detectAts — hostname slug overrides', () => {
         });
     });
 
+    test('https://nitor.com/en/careers → no ATS, so slug probing is skipped', () => {
+        expect(detectAts('https://nitor.com/en/careers')).toEqual({
+            ats: null,
+            companySlug: null,
+        });
+    });
+
     test('https://tandemhealth.ai/about/careers → ashby board "tandem-health"', () => {
         expect(detectAts('https://tandemhealth.ai/about/careers')).toEqual({
             ats: 'ashby',

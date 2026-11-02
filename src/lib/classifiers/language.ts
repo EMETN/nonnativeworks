@@ -519,7 +519,7 @@ const LANG_MENTIONS = (lang: string) => [
 ];
 
 /**
- * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset)".
+ * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset); a bare plural "advantages"/"assets" needs no article.
  * Handles any intensifier adjective(s) between the article and the noun without enumerating them.
  * Examples: "is an advantage", "is a big plus", "would be a strong asset", "seen as a huge advantage".
  *
@@ -546,7 +546,7 @@ function _buildAdvantageRegex(lang: string): RegExp {
     // or any single word (handles typos like "considerd" and extras like "also", "really").
     // The bare "considered(?: as)?" alternative handles ellipsis where "is" is dropped
     // entirely, e.g. "French or German considered a strong advantage".
-    const operatorSuffix = `(?:\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)|\\s+of\\s+(?:an?\\s+)?advantage)\\b`;
+    const operatorSuffix = `(?:\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|(?:\\w+\\s+){0,2}(?:advantages|assets)|advantageous|preferred)|\\s+of\\s+(?:an?\\s+)?advantage)\\b`;
     // Gap words in the compound-mention branch must not cross over a DIFFERENT
     // language's name — otherwise "proficiency in Dutch and English (French is
     // considered an asset)" would let "proficiency in Dutch" reach across "and
@@ -616,7 +616,7 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
         `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
         // The gap words must not include "speaker"/"speaking": in "Swedish speaker
         // (plus English required)" the "plus" opens a new clause, it doesn't rate Swedish.
-        `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
+        `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantages?|assets?|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
 }
 

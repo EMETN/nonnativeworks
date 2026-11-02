@@ -235,6 +235,10 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
         if url_tag and url_tag.get("href"):
             job_url = urljoin(base_url, url_tag["href"])
 
+    # The card itself may be the link (e.g. <a class="teaser"><h3>…</h3></a>).
+    if not job_url and card.get("href"):
+        job_url = urljoin(base_url, card["href"])
+
     if not title:
         return None
 
@@ -253,6 +257,9 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
                 if text:
                     location = text
                     break
+
+    # Single-site companies whose cards carry no location at all.
+    location = location or cfg.get("default_location")
 
     return build_job(title, job_url, location)
 

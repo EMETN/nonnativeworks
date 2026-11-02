@@ -212,6 +212,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | UpCloud | `upcloud.teamtailor.com/jobs` | teamtailor | |
 | Futurice | `careers.futurice.com/en-GB/jobs` | teamtailor | |
 | Nordnet | `career.nordnetab.com/jobs` | teamtailor |
+| Nitor | `nitor.com/en/careers` | `css_cards` | Contentful page, all postings on one page (no pagination). Card is the link itself; no location on the cards, so `default_location: Finland` (offices in Helsinki and Tampere). Includes an "Open Application" entry |
 | NestAI | `careers.nestai.com/jobs` | teamtailor | Marketing page `nestai.com/open-positions` is a Webflow list of the same jobs; 20 per page |
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |

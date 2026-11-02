@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bs4 import BeautifulSoup  # noqa: E402
 from platforms.generic_paginated import (  # noqa: E402
+    _extract_card,
     _extract_teamtailor_card,
     _extract_next_data,
     _extract_phenom_description,
@@ -423,6 +424,36 @@ class ExtractTeamtailorCardTest(unittest.TestCase):
         )
 
         self.assertEqual(job["location"], "Stockholm")
+
+
+class ExtractCardTest(unittest.TestCase):
+    BASE = "https://careers.example.com/en/careers"
+
+    def _card(self, html: str):
+        return BeautifulSoup(html, "html.parser").select_one("a, li")
+
+    def test_card_that_is_the_link_supplies_the_url(self):
+        card = self._card('<a href="/en/careers/dev"><h3>Developer</h3></a>')
+
+        job = _extract_card(card, self.BASE, {"title_selector": "h3"})
+
+        self.assertEqual(job["url"], "https://careers.example.com/en/careers/dev")
+
+    def test_default_location_fills_a_missing_location(self):
+        card = self._card('<a href="/en/careers/dev"><h3>Developer</h3></a>')
+
+        job = _extract_card(card, self.BASE, {"default_location": "Finland"})
+
+        self.assertEqual(job["location"], "Finland")
+
+    def test_default_location_does_not_override_a_found_location(self):
+        card = self._card(
+            '<li><a href="/j/1">Dev</a><span class="location">Oulu</span></li>'
+        )
+
+        job = _extract_card(card, self.BASE, {"default_location": "Finland"})
+
+        self.assertEqual(job["location"], "Oulu")
 
 
 if __name__ == "__main__":

@@ -31,11 +31,26 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
 };
 
+/**
+ * Career-page hostnames that have no usable ATS board, even though a board with the
+ * same slug exists. Skipping detection keeps slug probing away from it, so the
+ * company's own scraper config is used.
+ */
+const NO_ATS_HOSTNAMES = new Set([
+    // Slug probing would hit a stale Workable "nitor" board: Finnish-only titles and
+    // postings from 2019–2024, unlike the 10 current ones on nitor.com/en/careers.
+    'nitor.com',
+]);
+
 export function detectAts(url: string): AtsDetectionResult {
     try {
         const parsed = new URL(url);
         const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
         const pathname = parsed.pathname;
+
+        if (NO_ATS_HOSTNAMES.has(hostname)) {
+            return { ats: null, companySlug: null };
+        }
 
         // Hostname override — e.g. ouraring.com → Greenhouse slug "oura"
         if (hostname in HOSTNAME_SLUG_OVERRIDES) {
