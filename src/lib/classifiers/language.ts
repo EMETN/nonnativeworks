@@ -596,13 +596,18 @@ function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
  *   "German, Italian, Danish, Swedish a bonus"   → German matches
  *   "German or Italian is a plus"                 → German matches
  *   "German, Italian a plus"                      → German matches
+ *   "Finnish and English language skills are considered an advantage" → Finnish matches
  * The language can appear at any position in the list. The advantage phrase
  * uses the same operator patterns as buildAdvantageRegex.
  */
 function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
-    const listTail = `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+or\\s+[a-z]+)?`;
+    // The last item may be joined by "or" or "and"; an optional "language skills"
+    // noun may follow ("Finnish and English language skills are considered an advantage").
+    const listTail =
+        `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+(?:or|and)\\s+[a-z]+)?` +
+        `(?:\\s+(?:language\\s+)?skills?|\\s+language)?`;
     // Leading optional "considered " consumes ellipsis phrasing like "French or
     // German considered a strong advantage" without eating into the {0,2} gap-word
     // budget below (which alone can't span "considered a strong").

@@ -99,6 +99,30 @@ export const CASES: FixtureCase[] = [
     // These phrases fire before tinyld so they work on short descriptions too.
 
     {
+        label: '1b — "Fluent Finnish and English language skills are considered an advantage" (Nitor)',
+        title: 'AI Architect',
+        desc: 'Fluent Finnish and English language skills are considered an advantage since we have customers both locally and internationally.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Fluent Finnish and English are considered an advantage"',
+        title: 'Software Engineer',
+        desc: 'Fluent Finnish and English are considered an advantage.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — requirement stays: "Fluent Finnish and English language skills are required"',
+        title: 'Software Engineer',
+        desc: 'Fluent Finnish and English language skills are required. Cloud experience is an advantage.',
+        country: 'FI',
+        requires: true,
+        advantage: false,
+    },
+    {
         label: '1b — "Finnish is a plus"',
         title: 'Software Engineer',
         desc: 'You will work with our international team. Finnish is a plus.',
