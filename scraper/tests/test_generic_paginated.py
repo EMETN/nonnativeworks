@@ -5,10 +5,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from bs4 import BeautifulSoup  # noqa: E402
+
 from platforms.generic_paginated import (  # noqa: E402
+    _extract_card,
+    _extract_next_data,
     _extract_phenom_description,
     _extract_script_json,
     _extract_script_var_json,
+    _extract_teamtailor_card,
     _fetch_phenom_api_page,
     _jobs_from_items,
     _phenom_tracked_countries,
@@ -320,6 +325,59 @@ class _FakeResponse:
         return self.payload
 
 
+class ExtractNextDataTest(unittest.TestCase):
+    CFG = {
+        "data_path": "props.pageProps.list",
+        "full_description": True,
+        "url_template": "/positions/{id}",
+        "fields": {
+            "title": "jobTitle",
+            "locations": "officeLocations",
+            "location_subfield": "title",
+            "country_subfield": "country.name",
+            "job_function": "typesOfWork.0",
+            "description": ["highLevelDescription", "requirements", "responsibilities"],
+        },
+    }
+
+    @staticmethod
+    def _page(items):
+        data = {"props": {"pageProps": {"list": items}}}
+        return f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'
+
+    def test_builds_one_job_per_country_with_full_description(self):
+        item = {
+            "id": "abc",
+            "jobTitle": "Product manager",
+            "typesOfWork": ["Product & Marketing"],
+            "officeLocations": [
+                {"title": "Milan (Italy)", "country": {"name": "Italy"}},
+                {"title": "Madrid (Spain)", "country": {"name": "Spain"}},
+            ],
+            "highLevelDescription": "<span>About us</span>",
+            "requirements": [{"title": "Reasoning", "description": "Solve problems"}],
+            "responsibilities": ["<span>Investigate</span>"],
+        }
+
+        jobs = _extract_next_data(self._page([item]), self.CFG, "https://x.example/")
+
+        self.assertEqual(
+            [j["location"] for j in jobs], ["Milan, Italy", "Madrid, Spain"]
+        )
+        self.assertEqual(jobs[0]["url"], "https://x.example/positions/abc")
+        self.assertEqual(jobs[0]["jobFunction"], "Product & Marketing")
+        # Stored as descriptionHtml so the per-job detail fetch is skipped.
+        self.assertNotIn("descriptionText", jobs[0])
+        for part in ("About us", "Reasoning", "Solve problems", "Investigate"):
+            self.assertIn(part, jobs[0]["descriptionHtml"])
+
+    def test_returns_empty_without_payload_or_array(self):
+        self.assertEqual(
+            _extract_next_data("<main>none</main>", self.CFG, "https://x/"), []
+        )
+        self.assertEqual(_extract_next_data(self._page({}), self.CFG, "https://x/"), [])
+
+
 class ExtractPhenomDescriptionTest(unittest.TestCase):
     def test_reads_job_detail_description(self):
         detail = {"status": 200, "data": {"job": {"description": "<p>Hello</p>"}}}
@@ -327,8 +385,76 @@ class ExtractPhenomDescriptionTest(unittest.TestCase):
 
         self.assertEqual(_extract_phenom_description(html), "<p>Hello</p>")
 
+    def test_skips_earlier_job_detail_config_mentions(self):
+        # GE HealthCare pages mention "jobDetail" in widget config before the
+        # real payload; the first mention must not end the search.
+        detail = {"status": 200, "data": {"job": {"description": "<p>Real</p>"}}}
+        html = (
+            '<script>cfg = {"jobDetail":"data.job"},{"other":{"trait14":"key"}};'
+            f'phApp.ddo = {{"jobDetail":{json.dumps(detail)}}};</script>'
+        )
+
+        self.assertEqual(_extract_phenom_description(html), "<p>Real</p>")
+
     def test_returns_empty_without_payload(self):
         self.assertEqual(_extract_phenom_description("<main>No payload</main>"), "")
+
+
+class ExtractTeamtailorCardTest(unittest.TestCase):
+    def _card(self, location_span: str):
+        html = (
+            '<li><a href="/jobs/1-dev">Dev</a><div class="text-md mt-4">'
+            "<span>Engineering</span><span>&middot;</span>"
+            f"{location_span}</div></li>"
+        )
+        return BeautifulSoup(html, "html.parser").li
+
+    def test_multiple_locations_label_uses_title_attribute(self):
+        card = self._card(
+            '<span title="Helsinki, Oulu, Tampere">Multiple locations</span>'
+        )
+
+        job = _extract_teamtailor_card(card, "https://careers.example.com/jobs", {})
+
+        self.assertEqual(job["location"], "Helsinki, Oulu, Tampere")
+        self.assertEqual(job["jobFunction"], "Engineering")
+
+    def test_single_location_is_unchanged(self):
+        job = _extract_teamtailor_card(
+            self._card("<span>Stockholm</span>"), "https://careers.example.com/jobs", {}
+        )
+
+        self.assertEqual(job["location"], "Stockholm")
+
+
+class ExtractCardTest(unittest.TestCase):
+    BASE = "https://careers.example.com/en/careers"
+
+    def _card(self, html: str):
+        return BeautifulSoup(html, "html.parser").select_one("a, li")
+
+    def test_card_that_is_the_link_supplies_the_url(self):
+        card = self._card('<a href="/en/careers/dev"><h3>Developer</h3></a>')
+
+        job = _extract_card(card, self.BASE, {"title_selector": "h3"})
+
+        self.assertEqual(job["url"], "https://careers.example.com/en/careers/dev")
+
+    def test_default_location_fills_a_missing_location(self):
+        card = self._card('<a href="/en/careers/dev"><h3>Developer</h3></a>')
+
+        job = _extract_card(card, self.BASE, {"default_location": "Finland"})
+
+        self.assertEqual(job["location"], "Finland")
+
+    def test_default_location_does_not_override_a_found_location(self):
+        card = self._card(
+            '<li><a href="/j/1">Dev</a><span class="location">Oulu</span></li>'
+        )
+
+        job = _extract_card(card, self.BASE, {"default_location": "Finland"})
+
+        self.assertEqual(job["location"], "Oulu")
 
 
 if __name__ == "__main__":

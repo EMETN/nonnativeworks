@@ -127,6 +127,14 @@ export interface CompanyApiConfig {
         location?: string;
         standardizedLocations?: string;
         /**
+         * Dot-path to an array of location strings, joined with "; " into job.location so
+         * every country of a multi-country posting is resolved (one position per tracked
+         * country, with that country's cities). Takes priority over `location`, which
+         * only ever reads an array's first element. Use when the API lists all of a
+         * posting's locations in one array (e.g. Microsoft's `locations`).
+         */
+        locations?: string;
+        /**
          * Dot-path to an array or object of city name strings (e.g. sfstd_jobLocation_obj).
          * Populates job.cities with all city strings found. Takes priority over location-derived
          * city extraction when present.
@@ -328,6 +336,8 @@ export interface CompanyApiConfig {
      * POST requests: entry fields are merged into the request body.
      * GET requests: entry fields are appended as URL query params.
      * Use when the API requires separate requests per filter value (e.g. one country per request).
+     * GET requests tag each job with the queried country (country_code) — except when
+     * fields.locations is set: those jobs keep their own full location list instead.
      */
     repeatFor?: {
         body: Record<string, unknown>[];
@@ -366,6 +376,8 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         method: 'GET',
         pagination: { type: 'none' },
         companyName: 'Deel',
+        // external_link points at the application form; the overview page is the job posting.
+        urlPlaceholders: { '/application': '/overview' },
         fields: {
             title: 'attributes.title',
             location: 'attributes.location_name',
@@ -375,11 +387,72 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             // (same role in multiple locations) and would collapse them during dedup.
             id: 'attributes.ashby_id',
         },
+        // full_job_description is empty for every posting now (it was populated when
+        // this was added), so the language requirement ("Fluent Swedish speaker…") never
+        // reached the classifier. Keep reading it in case it comes back, and otherwise
+        // fetch the job page and cut out its JSON-LD JobPosting description — the rest of
+        // the page is site chrome and a 200 KB script payload.
         descriptionFields: ['attributes.full_job_description'],
+        fetchDescription: true,
+        descriptionFromHtml:
+            '"@type":"JobPosting".*?"description":"((?:[^"\\\\]|\\\\.)*)"',
         expandSecondaryLocations: {
             path: 'attributes.locations_list',
             countryName: 'location',
         },
+    },
+
+    // Barona's WordPress AJAX feed on barona.fi (no Cloudflare, unlike baronacareers.com
+    // where the job pages live). Pages are 1-based; an out-of-range page returns []. Each
+    // item carries its description inline plus an ISO2 country, so no enrichment is
+    // needed. `cities` is a Python-repr string, not JSON — use the single `city` field.
+    // requirements.languages is only exposed behind baronacareers.com's Cloudflare
+    // challenge, so the classifier decides requires_native_language from the text.
+    'barona.fi': {
+        url: 'https://www.barona.fi/wp-admin/admin-ajax.php?action=barona_job_feed&per_page=100&lang=en&keyword=&published=&search=',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: '*/*',
+            Referer: 'https://www.barona.fi/en/jobs/',
+        },
+        pagination: { type: 'page', param: 'page', startPage: 1 },
+        companyName: 'Barona',
+        fields: {
+            title: 'title',
+            location: 'city',
+            country: 'country',
+            url: 'applyUrl',
+            id: 'id',
+        },
+        descriptionFields: ['description'],
+    },
+
+    // Stellantis runs on a Madgex/CWS career site whose search widget calls Google
+    // Cloud Talent Solution through jobsapi-google.m-cloud.io (the org id and endpoint
+    // are in the page's cws_opts). ~750 jobs, each with its description inline and an
+    // ISO2 primary_country, so nothing else needs fetching. pageSize caps at 100 —
+    // asking for 200 silently returns only 10 — and offset is 0-based.
+    'careers.stellantis.com': {
+        url: 'https://jobsapi-google.m-cloud.io/api/job/search?pageSize=100&companyName=companies/16115603-6c1b-4c45-b544-238a4e6c51b3',
+        method: 'GET',
+        pagination: {
+            type: 'offset',
+            param: 'offset',
+            pageSize: 100,
+            totalCountPath: 'totalHits',
+        },
+        itemsPath: 'searchResults',
+        companyName: 'Stellantis',
+        fields: {
+            title: 'job.title',
+            location: 'job.primary_city',
+            country: 'job.primary_country',
+            url: 'job.url',
+            jobFunction: 'job.primary_category',
+            id: 'job.id',
+        },
+        descriptionFields: ['job.description'],
     },
 
     // Spotify's WordPress "animal" jobs API. The search endpoint returns the whole
@@ -424,6 +497,71 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             url: 'canonicalPositionUrl',
             id: 'id',
         },
+    },
+
+    // Microsoft's Eightfold "PCSX" API (the classic /api/apply/v2 returns 403 "Not
+    // authorized for PCSX"). Fixed page size of 10 and a hard throttle (~1 request per
+    // 7s sustained, 429s otherwise), so the full ~2,100-posting board (213 pages) is
+    // out of reach — query one tracked country at a time instead (~40 requests).
+    // The `location` filter is a fuzzy geo search that leaks neighbouring countries
+    // (Netherlands returns Belgium-only jobs), so fields.locations joins every location
+    // of a posting and the country is resolved from that, not from the query (GET
+    // repeatFor skips its own tagging when fields.locations is set). A posting found
+    // under several queries is deduplicated by id. Poland, Hungary and Iceland have no
+    // postings today but cost one request each. Descriptions come from the per-job
+    // endpoint, for tracked countries only.
+    'apply.careers.microsoft.com': {
+        url: 'https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com&query=&sort_by=relevance',
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'data.count',
+        },
+        itemsPath: 'data.positions',
+        companyName: 'Microsoft',
+        urlTemplate: 'https://apply.careers.microsoft.com{positionUrl}',
+        fields: {
+            title: 'name',
+            locations: 'locations',
+            department: 'department',
+            id: 'id',
+        },
+        repeatFor: {
+            body: [
+                { location: 'Finland' },
+                { location: 'Sweden' },
+                { location: 'Norway' },
+                { location: 'Denmark' },
+                { location: 'Iceland' },
+                { location: 'Netherlands' },
+                { location: 'Germany' },
+                { location: 'Estonia' },
+                { location: 'Latvia' },
+                { location: 'Lithuania' },
+                { location: 'Poland' },
+                { location: 'France' },
+                { location: 'Belgium' },
+                { location: 'Luxembourg' },
+                { location: 'Switzerland' },
+                { location: 'Spain' },
+                { location: 'Portugal' },
+                { location: 'Austria' },
+                { location: 'Italy' },
+                { location: 'Hungary' },
+                { location: 'Croatia' },
+                { location: 'Romania' },
+                { location: 'Bulgaria' },
+                { location: 'Greece' },
+                { location: 'Czech Republic' },
+            ],
+        },
+        descriptionApiUrl:
+            'https://apply.careers.microsoft.com/api/pcsx/position_details?position_id={sourceId}&domain=microsoft.com&hl=en',
+        descriptionApiItemsPath: 'data',
+        descriptionApiFields: ['jobDescription'],
     },
 
     // Bayer's Eightfold API, same num=10 cap as Netflix's — paginate by start offset.
@@ -753,6 +891,49 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // that instead of treating every secondary location as a separate country —
         // the old countryName mode created one duplicate row per city, even when all
         // 25 were in Denmark.
+        expandSecondaryLocations: {
+            path: 'secondaryLocations',
+            cityField: 'Name',
+            countryCodeField: 'CountryCode',
+        },
+    },
+
+    // Uber's careers site (jobs.uber.com) sits behind a Cloudflare challenge, but its
+    // Apply button lands on this Oracle HCM tenant, whose REST API answers plain
+    // requests. Same structure as Danske Bank; the site is addressed by name
+    // (siteNumber=UberCareers) rather than a CX_ number. ~770 jobs worldwide.
+    // The posting body is ExternalDescriptionStr (+ ExternalResponsibilitiesStr on
+    // some postings); CorporateDescriptionStr is the same Uber boilerplate on every job.
+    'iaziqy.fa.ocs.oraclecloud.com': {
+        url: 'https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.workLocation,requisitionList.otherWorkLocations,requisitionList.secondaryLocations,flexFieldsFacet.values,requisitionList.requisitionFlexFields&finder=findReqs;siteNumber=UberCareers,facetsList=LOCATIONS%3BWORK_LOCATIONS%3BWORKPLACE_TYPES%3BTITLES%3BCATEGORIES%3BORGANIZATIONS%3BPOSTING_DATES%3BFLEX_FIELDS,limit=200,sortBy=POSTING_DATES_DESC',
+        method: 'GET',
+        headers: {
+            accept: '*/*',
+            'accept-language': 'en',
+            'content-type':
+                'application/vnd.oracle.adf.resourceitem+json;charset=utf-8',
+            'ora-irc-language': 'en',
+        },
+        pagination: { type: 'finder-offset', pageSize: 200 },
+        itemsPath: 'items.0.requisitionList',
+        fields: {
+            title: 'Title',
+            location: 'PrimaryLocation',
+            id: 'Id',
+            country: 'PrimaryLocationCountry',
+        },
+        urlTemplate:
+            'https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/job/{Id}',
+        companyName: 'Uber',
+        descriptionApiUrl:
+            'https://iaziqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{sourceId}%22,siteNumber=UberCareers',
+        descriptionApiFields: [
+            'ExternalDescriptionStr',
+            'ExternalResponsibilitiesStr',
+        ],
+        descriptionApiLocationField: 'workLocation.0.TownOrCity',
+        descriptionApiJobFunctionField: 'JobFunction',
+        descriptionApiWorkModelField: 'WorkplaceType',
         expandSecondaryLocations: {
             path: 'secondaryLocations',
             cityField: 'Name',
@@ -1539,6 +1720,10 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'swecogroup.com', name: 'Sweco Group' },
     { urlSubstring: 'nordnetab.com', name: 'Nordnet' },
     { urlSubstring: 'upcloud.teamtailor.com', name: 'UpCloud' },
+    { urlSubstring: 'iqm.teamtailor.com', name: 'IQM' },
+    { urlSubstring: 'careers.nestai.com', name: 'NestAI' },
+    { urlSubstring: 'nitor.com', name: 'Nitor' },
+    { urlSubstring: 'careers.dhl.com', name: 'DHL' },
     {
         urlSubstring: 'careers.siemens-healthineers.com',
         name: 'Siemens Healthineers',
@@ -1547,6 +1732,8 @@ export const COMPANY_NAME_OVERRIDES: Array<{
         urlSubstring: 'onehealthineers.wd3.myworkdayjobs.com',
         name: 'Siemens Healthineers',
     },
+    { urlSubstring: 'jobs.bendingspoons.com', name: 'Bending Spoons' },
+    { urlSubstring: 'careers.gehealthcare.com', name: 'GE Healthcare' },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
     { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },

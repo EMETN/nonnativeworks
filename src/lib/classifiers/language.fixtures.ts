@@ -49,6 +49,20 @@ const NORWEGIAN_NATIVE_DESC =
     'samarbeide på tvers av avdelinger. Hos oss får du muligheten til å vokse faglig, ' +
     'og vi tilbyr gode muligheter for utvikling i et dynamisk og fagsterkt miljø.';
 
+// Microsoft's Czech pay-range line, which tinyld misreads as another language with a low
+// score (the "č" in "Kč"). Used to check that a lone low-confidence paragraph among
+// English ones doesn't flag the ad.
+const MS_ENGLISH_INTRO =
+    'The Customer Value Creation (CVC) Engineering organization is a foundational part of Microsoft Security’s mission to make the world a safer place. We anticipate and solve customer support needs by amplifying the voice of the customer within engineering and delivering scalable, high-impact solutions. Every engagement is designed to build trust, resilience, and long-term success—guided by a deep commitment to diversity, inclusion, and innovation.\n' +
+    'We’re looking for individuals who are passionate about customer success and energized by solving complex technical challenges. If you thrive in environments where innovation and empathy shape the customer experience, you’ll find purpose here. Be on the cusp of innovation where generative AI solutions such as Microsoft Security CoPilot are helping security and IT professionals respond to cyberthreats faster and process signals as scale. Join a team of cloud professionals who believe that delivering extraordinary support is not just a function—but a mission.\n';
+
+const MS_PAY_RANGE_LINE = // tinyld: "lt" 0.58
+    'Customer Experience Engineering IC4 - The typical base pay range for this role across Czechia is Kč 1,338,000.00 - Kč 2,448,000.00 per year. Certain roles may be eligible for benefits and other compensation.';
+
+// A genuine French paragraph: tinyld is confident about it (well above the trust threshold).
+const FRENCH_PARAGRAPH =
+    'Nous recherchons un ingénieur commercial expérimenté pour renforcer notre équipe en pleine croissance. Vous serez responsable du développement de notre portefeuille de clients, de la préparation des offres commerciales et du suivi des relations avec nos partenaires. Une excellente maîtrise du français, à l’oral comme à l’écrit, est indispensable pour ce poste, car vous échangerez quotidiennement avec des clients francophones.';
+
 export const CASES: FixtureCase[] = [
     // ── Phase 1a: Non-ASCII or keyword in title ──────────────────────────────
 
@@ -98,6 +112,54 @@ export const CASES: FixtureCase[] = [
     // ── Phase 1b: Advantage pre-filter (short English desc, no tinyld) ───────
     // These phrases fire before tinyld so they work on short descriptions too.
 
+    {
+        label: '1b — "Fluent Finnish and English language skills are considered an advantage" (Nitor)',
+        title: 'AI Architect',
+        desc: 'Fluent Finnish and English language skills are considered an advantage since we have customers both locally and internationally.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "...language skills are considered advantages, as we have clients..." (Nitor, plural)',
+        title: 'AI Architect',
+        desc: 'Fluent Finnish and English language skills are considered advantages, as we have clients both domestically and internationally.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Finnish language skills are considered advantages" (bare plural)',
+        title: 'Software Engineer',
+        desc: 'Finnish language skills are considered advantages.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Finnish and Swedish are considered assets" (bare plural)',
+        title: 'Software Engineer',
+        desc: 'Finnish and Swedish are considered assets.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Fluent Finnish and English are considered an advantage"',
+        title: 'Software Engineer',
+        desc: 'Fluent Finnish and English are considered an advantage.',
+        country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — requirement stays: "Fluent Finnish and English language skills are required"',
+        title: 'Software Engineer',
+        desc: 'Fluent Finnish and English language skills are required. Cloud experience is an advantage.',
+        country: 'FI',
+        requires: true,
+        advantage: false,
+    },
     {
         label: '1b — "Finnish is a plus"',
         title: 'Software Engineer',
@@ -1490,6 +1552,95 @@ export const CASES: FixtureCase[] = [
         title: 'Specialist dezvoltare produse',
         desc: 'Țiriac Asigurări oferă o gamă completă de produse și servicii de protecție și financiare pentru persoane fizice și companii, sprijinită de o rețea puternică de agenți și brokeri și de experiența unui grup de asigurări de top.',
         country: 'RO',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a-cross — "Fluent Swedish speaker (plus English required for coordination)" in Sweden → required (the parenthetical "plus" must not read as an advantage phrase)',
+        title: 'Customer Support Specialist',
+        desc: 'We are looking for a fluent Swedish speaker (plus English required for coordination).',
+        country: 'SE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a-cross — "Fluent Swedish speaker (plus English required for coordination)" in Finland → required',
+        title: 'Customer Support Specialist',
+        desc: 'We are looking for a fluent Swedish speaker (plus English required for coordination).',
+        country: 'FI',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Minimum B2 level of spoken German." in Germany → required',
+        title: 'Customer Support Specialist',
+        desc: 'Minimum B2 level of spoken German.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a-cross — "Minimum B2 level of spoken German." in Finland → required',
+        title: 'Customer Support Specialist',
+        desc: 'Minimum B2 level of spoken German.',
+        country: 'FI',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Fluency in the local market language" in Spain → required',
+        title: 'Account Executive',
+        desc: 'Fluency in the local market language, and professional proficiency in English.',
+        country: 'ES',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Fluency in the local market language" in France → required',
+        title: 'Account Executive',
+        desc: 'Fluency in the local market language, and professional proficiency in English.',
+        country: 'FR',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "fluency in the local language is a plus" → advantage only',
+        title: 'Account Executive',
+        desc: 'Fluency in the local language is a plus. Professional English required.',
+        country: 'ES',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '2a — "Italian Language: Native or C2" in Italy → required',
+        title: 'Account Executive',
+        desc: 'Requirements: Italian Language: Native or C2. English: professional proficiency.',
+        country: 'IT',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "German Language: C1" in Germany → required',
+        title: 'Account Executive',
+        desc: 'German Language: C1. English: B2.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    // ── Phase 1c / 1c-any: a lone low-confidence paragraph must not flag an English ad ──
+    {
+        label: '1c-any — English Microsoft ad whose pay-range line scores "lt" (0.58) among English paragraphs → not required',
+        title: 'Senior Security Customer Engineer',
+        desc: MS_ENGLISH_INTRO + MS_PAY_RANGE_LINE,
+        country: 'CZ',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '1c-any — a confidently detected French paragraph still flags the ad even when it is a minority of the text',
+        title: 'Account Executive',
+        desc: MS_ENGLISH_INTRO + MS_PAY_RANGE_LINE + '\n' + FRENCH_PARAGRAPH,
+        country: 'DE',
         requires: true,
         advantage: false,
     },

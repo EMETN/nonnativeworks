@@ -87,8 +87,16 @@ companies:
       url: https://jobs.autodesk.com/careers
       min_positions: 10
 
+    - name: Barona
+      url: https://www.barona.fi/en/jobs/
+      min_positions: 10
+
     - name: Bayer
       url: https://bayer.eightfold.ai/careers
+      min_positions: 10
+
+    - name: Bending Spoons
+      url: https://jobs.bendingspoons.com/
       min_positions: 10
 
     - name: Bolt
@@ -139,6 +147,10 @@ companies:
       url: https://www.deptagency.com/careers/roles
       min_positions: 5
 
+    - name: DHL
+      url: https://careers.dhl.com/global/en/search-results
+      min_positions: 100
+
     - name: Doctolib
       url: https://careers.doctolib.fr/jobs/
       min_positions: 30
@@ -183,6 +195,10 @@ companies:
       url: https://careers.futurice.com/en-GB/jobs
       min_positions: 1
 
+    - name: GE Healthcare
+      url: https://careers.gehealthcare.com/global/en/search-results
+      min_positions: 5
+
     - name: GetYourGuide
       url: https://www.getyourguide.careers/open-roles
       min_positions: 10
@@ -207,6 +223,10 @@ companies:
       url: https://careers.hiab.com/search
       min_positions: 3
 
+    - name: Hoxhunt
+      url: https://jobs.ashbyhq.com/hoxhunt
+      min_positions: 1
+
     - name: ICEYE
       url: https://www.iceye.com/careers/positions
       min_positions: 10
@@ -215,9 +235,17 @@ companies:
       url: https://if.wd502.myworkdayjobs.com/Careers
       min_positions: 5
 
+    - name: IKEA
+      url: https://jobs.ikea.com/en/search-jobs
+      min_positions: 10
+
     - name: ING
       url: https://ing.wd3.myworkdayjobs.com/ICSGBLCOR
       min_positions: 5
+
+    - name: IQM
+      url: https://iqm.teamtailor.com/jobs
+      min_positions: 1
 
     - name: Klarna
       url: https://jobs.deel.com/klarna
@@ -259,6 +287,10 @@ companies:
       url: https://www.mews.com/en/careers
       min_positions: 10
 
+    - name: Microsoft
+      url: https://apply.careers.microsoft.com/careers
+      min_positions: 50
+
     - name: Mistral
       url: https://jobs.ashbyhq.com/mistral.ai
       min_positions: 10
@@ -279,6 +311,10 @@ companies:
       url: https://careers.nebius.com/
       min_positions: 50
 
+    - name: NestAI
+      url: https://careers.nestai.com/jobs
+      min_positions: 1
+
     - name: Neste
       url: https://jobs.neste.com/search
       min_positions: 5
@@ -290,6 +326,10 @@ companies:
     - name: Nets/Nexi
       url: https://fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com
       min_positions: 5
+
+    - name: Nitor
+      url: https://nitor.com/en/careers
+      min_positions: 3
 
     - name: Nokia
       url: https://jobs.nokia.com/en
@@ -418,6 +458,10 @@ companies:
       url: https://lifeatspotify.com/jobs
       min_positions: 10
 
+    - name: Stellantis
+      url: https://careers.stellantis.com/job-search-results/
+      min_positions: 5
+
     - name: Stora Enso
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
@@ -472,6 +516,10 @@ companies:
 
     - name: Trustpilot
       url: https://corporate.trustpilot.com/careers
+      min_positions: 5
+
+    - name: Uber
+      url: https://iaziqy.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/UberCareers/jobs
       min_positions: 5
 
     - name: Uniper

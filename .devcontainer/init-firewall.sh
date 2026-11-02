@@ -177,7 +177,9 @@ cdn_domains=(
     "mcp.plane.so"  # Plane MCP (AWS ELB, rotates IPs)
     "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
+    "iaziqy.fa.ocs.oraclecloud.com" # Uber
     "upcloud.teamtailor.com"  # UpCloud
+    "iqm.teamtailor.com"  # IQM
 )
 company_domains=(
     "abb.wd3.myworkdayjobs.com"  # ABB
@@ -195,6 +197,18 @@ company_domains=(
     "careers.aiven.io"  # Aiven
     "akqa.com"  # AKQA
     "alpha-sense.com"  # AlphaSense
+    "www.alten.com" # Alten
+    "www.alten.be" # Alten Belgium
+    "www.alten.fi"  # Alten Finland
+    "www.alten.fr"  # Alten France
+    "www.alten-germany.de" # Alten Germany
+    "www.alten.it"  # Alten Italy
+    "www.alten.nl"  # Alten Netherlands
+    "www.alten.pt"  # Alten Portugal
+    "careers.altenromania.ro" # Alten Romania
+    "www.alten.es"  # Alten Spain
+    "www.alten.se"  # Alten Sweden
+    "www.alten.ch"  # Alten Switzerland
     "careers.amd.com"  # AMD
     "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
@@ -202,6 +216,7 @@ company_domains=(
     "jobs.autodesk.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
+    "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
     "cabify.careers"  # Cabify
     "capgemini.com"  # Capgemini
@@ -221,12 +236,14 @@ company_domains=(
     "careers.doctolib.fr"  # Doctolib
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
+    "elisa.com"  # Elisa
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "careers.feedzai.com"  # Feedzai
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
+    "careers.gehealthcare.com" # GE Healthcare
     "www.getyourguide.careers"  # GetYourGuide
     "about.gitlab.com"  # GitLab
     "gofore.com"  # Gofore
@@ -238,10 +255,12 @@ company_domains=(
     "if.wd502.myworkdayjobs.com"  # If
     "jobs.ikea.com"  # IKEA
     "ing.wd3.myworkdayjobs.com"  # ING
+    "iqm.tech" # IQM
     "kesko.fi"  # Kesko
     "jobs.deel.com"  # Klarna
     "kone.wd3.myworkdayjobs.com"  # KONE
     "konecranes.careers"  # Konecranes
+    "www.kraken.com"  # Kraken/Payward
     "legora.com"  # Legora
     "lovable.dev"  # Lovable
     "api-apply.lufthansagroup.careers"  # Lufthansa
@@ -258,6 +277,8 @@ company_domains=(
     "careers.munichre.com"  # Munich Re
     "n26.com"  # N26
     "careers.nebius.com"  # Nebius
+    "www.nestai.com"  #NestAI
+    "careers.nestai.com"  # NestAI
     "jobs.neste.com"  # Neste
     "explore.jobs.netflix.net"  # Netflix
     "nexigroup.com"  # Nexi
@@ -265,6 +286,7 @@ company_domains=(
     "jobs.nokia.com"  # Nokia
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
+    "jobs.nvidia.com"  # Nvidia
     "nxp.wd3.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
@@ -278,6 +300,7 @@ company_domains=(
     "careers.publicisgroupe.com"  # Publicis Groupe
     "www.randstad.com"  # Randstad
     "www.relexsolutions.com"  # RELEX Solutions
+    "www.reorbit.space" # Reorbit
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
@@ -309,6 +332,7 @@ company_domains=(
     "www.truecaller.com"  # Truecaller
     "corporate.trustpilot.com"  # Trustpilot
     "uber.com"  # Uber
+    "jobs.uber.com" # Uber
     "careers.vaisala.com"  # Vaisala
     "careers.vestas.com"  # Vestas
     "careers.vinted.com"  # Vinted
@@ -321,6 +345,7 @@ company_domains=(
     "wpp.careersitecloud.com"  # WPP
     "yousician.com"  # Yousician
     "jobs.zalando.com"  # Zalando
+    "zuehlke.wd3.myworkdayjobs.com"  # Zühlke
 )
 for domain in "${tool_domains[@]}" "${ats_domains[@]}" "${company_domains[@]}"; do
     echo "Resolving $domain..."

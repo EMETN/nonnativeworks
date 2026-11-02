@@ -57,7 +57,7 @@ bash scraper/run-local.sh --rebuild
 Edit `scraper/companies-local.yaml`. The format is the same as `scraper/companies.yaml`. Add a company here (instead of the main file) when:
 
 - The career site uses Cloudflare or bot protection that blocks GitHub Actions IPs
-- The scraper requires a Playwright browser session (njoyn, Barona Phase 2)
+- The scraper requires a Playwright browser session (njoyn)
 
 Test the company via the admin scraper tab first, then add it here.
 
@@ -153,15 +153,16 @@ Configured in `scraper/generic_scrapers.yaml`. Each entry matches a career page 
 
 Seven extraction modes are supported:
 
-| Mode                  | Description                                                         | Example companies                                                   |
-| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors          | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Scout24 |
-| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute       | Metso                                                               |
-| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                | Bolt                                                                |
-| `script_var_json`     | Jobs in a plain JavaScript variable assignment                      | Allianz                                                             |
-| `phenom_api`          | Phenom `/widgets` search API, one request per tracked country       | Siemens Healthineers                                                |
-| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                       | Nordnet, UpCloud, Futurice                                          |
-| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed) | Volvo Group                                                         |
+| Mode                  | Description                                                                    | Example companies                                                   |
+| --------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `css_cards` (default) | Jobs are repeating HTML elements selected by CSS selectors                     | Neste, SAP, Vaisala, Fortum, Hiab, Wärtsilä, Vestas, Sweco, Scout24 |
+| `attribute_json`      | All jobs encoded as a JSON array in an HTML element attribute                  | Metso                                                               |
+| `script_json`         | Jobs in a Next.js RSC `self.__next_f.push()` payload                           | Bolt                                                                |
+| `script_var_json`     | Jobs in a plain JavaScript variable assignment                                 | Allianz                                                             |
+| `next_data`           | Jobs in a Next.js `__NEXT_DATA__` payload; full text can come from the listing | Bending Spoons                                                      |
+| `phenom_api`          | Phenom `/widgets` search API, one request per tracked country                  | Siemens Healthineers                                                |
+| `teamtailor`          | TeamTailor ATS sites with fixed HTML template                                  | Nordnet, UpCloud, Futurice                                          |
+| `xml_feed`            | XML job feed with all fields inline (no detail page fetches needed)            | Volvo Group                                                         |
 
 All modes share a two-phase structure:
 
@@ -185,7 +186,6 @@ For career sites that need dedicated logic beyond what the generic config suppor
 | Academic Work | `platforms/academicwork.py` | URL contains `academicwork.fi/.se/.no/.dk/.de/.ch` |
 | Arla          | `platforms/arla.py`         | URL contains `jobs.arla.com`                       |
 | Attrax        | `platforms/attrax.py`       | HTML contains `attrax-vacancy-tile`                |
-| Barona        | `platforms/barona.py`       | URL contains `baronacareers.com` or `barona.fi`    |
 | Njoyn         | `platforms/njoyn.py`        | URL contains `njoyn.com`                           |
 | Rovio         | `platforms/rovio.py`        | URL contains `rovio.com`                           |
 | Zalando       | `platforms/zalando.py`      | URL contains `jobs.zalando.com`                    |

@@ -30,6 +30,14 @@ Extraction modes (set via extract_mode in config):
     array inside the parsed object. Fields support the same dot-notation access
     as script_json.
 
+  next_data
+    Next.js sites whose pages embed their data in the <script id="__NEXT_DATA__">
+    tag. data_path (dot-notation) navigates to the jobs array inside the parsed
+    JSON. When the listing carries the complete posting, set full_description:
+    true so it is stored as the job's description and the per-job detail fetch is
+    skipped. A fields.description list joins several fields (strings, lists of
+    strings, lists of {title, description} objects) into one description.
+
   phenom_api
     Phenom career sites, queried through their /widgets refineSearch JSON
     endpoint (api_body supplies the tenant's refNum). With country_filter_param
@@ -227,6 +235,10 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
         if url_tag and url_tag.get("href"):
             job_url = urljoin(base_url, url_tag["href"])
 
+    # The card itself may be the link (e.g. <a class="teaser"><h3>…</h3></a>).
+    if not job_url and card.get("href"):
+        job_url = urljoin(base_url, card["href"])
+
     if not title:
         return None
 
@@ -245,6 +257,9 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
                 if text:
                     location = text
                     break
+
+    # Single-site companies whose cards carry no location at all.
+    location = location or cfg.get("default_location")
 
     return build_job(title, job_url, location)
 
@@ -589,7 +604,7 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
 
     location = None
     department = None
-    meta_div = card.select_one("div.text-md")
+    meta_div = card.select_one("div.text-md, span.text-base")
     if meta_div:
         parts = [
             p.strip()
@@ -601,6 +616,14 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
             location = parts[1]
         elif len(parts) == 1:
             location = parts[0]
+
+        # Multi-location postings render a "Multiple locations" label whose
+        # title attribute holds the real comma-separated city list.
+        for span in meta_div.select("span[title]"):
+            full = span["title"].strip()
+            if full and span.get_text(strip=True) == location:
+                location = full
+                break
 
     # TeamTailor sites often prefix each city with the company/office name,
     # e.g. "Futurice Helsinki, Futurice Tampere". Strip the prefix so the
@@ -807,6 +830,49 @@ def _group_locations_by_country(locations: list[str]) -> dict[str, list[str]]:
     return groups
 
 
+def _flatten_text(value) -> str:
+    """Join the strings found anywhere inside a value: a string is itself, a list
+    or dict contributes each of its (nested) string members in order."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "\n".join(filter(None, map(_flatten_text, value)))
+    if isinstance(value, dict):
+        return "\n".join(filter(None, map(_flatten_text, value.values())))
+    return ""
+
+
+def _description_from_item(item: dict, desc_field) -> str:
+    """fields.description is one dot-path, or a list of paths joined together."""
+    if not desc_field:
+        return ""
+    paths = desc_field if isinstance(desc_field, list) else [desc_field]
+    return "\n".join(
+        filter(None, (_flatten_text(_get_nested(item, path)) for path in paths))
+    )
+
+
+_PAREN_SUFFIX_RE = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def _locations_with_country(
+    locations: list, location_subfield: str, country_subfield: str
+) -> list[str]:
+    """[{title: 'Milan (Italy)', country: {name: 'Italy'}}] → ['Milan, Italy'].
+
+    Puts the country last, comma-separated, which is the shape
+    _group_locations_by_country and the country lookup expect."""
+    result = []
+    for loc in locations:
+        title = _get_nested(loc, location_subfield)
+        country = _get_nested(loc, country_subfield)
+        if not title:
+            continue
+        city = _PAREN_SUFFIX_RE.sub("", title).strip()
+        result.append(f"{city}, {country}" if country and city else title)
+    return result
+
+
 def _jobs_from_items(
     items: list, cfg: dict, base_url: str, country: str | None = None
 ) -> list[dict]:
@@ -818,8 +884,10 @@ def _jobs_from_items(
     location_field = fields.get("location")
     locations_field = fields.get("locations")
     location_subfield = fields.get("location_subfield")
+    country_subfield = fields.get("country_subfield")
     jf_field = fields.get("job_function")
     desc_field = fields.get("description")
+    desc_key = "descriptionHtml" if cfg.get("full_description") else "descriptionText"
 
     jobs = []
     for item in items:
@@ -844,10 +912,14 @@ def _jobs_from_items(
 
         jf = _get_nested(item, jf_field) if jf_field else None
 
-        desc = _get_nested(item, desc_field) if desc_field else None
+        desc = _description_from_item(item, desc_field)
 
         locations = _get_nested(item, locations_field) if locations_field else None
-        if location_subfield and isinstance(locations, list):
+        if location_subfield and country_subfield and isinstance(locations, list):
+            locations = _locations_with_country(
+                locations, location_subfield, country_subfield
+            )
+        elif location_subfield and isinstance(locations, list):
             locations = list(
                 filter(None, (_get_nested(x, location_subfield) for x in locations))
             )
@@ -860,7 +932,7 @@ def _jobs_from_items(
             if jf:
                 job["jobFunction"] = jf
             if desc:
-                job["descriptionText"] = desc
+                job[desc_key] = desc
             jobs.append(job)
             continue
 
@@ -879,10 +951,48 @@ def _jobs_from_items(
             if jf:
                 job["jobFunction"] = jf
             if desc:
-                job["descriptionText"] = desc
+                job[desc_key] = desc
             jobs.append(job)
 
     return jobs
+
+
+_NEXT_DATA_RE = re.compile(
+    r'<script[^>]*\bid="__NEXT_DATA__"[^>]*>(.*?)</script>', re.DOTALL
+)
+
+
+def _extract_next_data(html: str, cfg: dict, base_url: str) -> list[dict]:
+    """Jobs from the Next.js __NEXT_DATA__ payload, found at cfg['data_path']."""
+    m = _NEXT_DATA_RE.search(html)
+    if not m:
+        print("generic: __NEXT_DATA__ not found", file=sys.stderr)
+        return []
+    try:
+        payload = json_mod.loads(m.group(1))
+    except ValueError:
+        print("generic: __NEXT_DATA__ is not valid JSON", file=sys.stderr)
+        return []
+    items = _get_nested(payload, cfg.get("data_path", "props.pageProps.jobs"))
+    if not isinstance(items, list):
+        print("generic: no jobs array at data_path", file=sys.stderr)
+        return []
+    return _jobs_from_items(items, cfg, base_url)
+
+
+def _fetch_next_data_page(
+    session: requests.Session,
+    list_url: str,
+    params: dict,
+    cfg: dict,
+) -> list[dict]:
+    try:
+        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        return []
+    return _extract_next_data(resp.text, cfg, list_url)
 
 
 def _extract_script_var_json(html: str, cfg: dict, base_url: str) -> list[dict]:
@@ -1057,17 +1167,26 @@ def _extract_json_description(raw_html: str, key: str) -> str:
 
 def _extract_phenom_description(raw_html: str) -> str:
     """Fallback for Phenom job pages, which render the description client-side
-    from the phApp.ddo jobDetail payload rather than shipping it in the DOM."""
-    idx = raw_html.find('"jobDetail"')
-    if idx == -1:
-        return ""
-    start = raw_html.find("{", idx)
-    try:
-        payload, _ = json_mod.JSONDecoder().raw_decode(raw_html, start)
-    except ValueError:
-        return ""
-    desc = _get_nested(payload, "data.job.description")
-    return desc if isinstance(desc, str) else ""
+    from the phApp.ddo jobDetail payload rather than shipping it in the DOM.
+
+    "jobDetail" appears several times in the page (widget config strings, the
+    payload itself), and on some tenants (e.g. GE HealthCare) the config
+    mentions come first. Try every occurrence until one decodes to a payload
+    carrying data.job.description."""
+    decoder = json_mod.JSONDecoder()
+    pos = raw_html.find('"jobDetail"')
+    while pos != -1:
+        start = raw_html.find("{", pos)
+        if start != -1:
+            try:
+                payload, _ = decoder.raw_decode(raw_html, start)
+            except ValueError:
+                payload = None
+            desc = _get_nested(payload, "data.job.description")
+            if isinstance(desc, str) and desc:
+                return desc
+        pos = raw_html.find('"jobDetail"', pos + 1)
+    return ""
 
 
 def _fetch_detail_page(
@@ -1248,6 +1367,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         fetch_page = _fetch_script_json_page
     elif extract_mode == "script_var_json":
         fetch_page = _fetch_script_var_json_page
+    elif extract_mode == "next_data":
+        fetch_page = _fetch_next_data_page
     elif extract_mode == "phenom_api":
         fetch_page = _fetch_phenom_api_page
     elif extract_mode == "teamtailor":

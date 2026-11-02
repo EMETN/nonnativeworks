@@ -75,6 +75,7 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     'the netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     'the-netherlands': { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     holland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
+    hollande: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nederland: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nld: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     nl: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
@@ -1822,6 +1823,10 @@ export function canonicalCityNames(cities: string[]): string[] {
  * Country names and cities from other countries are discarded.
  * Returns an empty array when no matching cities are found.
  */
+/** Place-name segments that stand for "no specific city". */
+const PLACEHOLDER_PLACE_RE =
+    /^(?:multiple|various)(?:\s+(?:locations?|cities))?$/i;
+
 function unwrapCityAfterCountry(location: string): string {
     return location.replace(
         /^([^,(]+?)\s*\(([^)]+)\)$/,
@@ -1864,7 +1869,8 @@ export function extractCitiesForCountry(
         const place = segments.find(
             (segment) =>
                 lookupCountryFromLocation(segment).length === 0 &&
-                !WORK_MODE_RE.test(segment),
+                !WORK_MODE_RE.test(segment) &&
+                !PLACEHOLDER_PLACE_RE.test(segment),
         );
         if (place) add(place);
     }

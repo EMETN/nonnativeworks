@@ -78,6 +78,8 @@
 #                         When set, the filter param uses the mapped value
 #                         instead of the ISO code, and each job is tagged with
 #                         the ISO country_code. Ignored without country_filter_param.
+#   default_location      Location used for cards that yield none, e.g. "Finland" for
+#                         a single-country company whose listing has no location field.
 #   url_selector          CSS selector for the job link when it is NOT on the
 #                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
@@ -419,6 +421,71 @@ scrapers:
           location: location
           locations: multi_location
 
+    # ── Bending Spoons (Next.js) ─────────────────────────────────────────────────
+    # All ~50 postings, with their full text, sit in the page's __NEXT_DATA__, so
+    # full_description skips the per-job detail fetch. Job pages are
+    # /positions/{id}. The description is the summary, requirements and
+    # responsibilities; officeLocations gives a city and a country per office.
+    - match: 'jobs.bendingspoons.com'
+      name: Bending Spoons
+      extract_mode: next_data
+      data_path: props.pageProps.list
+      full_description: true
+      url_template: '/positions/{id}'
+      fields:
+          title: jobTitle
+          locations: officeLocations
+          location_subfield: title
+          country_subfield: country.name
+          job_function: typesOfWork.0
+          description:
+              - highLevelDescription
+              - requirements
+              - responsibilities
+
+    # ── GE Healthcare (Phenom) ───────────────────────────────────────────────────
+    # Same Phenom /widgets API as Siemens Healthineers. applyUrl points at the
+    # Workday tenant, so url_template keeps links on the careers site instead.
+    - match: 'careers.gehealthcare.com/global/en/search-results'
+      name: GE Healthcare
+      extract_mode: phenom_api
+      api_body:
+          refNum: GEVGHLGLOBAL
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
+      pagination:
+          type: offset
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
+
+    # ── DHL Group (Phenom) ───────────────────────────────────────────────────────
+    # Same shape as GE Healthcare above: one /widgets query per tracked country (from
+    # the country facet). ~8,800 postings worldwide; applyUrl points at Avature, so
+    # url_template keeps links on the careers site.
+    - match: 'careers.dhl.com/global/en/search-results'
+      name: DHL
+      extract_mode: phenom_api
+      api_body:
+          refNum: DPDHGLOBAL
+          lang: en_global
+          siteType: external
+      url_template: '/global/en/job/{jobId}'
+      country_filter_param: country
+      pagination:
+          type: offset
+          param: from
+          page_size: 100
+      fields:
+          title: title
+          location: location
+          locations: multi_location
+
     # ── Siemens ──────────────────────────────────────────────────────────────────
     # Avature portal, same markup family as Siemens Healthineers above — but a far
     # bigger board: ~1,270 postings across the 25 tracked-country facets, served 6
@@ -498,6 +565,42 @@ scrapers:
           param: page
           page_size: 20
 
+    # ── IQM (TeamTailor) ─────────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length).
+    - match: 'iqm.teamtailor.com'
+      name: IQM
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
+    # ── NestAI (TeamTailor) ──────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length).
+    - match: 'careers.nestai.com'
+      name: NestAI
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
+    # ── Nitor ────────────────────────────────────────────────────────────────────
+    # Contentful-backed static page; all postings on one page, and the same teaser
+    # component also lists articles, so the card selector is limited to /careers/ links.
+    # The card is the link itself and carries no location; Nitor's offices are in
+    # Helsinki and Tampere, so default_location pins every posting to Finland.
+    - match: 'nitor.com/en/careers'
+      name: Nitor
+      card_selector: 'a[data-testid="content-teaser"][href*="/en/careers/"]'
+      title_selector: 'h3'
+      default_location: Finland
+      description_selector: '[class*="jobListingTextContainer"]'
+      pagination:
+          type: none
+
     # ── Volvo Group ──────────────────────────────────────────────────────────────
     # SuccessFactors XML job feed. Contains all fields inline (title, city,
     # 2-letter country code, department, HTML description) — no detail page
@@ -550,6 +653,35 @@ scrapers:
       title_selector: 'a.search-results-list__job-link'
       location_selector: 'li.job-list-01-list__job-info--location span'
       job_function_selector: 'li.job-list-01-list__job-info--category span'
+
+    # ── IKEA ─────────────────────────────────────────────────────────────────
+    # Same TalentBrew /results endpoint as Munich Re, but unfiltered: the whole
+    # board (~1,450 jobs across all countries) pages cleanly at 100 per request;
+    # untracked countries are dropped downstream. Unlike Munich Re, the minimal
+    # param set below is enough — the endpoint still returns the HTML envelope.
+    - match: 'jobs.ikea.com'
+      name: IKEA
+      list_url: https://jobs.ikea.com/en/search-jobs/results
+      extra_params:
+          RecordsPerPage: 100
+          SearchResultsModuleName: 'Search Results'
+          SearchFiltersModuleName: 'Search Filters'
+          SortCriteria: 0
+          SortDirection: 0
+          SearchType: 5
+          ResultsType: 0
+      json_html_key: results
+      pagination:
+          type: page
+          param: CurrentPage
+          page_size: 100
+      card_selector: 'li.job-list__item'
+      title_selector: 'span.job-list__title'
+      url_selector: 'a.job-list__anchor'
+      location_selector: 'span.job-list__location'
+      # The default `.job-description` matches the page's top banner (English UI
+      # text: "Save", "Apply"...), not the posting, so every job looked English.
+      description_selector: '.jd-desc-section__ats-description'
 
     # ── Carlsberg ──────────────────────────────────────────────────────────────
     # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no

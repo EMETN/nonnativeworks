@@ -1,4 +1,4 @@
-import { detect } from 'tinyld';
+import { detect, detectAll } from 'tinyld';
 import { titleAppearsNonEnglish, KEYWORDS_RE } from '../ats/title-language';
 
 // ---------------------------------------------------------------------------
@@ -464,12 +464,19 @@ function decodeHtmlEntities(text: string): string {
         );
 }
 
+// Unicode space separators (no-break space, en/em/thin spaces, ideographic space…).
+// Left in place they glue words into one token for tinyld, which then reads plain
+// English as another language: Microsoft ads separate words with U+00A0, and
+// paragraphs like "Doctorate AND demonstrable experience in core sales, partner
+// sales…" scored "pt" and "The Sales Enablement & Operations team…" scored "de".
+const UNICODE_SPACES_RE = /[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]/g;
+
 export function stripHtml(html: string): string {
     // Decode entities first so that doubly-encoded HTML (e.g. Greenhouse returns
     // "&lt;li&gt;" as literal text in the JSON) becomes real tags before the
     // stripping regexes run. A second decode pass at the end handles any
     // remaining entities in the text content itself (e.g. "&amp;" → "&").
-    const decoded = decodeHtmlEntities(html);
+    const decoded = decodeHtmlEntities(html).replace(UNICODE_SPACES_RE, ' ');
 
     // Remove entire sections that are never part of the job description body.
     // These are stripped with their contents to prevent navigation/footer text
@@ -493,7 +500,7 @@ export function stripHtml(html: string): string {
             .replace(/\n[ \t]*/g, '\n')
             .replace(/\n{3,}/g, '\n\n')
             .trim(),
-    );
+    ).replace(UNICODE_SPACES_RE, ' ');
 }
 
 /**
@@ -519,7 +526,7 @@ const LANG_MENTIONS = (lang: string) => [
 ];
 
 /**
- * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset)".
+ * Regex that matches "mention + (is|would be|as) a(n) [optional adjectives] (advantage|plus|bonus|asset); a bare plural "advantages"/"assets" needs no article.
  * Handles any intensifier adjective(s) between the article and the noun without enumerating them.
  * Examples: "is an advantage", "is a big plus", "would be a strong asset", "seen as a huge advantage".
  *
@@ -546,7 +553,7 @@ function _buildAdvantageRegex(lang: string): RegExp {
     // or any single word (handles typos like "considerd" and extras like "also", "really").
     // The bare "considered(?: as)?" alternative handles ellipsis where "is" is dropped
     // entirely, e.g. "French or German considered a strong advantage".
-    const operatorSuffix = `(?:\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|advantageous|preferred)|\\s+of\\s+(?:an?\\s+)?advantage)\\b`;
+    const operatorSuffix = `(?:\\s+(?:(?:is|are|would be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?|(?:seen\\s+)?as|considered(?:\\s+as)?)\\s+(?:(?:a|an)\\s+(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)|(?:\\w+\\s+){0,2}(?:advantages|assets)|advantageous|preferred)|\\s+of\\s+(?:an?\\s+)?advantage)\\b`;
     // Gap words in the compound-mention branch must not cross over a DIFFERENT
     // language's name — otherwise "proficiency in Dutch and English (French is
     // considered an asset)" would let "proficiency in Dutch" reach across "and
@@ -596,20 +603,27 @@ function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
  *   "German, Italian, Danish, Swedish a bonus"   → German matches
  *   "German or Italian is a plus"                 → German matches
  *   "German, Italian a plus"                      → German matches
+ *   "Finnish and English language skills are considered an advantage" → Finnish matches
  * The language can appear at any position in the list. The advantage phrase
  * uses the same operator patterns as buildAdvantageRegex.
  */
 function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
-    const listTail = `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+or\\s+[a-z]+)?`;
+    // The last item may be joined by "or" or "and"; an optional "language skills"
+    // noun may follow ("Finnish and English language skills are considered an advantage").
+    const listTail =
+        `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+(?:or|and)\\s+[a-z]+)?` +
+        `(?:\\s+(?:language\\s+)?skills?|\\s+language)?`;
     // Leading optional "considered " consumes ellipsis phrasing like "French or
     // German considered a strong advantage" without eating into the {0,2} gap-word
     // budget below (which alone can't span "considered a strong").
     const advantageSuffix =
         `\\s+(?:considered\\s+)?` +
         `(?:(?:is|are|would\\s+be)(?:\\s+(?:seen\\s+as|\\w+(?:\\s+as)?))?\\s+)?` +
-        `(?:(?:a|an)\\s+)?(?:\\w+\\s+){0,2}(?:advantage|asset|plus|bonus|merit|benefit)\\b`;
+        // The gap words must not include "speaker"/"speaking": in "Swedish speaker
+        // (plus English required)" the "plus" opens a new clause, it doesn't rate Swedish.
+        `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantages?|assets?|plus|bonus|merit|benefit)\\b`;
     return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
 }
 
@@ -765,6 +779,13 @@ function _buildRequirementSignals(lang: string): string[] {
         `b2 level of ${lang}`,
         `c1 level of ${lang}`,
         `c2 level of ${lang}`,
+        // ...with a skill modifier: "Minimum B2 level of spoken German"
+        ...['a1', 'a2', 'b1', 'b2', 'c1', 'c2'].flatMap((lvl) => [
+            `${lvl} level of spoken ${lang}`,
+            `${lvl} level of written ${lang}`,
+        ]),
+        `level of spoken ${lang}`,
+        `level of written ${lang}`,
         // Generic level-of-language phrasing without a CEFR code: "a very good level of Dutch"
         `level of ${lang}`,
         // Level descriptors
@@ -873,6 +894,19 @@ function _buildRequirementSignals(lang: string): string[] {
         `${lang} as second language`,
         // "either X or Y as a secondary language" — lang appears before "or" in an either/or
         `either ${lang}`,
+        // Label-style: "Italian Language: Native or C2", "German language: fluent"
+        ...[
+            'native',
+            'fluent',
+            'proficient',
+            'business level',
+            'a1',
+            'a2',
+            'b1',
+            'b2',
+            'c1',
+            'c2',
+        ].flatMap((lvl) => [`${lang} language: ${lvl}`, `${lang}: ${lvl}`]),
         // CEFR-style level descriptors
         `full professional proficiency in ${lang}`,
         `professional proficiency in ${lang}`,
@@ -1052,6 +1086,24 @@ function requirementNegatedByContext(
     return REQUIREMENT_ADVANTAGE_PREFIX_RE.test(before) ? 'advantage' : false;
 }
 
+// "Fluency in the local market language" / "fluent in the local country
+// language" — names no language, so the per-language signals miss it. Counts as
+// a requirement unless an advantage word follows in the same clause
+// ("... is a plus", "... is an asset", "... nice to have").
+const LOCAL_MARKET_LANGUAGE_RE =
+    /\b(?:fluency|fluent|proficiency|proficient|command|knowledge)\s+(?:in|of|with)\s+(?:the\s+|your\s+)?(?:local|country|home|regional)(?:\s+(?:market|country))?\s+languages?\b|\b(?:local|country)\s+market\s+languages?\b/;
+const LOCAL_MARKET_ADVANTAGE_AFTER_RE =
+    /^[^.;]{0,60}\b(?:plus|advantage|asset|bonus|nice to have|desirable|preferred|beneficial|welcome|not (?:required|necessary|mandatory))\b/;
+
+function matchLocalMarketLanguageRequirement(
+    combined: string,
+): RegExpMatchArray | null {
+    const m = LOCAL_MARKET_LANGUAGE_RE.exec(combined);
+    if (!m) return null;
+    const after = combined.slice(m.index! + m[0].length);
+    return LOCAL_MARKET_ADVANTAGE_AFTER_RE.test(after) ? null : m;
+}
+
 // ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
@@ -1153,6 +1205,44 @@ function detectChunkLanguage(chunk: string): string {
     return winnerCount > windows.length / 2 ? winner : '';
 }
 
+// A chunk's non-English verdict is only trusted when tinyld is confident about it or
+// the language covers a meaningful share of the description. tinyld sometimes misreads
+// ONE paragraph of plain English as another language with a low score — e.g. the single
+// "č" in "Kč" in Microsoft's Czech pay-range line scores the whole line "lt" (0.58)
+// against "en" (0.42), and tinyld weights diacritics so heavily that no length guard
+// helps. Such a chunk is a lone outlier among many English paragraphs, whereas a
+// genuinely native ad is mostly in its language. Checked on 843 real DHL descriptions:
+// all 285 that are flagged non-English stay flagged, since none relies solely on a
+// low-confidence chunk that is also a small share of its text.
+//
+// The diacritic-folding recheck used for Romanian (detectWindowLanguage) cannot be
+// generalised instead: on the same corpus it would turn 7 genuine French, German and
+// Dutch paragraphs ("Je komt te werken op het hoofdkantoor van DHL…") into English.
+const MIN_CONFIDENT_ACCURACY = 0.65;
+const MIN_LANGUAGE_SHARE = 0.4;
+
+type ChunkVerdict = { chunk: string; code: string; accuracy: number };
+
+function detectChunkVerdict(chunk: string): ChunkVerdict {
+    const code = detectChunkLanguage(chunk);
+    // An oversized chunk's verdict is a majority vote across windows, which is
+    // corroboration in itself; a single-window verdict has only tinyld's score.
+    let accuracy = 1;
+    if (code && code !== 'en' && windowOversizedChunk(chunk).length <= 1) {
+        accuracy = detectAll(chunk).find((l) => l.lang === code)?.accuracy ?? 0;
+    }
+    return { chunk, code, accuracy };
+}
+
+function isTrustedVerdict(verdict: ChunkVerdict, all: ChunkVerdict[]): boolean {
+    if (verdict.accuracy >= MIN_CONFIDENT_ACCURACY) return true;
+    const total = all.reduce((n, v) => n + v.chunk.length, 0);
+    const sameLanguage = all
+        .filter((v) => v.code === verdict.code)
+        .reduce((n, v) => n + v.chunk.length, 0);
+    return total > 0 && sameLanguage / total >= MIN_LANGUAGE_SHARE;
+}
+
 /**
  * Like anyChunkInNativeLanguage but returns the matching chunk and detected
  * language code so callers can log exactly what triggered detection.
@@ -1177,9 +1267,11 @@ function findNativeLanguageChunk(
     const nativeCharEntry = countryCode
         ? COUNTRY_NATIVE_CHARS[countryCode]
         : undefined;
-    for (const chunk of candidates) {
-        const code = detectChunkLanguage(chunk);
+    const verdicts = candidates.map(detectChunkVerdict);
+    for (const verdict of verdicts) {
+        const { chunk, code } = verdict;
         if (!langCodes.includes(code)) continue;
+        if (!isTrustedVerdict(verdict, verdicts)) continue;
         // If we have a native-char pattern for this country, require at least 2
         // such characters in the chunk. A single accented letter from one word is
         // not enough evidence — it too easily misleads tinyld on English text.
@@ -1260,10 +1352,12 @@ function findAnyNonEnglishChunk(
             : text.trim().length >= 200
               ? [text.trim()]
               : [];
-    for (const chunk of candidates) {
-        const code = detectChunkLanguage(chunk);
+    const verdicts = candidates.map(detectChunkVerdict);
+    for (const verdict of verdicts) {
+        const { chunk, code } = verdict;
         if (!code || code.length !== 2 || code === 'en') continue;
         if (!TRUSTED_LANG_CODES.has(code)) continue;
+        if (!isTrustedVerdict(verdict, verdicts)) continue;
         if (
             MEDIUM_CONFIDENCE_LANGS.has(code) &&
             chunk.length < MEDIUM_CONFIDENCE_MIN_CHUNK
@@ -1730,9 +1824,9 @@ export function detectNativeLanguage(
     // but clearly means native fluency in the local language is required.
     const genericMatch =
         languages.length > 0
-            ? combined.match(
+            ? (combined.match(
                   /native (?:local country|local|country|regional) language|local language (?:is |are )?required|local language skills|fluent in (?:the )?local language|local language:\s*(?:fluent|native|business level|proficient|good)|in addition to the local language|as well as (?:the )?local languages?\b/,
-              )
+              ) ?? matchLocalMarketLanguageRequirement(combined))
             : null;
     if (genericMatch) {
         return {

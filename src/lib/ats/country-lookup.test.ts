@@ -292,6 +292,24 @@ describe('extractCitiesForCountry', () => {
         ).toEqual(['Luxembourg']);
     });
 
+    test('does not report a "Multiple Locations" placeholder as a city', () => {
+        expect(
+            extractCitiesForCountry(
+                'Finland, Multiple Locations, Multiple Locations',
+                'FI',
+            ),
+        ).toEqual([]);
+    });
+
+    test('still reports the real cities of a country in a multi-country posting', () => {
+        expect(
+            extractCitiesForCountry(
+                'Finland, Uusimaa, Helsinki; Ireland, Dublin, Dublin',
+                'FI',
+            ),
+        ).toEqual(['Helsinki']);
+    });
+
     test('finds no city in a bare country', () => {
         expect(extractCitiesForCountry('Netherlands', 'NL')).toEqual([]);
     });
