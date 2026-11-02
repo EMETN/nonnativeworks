@@ -6,7 +6,7 @@ export const prerender = false;
 const PAGE_SIZE = 1000;
 
 const ENRICHED_SELECT =
-    'id, title, url, requires_native_language, local_language_advantage, required_education, category:categories(id, name, slug), company:companies(name, country:countries(name))';
+    'id, company_id, title, url, city, requires_native_language, local_language_advantage, required_education, category:categories(id, name, slug), company:companies(name, country:countries(name))';
 
 export const GET: APIRoute = async ({ url }) => {
     const companyIds = url.searchParams.getAll('company_id');

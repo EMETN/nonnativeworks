@@ -28,8 +28,10 @@ const CategoryInfoSchema = z.object({
 
 export const AdminPositionSchema = z.object({
     id: z.string(),
+    company_id: z.string(),
     title: z.string(),
     url: z.string().nullable(),
+    city: z.array(z.string()).nullable(),
     requires_native_language: z.boolean(),
     local_language_advantage: z.boolean(),
     required_education: z.string().nullable(),
