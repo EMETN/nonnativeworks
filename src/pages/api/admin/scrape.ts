@@ -29,6 +29,7 @@ import {
     lookupCountryFromLocation,
     extractWorkModelFromLocation,
     getCompanyCountryFallback,
+    isKnownCity,
     resolveJobCities,
 } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
@@ -359,6 +360,7 @@ function buildScrapeResult(
     let skippedUntracked = 0;
     let cacheHits = 0;
     const positionLogs: PositionLogEntry[] = [];
+    const unknownCities = new Set<string>();
     const skippedUnknownLocationJobs: Array<{
         title: string;
         location: string;
@@ -396,6 +398,9 @@ function buildScrapeResult(
 
         for (const countryInfo of trackedCountries) {
             const cities = resolveJobCities(job, countryInfo.code);
+            for (const city of cities) {
+                if (!isKnownCity(city)) unknownCities.add(city);
+            }
             const workModel =
                 job.work_model ??
                 extractWorkModelFromLocation(job.location ?? '');
@@ -528,6 +533,7 @@ function buildScrapeResult(
         skippedUnknownLocation: skipped,
         skippedUnknownLocationJobs,
         skippedUntrackedCountry: skippedUntracked,
+        unknownCities: [...unknownCities],
         outcomeCacheHits: cacheHits,
         outcomeCacheTotal: positionLogs.length,
     });

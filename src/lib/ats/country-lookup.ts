@@ -1798,6 +1798,16 @@ function spellCityName(name: string): string {
     return singleCase ? toTitleCase(name) : name;
 }
 
+const KNOWN_CITY_KEYS = new Set([
+    ...Object.keys(CITY_MAP).map(cityKey),
+    ...SPELLING_BY_KEY.keys(),
+    ...Object.values(ENGLISH_CITY_NAMES).map(cityKey),
+]);
+
+export function isKnownCity(name: string): boolean {
+    return KNOWN_CITY_KEYS.has(cityKey(name));
+}
+
 export function canonicalCityNames(cities: string[]): string[] {
     const names = new Set(
         cities.map(cityFromLabel).filter(Boolean).map(spellCityName),

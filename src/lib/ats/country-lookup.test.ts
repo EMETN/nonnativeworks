@@ -5,6 +5,7 @@ import { test, expect, describe } from 'vitest';
 import {
     extractCitiesForCountry,
     extractWorkModelFromLocation,
+    isKnownCity,
     lookupCountryFromLocation,
     resolveJobCities,
     canonicalCityNames,
@@ -484,4 +485,17 @@ test('falls back to the location when the supplied city is not a city', () => {
             'DE',
         ),
     ).toEqual(['Garching']);
+});
+
+describe('isKnownCity', () => {
+    test.each(['Kraków', 'Warsaw', 'Munich', 'Elbląg', 'Saint-Nazaire'])(
+        'recognises %s',
+        (city) => {
+            expect(isKnownCity(city)).toBe(true);
+        },
+    );
+
+    test('does not recognise a city with no entry', () => {
+        expect(isKnownCity('Nowhereville')).toBe(false);
+    });
 });

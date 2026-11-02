@@ -83,6 +83,7 @@ export function logScrapeRun(params: {
     skippedUnknownLocation: number;
     skippedUnknownLocationJobs?: Array<{ title: string; location: string }>;
     skippedUntrackedCountry: number;
+    unknownCities?: string[];
     outcomeCacheHits?: number;
     outcomeCacheTotal?: number;
     error?: string;
@@ -182,6 +183,11 @@ export function logScrapeRun(params: {
                 lines.push(`  ?  ${titleStr}${locStr}`);
             }
         }
+        lines.push('');
+    }
+
+    if (params.unknownCities?.length) {
+        lines.push(`  UNKNOWN CITIES  ${params.unknownCities.join('  ·  ')}`);
         lines.push('');
     }
 
