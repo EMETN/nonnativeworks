@@ -26,8 +26,17 @@ const HOSTNAME_SLUG_OVERRIDES: Record<
     'openai.com': { ats: 'ashby', slug: 'openai' },
     'cognite.com': { ats: 'greenhouse', slug: 'cognite' },
     'ogilvy.com': { ats: 'greenhouse', slug: 'ogilvy' },
+    'careers.vinted.com': { ats: 'greenhouse', slug: 'vinteden' },
+    // Slug probing would hit a stale, empty Workable "picnic" account.
+    'jobs.picnic.app': { ats: 'greenhouse', slug: 'teampicnic' },
+    'relexsolutions.com': { ats: 'greenhouse', slug: 'relex' },
+    'supermetrics.com': { ats: 'greenhouse', slug: 'supermetricsoy' },
+    'mews.com': { ats: 'greenhouse', slug: 'mewssystems' },
+    'careers.talkdesk.com': { ats: 'greenhouse', slug: 'talkdesk2' },
     // Slug probing would hit Lever's "mistral", an empty board.
     'mistral.ai': { ats: 'ashby', slug: 'mistral.ai' },
+    // Slug probing would hit Doctolib's stale Greenhouse board.
+    'careers.doctolib.fr': { ats: 'ashby', slug: 'doctolib' },
     'wise.jobs': { ats: 'smartrecruiters', slug: 'Wise' },
 };
 

@@ -4,7 +4,7 @@ Discover companies that welcome non-native language speakers. Track open positio
 
 ## Stack
 
-- **Astro 7** — full SSR (`output: 'server'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
+- **Astro 7** — prerendered pages with on-demand admin and API routes (`output: 'static'`; Netlify adapter in production, Node standalone adapter for local dev and CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)
@@ -112,6 +112,7 @@ pnpm dev        # Doppler route (maintainers)
 | `pnpm db:copy-prod` | Copy prod's public data locally (maintainers)   |
 | `pnpm db:clear`     | Empty the local database's data                 |
 | `pnpm db:env:file`  | Write the local stack's keys to `.env.supabase` |
+| `pnpm deps:update`  | Update all deps; CI runs the checks on the PR   |
 | `pnpm format`       | Format with Prettier                            |
 | `pnpm lint:py`      | Lint `scraper/` with Ruff                       |
 | `pnpm lint:secrets` | Scan the repo for credentials (Secretlint)      |

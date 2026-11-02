@@ -34,7 +34,7 @@ jobs:
               uses: actions/cache@v6
               with:
                   path: ~/.supabase/cache/stack
-                  key: supabase-native-${{ runner.os }}-${{ runner.arch }}-2.121.0
+                  key: supabase-native-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('supabase/supabase.lock') }}
 
             - name: Start local Supabase
               run: |

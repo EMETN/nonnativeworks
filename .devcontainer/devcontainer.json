@@ -17,7 +17,8 @@
                 "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
                 "eamodio.gitlens",
-                "astro-build.astro-vscode"
+                "astro-build.astro-vscode",
+                "charliermarsh.ruff"
             ],
             "settings": {
                 "editor.formatOnSave": true,

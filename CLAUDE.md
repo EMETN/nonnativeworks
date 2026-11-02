@@ -6,7 +6,7 @@ A website that tracks open job positions at companies where English is enough �
 
 ## Stack
 
-- **Astro 7** — `output: 'server'` (full SSR; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
+- **Astro 7** — `output: 'static'` (prerendered pages, with on-demand admin and API routes; Netlify adapter in production, Node standalone adapter for local dev and GitHub Actions CI)
 - **Preact** — interactive islands (`client:load`)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin (no `tailwind.config.js`)
 - **Supabase** — PostgreSQL + Auth (cookie-based sessions via `@supabase/ssr`)
@@ -42,7 +42,7 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 
 Migrations live in `supabase/migrations/`.
 
-- Local: `pnpm db:start` runs the Supabase CLI's native runtime (no Docker; `[experimental] stack = true` in `supabase/config.toml`) and applies every migration. `pnpm db:env` / `pnpm db:env:file` point the app at it. CLI pinned as devDependency `supabase@2.121.0`.
+- Local: `pnpm db:start` runs the Supabase CLI's native runtime (no Docker; `[experimental] stack = true` in `supabase/config.toml`) and applies every migration. `pnpm db:env` / `pnpm db:env:file` point the app at it. CLI pinned as a devDependency in `package.json`.
 - Prod: still applied manually in the Supabase SQL editor.
 - `000_full_schema.sql` seeds 13 categories.
 

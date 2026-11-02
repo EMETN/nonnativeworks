@@ -17,6 +17,12 @@ describe('detectAts — hostname slug overrides', () => {
         ['https://www.anthropic.com/careers/jobs', 'anthropic'],
         ['https://www.cognite.com/en/company/careers', 'cognite'],
         ['https://www.ogilvy.com/work-with-us', 'ogilvy'],
+        ['https://careers.vinted.com/jobs', 'vinteden'],
+        ['https://jobs.picnic.app/en/jobs', 'teampicnic'],
+        ['https://www.relexsolutions.com/careers/', 'relex'],
+        ['https://supermetrics.com/careers', 'supermetricsoy'],
+        ['https://www.mews.com/en/careers', 'mewssystems'],
+        ['https://careers.talkdesk.com/all-open-positions', 'talkdesk2'],
     ])('%s → greenhouse board %j', (url, slug) => {
         expect(detectAts(url)).toEqual({
             ats: 'greenhouse',
@@ -70,6 +76,13 @@ describe('detectAts — hostname slug overrides', () => {
         expect(detectAts('https://mistral.ai/careers/')).toEqual({
             ats: 'ashby',
             companySlug: 'mistral.ai',
+        });
+    });
+
+    test('https://careers.doctolib.fr/jobs/ → ashby board "doctolib"', () => {
+        expect(detectAts('https://careers.doctolib.fr/jobs/')).toEqual({
+            ats: 'ashby',
+            companySlug: 'doctolib',
         });
     });
 

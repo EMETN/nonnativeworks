@@ -245,3 +245,52 @@ describe('offset pagination — large boards', () => {
         expect(await promise).toHaveLength(5);
     });
 });
+
+describe('Autodesk (Eightfold PCSX)', () => {
+    const mockPositions = (positions: Record<string, unknown>[]) =>
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    data: { positions, count: positions.length },
+                }),
+            })),
+        );
+
+    test('keeps every location of a multi-country posting', async () => {
+        mockPositions([
+            {
+                id: 1,
+                name: 'Account Executive',
+                standardizedLocations: ['Dublin, D, IE', 'Barcelona, CT, ES'],
+                positionUrl: '/careers/job/1',
+            },
+        ]);
+
+        const [job] = await fetchCompanyApiJobs(
+            COMPANY_APIS['jobs.autodesk.com'],
+        );
+
+        expect(job.location).toBe('Dublin, D, IE; Barcelona, CT, ES');
+        expect(job.url).toBe('https://jobs.autodesk.com/careers/job/1');
+    });
+
+    test('a bare region code does not read as a country', async () => {
+        mockPositions([
+            {
+                id: 2,
+                name: 'Remote Engineer',
+                standardizedLocations: ['DE,US', 'NL,CA', 'Berlin, BE, DE'],
+                positionUrl: '/careers/job/2',
+            },
+        ]);
+
+        const [job] = await fetchCompanyApiJobs(
+            COMPANY_APIS['jobs.autodesk.com'],
+        );
+
+        expect(job.location).toBe('US; CA; Berlin, BE, DE');
+    });
+});

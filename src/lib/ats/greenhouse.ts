@@ -1,10 +1,18 @@
+import {
+    extractCitiesForCountry,
+    extractWorkModelFromLocation,
+    lookupCountryFromLocation,
+} from './country-lookup';
+import { fetchPicnicSiteJobs } from './picnic';
+import { withRelexSiteLocations } from './relex';
 import type { RawJob } from './types';
 
 interface GreenhouseJob {
     id: number;
     title: string;
     location: { name: string };
-    content: string; // HTML
+    offices?: { name: string; location?: string | null }[];
+    content: string;
     departments: { name: string }[];
     absolute_url: string;
 }
@@ -13,14 +21,26 @@ interface GreenhouseBoard {
     name: string;
 }
 
-/**
- * Some companies' Greenhouse boards serve an apply-only page at absolute_url —
- * no job description, just the application form (e.g. GetYourGuide). They have
- * their own branded career site that renders the description around the same
- * embedded form, at the same job id path. Prefer that URL when known.
- */
-const DESCRIPTION_PAGE_DOMAINS: Record<string, string> = {
-    getyourguide: 'www.getyourguide.careers',
+// absolute_url shows no description on these boards: apply form only, or the job list.
+const DESCRIPTION_PAGE_URLS: Record<string, (jobId: number) => string> = {
+    getyourguide: (jobId) => `https://www.getyourguide.careers/jobs/${jobId}`,
+    nebius: (jobId) => `https://careers.nebius.com/job?gh_jid=${jobId}`,
+    truecaller: (jobId) => `https://www.truecaller.com/careers/jobs/${jobId}`,
+};
+
+const LANGUAGE_BOARDS: Record<string, string[]> = {
+    vinteden: ['vintedfr', 'vintedde', 'vintedes'],
+};
+
+const OFF_BOARD_JOBS: Record<string, () => Promise<RawJob[]>> = {
+    teampicnic: fetchPicnicSiteJobs,
+};
+
+const LOCATION_ENRICHERS: Record<
+    string,
+    (jobs: RawJob[]) => Promise<RawJob[]>
+> = {
+    relex: withRelexSiteLocations,
 };
 
 export async function fetchGreenhouseCompanyName(
@@ -40,6 +60,16 @@ export async function fetchGreenhouseCompanyName(
 }
 
 export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
+    const boards = [slug, ...(LANGUAGE_BOARDS[slug] ?? [])];
+    const [boardJobs, offBoardJobs] = await Promise.all([
+        Promise.all(boards.map(fetchBoardJobs)),
+        OFF_BOARD_JOBS[slug]?.() ?? [],
+    ]);
+    const jobs = [...boardJobs.flat(), ...offBoardJobs];
+    return LOCATION_ENRICHERS[slug]?.(jobs) ?? jobs;
+}
+
+async function fetchBoardJobs(slug: string): Promise<RawJob[]> {
     const res = await fetch(
         `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(slug)}/jobs?content=true`,
     );
@@ -49,17 +79,45 @@ export async function fetchGreenhouseJobs(slug: string): Promise<RawJob[]> {
         );
     }
     const data: { jobs: GreenhouseJob[] } = await res.json();
-    const descriptionDomain = DESCRIPTION_PAGE_DOMAINS[slug];
+    const descriptionPageUrl = DESCRIPTION_PAGE_URLS[slug];
     return (data.jobs ?? []).map((job) => ({
         title: job.title,
         descriptionHtml: job.content,
-        location: job.location?.name,
-        url: descriptionDomain
-            ? `https://${descriptionDomain}/jobs/${job.id}`
-            : job.absolute_url,
+        location: locationWithOfficeFallback(job),
+        url: descriptionPageUrl?.(job.id) ?? job.absolute_url,
         department: job.departments?.[0]?.name,
         jobFunction: job.departments?.[0]?.name,
     }));
+}
+
+const REGION_LOCATION_RE =
+    /^(remote\s*[-–]\s*)?(europe|emea|apac|latam|americas)$/i;
+
+function locationWithOfficeFallback(job: GreenhouseJob): string | undefined {
+    const location = job.location?.name;
+    if (location && lookupCountryFromLocation(location).length > 0) {
+        return [location, ...officeCities(job, location)].join('; ');
+    }
+    if (REGION_LOCATION_RE.test(location?.trim() ?? '')) return location;
+    const offices = (job.offices ?? []).map((office) => office.name);
+    if (offices.length === 0) return location;
+    return [location, ...offices].filter(Boolean).join('; ');
+}
+
+function officeCities(job: GreenhouseJob, location: string): string[] {
+    if (extractWorkModelFromLocation(location) === 'remote') return [];
+    const countriesWithoutCity = lookupCountryFromLocation(location).filter(
+        ({ code }) => extractCitiesForCountry(location, code).length === 0,
+    );
+    const officeLocations = (job.offices ?? []).map(
+        (office) => office.location ?? office.name,
+    );
+    return [...new Set(officeLocations)].filter((officeLocation) =>
+        countriesWithoutCity.some(
+            ({ code }) =>
+                extractCitiesForCountry(officeLocation, code).length > 0,
+        ),
+    );
 }
 
 function formatSlug(slug: string): string {

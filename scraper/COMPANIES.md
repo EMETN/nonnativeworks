@@ -4,6 +4,7 @@
 - ABN AMRO
 - Academic Work
 - Accenture
+- Adyen
 - Airbus
 - Aiven
 - Allianz
@@ -19,8 +20,10 @@
 - BMW Group (local script)
 - Bolt
 - Booking.com
+- Cabify
 - Capgemini
 - Carlsberg
+- Celonis
 - CGI (local script)
 - Cognite
 - Danske Bank
@@ -28,17 +31,20 @@
 - Delivery Hero
 - Dentsu
 - DEPT
+- Doctolib
 - E.ON
 - Edenred
 - Elekta
 - Equinor
 - Ericsson
+- Feedzai
 - Finnair
 - Fiskars
 - Fortum
 - Futurice
 - GE Healthcare
 - GetYourGuide
+- GitLab
 - Gofore
 - Happeo
 - Heineken
@@ -57,8 +63,12 @@
 - Maersk
 - Mapbox
 - Metso
+- Mews
 - Mistral
+- Monks
 - Munich Re
+- N26
+- Nebius
 - Neste
 - Netflix
 - Nets/Nexi
@@ -74,12 +84,14 @@
 - Orkla
 - Oura
 - Philips
+- Picnic
 - Posti
 - Prosus
 - Proton
 - Publicis Groupe
 - Randstad
 - Reaktor
+- RELEX Solutions
 - Rovio
 - Sanoma
 - SAP
@@ -93,20 +105,25 @@
 - Spotify
 - Stellantis
 - Stora Enso
+- SumUp
 - Supercell
+- Supermetrics
 - Sweco Group
+- Talkdesk
 - Tandem Health
 - Tekever
 - Telia
 - Thales
 - Thoughtworks
 - Tieto
+- Truecaller
 - Trustpilot
 - Uber
 - Uniper
 - UpCloud
 - Vaisala
 - Vestas
+- Vinted
 - VML
 - Volvo Group
 - Wise
@@ -126,15 +143,15 @@ Which companies are handled at each layer. Layers run in order and stop as soon 
 
 Detected automatically from the career page URL. No per-company config needed — just submit the ATS-hosted URL.
 
-| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                    |
-| --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy                                                                                                                       |
-| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                   |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), Hoxhunt, OpenAI, Supercell, Mapbox, Mistral (`mistral.ai`)                                                                                                                                                  |
-| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                            |
-| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Autodesk, Equinor, Dentsu (per-country facets) |
-| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                |
-| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration), Wise (via `wise.jobs` override)                                                                                                                                                                                  |
+| ATS             | URL pattern                                         | Companies using it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy, Vinted (`vinteden` + language boards), Monks, SumUp, GitLab, Adyen, Nebius, Picnic (`teampicnic`, plus driver and warehouse pages from its own site), RELEX Solutions (`relex`, plus cities from its own site), Supermetrics (`supermetricsoy`), Celonis, Mews (`mewssystems`), Feedzai, Talkdesk (`talkdesk2`), N26, Cabify, Truecaller |
+| Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), Hoxhunt, OpenAI, Supercell, Mapbox, Mistral (`mistral.ai`), Doctolib                                                                                                                                                                                                                                                                                                                                                            |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Equinor, Dentsu (per-country facets)                                                                                                                                                                                                                               |
+| Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration), Wise (via `wise.jobs` override)                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ---
 
@@ -237,7 +254,7 @@ Dedicated per-platform Python modules for sites with non-standard structures.
 | Company       | Hostname                              | Notes                                                                                                                                                                                                                                                                                                                                   |
 | ------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Academic Work | `academicwork.fi/.se/.no/.dk/.de/.ch` | Staffing agency; one companies.yaml entry fans out to all six country sites per run; paginated `?i=0,1,...` listing; card parsed via `div.grid.auto-rows-min` grid; descriptions fetched from English URL (`/en/jobs/j/…?lang=en`) to avoid local-site boilerplate; jobs stamped with country_code explicitly per site                  |
-| Aiven         | `aiven.io/careers/job`                | Static single page; JSON-LD `JobPosting` list paired with job-card links for URLs                                                                                                                                                                                                                                                       |
+| Aiven         | `aiven.io/careers/job`                | Static single page; title, location and URL from job cards, descriptions from job pages                                                                                                                                                                                                                                                 |
 | Arla          | `jobs.arla.com`                       | Jobs JSON embedded in a `<script>` block (`phApp.ddo`); paginated `?from=N`; descriptions enriched via static fetch                                                                                                                                                                                                                     |
 | BMW Group     | `bmwgroup.jobs`                       | AEM; the whole board arrives as one server-rendered jobfinder fragment (path read from the page's own `data-jobfinder-path`), fields in `data-*` attributes; rows carry a bare city, so the country comes from the page's location filter (`DE/Munich` values) joined on a normalised city name; descriptions enriched via static fetch |
 | CGI           | `cgi.njoyn.com`                       | Njoyn ATS; Playwright                                                                                                                                                                                                                                                                                                                   |

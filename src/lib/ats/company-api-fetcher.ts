@@ -76,6 +76,19 @@ function getString(obj: unknown, path: string | undefined): string | undefined {
     return undefined;
 }
 
+const REGION_ONLY_LOCATION_RE = /^[A-Z]{2},\s*([A-Z]{2})$/;
+
+function joinStandardizedLocations(
+    item: unknown,
+    path: string | undefined,
+): string | undefined {
+    const locations = getStringArray(item, path);
+    if (locations.length === 0) return undefined;
+    return locations
+        .map((l) => l.replace(REGION_ONLY_LOCATION_RE, '$1'))
+        .join('; ');
+}
+
 function extractItems(data: unknown, itemsPath: string | undefined): unknown[] {
     const raw = itemsPath ? getPath(data, itemsPath) : data;
     return Array.isArray(raw) ? raw : [];
@@ -156,9 +169,9 @@ function mapItem(
     return {
         title,
         location:
-            allLocations.length > 0
-                ? allLocations.join('; ')
-                : getString(item, fields.location),
+            (allLocations.length > 0 ? allLocations.join('; ') : undefined) ??
+            joinStandardizedLocations(item, fields.standardizedLocations) ??
+            getString(item, fields.location),
         cities: cities.length > 0 ? cities : undefined,
         country_code: fields.country
             ? (getString(item, fields.country) ?? undefined)

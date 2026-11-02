@@ -174,6 +174,7 @@ cdn_domains=(
     "fa-ewwx-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Nexi)
     "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com"  # Oracle Cloud (Orkla, Nokia)
     "careers.theheinekencompany.com"  # Heineken (Cloudflare-fronted)
+    "mcp.plane.so"  # Plane MCP (AWS ELB, rotates IPs)
     "cdn.playwright.dev"  # Playwright browser downloads: primary CDN (Firefox/WebKit for the Playwright MCP)
     "playwright.download.prss.microsoft.com"  # Playwright browser downloads: fallback CDN
     "iaziqy.fa.ocs.oraclecloud.com" # Uber
@@ -190,8 +191,10 @@ company_domains=(
     "academicwork.de"
     "academicwork.ch"
     "www.accenture.com"  # Accenture
+    "careers.adyen.com"  # Adyen
     "ag.wd3.myworkdayjobs.com"  # Airbus
     "aiven.io"  # Aiven
+    "careers.aiven.io"  # Aiven
     "akqa.com"  # AKQA
     "alpha-sense.com"  # AlphaSense
     "www.alten.com" # Alten
@@ -210,14 +213,16 @@ company_domains=(
     "www.anthropic.com"  # Anthropic
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
-    "autodesk.wd1.myworkdayjobs.com"  # Autodesk
+    "jobs.autodesk.com"  # Autodesk
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
+    "cabify.careers"  # Cabify
     "capgemini.com"  # Capgemini
     "cg-jobstream-api.azurewebsites.net"  # Capgemini
     "careers.carlsberg.com"  # Carlsberg
+    "careers.celonis.com"  # Celonis
     "cgi.njoyn.com"  # CGI
     "www.cognite.com"  # Cognite
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
@@ -228,16 +233,19 @@ company_domains=(
     "careers.telekom.com"  # Deutsche Telekom
     "search.prod.gcw.ng.telekom.net"  # Deutsche Telekom
     "careers.dhl.com"  # DHL
+    "careers.doctolib.fr"  # Doctolib
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
     "elisa.com"  # Elisa
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
+    "careers.feedzai.com"  # Feedzai
     "finnair.wd103.myworkdayjobs.com"  # Finnair
     "fiskars.wd3.myworkdayjobs.com"  # Fiskars
     "jobs.fortum.com"  # Fortum
     "careers.gehealthcare.com" # GE Healthcare
     "www.getyourguide.careers"  # GetYourGuide
+    "about.gitlab.com"  # GitLab
     "gofore.com"  # Gofore
     "jobsapi-google.m-cloud.io"  # Google Jobs API (unattributed)
     "happeo.recruitee.com"  # Happeo
@@ -261,11 +269,14 @@ company_domains=(
     "www.mapbox.com"  # Mapbox — on Ashby (api.ashbyhq.com does the scraping); page host for Python fallback
     "metso.com"  # Metso
     "www.metso.com"  # Metso — metso.com 301-redirects here (different IPs), both needed
+    "www.mews.com"  # Mews
     "mistral.ai"  # Mistral
     "apply.careers.microsoft.com"  # Microsoft
     "careers.microsoft.com"  # Microsoft
     "www.monks.com"  # Monks
     "careers.munichre.com"  # Munich Re
+    "n26.com"  # N26
+    "careers.nebius.com"  # Nebius
     "www.nestai.com"  #NestAI
     "careers.nestai.com"  # NestAI
     "jobs.neste.com"  # Neste
@@ -283,10 +294,12 @@ company_domains=(
     "careers.orkla.com"  # Orkla
     "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
     "philips.wd3.myworkdayjobs.com"  # Philips
+    "jobs.picnic.app"  # Picnic
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
     "www.randstad.com"  # Randstad
+    "www.relexsolutions.com"  # RELEX Solutions
     "www.reorbit.space" # Reorbit
     "revolut.com"  # Revolut
     "rovio.com"  # Rovio
@@ -304,8 +317,11 @@ company_domains=(
     "www.lifeatspotify.com"  # Spotify — job detail pages (description enrichment fetches these)
     "careers.stellantis.com"  # Stellantis
     "storaenso.wd502.myworkdayjobs.com"  # Stora Enso
+    "www.sumup.com"  # SumUp
     "supercell.com"  # Supercell
+    "supermetrics.com"  # Supermetrics
     "swecogroup.com"  # Sweco
+    "careers.talkdesk.com"  # Talkdesk
     "tandemhealth.ai"  # Tandem Health
     "careers.tekever.com"  # Tekever
     "www.teliacompany.com"  # Telia
@@ -313,6 +329,7 @@ company_domains=(
     "thales.wd3.myworkdayjobs.com"  # Thales
     "www.thoughtworks.com"  # Thoughtworks — on Greenhouse (boards-api.greenhouse.io does the scraping); page host for Python fallback
     "careers.tieto.com"  # Tietoevry
+    "www.truecaller.com"  # Truecaller
     "corporate.trustpilot.com"  # Trustpilot
     "uber.com"  # Uber
     "jobs.uber.com" # Uber

@@ -47,6 +47,10 @@ companies:
       url: https://www.accenture.com/us-en/careers
       min_positions: 10
 
+    - name: Adyen
+      url: https://careers.adyen.com/vacancies?locale=en
+      min_positions: 30
+
     - name: Airbus
       url: https://ag.wd3.myworkdayjobs.com/Airbus?locationCountry=bd34c524a6a04ae6915f5d96fa086199&locationCountry=f2e609fe92974a55a05fc1cdc2852122&locationCountry=2e8c5034deb045d49315417c347472ca&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=8cd04a563fd94da7b06857a79faaf815&locationCountry=9db257f5937e4421b2fac64eec6832f8&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=0afb2fa656da42e8bfb6d47bd24a26fa&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=6a800a4736884df5826858d435650f45
       min_positions: 10
@@ -80,7 +84,7 @@ companies:
       min_positions: 30
 
     - name: Autodesk
-      url: https://autodesk.wd1.myworkdayjobs.com/Ext?locationCountry=6a800a4736884df5826858d435650f45&locationCountry=bd34c524a6a04ae6915f5d96fa086199&locationCountry=f2e609fe92974a55a05fc1cdc2852122&locationCountry=2e8c5034deb045d49315417c347472ca&locationCountry=131d5ac7e3ee4d7b962bdc96e498e412&locationCountry=d07f8ca8625e4345b98a91d0558b872a&locationCountry=9696868b09c64d52a62ee13b052383cc&locationCountry=8cd04a563fd94da7b06857a79faaf815&locationCountry=dcc5b7608d8644b3a93716604e78e995&locationCountry=54c5b6971ffb4bf0b116fe7651ec789a&locationCountry=49ab063f422741e2aef271de00efeac8&locationCountry=fc078443155c4ad294201ecf5a61a499&locationCountry=1face6f426c14de9979a134697da0db3&locationCountry=a04ea128f43a42e59b1e6a19e8f0b374&locationCountry=d004c0d1a6c84511ab048669fcdf9fd7
+      url: https://jobs.autodesk.com/careers
       min_positions: 10
 
     - name: Barona
@@ -103,6 +107,10 @@ companies:
       url: https://jobs.booking.com
       min_positions: 10
 
+    - name: Cabify
+      url: https://cabify.careers/en/jobs
+      min_positions: 5
+
     - name: Capgemini
       url: https://careers.capgemini.com
       min_positions: 10
@@ -110,6 +118,10 @@ companies:
     - name: Carlsberg
       url: https://careers.carlsberg.com/search/?createNewAlert=false&q=&locationsearch=&optionsFacetsDD_customfield1=&optionsFacetsDD_customfield3=&optionsFacetsDD_customfield2=
       min_positions: 10
+
+    - name: Celonis
+      url: https://careers.celonis.com/join-us/open-positions
+      min_positions: 30
 
     - name: Cognite
       url: https://www.cognite.com/en/company/careers
@@ -137,7 +149,11 @@ companies:
 
     - name: DHL
       url: https://careers.dhl.com/global/en/search-results
-      min_positions: 500
+      min_positions: 100
+
+    - name: Doctolib
+      url: https://careers.doctolib.fr/jobs/
+      min_positions: 30
 
     - name: Edenred
       url: https://wd3.myworkdaysite.com/en-US/recruiting/edenpeople/Edenred_Careers
@@ -158,6 +174,10 @@ companies:
     - name: Ericsson
       url: https://jobs.ericsson.com/careers
       min_positions: 10
+
+    - name: Feedzai
+      url: https://careers.feedzai.com/all-jobs/
+      min_positions: 3
 
     - name: Finnair
       url: https://finnair.wd103.myworkdayjobs.com/en-US/finnair
@@ -181,6 +201,10 @@ companies:
 
     - name: GetYourGuide
       url: https://www.getyourguide.careers/open-roles
+      min_positions: 10
+
+    - name: GitLab
+      url: https://about.gitlab.com/jobs/all-jobs/
       min_positions: 10
 
     - name: Gofore
@@ -259,6 +283,10 @@ companies:
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
 
+    - name: Mews
+      url: https://www.mews.com/en/careers
+      min_positions: 10
+
     - name: Microsoft
       url: https://apply.careers.microsoft.com/careers
       min_positions: 50
@@ -267,9 +295,21 @@ companies:
       url: https://jobs.ashbyhq.com/mistral.ai
       min_positions: 10
 
+    - name: Monks
+      url: https://www.monks.com/careers
+      min_positions: 5
+
     - name: Munich Re
       url: https://careers.munichre.com/en/search-jobs
       min_positions: 10
+
+    - name: N26
+      url: https://n26.com/en-eu/careers
+      min_positions: 10
+
+    - name: Nebius
+      url: https://careers.nebius.com/
+      min_positions: 50
 
     - name: NestAI
       url: https://careers.nestai.com/jobs
@@ -339,9 +379,13 @@ companies:
       url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
       min_positions: 10
 
+    - name: Picnic
+      url: https://jobs.picnic.app/en/jobs
+      min_positions: 50
+
     - name: Posti
       url: https://posti.wd3.myworkdayjobs.com/en-US/external
-      min_positions: 5
+      min_positions: 1
 
     - name: Prosus
       url: https://jobs.ashbyhq.com/prosus
@@ -362,6 +406,10 @@ companies:
     - name: Reaktor
       url: https://www.reaktor.com/careers
       min_positions: 2
+
+    - name: RELEX Solutions
+      url: https://www.relexsolutions.com/careers/
+      min_positions: 5
 
     - name: Rovio
       url: https://www.rovio.com/open-positions
@@ -418,13 +466,25 @@ companies:
       url: https://storaenso.wd502.myworkdayjobs.com/Stora_Enso_site_opportunities
       min_positions: 5
 
+    - name: SumUp
+      url: https://www.sumup.com/careers/positions/
+      min_positions: 30
+
     - name: Supercell
       url: https://supercell.com/en/careers/
       min_positions: 10
 
+    - name: Supermetrics
+      url: https://supermetrics.com/careers
+      min_positions: 1
+
     - name: Sweco Group
       url: https://www.swecogroup.com/careers/vacancies
       min_positions: 1
+
+    - name: Talkdesk
+      url: https://careers.talkdesk.com/all-open-positions
+      min_positions: 5
 
     - name: Tandem Health
       url: https://tandemhealth.ai/about/careers
@@ -450,6 +510,10 @@ companies:
       url: https://careers.tieto.com
       min_positions: 10
 
+    - name: Truecaller
+      url: https://www.truecaller.com/careers/jobs
+      min_positions: 5
+
     - name: Trustpilot
       url: https://corporate.trustpilot.com/careers
       min_positions: 5
@@ -473,6 +537,10 @@ companies:
     - name: Vestas
       url: https://careers.vestas.com/search
       min_positions: 10
+
+    - name: Vinted
+      url: https://careers.vinted.com/jobs
+      min_positions: 30
 
     - name: VML
       url: https://www.vml.com/careers

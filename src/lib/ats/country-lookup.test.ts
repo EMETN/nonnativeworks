@@ -4,7 +4,9 @@
 import { test, expect, describe } from 'vitest';
 import {
     extractCitiesForCountry,
+    extractWorkModelFromLocation,
     lookupCountryFromLocation,
+    toEnglishCityNames,
 } from './country-lookup';
 
 const codes = (loc: string) =>
@@ -85,6 +87,16 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
         expect(codes('Vila Real')).toEqual(['PT']);
         expect(codes('Guarda')).toEqual(['PT']);
     });
+
+    test('a repeated bare city resolves once', () => {
+        expect(codes('Niort; Niort')).toEqual(['FR']);
+    });
+
+    test('Doctolib locations resolve', () => {
+        expect(codes('Wuppertal')).toEqual(['DE']);
+        expect(codes('Ile-de-France')).toEqual(['FR']);
+        expect(codes('Île-de-France')).toEqual(['FR']);
+    });
 });
 
 describe('lookupCountryFromLocation — "City, XX" code qualifies the city', () => {
@@ -164,7 +176,120 @@ describe('lookupCountryFromLocation — Czechia', () => {
     });
 });
 
+describe('toEnglishCityNames', () => {
+    test('replaces a local name with its English name', () => {
+        expect(toEnglishCityNames(['München', 'Wien'])).toEqual([
+            'Munich',
+            'Vienna',
+        ]);
+    });
+
+    test('merges a local and English name for the same city', () => {
+        expect(toEnglishCityNames(['Antwerpen', 'Antwerp'])).toEqual([
+            'Antwerp',
+        ]);
+    });
+
+    test('drops a team suffix from the city', () => {
+        expect(toEnglishCityNames(['Berlin Tech', 'Berlin'])).toEqual([
+            'Berlin',
+        ]);
+    });
+
+    test('leaves other cities unchanged', () => {
+        expect(toEnglishCityNames(['Mo i Rana'])).toEqual(['Mo i Rana']);
+    });
+});
+
+describe('lookupCountryFromLocation — city prefix matches', () => {
+    test('ignores a city prefix when the location names its country', () => {
+        expect(codes('Porto Seguro, Bahia, Brazil')).toEqual(['BR']);
+    });
+
+    test('keeps a city prefix when nothing else resolves', () => {
+        expect(codes('Riga Central')).toEqual(['LV']);
+    });
+
+    test('resolves each semicolon-separated location on its own', () => {
+        expect(codes('Porto Seguro, Brazil; Riga Central')).toEqual([
+            'BR',
+            'LV',
+        ]);
+    });
+});
+
+test('resolves Campobasso without a country in the location', () => {
+    expect(codes('Campobasso')).toEqual(['IT']);
+});
+
 describe('extractCitiesForCountry', () => {
+    test('reads the city from "Country (City)"', () => {
+        expect(extractCitiesForCountry('Norway (Oslo)', 'NO')).toEqual([
+            'Oslo',
+        ]);
+        expect(
+            extractCitiesForCountry(
+                'England, United Kingdom; Germany; Norway (Oslo)',
+                'NO',
+            ),
+        ).toEqual(['Oslo']);
+    });
+
+    test('takes no city from a work mode in parentheses', () => {
+        expect(extractCitiesForCountry('Norway (remote)', 'NO')).toEqual([]);
+    });
+
+    test('takes no city from a venue in parentheses', () => {
+        expect(
+            extractCitiesForCountry(
+                'KQB (Amsterdam - Herengracht 578-58)',
+                'NL',
+            ),
+        ).toEqual([]);
+    });
+
+    test('keeps every city of a multi-location posting', () => {
+        expect(
+            extractCitiesForCountry(
+                'Agen, Lot-et-Garonne, France; Arcachon, Gironde, France',
+                'FR',
+            ),
+        ).toEqual(['Agen', 'Arcachon']);
+    });
+
+    test('drops the HQ suffix from a city', () => {
+        expect(extractCitiesForCountry('Dublin; Helsinki HQ', 'FI')).toEqual([
+            'Helsinki',
+        ]);
+    });
+
+    test('keeps unknown cities alongside known ones', () => {
+        expect(
+            extractCitiesForCountry(
+                'Bordeaux, Gironde, France; Niort, Deux-Sèvres, France',
+                'FR',
+            ),
+        ).toEqual(['Bordeaux', 'Niort']);
+    });
+
+    test('ignores cities in other countries', () => {
+        expect(
+            extractCitiesForCountry('Agen, France; Berlin, Germany', 'FR'),
+        ).toEqual(['Agen']);
+    });
+
+    test('does not treat a work mode as a city', () => {
+        expect(
+            extractCitiesForCountry('Berlin, Germany; Remote, Germany', 'DE'),
+        ).toEqual(['Berlin']);
+    });
+
+    test('reads Luxembourg as a city in its own country', () => {
+        expect(
+            extractCitiesForCountry('Luxembourg, Luxembourg, Luxembourg', 'LU'),
+        ).toEqual(['Luxembourg']);
+    });
+
     test('does not report a "Multiple Locations" placeholder as a city', () => {
         expect(
             extractCitiesForCountry(
@@ -182,4 +307,12 @@ describe('extractCitiesForCountry', () => {
             ),
         ).toEqual(['Helsinki']);
     });
+
+    test('finds no city in a bare country', () => {
+        expect(extractCitiesForCountry('Netherlands', 'NL')).toEqual([]);
+    });
+});
+
+test('reads the work model from a leading comma segment', () => {
+    expect(extractWorkModelFromLocation('Remote, Germany')).toBe('remote');
 });
