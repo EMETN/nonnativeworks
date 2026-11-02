@@ -230,6 +230,18 @@ Jobs matching no tracked country are counted as `skipped_untracked_country` and 
 
 ---
 
+## City names
+
+`resolveJobCities()` (`src/lib/ats/country-lookup.ts`) sets the cities for each country's copy of a job, so every scraper layer gets the same result:
+
+1. **Clean up**: `canonicalCityNames()` reduces each label to a city, removing suffixes (`Krakow_OLD`, `Toulouse Area`), street addresses, postcodes, district numbers and branch codes (`PB_Cen_Katowice (ul. Sokolska 34)`). Labels with no city (`Remote`, `Poland`, `85748`) are dropped. When a label names several places, only the first is kept.
+2. **Spell**: matching ignores case, accents and hyphens, so every variant of a city gets one name. English names come from `ENGLISH_CITY_NAMES` (`Warszawa` → `Warsaw`) and local spellings from `CITY_SPELLINGS` in `src/lib/ats/city-spellings.ts` (`Krakow` → `Kraków`). Other all-caps or all-lowercase names become title case.
+3. **Filter by country**: a city that `CITY_MAP` places in another country is dropped. If no city is left, the job's `location` text is used instead.
+
+Each scrape log ends with an `UNKNOWN CITIES` line listing names found in none of these tables. Most are valid small towns, so only act on one that needs a fixed spelling: add its correct spelling to `CITY_SPELLINGS`, or to `ENGLISH_CITY_NAMES` if it has an English name. This also applies when onboarding a company.
+
+---
+
 ## Classification
 
 Each resolved `(job, countryCode)` pair is passed to `classifyJobVerbose()`, which runs two classifiers.

@@ -1,4 +1,5 @@
 import { nameToSlug } from './country-flags';
+import { foldText } from './text';
 import type { ListedPosition } from './types';
 
 export type PageKind = 'country' | 'company';
@@ -194,6 +195,17 @@ export function applyFilters(
     state: FilterState,
 ): ListedPosition[] {
     return positions.filter((p) => matches(p, state));
+}
+
+export function searchPositions(
+    positions: ListedPosition[],
+    search: string,
+): ListedPosition[] {
+    const q = foldText(search).trim();
+    if (!q) return positions;
+    return positions.filter((p) =>
+        [p.title, ...(p.city ?? [])].some((text) => foldText(text).includes(q)),
+    );
 }
 
 /** Counts per option given every other active filter, so each count is what selecting it would add. */

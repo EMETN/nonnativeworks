@@ -12,7 +12,7 @@ The scraper runs in three layers, falling through to the next if the previous re
 2. **Layer 1.5 — per-company API**: Falls back to `COMPANY_APIS` config (`src/lib/ats/company-apis.ts`) for companies with custom API endpoints. Fetching logic lives in `src/lib/ats/company-api-fetcher.ts`. Configured companies: OP Financial Group, Nokia, Gofore, Nordea, Accenture, Barona.
 3. **Layer 2 — Python scraper**: Falls back to `scraper/main.py` (Playwright-based browser scraper). After the Python scraper returns jobs, `enrichDescriptions()` fetches individual job pages for language classification.
 
-After jobs are collected, each job's location is resolved via `lookupCountryFromLocation()` (`src/lib/ats/country-lookup.ts`). Jobs without a matching tracked country are skipped. `classifyJobVerbose()` then assigns `category` and `requires_native_language`.
+After jobs are collected, each job's location is resolved via `lookupCountryFromLocation()` (`src/lib/ats/country-lookup.ts`). Jobs without a matching tracked country are skipped. City names are normalised to one spelling by `resolveJobCities()` (see "City names" in `SCRAPING.md`). `classifyJobVerbose()` then assigns `category` and `requires_native_language`.
 
 ## Development
 

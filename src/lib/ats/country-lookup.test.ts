@@ -5,8 +5,10 @@ import { test, expect, describe } from 'vitest';
 import {
     extractCitiesForCountry,
     extractWorkModelFromLocation,
+    isKnownCity,
     lookupCountryFromLocation,
-    toEnglishCityNames,
+    resolveJobCities,
+    canonicalCityNames,
 } from './country-lookup';
 
 const codes = (loc: string) =>
@@ -176,28 +178,28 @@ describe('lookupCountryFromLocation — Czechia', () => {
     });
 });
 
-describe('toEnglishCityNames', () => {
+describe('canonicalCityNames', () => {
     test('replaces a local name with its English name', () => {
-        expect(toEnglishCityNames(['München', 'Wien'])).toEqual([
+        expect(canonicalCityNames(['München', 'Wien'])).toEqual([
             'Munich',
             'Vienna',
         ]);
     });
 
     test('merges a local and English name for the same city', () => {
-        expect(toEnglishCityNames(['Antwerpen', 'Antwerp'])).toEqual([
+        expect(canonicalCityNames(['Antwerpen', 'Antwerp'])).toEqual([
             'Antwerp',
         ]);
     });
 
     test('drops a team suffix from the city', () => {
-        expect(toEnglishCityNames(['Berlin Tech', 'Berlin'])).toEqual([
+        expect(canonicalCityNames(['Berlin Tech', 'Berlin'])).toEqual([
             'Berlin',
         ]);
     });
 
     test('leaves other cities unchanged', () => {
-        expect(toEnglishCityNames(['Mo i Rana'])).toEqual(['Mo i Rana']);
+        expect(canonicalCityNames(['Mo i Rana'])).toEqual(['Mo i Rana']);
     });
 });
 
@@ -315,4 +317,203 @@ describe('extractCitiesForCountry', () => {
 
 test('reads the work model from a leading comma segment', () => {
     expect(extractWorkModelFromLocation('Remote, Germany')).toBe('remote');
+});
+
+describe('resolveJobCities', () => {
+    test('falls back to the location when the supplied city is in another country', () => {
+        expect(
+            resolveJobCities(
+                { city: 'Stockholm', location: 'Warsaw, Poland' },
+                'PL',
+            ),
+        ).toEqual(['Warsaw']);
+    });
+
+    test('leaves no city when only the country is known', () => {
+        expect(
+            resolveJobCities({ city: 'Bratislava', location: 'Poland' }, 'PL'),
+        ).toEqual([]);
+    });
+
+    test('keeps only the cities of the given country', () => {
+        expect(
+            resolveJobCities(
+                { cities: ['Stockholm', 'Warsaw', 'Krakow'], location: '' },
+                'PL',
+            ),
+        ).toEqual(['Warsaw', 'Kraków']);
+    });
+
+    test('keeps a supplied city missing from the lookup', () => {
+        expect(
+            resolveJobCities({ city: 'Mo i Rana', location: 'Norway' }, 'NO'),
+        ).toEqual(['Mo i Rana']);
+    });
+
+    test.each([
+        ['Drôme', 'FR'],
+        ['Liège', 'BE'],
+    ])('keeps %s, whose ending looks like a country code', (city, code) => {
+        expect(resolveJobCities({ city }, code)).toEqual([city]);
+    });
+
+    test('translates the supplied city to English', () => {
+        expect(resolveJobCities({ city: 'Warszawa' }, 'PL')).toEqual([
+            'Warsaw',
+        ]);
+    });
+
+    test('extracts from the location when no city is supplied', () => {
+        expect(
+            resolveJobCities(
+                { location: 'Helsinki, Finland; Tallinn, Estonia' },
+                'EE',
+            ),
+        ).toEqual(['Tallinn']);
+    });
+});
+
+describe('canonicalCityNames spelling', () => {
+    test.each([
+        ['Krakow', 'Kraków'],
+        ['KRAKÓW', 'Kraków'],
+        ['Wroclaw', 'Wrocław'],
+        ['Gdansk', 'Gdańsk'],
+        ['POZNAŃ', 'Poznań'],
+        ['Lodz', 'Łódź'],
+        ['RZESZÓW', 'Rzeszów'],
+        ['Elblag', 'Elbląg'],
+        ['Dusseldorf', 'Düsseldorf'],
+        ['MALMO', 'Malmö'],
+        ['Orleans', 'Orléans'],
+        ['SAINT-ETIENNE', 'Saint-Étienne'],
+        ['Rīga', 'Riga'],
+        ['Saint Nazaire', 'Saint-Nazaire'],
+        ['Sophia-Antipolis', 'Sophia Antipolis'],
+    ])('spells %s as %s', (raw, expected) => {
+        expect(canonicalCityNames([raw])).toEqual([expected]);
+    });
+
+    test.each([
+        ['KATOWICE', 'Katowice'],
+        ['TCZEW', 'Tczew'],
+        ['lummen', 'Lummen'],
+        ['LE MANS', 'Le Mans'],
+        ['ST LAURENT DU VAR', 'St Laurent du Var'],
+    ])('fixes the case of %s', (raw, expected) => {
+        expect(canonicalCityNames([raw])).toEqual([expected]);
+    });
+
+    test('merges every spelling of a city', () => {
+        expect(
+            canonicalCityNames(['Krakow', 'KRAKÓW', 'Kraków', 'Krakow Area']),
+        ).toEqual(['Kraków']);
+    });
+
+    test('keeps a parenthesised part of the real name', () => {
+        expect(canonicalCityNames(['Halle (Saale)'])).toEqual([
+            'Halle (Saale)',
+        ]);
+    });
+
+    test.each([
+        ['Frankfurt am Main', 'Frankfurt am Main'],
+        ['Frankfurt Am Main', 'Frankfurt am Main'],
+        ['Frankfurt / Main', 'Frankfurt am Main'],
+        ['Frankfurt/Main', 'Frankfurt am Main'],
+        ['Mo i Rana', 'Mo i Rana'],
+    ])('does not shorten %s', (raw, expected) => {
+        expect(canonicalCityNames([raw])).toEqual([expected]);
+    });
+});
+
+describe('canonicalCityNames noise', () => {
+    test.each([
+        ['Krakow_OLD', 'Kraków'],
+        ['Contern_EXC', 'Contern'],
+        ['Toulouse Area', 'Toulouse'],
+        ['München Area', 'Munich'],
+        ['Copenhagen Office', 'Copenhagen'],
+        ['Helsinki Metropolitan Area', 'Helsinki'],
+        ['Prague 6', 'Prague'],
+        ['Praha 13', 'Prague'],
+        ['PARIS 9ème', 'Paris'],
+        ['PARIS CEDEX 16', 'Paris'],
+        ['MARSEILLE 08', 'Marseille'],
+        ['Copenhagen V, Denmark', 'Copenhagen'],
+        ['Munich, Germany', 'Munich'],
+        ['Zwycięstwa 23, 44-100 Gliwice', 'Gliwice'],
+        ['Paris - 67 avenue Wagram', 'Paris'],
+        ['Sofia-  Srebarna 16', 'Sofia'],
+        ['Augsburg Karl-Drais-Str. 5', 'Augsburg'],
+        ['Bruxelles Avenue Marnix (ING)', 'Brussels'],
+        ['France - Lyon - Lyon (Edenred France)', 'Lyon'],
+        ['PSS – Lisbon (Central)', 'Lisbon'],
+        ['Stockholm - Home Based', 'Stockholm'],
+        ['Mapbox Helsinki', 'Helsinki'],
+        ['45300 Bouilly en Gatinais', 'Bouilly en Gatinais'],
+        ['LYON 6EME', 'Lyon'],
+        ['Amersfoort CDI', 'Amersfoort'],
+    ])('reduces %s to %s', (raw, expected) => {
+        expect(canonicalCityNames([raw])).toEqual([expected]);
+    });
+
+    test.each([
+        ['PB_Cen_Katowice (ul. Sokolska 34)', 'Katowice'],
+        [
+            'PB_Det/Korp_Zielona Góra (ul. Bohaterów Westerplatte 19)',
+            'Zielona Góra',
+        ],
+        ['PB_Korp_Łódź (ul. Kopcińskiego 73/75)', 'Łódź'],
+        ['Warszawa (Pańska 97)', 'Warsaw'],
+        ['CDR (Amsterdam - Cedar)', 'Amsterdam'],
+    ])('reads the city from the ING branch code %s', (raw, expected) => {
+        expect(canonicalCityNames([raw])).toEqual([expected]);
+    });
+
+    test.each([
+        ['85748'],
+        ['Remote'],
+        ['Poland'],
+        ['Mapbox Poland'],
+        ['Remote - Spain'],
+        ['Remote Germany'],
+        ['Germany - Home Based'],
+        ['Województwo pomorskie'],
+        ['Flexible location'],
+    ])('treats %s as no city', (raw) => {
+        expect(canonicalCityNames([raw])).toEqual([]);
+    });
+
+    test('reduces Offshore Poland to Offshore', () => {
+        expect(canonicalCityNames(['Offshore Poland'])).toEqual(['Offshore']);
+    });
+
+    test('prefers a real location over Offshore', () => {
+        expect(canonicalCityNames(['Offshore Poland', 'Łeba'])).toEqual([
+            'Łeba',
+        ]);
+    });
+});
+
+test('falls back to the location when the supplied city is not a city', () => {
+    expect(
+        resolveJobCities(
+            { city: '85748', location: 'Garching, Germany' },
+            'DE',
+        ),
+    ).toEqual(['Garching']);
+});
+
+describe('isKnownCity', () => {
+    test.each(['Kraków', 'Warsaw', 'Munich', 'Elbląg', 'Saint-Nazaire'])(
+        'recognises %s',
+        (city) => {
+            expect(isKnownCity(city)).toBe(true);
+        },
+    );
+
+    test('does not recognise a city with no entry', () => {
+        expect(isKnownCity('Nowhereville')).toBe(false);
+    });
 });

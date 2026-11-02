@@ -11,6 +11,15 @@ test('strips diacritics so accented names match ASCII queries', () => {
     expect(foldText('São Paulo').includes(foldText('sao'))).toBe(true);
 });
 
+test.each([
+    ['Łódź', 'lodz'],
+    ['København', 'kobenhavn'],
+    ['Straße', 'strasse'],
+    ['Iași', 'iasi'],
+])('folds letters with no combining accent: %s', (value, expected) => {
+    expect(foldText(value)).toBe(expected);
+});
+
 test('leaves plain ASCII unchanged', () => {
     expect(foldText('Helsinki')).toBe('helsinki');
 });

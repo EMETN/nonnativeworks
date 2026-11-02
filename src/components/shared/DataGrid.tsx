@@ -356,6 +356,7 @@ export default function DataGrid({
                                 />
                             </svg>
                             <input
+                                name="search"
                                 type="text"
                                 aria-label={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}`}
                                 placeholder={`Search ${entityLabel === 'country' ? 'countries' : 'companies'}...`}

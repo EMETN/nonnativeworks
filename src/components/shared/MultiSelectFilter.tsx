@@ -142,6 +142,7 @@ export default function MultiSelectFilter({
                             />
                         </svg>
                         <input
+                            name={`${id}-search`}
                             type="text"
                             aria-label={`Search ${plural}`}
                             placeholder={`Search ${plural}`}
@@ -175,6 +176,7 @@ export default function MultiSelectFilter({
                                 style={numFont}
                             >
                                 <input
+                                    name={`${id}-option`}
                                     type="checkbox"
                                     checked={checked}
                                     disabled={disabled}

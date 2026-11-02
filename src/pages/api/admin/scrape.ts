@@ -27,10 +27,10 @@ import {
 } from '../../../lib/ats/smartrecruiters';
 import {
     lookupCountryFromLocation,
-    extractCitiesForCountry,
     extractWorkModelFromLocation,
     getCompanyCountryFallback,
-    toEnglishCityNames,
+    isKnownCity,
+    resolveJobCities,
 } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { stripHtml } from '../../../lib/classifiers/language';
@@ -360,6 +360,7 @@ function buildScrapeResult(
     let skippedUntracked = 0;
     let cacheHits = 0;
     const positionLogs: PositionLogEntry[] = [];
+    const unknownCities = new Set<string>();
     const skippedUnknownLocationJobs: Array<{
         title: string;
         location: string;
@@ -396,15 +397,10 @@ function buildScrapeResult(
         }
 
         for (const countryInfo of trackedCountries) {
-            const cities = toEnglishCityNames(
-                job.cities ??
-                    (job.city
-                        ? [job.city]
-                        : extractCitiesForCountry(
-                              job.location ?? '',
-                              countryInfo.code,
-                          )),
-            );
+            const cities = resolveJobCities(job, countryInfo.code);
+            for (const city of cities) {
+                if (!isKnownCity(city)) unknownCities.add(city);
+            }
             const workModel =
                 job.work_model ??
                 extractWorkModelFromLocation(job.location ?? '');
@@ -537,6 +533,7 @@ function buildScrapeResult(
         skippedUnknownLocation: skipped,
         skippedUnknownLocationJobs,
         skippedUntrackedCountry: skippedUntracked,
+        unknownCities: [...unknownCities],
         outcomeCacheHits: cacheHits,
         outcomeCacheTotal: positionLogs.length,
     });
