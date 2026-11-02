@@ -2,9 +2,11 @@ import { describe, expect, test } from 'vitest';
 import {
     ALL_COMPANIES,
     ALL_COUNTRIES,
+    catalogGroups,
     catalogSummary,
     companyOptions,
     countryOptions,
+    groupPositions,
     positionSummary,
     resolveScope,
 } from './admin-position-scope';
@@ -110,26 +112,29 @@ describe('resolveScope', () => {
     test('all companies queries with no filter', () => {
         expect(resolveScope(COMPANIES, ALL_COMPANIES, '')).toEqual({
             query: '',
-            multiCompany: true,
+            grouping: 'company-country',
         });
     });
 
     test('all countries with no company queries with no filter', () => {
         expect(resolveScope(COMPANIES, '', ALL_COUNTRIES)).toEqual({
             query: '',
-            multiCompany: true,
+            grouping: 'company-country',
         });
     });
 
     test('all countries with a company spans its countries', () => {
         expect(resolveScope(COMPANIES, 'Spotify', ALL_COUNTRIES)).toEqual({
             query: '?company_id=spotify-se&company_id=spotify-de',
-            multiCompany: true,
+            grouping: 'country',
         });
     });
 
     test('a country with no company gets every position in that country', () => {
-        const expected = { query: '?country_id=id-Sweden', multiCompany: true };
+        const expected = {
+            query: '?country_id=id-Sweden',
+            grouping: 'company',
+        };
         expect(resolveScope(COMPANIES, '', 'id-Sweden')).toEqual(expected);
         expect(resolveScope(COMPANIES, ALL_COMPANIES, 'id-Sweden')).toEqual(
             expected,
@@ -139,14 +144,14 @@ describe('resolveScope', () => {
     test('a company with no country spans all its countries', () => {
         expect(resolveScope(COMPANIES, 'Spotify', '')).toEqual({
             query: '?company_id=spotify-se&company_id=spotify-de',
-            multiCompany: true,
+            grouping: 'country',
         });
     });
 
     test('company and country together select that one company row', () => {
         expect(resolveScope(COMPANIES, 'Spotify', 'id-Germany')).toEqual({
             query: '?company_id=spotify-de',
-            multiCompany: false,
+            grouping: null,
         });
     });
 
@@ -213,4 +218,137 @@ test('catalogSummary totals every company, counting a name once', () => {
             company('SAP', 'Sweden', 3, 0),
         ]),
     ).toEqual({ english: 9, total: 18, companies: 2, countries: 2 });
+});
+
+describe('groupPositions', () => {
+    const position = (
+        company: string,
+        country: string,
+        title: string,
+        requires_native_language = false,
+    ) => ({
+        title,
+        requires_native_language,
+        company: { name: company, country_name: country },
+    });
+
+    const POSITIONS = [
+        position('Spotify', 'Sweden', 'Designer'),
+        position('ABB', 'Sweden', 'Engineer', true),
+        position('Spotify', 'Germany', 'Analyst'),
+        position('ABB', 'Sweden', 'Welder'),
+    ];
+
+    test('no grouping leaves the list flat', () => {
+        expect(groupPositions(POSITIONS, null)).toEqual([]);
+    });
+
+    test('groups by company in name order, keeping row order inside', () => {
+        const groups = groupPositions(POSITIONS, 'company');
+
+        expect(groups.map((g) => g.label)).toEqual(['ABB', 'Spotify']);
+        expect(groups[0]?.positions.map((p) => p.title)).toEqual([
+            'Engineer',
+            'Welder',
+        ]);
+    });
+
+    test('groups by country', () => {
+        expect(
+            groupPositions(POSITIONS, 'country').map((g) => g.label),
+        ).toEqual(['Germany', 'Sweden']);
+    });
+
+    test('counts positions per group', () => {
+        expect(groupPositions(POSITIONS, 'company')[0]).toMatchObject({
+            english: 1,
+            total: 2,
+        });
+    });
+
+    test('a single group stays flat', () => {
+        const oneCompany = POSITIONS.filter((p) => p.company.name === 'ABB');
+
+        expect(groupPositions(oneCompany, 'company')).toEqual([]);
+    });
+
+    test('nests countries inside each company with unique keys', () => {
+        const [, spotify] = groupPositions(POSITIONS, 'company-country');
+
+        expect(spotify?.children.map((g) => g.label)).toEqual([
+            'Germany',
+            'Sweden',
+        ]);
+        expect(spotify?.children.map((g) => g.key)).toEqual([
+            'Spotify/Germany',
+            'Spotify/Sweden',
+        ]);
+    });
+
+    test('a company in one country skips the country level', () => {
+        const [abb] = groupPositions(POSITIONS, 'company-country');
+
+        expect(abb).toMatchObject({ children: [], note: 'Sweden' });
+        expect(abb?.positions).toHaveLength(2);
+    });
+});
+
+describe('catalogGroups', () => {
+    const company = (
+        company_id: string,
+        name: string,
+        country_name: string,
+        total_positions: number,
+        english_positions: number,
+    ) => ({
+        company_id,
+        name,
+        country_name,
+        total_positions,
+        english_positions,
+    });
+
+    const CATALOG = [
+        company('spotify-se', 'Spotify', 'Sweden', 4, 3),
+        company('abb-se', 'ABB', 'Sweden', 2, 1),
+        company('abb-de', 'ABB', 'Germany', 3, 1),
+        company('sap-de', 'SAP', 'Germany', 5, 5),
+        company('sap-fr', 'SAP', 'France', 0, 0),
+        company('idle-se', 'Idle', 'Sweden', 0, 0),
+    ];
+
+    test('takes the first companies by name and reports the total', () => {
+        const { groups, total } = catalogGroups(CATALOG, 2);
+
+        expect(groups.map((g) => g.label)).toEqual(['ABB', 'SAP']);
+        expect(total).toBe(3);
+    });
+
+    test('lists countries under a company with summed counts', () => {
+        const [abb] = catalogGroups(CATALOG, 1).groups;
+
+        expect(abb).toMatchObject({ english: 2, total: 5 });
+        expect(abb?.companyId).toBeUndefined();
+        expect(abb?.children).toMatchObject([
+            { key: 'ABB/Germany', label: 'Germany', companyId: 'abb-de' },
+            { key: 'ABB/Sweden', label: 'Sweden', companyId: 'abb-se' },
+        ]);
+    });
+
+    test('a company in one country loads directly, naming the country', () => {
+        const spotify = catalogGroups(CATALOG, 3).groups[2];
+
+        expect(spotify).toMatchObject({
+            label: 'Spotify',
+            note: 'Sweden',
+            companyId: 'spotify-se',
+            children: [],
+        });
+    });
+
+    test('skips countries with no positions', () => {
+        const sap = catalogGroups(CATALOG, 2).groups[1];
+
+        expect(sap).toMatchObject({ note: 'Germany', companyId: 'sap-de' });
+    });
 });
