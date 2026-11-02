@@ -367,7 +367,7 @@ export default function SkillsManager() {
             )}
 
             {selectedCategory && !loading && skills.length > 0 && (
-                <div class="overflow-x-auto lg:overflow-visible rounded-xl border border-gray-200">
+                <div class="overflow-x-auto lg:overflow-clip rounded-xl border border-gray-200">
                     <table class="lg:sticky-head w-full text-sm">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200 text-left">
