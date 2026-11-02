@@ -27,10 +27,9 @@ import {
 } from '../../../lib/ats/smartrecruiters';
 import {
     lookupCountryFromLocation,
-    extractCitiesForCountry,
     extractWorkModelFromLocation,
     getCompanyCountryFallback,
-    toEnglishCityNames,
+    resolveJobCities,
 } from '../../../lib/ats/country-lookup';
 import { classifyJobVerbose } from '../../../lib/classifier';
 import { stripHtml } from '../../../lib/classifiers/language';
@@ -396,15 +395,7 @@ function buildScrapeResult(
         }
 
         for (const countryInfo of trackedCountries) {
-            const cities = toEnglishCityNames(
-                job.cities ??
-                    (job.city
-                        ? [job.city]
-                        : extractCitiesForCountry(
-                              job.location ?? '',
-                              countryInfo.code,
-                          )),
-            );
+            const cities = resolveJobCities(job, countryInfo.code);
             const workModel =
                 job.work_model ??
                 extractWorkModelFromLocation(job.location ?? '');

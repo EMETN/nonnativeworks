@@ -1746,6 +1746,22 @@ export function extractCitiesForCountry(
     return results;
 }
 
+export function resolveJobCities(
+    job: { city?: string; cities?: string[]; location?: string },
+    countryCode: string,
+): string[] {
+    const supplied = job.cities ?? (job.city ? [job.city] : []);
+    const local = supplied.filter((city) => {
+        const home = CITY_MAP[normalizeKey(city)];
+        return !home || home.code === countryCode;
+    });
+    return toEnglishCityNames(
+        local.length > 0
+            ? local
+            : extractCitiesForCountry(job.location ?? '', countryCode),
+    );
+}
+
 export function lookupCountryFromLocation(location: string): CountryInfo[] {
     if (!location || !location.trim()) return [];
 

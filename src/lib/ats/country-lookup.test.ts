@@ -6,6 +6,7 @@ import {
     extractCitiesForCountry,
     extractWorkModelFromLocation,
     lookupCountryFromLocation,
+    resolveJobCities,
     toEnglishCityNames,
 } from './country-lookup';
 
@@ -297,4 +298,58 @@ describe('extractCitiesForCountry', () => {
 
 test('reads the work model from a leading comma segment', () => {
     expect(extractWorkModelFromLocation('Remote, Germany')).toBe('remote');
+});
+
+describe('resolveJobCities', () => {
+    test('falls back to the location when the supplied city is in another country', () => {
+        expect(
+            resolveJobCities(
+                { city: 'Stockholm', location: 'Warsaw, Poland' },
+                'PL',
+            ),
+        ).toEqual(['Warsaw']);
+    });
+
+    test('leaves no city when only the country is known', () => {
+        expect(
+            resolveJobCities({ city: 'Bratislava', location: 'Poland' }, 'PL'),
+        ).toEqual([]);
+    });
+
+    test('keeps only the cities of the given country', () => {
+        expect(
+            resolveJobCities(
+                { cities: ['Stockholm', 'Warsaw', 'Krakow'], location: '' },
+                'PL',
+            ),
+        ).toEqual(['Warsaw', 'Krakow']);
+    });
+
+    test('keeps a supplied city missing from the lookup', () => {
+        expect(
+            resolveJobCities({ city: 'Mo i Rana', location: 'Norway' }, 'NO'),
+        ).toEqual(['Mo i Rana']);
+    });
+
+    test.each([
+        ['Drôme', 'FR'],
+        ['Liège', 'BE'],
+    ])('keeps %s, whose ending looks like a country code', (city, code) => {
+        expect(resolveJobCities({ city }, code)).toEqual([city]);
+    });
+
+    test('translates the supplied city to English', () => {
+        expect(resolveJobCities({ city: 'Warszawa' }, 'PL')).toEqual([
+            'Warsaw',
+        ]);
+    });
+
+    test('extracts from the location when no city is supplied', () => {
+        expect(
+            resolveJobCities(
+                { location: 'Helsinki, Finland; Tallinn, Estonia' },
+                'EE',
+            ),
+        ).toEqual(['Tallinn']);
+    });
 });
