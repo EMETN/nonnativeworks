@@ -1,4 +1,4 @@
-import { detect } from 'tinyld';
+import { detect, detectAll } from 'tinyld';
 import { titleAppearsNonEnglish, KEYWORDS_RE } from '../ats/title-language';
 
 // ---------------------------------------------------------------------------
@@ -464,12 +464,19 @@ function decodeHtmlEntities(text: string): string {
         );
 }
 
+// Unicode space separators (no-break space, en/em/thin spaces, ideographic space…).
+// Left in place they glue words into one token for tinyld, which then reads plain
+// English as another language: Microsoft ads separate words with U+00A0, and
+// paragraphs like "Doctorate AND demonstrable experience in core sales, partner
+// sales…" scored "pt" and "The Sales Enablement & Operations team…" scored "de".
+const UNICODE_SPACES_RE = /[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]/g;
+
 export function stripHtml(html: string): string {
     // Decode entities first so that doubly-encoded HTML (e.g. Greenhouse returns
     // "&lt;li&gt;" as literal text in the JSON) becomes real tags before the
     // stripping regexes run. A second decode pass at the end handles any
     // remaining entities in the text content itself (e.g. "&amp;" → "&").
-    const decoded = decodeHtmlEntities(html);
+    const decoded = decodeHtmlEntities(html).replace(UNICODE_SPACES_RE, ' ');
 
     // Remove entire sections that are never part of the job description body.
     // These are stripped with their contents to prevent navigation/footer text
@@ -493,7 +500,7 @@ export function stripHtml(html: string): string {
             .replace(/\n[ \t]*/g, '\n')
             .replace(/\n{3,}/g, '\n\n')
             .trim(),
-    );
+    ).replace(UNICODE_SPACES_RE, ' ');
 }
 
 /**
@@ -1198,6 +1205,44 @@ function detectChunkLanguage(chunk: string): string {
     return winnerCount > windows.length / 2 ? winner : '';
 }
 
+// A chunk's non-English verdict is only trusted when tinyld is confident about it or
+// the language covers a meaningful share of the description. tinyld sometimes misreads
+// ONE paragraph of plain English as another language with a low score — e.g. the single
+// "č" in "Kč" in Microsoft's Czech pay-range line scores the whole line "lt" (0.58)
+// against "en" (0.42), and tinyld weights diacritics so heavily that no length guard
+// helps. Such a chunk is a lone outlier among many English paragraphs, whereas a
+// genuinely native ad is mostly in its language. Checked on 843 real DHL descriptions:
+// all 285 that are flagged non-English stay flagged, since none relies solely on a
+// low-confidence chunk that is also a small share of its text.
+//
+// The diacritic-folding recheck used for Romanian (detectWindowLanguage) cannot be
+// generalised instead: on the same corpus it would turn 7 genuine French, German and
+// Dutch paragraphs ("Je komt te werken op het hoofdkantoor van DHL…") into English.
+const MIN_CONFIDENT_ACCURACY = 0.65;
+const MIN_LANGUAGE_SHARE = 0.4;
+
+type ChunkVerdict = { chunk: string; code: string; accuracy: number };
+
+function detectChunkVerdict(chunk: string): ChunkVerdict {
+    const code = detectChunkLanguage(chunk);
+    // An oversized chunk's verdict is a majority vote across windows, which is
+    // corroboration in itself; a single-window verdict has only tinyld's score.
+    let accuracy = 1;
+    if (code && code !== 'en' && windowOversizedChunk(chunk).length <= 1) {
+        accuracy = detectAll(chunk).find((l) => l.lang === code)?.accuracy ?? 0;
+    }
+    return { chunk, code, accuracy };
+}
+
+function isTrustedVerdict(verdict: ChunkVerdict, all: ChunkVerdict[]): boolean {
+    if (verdict.accuracy >= MIN_CONFIDENT_ACCURACY) return true;
+    const total = all.reduce((n, v) => n + v.chunk.length, 0);
+    const sameLanguage = all
+        .filter((v) => v.code === verdict.code)
+        .reduce((n, v) => n + v.chunk.length, 0);
+    return total > 0 && sameLanguage / total >= MIN_LANGUAGE_SHARE;
+}
+
 /**
  * Like anyChunkInNativeLanguage but returns the matching chunk and detected
  * language code so callers can log exactly what triggered detection.
@@ -1222,9 +1267,11 @@ function findNativeLanguageChunk(
     const nativeCharEntry = countryCode
         ? COUNTRY_NATIVE_CHARS[countryCode]
         : undefined;
-    for (const chunk of candidates) {
-        const code = detectChunkLanguage(chunk);
+    const verdicts = candidates.map(detectChunkVerdict);
+    for (const verdict of verdicts) {
+        const { chunk, code } = verdict;
         if (!langCodes.includes(code)) continue;
+        if (!isTrustedVerdict(verdict, verdicts)) continue;
         // If we have a native-char pattern for this country, require at least 2
         // such characters in the chunk. A single accented letter from one word is
         // not enough evidence — it too easily misleads tinyld on English text.
@@ -1305,10 +1352,12 @@ function findAnyNonEnglishChunk(
             : text.trim().length >= 200
               ? [text.trim()]
               : [];
-    for (const chunk of candidates) {
-        const code = detectChunkLanguage(chunk);
+    const verdicts = candidates.map(detectChunkVerdict);
+    for (const verdict of verdicts) {
+        const { chunk, code } = verdict;
         if (!code || code.length !== 2 || code === 'en') continue;
         if (!TRUSTED_LANG_CODES.has(code)) continue;
+        if (!isTrustedVerdict(verdict, verdicts)) continue;
         if (
             MEDIUM_CONFIDENCE_LANGS.has(code) &&
             chunk.length < MEDIUM_CONFIDENCE_MIN_CHUNK
