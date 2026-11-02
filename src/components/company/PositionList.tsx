@@ -261,6 +261,7 @@ export default function PositionList({ positions, kind, report }: Props) {
                     />
                 </svg>
                 <input
+                    name="search-positions"
                     type="text"
                     aria-label="Search positions"
                     placeholder="Search positions"
@@ -363,6 +364,7 @@ export default function PositionList({ positions, kind, report }: Props) {
                                 />
                             </svg>
                             <select
+                                name="sort"
                                 aria-label="Sort by"
                                 value={activeSort}
                                 onPointerDown={() => setSortByPointer(true)}

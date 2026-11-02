@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useId, useState, useEffect } from 'preact/hooks';
 import { CATEGORIES } from '../../lib/categories';
 import { isHttpUrl } from '../../lib/safe-url';
 import { atsLabel } from '../../lib/ats/detector';
@@ -236,6 +236,8 @@ export default function Scraper() {
                 <div>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <input
+                            name="career-page-url"
+                            aria-label="Career page URL"
                             type="url"
                             placeholder="company.com/careers"
                             value={url}
@@ -467,6 +469,7 @@ function ReviewPanel({
                         Company name
                     </label>
                     <input
+                        name="company-name"
                         type="text"
                         value={data.company_name}
                         onInput={(e) =>
@@ -493,6 +496,7 @@ function ReviewPanel({
                     <div class="flex items-center gap-3 min-h-[2.375rem]">
                         <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
                             <input
+                                name="is-english-company"
                                 type="checkbox"
                                 checked={data.is_english_company}
                                 onChange={(e) =>
@@ -743,6 +747,7 @@ interface JobRowProps {
 }
 
 function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
+    const languageGroup = useId();
     const langStatus: LanguageStatus = job.requires_native_language
         ? 'required'
         : job.local_language_advantage
@@ -769,6 +774,8 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
             <td class="px-4 py-2 text-gray-600">{job.city?.join(', ')}</td>
             <td class="px-4 py-2">
                 <select
+                    name="category"
+                    aria-label={`Category for ${job.title}`}
                     value={job.category}
                     onChange={(e) =>
                         onCategory((e.target as HTMLSelectElement).value)
@@ -792,6 +799,7 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
                             class="flex items-center gap-1 cursor-pointer"
                         >
                             <input
+                                name={languageGroup}
                                 type="radio"
                                 checked={langStatus === status}
                                 onChange={() => onLanguage(status)}
