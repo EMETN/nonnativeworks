@@ -151,10 +151,14 @@ function mapItem(
     }
 
     const cities = getStringArray(item, fields.cities);
+    const allLocations = getStringArray(item, fields.locations);
 
     return {
         title,
-        location: getString(item, fields.location),
+        location:
+            allLocations.length > 0
+                ? allLocations.join('; ')
+                : getString(item, fields.location),
         cities: cities.length > 0 ? cities : undefined,
         country_code: fields.country
             ? (getString(item, fields.country) ?? undefined)
@@ -1306,7 +1310,11 @@ export async function fetchCompanyApiJobs(
                 };
             }
             const jobs = await fetchAllJobsRaw(spec, label);
-            if (method === 'GET') {
+            // With fields.locations the job already carries every country of the posting,
+            // so the queried country is not authoritative (the filter can leak neighbours)
+            // and a posting listed under several queries is simply one job, which
+            // deduplication collapses. Skip the tagging below.
+            if (method === 'GET' && !config.fields.locations) {
                 // Tag each job with the filter country so the same job appearing in
                 // multiple country queries survives as a separate entry per country.
                 // Without this, dedup by sourceId would collapse them into one, and

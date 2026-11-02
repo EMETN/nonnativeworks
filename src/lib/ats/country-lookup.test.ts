@@ -2,7 +2,10 @@
 // Watch mode: pnpm test:watch
 
 import { test, expect, describe } from 'vitest';
-import { lookupCountryFromLocation } from './country-lookup';
+import {
+    extractCitiesForCountry,
+    lookupCountryFromLocation,
+} from './country-lookup';
 
 const codes = (loc: string) =>
     lookupCountryFromLocation(loc)
@@ -158,5 +161,25 @@ describe('lookupCountryFromLocation — Czechia', () => {
                 { name: 'Czechia', code: 'CZ', slug: 'czechia' },
             ]);
         }
+    });
+});
+
+describe('extractCitiesForCountry', () => {
+    test('does not report a "Multiple Locations" placeholder as a city', () => {
+        expect(
+            extractCitiesForCountry(
+                'Finland, Multiple Locations, Multiple Locations',
+                'FI',
+            ),
+        ).toEqual([]);
+    });
+
+    test('still reports the real cities of a country in a multi-country posting', () => {
+        expect(
+            extractCitiesForCountry(
+                'Finland, Uusimaa, Helsinki; Ireland, Dublin, Dublin',
+                'FI',
+            ),
+        ).toEqual(['Helsinki']);
     });
 });

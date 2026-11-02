@@ -1642,6 +1642,10 @@ export function extractWorkModelFromLocation(
  * Country names and cities from other countries are discarded.
  * Returns an empty array when no matching cities are found.
  */
+/** Place-name segments that stand for "no specific city". */
+const PLACEHOLDER_PLACE_RE =
+    /^(?:multiple|various)(?:\s+(?:locations?|cities))?$/i;
+
 export function extractCitiesForCountry(
     location: string,
     countryCode: string,
@@ -1684,6 +1688,8 @@ export function extractCitiesForCountry(
                 if (resolved.length > 0 && !CITY_MAP[normalizeKey(segment)]) {
                     continue;
                 }
+                // ...and placeholders such as "Finland, Multiple Locations".
+                if (PLACEHOLDER_PLACE_RE.test(segment)) continue;
                 results.push(segment);
                 break;
             }

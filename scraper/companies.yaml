@@ -259,6 +259,10 @@ companies:
       url: https://metso.com/corporate/careers/open-jobs
       min_positions: 1
 
+    - name: Microsoft
+      url: https://apply.careers.microsoft.com/careers
+      min_positions: 50
+
     - name: Mistral
       url: https://jobs.ashbyhq.com/mistral.ai
       min_positions: 10

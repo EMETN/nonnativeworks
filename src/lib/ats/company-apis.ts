@@ -126,6 +126,14 @@ export interface CompanyApiConfig {
         title: string;
         location?: string;
         /**
+         * Dot-path to an array of location strings, joined with "; " into job.location so
+         * every country of a multi-country posting is resolved (one position per tracked
+         * country, with that country's cities). Takes priority over `location`, which
+         * only ever reads an array's first element. Use when the API lists all of a
+         * posting's locations in one array (e.g. Microsoft's `locations`).
+         */
+        locations?: string;
+        /**
          * Dot-path to an array or object of city name strings (e.g. sfstd_jobLocation_obj).
          * Populates job.cities with all city strings found. Takes priority over location-derived
          * city extraction when present.
@@ -327,6 +335,8 @@ export interface CompanyApiConfig {
      * POST requests: entry fields are merged into the request body.
      * GET requests: entry fields are appended as URL query params.
      * Use when the API requires separate requests per filter value (e.g. one country per request).
+     * GET requests tag each job with the queried country (country_code) — except when
+     * fields.locations is set: those jobs keep their own full location list instead.
      */
     repeatFor?: {
         body: Record<string, unknown>[];
@@ -486,6 +496,71 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             url: 'canonicalPositionUrl',
             id: 'id',
         },
+    },
+
+    // Microsoft's Eightfold "PCSX" API (the classic /api/apply/v2 returns 403 "Not
+    // authorized for PCSX"). Fixed page size of 10 and a hard throttle (~1 request per
+    // 7s sustained, 429s otherwise), so the full ~2,100-posting board (213 pages) is
+    // out of reach — query one tracked country at a time instead (~40 requests).
+    // The `location` filter is a fuzzy geo search that leaks neighbouring countries
+    // (Netherlands returns Belgium-only jobs), so fields.locations joins every location
+    // of a posting and the country is resolved from that, not from the query (GET
+    // repeatFor skips its own tagging when fields.locations is set). A posting found
+    // under several queries is deduplicated by id. Poland, Hungary and Iceland have no
+    // postings today but cost one request each. Descriptions come from the per-job
+    // endpoint, for tracked countries only.
+    'apply.careers.microsoft.com': {
+        url: 'https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com&query=&sort_by=relevance',
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'data.count',
+        },
+        itemsPath: 'data.positions',
+        companyName: 'Microsoft',
+        urlTemplate: 'https://apply.careers.microsoft.com{positionUrl}',
+        fields: {
+            title: 'name',
+            locations: 'locations',
+            department: 'department',
+            id: 'id',
+        },
+        repeatFor: {
+            body: [
+                { location: 'Finland' },
+                { location: 'Sweden' },
+                { location: 'Norway' },
+                { location: 'Denmark' },
+                { location: 'Iceland' },
+                { location: 'Netherlands' },
+                { location: 'Germany' },
+                { location: 'Estonia' },
+                { location: 'Latvia' },
+                { location: 'Lithuania' },
+                { location: 'Poland' },
+                { location: 'France' },
+                { location: 'Belgium' },
+                { location: 'Luxembourg' },
+                { location: 'Switzerland' },
+                { location: 'Spain' },
+                { location: 'Portugal' },
+                { location: 'Austria' },
+                { location: 'Italy' },
+                { location: 'Hungary' },
+                { location: 'Croatia' },
+                { location: 'Romania' },
+                { location: 'Bulgaria' },
+                { location: 'Greece' },
+                { location: 'Czech Republic' },
+            ],
+        },
+        descriptionApiUrl:
+            'https://apply.careers.microsoft.com/api/pcsx/position_details?position_id={sourceId}&domain=microsoft.com&hl=en',
+        descriptionApiItemsPath: 'data',
+        descriptionApiFields: ['jobDescription'],
     },
 
     // Bayer's Eightfold API, same num=10 cap as Netflix's — paginate by start offset.
