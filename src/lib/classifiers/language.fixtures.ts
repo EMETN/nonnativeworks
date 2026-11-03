@@ -59,6 +59,15 @@ const MS_ENGLISH_INTRO =
 const MS_PAY_RANGE_LINE = // tinyld: "lt" 0.58
     'Customer Experience Engineering IC4 - The typical base pay range for this role across Czechia is Kč 1,338,000.00 - Kč 2,448,000.00 per year. Certain roles may be eligible for benefits and other compensation.';
 
+// Kraken's English intro: tinyld reads "Kraken Security Labs" as Latvian ("lv" 0.66, just
+// over the trust cutoff) although the paragraph has no Latvian letters.
+const KRAKEN_SECURITY_LABS_PARAGRAPH =
+    'We are seeking a skilled & hands-on Senior Security Architect for Kraken Security Labs. Kraken Security Labs provides boutique-style, deeply technical internal security consulting on current and future products.';
+
+// A genuine Latvian paragraph (a job ad), full of Latvian letters.
+const LATVIAN_PARAGRAPH =
+    'Mēs meklējam pieredzējušu pārdošanas vadītāju, kas palīdzēs attīstīt mūsu klientu portfeli un veidot ilgtermiņa attiecības ar sadarbības partneriem. Jūs būsiet atbildīgs par tirdzniecības piedāvājumu sagatavošanu, sarunām ar klientiem un komandas darba koordinēšanu. Nepieciešamas teicamas latviešu valodas zināšanas, jo ikdienā sazināsieties ar vietējiem uzņēmumiem.';
+
 // A genuine French paragraph: tinyld is confident about it (well above the trust threshold).
 const FRENCH_PARAGRAPH =
     'Nous recherchons un ingénieur commercial expérimenté pour renforcer notre équipe en pleine croissance. Vous serez responsable du développement de notre portefeuille de clients, de la préparation des offres commerciales et du suivi des relations avec nos partenaires. Une excellente maîtrise du français, à l’oral comme à l’écrit, est indispensable pour ce poste, car vous échangerez quotidiennement avec des clients francophones.';
@@ -1641,6 +1650,26 @@ export const CASES: FixtureCase[] = [
         title: 'Account Executive',
         desc: MS_ENGLISH_INTRO + MS_PAY_RANGE_LINE + '\n' + FRENCH_PARAGRAPH,
         country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '1c-any — English Kraken ad whose "Kraken Security Labs" paragraph scores "lv" (0.66) but has no Latvian letters → not required',
+        title: 'Staff Security Architect',
+        desc:
+            MS_ENGLISH_INTRO +
+            KRAKEN_SECURITY_LABS_PARAGRAPH +
+            '\n' +
+            MS_ENGLISH_INTRO,
+        country: 'SE',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '1c-any — a genuine Latvian paragraph on a Swedish listing is still flagged (has Latvian letters)',
+        title: 'Sales Manager',
+        desc: LATVIAN_PARAGRAPH,
+        country: 'SE',
         requires: true,
         advantage: false,
     },

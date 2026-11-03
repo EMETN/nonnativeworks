@@ -1332,6 +1332,21 @@ const SCRIPT_GATED_LANGS: Partial<Record<string, RegExp>> = {
     el: /[\u0370-\u03FF\u1F00-\u1FFF]/, // Greek
 };
 
+// Languages whose alphabet has letters English never uses. Genuine text in them runs
+// to dozens of such letters per paragraph, so a chunk tinyld calls e.g. Latvian with
+// fewer than two of them is a misfire on English — typically a proper noun, like
+// "Kraken Security Labs" scoring "lv" 0.66. Deliberately limited to these: the Nordic,
+// German and French letters also turn up in loanwords and place names inside English
+// ads, so a count of them says little either way.
+const LANG_DISTINCTIVE_CHARS: Partial<Record<string, RegExp>> = {
+    lv: COUNTRY_NATIVE_CHARS.LV!.pattern,
+    lt: COUNTRY_NATIVE_CHARS.LT!.pattern,
+    et: COUNTRY_NATIVE_CHARS.EE!.pattern,
+    pl: COUNTRY_NATIVE_CHARS.PL!.pattern,
+    is: COUNTRY_NATIVE_CHARS.IS!.pattern,
+};
+const MIN_DISTINCTIVE_CHARS = 2;
+
 /**
  * Checks whether any chunk of the text is detected as a non-English language
  * by tinyld. Used as a fallback when the description is written in a language
@@ -1365,6 +1380,12 @@ function findAnyNonEnglishChunk(
             continue;
         const scriptGate = SCRIPT_GATED_LANGS[code];
         if (scriptGate && !scriptGate.test(chunk)) continue;
+        const distinctive = LANG_DISTINCTIVE_CHARS[code];
+        if (
+            distinctive &&
+            (chunk.match(distinctive)?.length ?? 0) < MIN_DISTINCTIVE_CHARS
+        )
+            continue;
         return { chunk, detectedCode: code };
     }
     return null;
