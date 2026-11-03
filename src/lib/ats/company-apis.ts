@@ -1154,6 +1154,71 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         descriptionApiWorkModelField: 'workLocationOption',
     },
 
+    // Nvidia's Eightfold PCSX API (~2,700 postings worldwide, 10 per page), queried one
+    // tracked country at a time like Ericsson and Microsoft. The `location` filter is a
+    // fuzzy geo search that also matches postings listing several countries
+    // (Finland returns jobs also in Germany and Sweden), so fields.locations joins every
+    // location of a posting and the country is resolved from that, not from the query.
+    // A posting found under several queries is deduplicated by id.
+    'jobs.nvidia.com': {
+        url: 'https://jobs.nvidia.com/api/pcsx/search?domain=nvidia.com&query=&sort_by=hot',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: 'application/json',
+            Referer: 'https://jobs.nvidia.com/careers',
+        },
+        repeatFor: {
+            body: [
+                { location: 'Austria' },
+                { location: 'Belgium' },
+                { location: 'Bulgaria' },
+                { location: 'Croatia' },
+                { location: 'Czech Republic' },
+                { location: 'Denmark' },
+                { location: 'Estonia' },
+                { location: 'Finland' },
+                { location: 'France' },
+                { location: 'Germany' },
+                { location: 'Greece' },
+                { location: 'Hungary' },
+                { location: 'Iceland' },
+                { location: 'Italy' },
+                { location: 'Latvia' },
+                { location: 'Lithuania' },
+                { location: 'Luxembourg' },
+                { location: 'Netherlands' },
+                { location: 'Norway' },
+                { location: 'Poland' },
+                { location: 'Portugal' },
+                { location: 'Romania' },
+                { location: 'Spain' },
+                { location: 'Sweden' },
+                { location: 'Switzerland' },
+            ],
+        },
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'data.count',
+        },
+        itemsPath: 'data.positions',
+        fields: {
+            title: 'name',
+            locations: 'locations',
+            id: 'id',
+            department: 'department',
+        },
+        urlTemplate: 'https://jobs.nvidia.com{positionUrl}',
+        companyName: 'Nvidia',
+        descriptionApiUrl:
+            'https://jobs.nvidia.com/api/pcsx/position_details?position_id={sourceId}&domain=nvidia.com&hl=en',
+        descriptionApiItemsPath: 'data',
+        descriptionApiFields: ['jobDescription'],
+        descriptionApiWorkModelField: 'workLocationOption',
+    },
+
     'teliacompany.com': {
         url: 'https://www.teliacompany.com/api/job',
         method: 'GET',

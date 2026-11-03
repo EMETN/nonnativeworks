@@ -76,6 +76,7 @@
 - Nordea
 - Nordnet
 - Novo Nordisk
+- Nvidia
 - NXP
 - Ogilvy
 - OP Financial Group
@@ -191,6 +192,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)                                                                                                                                               |
 | AMD                | `careers.amd.com`                            | Jibe jobs API                                                                                                                                                                                      |
 | Ericsson           | `jobs.ericsson.com`                          | Eightfold PCSX search API                                                                                                                                                                          |
+| Nvidia             | `jobs.nvidia.com`                            | Eightfold PCSX search API, one query per tracked country                                                                                                                                           |
 
 ---
 
