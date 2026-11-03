@@ -1810,4 +1810,6 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'theheinekencompany.com', name: 'Heineken' },
     { urlSubstring: 'jobs.deel.com/klarna', name: 'Klarna' },
     { urlSubstring: 'mistral.ai', name: 'Mistral' },
+    { urlSubstring: 'jobs.ashbyhq.com/kraken.com', name: 'Kraken/Payward' },
+    { urlSubstring: 'zuehlke.wd3.myworkdayjobs.com', name: 'Zühlke' },
 ];
