@@ -214,6 +214,7 @@ company_domains=(
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
     "jobs.autodesk.com"  # Autodesk
+    "careers.axpo.com"  # Axpo
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
@@ -236,7 +237,9 @@ company_domains=(
     "careers.doctolib.fr"  # Doctolib
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
+    "elevenlabs.io"  # ElevenLabs
     "elisa.com"  # Elisa
+    "www.jobs.enpal.com"  # Enpal
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "careers.feedzai.com"  # Feedzai
@@ -286,6 +289,7 @@ company_domains=(
     "jobs.nokia.com"  # Nokia
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
+    "nordsecurity.com"  # Nord Security
     "jobs.nvidia.com"  # Nvidia
     "nxp.wd3.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
@@ -293,6 +297,8 @@ company_domains=(
     "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla
     "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
+    "www.perk.com"  # Perk
+    "www.personio.com"  # Personio
     "philips.wd3.myworkdayjobs.com"  # Philips
     "jobs.picnic.app"  # Picnic
     "posti.wd3.myworkdayjobs.com"  # Posti

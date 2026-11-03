@@ -570,6 +570,10 @@ companies:
       url: https://jobs.zalando.com/en/jobs
       min_positions: 10
 
+    - name: Zühlke
+      url: https://zuehlke.wd3.myworkdayjobs.com/Zuhlke-Careers
+      min_positions: 3
+
 # Examples — uncomment and fill in real values:
 #
 # ATS-based (Greenhouse, Lever, Ashby, Workable — fast, no browser needed):
