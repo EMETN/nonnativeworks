@@ -214,7 +214,8 @@ company_domains=(
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
     "jobs.autodesk.com"  # Autodesk
-    "careers.axpo.com"  # Axpo
+    "careers.axpo.com"  # Axpo Group
+    "ckw.ch"  # Axpo Group (CKW; its Teamtailor pages redirect here)
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons

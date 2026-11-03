@@ -101,6 +101,40 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
     });
 });
 
+describe('lookupCountryFromLocation — Axpo Group sites', () => {
+    test('Swiss towns resolve, with or without a parenthesised site name', () => {
+        expect(codes('Baden')).toEqual(['CH']);
+        expect(codes('Luzern (Reussbühl)')).toEqual(['CH']);
+        expect(codes('Emmen (Rathausen)')).toEqual(['CH']);
+        expect(codes('Küssnacht am Rigi')).toEqual(['CH']);
+        expect(codes('Domat/Ems')).toEqual(['CH']);
+        expect(codes('Kernkraftwerk Leibstadt AG')).toEqual(['CH']);
+    });
+
+    test('a multi-site list resolves to Switzerland once', () => {
+        expect(codes('Lupfig, Emmen (Rathausen), Risch-Rotkreuz')).toEqual([
+            'CH',
+        ]);
+    });
+
+    test('towns outside Switzerland resolve to their own country', () => {
+        expect(codes('Genova')).toEqual(['IT']);
+        expect(codes('Jerez de la Frontera')).toEqual(['ES']);
+        expect(codes('Volkswind GmbH, Ganderkesee')).toEqual(['DE']);
+        expect(codes('Volkswind France, Limoges')).toEqual(['FR']);
+    });
+
+    test('Baden-Württemberg is not mistaken for Baden', () => {
+        expect(codes('Baden-Württemberg, Germany')).toEqual(['DE']);
+    });
+
+    test('names shared with a place in another tracked country stay unresolved', () => {
+        expect(codes('Zell am See')).toEqual([]);
+        expect(codes('Rothenburg ob der Tauber')).toEqual([]);
+        expect(codes('Birr')).toEqual([]);
+    });
+});
+
 describe('lookupCountryFromLocation — "City, XX" code qualifies the city', () => {
     test.each([
         ['San Francisco, CA', ['US']],

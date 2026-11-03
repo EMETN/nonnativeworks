@@ -87,6 +87,10 @@ companies:
       url: https://jobs.autodesk.com/careers
       min_positions: 10
 
+    - name: Axpo Group
+      url: https://careers.axpo.com/jobs
+      min_positions: 30
+
     - name: Barona
       url: https://www.barona.fi/en/jobs/
       min_positions: 10

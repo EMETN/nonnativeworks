@@ -565,6 +565,18 @@ scrapers:
           param: page
           page_size: 20
 
+    # ── Axpo Group (TeamTailor) ────────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length). The board aggregates the whole
+    # group (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...), all under one company.
+    - match: 'careers.axpo.com'
+      name: Axpo Group
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
     # ── IQM (TeamTailor) ─────────────────────────────────────────────────────────
     # page_size must be 20 (Teamtailor's page length).
     - match: 'iqm.teamtailor.com'

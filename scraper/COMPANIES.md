@@ -14,6 +14,7 @@
 - Arla
 - ASML
 - Autodesk
+- Axpo Group
 - Barona
 - Bayer
 - Bending Spoons
@@ -237,6 +238,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Nitor | `nitor.com/en/careers` | `css_cards` | Contentful page, all postings on one page (no pagination). Card is the link itself; no location on the cards, so `default_location: Finland` (offices in Helsinki and Tampere). Includes an "Open Application" entry |
 | NestAI | `careers.nestai.com/jobs` | teamtailor | Marketing page `nestai.com/open-positions` is a Webflow list of the same jobs; 20 per page |
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
+| Axpo Group | `careers.axpo.com/jobs` | teamtailor | Board aggregates the group's Teamtailor sites (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...); 20 per page. CKW pages redirect to `ckw.ch` |
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |
 | Bending Spoons | `jobs.bendingspoons.com` | `next_data` | All postings and their full text are in the page's `__NEXT_DATA__`; no detail fetches. One job per office country |
 | GE Healthcare | `careers.gehealthcare.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Job links use `url_template` (applyUrl points at Workday) |
