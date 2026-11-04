@@ -568,10 +568,13 @@ scrapers:
     # ── Axpo Group (TeamTailor) ────────────────────────────────────────────────────────
     # page_size must be 20 (Teamtailor's page length). The board aggregates the whole
     # group (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...), all under one company.
+    # Cards often show "Hybrid"/"Fully Remote"/an entity name instead of a place, so
+    # detail_location_jsonld reads the real address from each job page's JSON-LD.
     - match: 'careers.axpo.com'
       name: Axpo Group
       extract_mode: teamtailor
       description_selector: 'div.prose'
+      detail_location_jsonld: true
       pagination:
           type: page
           param: page

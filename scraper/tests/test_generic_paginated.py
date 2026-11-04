@@ -459,3 +459,59 @@ class ExtractCardTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_jsonld_location_reads_address():
+    from platforms.generic_paginated import _jsonld_location
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+        '"address":{"addressLocality":"Madrid","addressCountry":"ES"}}]}</script>'
+    )
+    assert _jsonld_location(html) == "Madrid, ES"
+
+
+def test_jsonld_location_empty_address_is_none():
+    from platforms.generic_paginated import _jsonld_location
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+        '"address":{}}]}</script>'
+    )
+    assert _jsonld_location(html) is None
+
+
+def test_new_session_upgrades_http_redirect():
+    from unittest import mock
+
+    import requests
+
+    from platforms.generic_paginated import _new_session
+
+    hop = requests.Response()
+    hop.status_code = 301
+    hop.headers["location"] = "http://ckw.ch/careers/jobs/1"
+    hop.url = "https://ckw.teamtailor.com/jobs/1"
+    final = requests.Response()
+    final.status_code = 200
+    final.url = "https://ckw.ch/careers/jobs/1"
+    seen = []
+
+    def fake_send(self, request, **kw):
+        seen.append(request.url)
+        resp = hop if len(seen) == 1 else final
+        resp.request = request
+        return resp
+
+    with mock.patch.object(requests.adapters.HTTPAdapter, "send", fake_send):
+        _new_session().get("https://ckw.teamtailor.com/jobs/1")
+    assert seen[1] == "https://ckw.ch/careers/jobs/1"
+
+
+def test_card_work_model():
+    from platforms.generic_paginated import _card_work_model
+
+    assert _card_work_model("Hybrid") == "Hybrid"
+    assert _card_work_model("Fully Remote") == "Remote"
+    assert _card_work_model("Baden") is None
+    assert _card_work_model(None) is None

@@ -195,6 +195,7 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
     # ── German ───────────────────────────────────────────────────────────
     "DE": [
         "anforderung",  # requirement
+        "anlagenwart",  # plant attendant
         "architekt",  # architect
         "assistenz",  # assistant
         "ausbilder",  # instructor, trainer
@@ -202,9 +203,13 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "aushilfe",  # temporary worker
         "ausschreiberung",  # tender
         "auszubildender",  # trainee
+        "bauleiter",  # construction / site manager
         "berater",  # consultant / advisor
         "datenbank",  # database
         "digitalisierung",  # digitalization
+        "einkauf",  # purchasing
+        "elektriker",  # electrician
+        "elektroinstallateur",  # electrical installer
         "elektroniker",  # electrician
         "energiebranche",  # energy sector
         "entwickler",  # developer
@@ -218,9 +223,11 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "genehmigung",  # approval
         "geomatiker",  # geomatics engineer
         "glasfaser",  # fibre optic
+        "gruppenleiter",  # group leader
         "informatik",  # computer science
         "infrastruktur",  # infrastructure
         "ingenieur",  # engineer
+        "initiativbewerbung",  # open application
         "kauffrau",  # merchant / business person (female form)
         "kaufmann",  # merchant / business person
         "konstrukteur",  # designer / design engineer
@@ -228,6 +235,8 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "kraftfahrer",  # driver
         "laborant",  # laboratory technician
         "landschaft",  # landscape
+        "lehrstelle",  # apprenticeship position
+        "lernende",  # apprentice (CH)
         "logistik",  # logistics
         "masterstudium",  # master's degree/programme
         "mechaniker",  # mechanic
@@ -236,10 +245,14 @@ _TITLE_KEYWORDS_BY_LANG: dict[str, list[str]] = {
         "praktikant",  # intern
         "praktikum",  # internship
         "projekt",  # project
+        "reaktoroperateur",  # reactor operator
+        "ressortleiter",  # division head (CH)
         "sachbearbeiter",  # clerk / officer
+        "schnupperlehre",  # trial apprenticeship (CH)
         "schwerpunkt",  # focus
         "spezialist",  # specialist
         "studium",  # degree programme
+        "systembetreuer",  # system administrator
         "teamleiter",  # team lead
         "teamleitung",  # team leader
         "technischer",  # technical
