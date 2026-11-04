@@ -1761,6 +1761,8 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
     'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
+    // elevenlabs.io/careers/positions renders client-side; the jobs live on Ashby.
+    'elevenlabs.io': 'https://jobs.ashbyhq.com/elevenlabs',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────
@@ -1811,6 +1813,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'jobs.deel.com/klarna', name: 'Klarna' },
     { urlSubstring: 'mistral.ai', name: 'Mistral' },
     { urlSubstring: 'jobs.ashbyhq.com/kraken.com', name: 'Kraken/Payward' },
+    { urlSubstring: 'jobs.ashbyhq.com/elevenlabs', name: 'ElevenLabs' },
     { urlSubstring: 'careers.axpo.com', name: 'Axpo Group' },
     { urlSubstring: 'zuehlke.wd3.myworkdayjobs.com', name: 'Zühlke' },
 ];
