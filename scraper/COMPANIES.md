@@ -87,6 +87,7 @@
 - Orion
 - Orkla
 - Oura
+- Personio (local script)
 - Philips
 - Picnic
 - Posti
@@ -186,6 +187,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                                                                                                                                              |
 | Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                                                                                                                                                |
 | Barona             | `barona.fi`                                  | WordPress AJAX feed (1-based pages, inline descriptions, ISO2 country); no per-job language data, classifier decides                                                                               |
+| Personio           | `personio.com`                               | First-party JSON list (`/api/careers/jobs/list/`, no pagination); job pages are behind a bot checkpoint, so no descriptions — title-only classification                                            |
 | Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions)                                                                                                                          |
 | Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)                                                                                                                                |     |
 | Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                                                                                                                                                               |

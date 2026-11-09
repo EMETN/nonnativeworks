@@ -428,6 +428,27 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         descriptionFields: ['description'],
     },
 
+    // Personio's own careers page is a Next.js app that reads one first-party JSON
+    // endpoint (/api/careers/jobs/list/, trailing slash required — without it a 308
+    // redirects). It answers ordinary clients, but the HTML pages (job details
+    // included) sit behind a Vercel bot checkpoint, so no description is fetched:
+    // classification works from the title alone. allOffices lists every office a
+    // posting is open in ("Remote Germany" resolves to Germany by prefix).
+    'personio.com': {
+        url: 'https://www.personio.com/api/careers/jobs/list/',
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        pagination: { type: 'none' },
+        companyName: 'Personio',
+        fields: {
+            title: 'name',
+            locations: 'allOffices',
+            department: 'department',
+            id: 'id',
+        },
+        urlTemplate: 'https://www.personio.com/careers/{id}/',
+    },
+
     // Stellantis runs on a Madgex/CWS career site whose search widget calls Google
     // Cloud Talent Solution through jobsapi-google.m-cloud.io (the org id and endpoint
     // are in the page's cws_opts). ~750 jobs, each with its description inline and an
