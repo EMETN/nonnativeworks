@@ -175,6 +175,10 @@ companies:
       url: https://elevenlabs.io/careers/positions
       min_positions: 30
 
+    - name: Enpal
+      url: https://www.jobs.enpal.com/jobs
+      min_positions: 30
+
     - name: Equinor
       url: https://equinor.wd3.myworkdayjobs.com/EQNR
       min_positions: 1

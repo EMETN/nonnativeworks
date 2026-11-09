@@ -1784,6 +1784,8 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
     // elevenlabs.io/careers/positions renders client-side; the jobs live on Ashby.
     'elevenlabs.io': 'https://jobs.ashbyhq.com/elevenlabs',
+    // jobs.enpal.com is a Webflow page that reads Ashby through its own proxy.
+    'jobs.enpal.com': 'https://jobs.ashbyhq.com/enpal',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────
@@ -1835,6 +1837,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'mistral.ai', name: 'Mistral' },
     { urlSubstring: 'jobs.ashbyhq.com/kraken.com', name: 'Kraken/Payward' },
     { urlSubstring: 'jobs.ashbyhq.com/elevenlabs', name: 'ElevenLabs' },
+    { urlSubstring: 'jobs.ashbyhq.com/enpal', name: 'Enpal' },
     { urlSubstring: 'careers.axpo.com', name: 'Axpo Group' },
     { urlSubstring: 'zuehlke.wd3.myworkdayjobs.com', name: 'Zühlke' },
 ];
