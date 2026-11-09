@@ -280,6 +280,15 @@ def _extract_card(card, base_url: str, cfg: dict) -> dict | None:
     # Single-site companies whose cards carry no location at all.
     location = location or cfg.get("default_location")
 
+    # A separate work-model label on the card ("Hybrid", "Remote", "On-site") rides
+    # along as a "Hybrid - City" prefix, which the TypeScript side reads the work
+    # model from and strips before the country lookup.
+    if location and (wm_sel := cfg.get("work_model_selector")):
+        wm_tag = card.select_one(wm_sel)
+        mode = _card_work_model(wm_tag.get_text(strip=True) if wm_tag else None)
+        if mode:
+            location = f"{mode} - {location}"
+
     return build_job(title, job_url, location)
 
 
@@ -1246,6 +1255,8 @@ def _card_work_model(label: str | None) -> str | None:
         return "Hybrid"
     if "remote" in lowered:
         return "Remote"
+    if re.search(r"on-?site|in-?office", lowered):
+        return "On-site"
     return None
 
 

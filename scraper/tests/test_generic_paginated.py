@@ -456,6 +456,39 @@ class ExtractCardTest(unittest.TestCase):
 
         self.assertEqual(job["location"], "Oulu")
 
+    def test_work_model_selector_prefixes_the_location(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Warsaw</i>'
+            '<i class="wm"> Hybrid </i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "Hybrid - Warsaw")
+
+    def test_work_model_selector_reads_on_site(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Berlin</i>'
+            '<i class="wm">On-site</i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "On-site - Berlin")
+
+    def test_work_model_selector_ignores_a_label_that_is_not_a_work_model(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Warsaw</i>'
+            '<i class="wm">Finance</i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "Warsaw")
+
 
 if __name__ == "__main__":
     unittest.main()

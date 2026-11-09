@@ -912,6 +912,17 @@ function _buildRequirementSignals(lang: string): string[] {
         `professional proficiency in ${lang}`,
         `full proficiency in ${lang}`,
         `conversational ${lang}`,
+        // Work done in the language (writing / translation roles): "1+ years of
+        // copywriting in German", "localization/translation experience into German".
+        // Deliberately narrow — a bare "into ${lang}" or "${lang} content" would flag
+        // product ads like "our app is translated into German".
+        `copywriting in ${lang}`,
+        `proofread ${lang}`,
+        `proofreading ${lang}`,
+        `translate into ${lang}`,
+        `translation into ${lang}`,
+        `localization into ${lang}`,
+        `localisation into ${lang}`,
     ];
 }
 

@@ -466,25 +466,40 @@ async function fetchPage(
 const GONE_SENTINEL = '\x00GONE';
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
-    try {
-        const res = await fetchPublic(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-        });
-        if (res.status === 404 || res.status === 410) {
-            console.warn(
-                `[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`,
-            );
-            return GONE_SENTINEL;
-        }
-        if (!res.ok) {
-            console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
+    // 429 is retried with Retry-After / exponential backoff, mirroring fetchPage —
+    // otherwise a rate-limited job page silently loses its description.
+    for (let attempt = 0; attempt < THROTTLED_FETCH_ATTEMPTS; attempt++) {
+        try {
+            const res = await fetchPublic(url, {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+            });
+            if (res.status === 404 || res.status === 410) {
+                console.warn(
+                    `[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`,
+                );
+                return GONE_SENTINEL;
+            }
+            if (res.status === 429 && attempt < THROTTLED_FETCH_ATTEMPTS - 1) {
+                const waitMs =
+                    parseRetryAfterMs(res.headers.get('retry-after')) ??
+                    THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500;
+                console.warn(
+                    `[fetchPageHtml] 429 for ${url}, retrying in ${Math.round(waitMs)}ms`,
+                );
+                await sleep(waitMs);
+                continue;
+            }
+            if (!res.ok) {
+                console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
+                return undefined;
+            }
+            return await res.text();
+        } catch (err) {
+            console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
             return undefined;
         }
-        return await res.text();
-    } catch (err) {
-        console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
-        return undefined;
     }
+    return undefined;
 }
 
 /**

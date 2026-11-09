@@ -80,6 +80,12 @@
 #                         the ISO country_code. Ignored without country_filter_param.
 #   default_location      Location used for cards that yield none, e.g. "Finland" for
 #                         a single-country company whose listing has no location field.
+#   work_model_selector   CSS selector for a card element holding the work model
+#                         ("Hybrid", "Remote", "On-site"), for sites that show it
+#                         separately from the location. It is prepended to the
+#                         location as "Hybrid - City", which the TypeScript side
+#                         turns into the job's work model. Labels that name none of
+#                         the three are ignored.
 #   url_selector          CSS selector for the job link when it is NOT on the
 #                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
@@ -523,6 +529,21 @@ scrapers:
       location_selector: 'span.list-item-location'
       description_selector: '#section1__content .article__content__view__field__value'
       detail_location_selector: 'ul.list--locations li'
+
+    # ── Nord Security ───────────────────────────────────────────────────────────
+    # Every role is one <a data-role-card> in the static page. Its badges are
+    # [product, city, work model, area]: the second is the location, the third
+    # the work model.
+    # (The "Apply for role" carousel buttons have no data-role-card; skip them.)
+    - match: 'nordsecurity.com/careers'
+      name: Nord Security
+      card_selector: 'a[data-role-card="true"]'
+      title_selector: 'p.heading-sm'
+      location_selector: 'div[data-size]:nth-of-type(2)'
+      work_model_selector: 'div[data-size]:nth-of-type(3)'
+      description_selector: 'main'
+      pagination:
+          type: none
 
     # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
     - match: 'career.nordnetab.com'

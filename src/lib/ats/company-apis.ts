@@ -1839,5 +1839,6 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'jobs.ashbyhq.com/elevenlabs', name: 'ElevenLabs' },
     { urlSubstring: 'jobs.ashbyhq.com/enpal', name: 'Enpal' },
     { urlSubstring: 'careers.axpo.com', name: 'Axpo Group' },
+    { urlSubstring: 'nordsecurity.com', name: 'Nord Security' },
     { urlSubstring: 'zuehlke.wd3.myworkdayjobs.com', name: 'Zühlke' },
 ];
