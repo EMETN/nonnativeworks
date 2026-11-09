@@ -18,8 +18,12 @@ const [allCountries, companyCounts, stats] = await Promise.all([
     getCompanyCountsByCountry(undefined, undefined),
     getGlobalStats(undefined, undefined),
 ]);
+// Regions (e.g. Europe) are not countries: they stay out of country counts and grids.
 const countries: CountryStats[] = allCountries.filter(
-    (c) => c.total_positions > 0,
+    (c) => c.total_positions > 0 && !c.is_region,
+);
+const europe = allCountries.find(
+    (c) => c.is_region && c.slug === 'europe' && c.total_positions > 0,
 );
 
 const totalPositions = stats.total_positions;
@@ -82,6 +86,18 @@ const englishPositions = stats.english_positions;
                     companyCounts={companyCounts}
                     client:idle
                 />
+                {europe && (
+                    <p class="mt-8 text-center text-gray-600">
+                        Open to working from anywhere in Europe?{' '}
+                        <a
+                            href="/europe"
+                            class="font-semibold text-[#0F7A4F] hover:underline"
+                        >
+                            See {europe.english_positions} remote positions
+                            across Europe
+                        </a>
+                    </p>
+                )}
                 <div class="mt-6 text-center suggest-cta">
                     <SuggestCta kind="country" />
                 </div>

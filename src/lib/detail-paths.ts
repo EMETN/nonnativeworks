@@ -117,7 +117,10 @@ export function buildDetailPages(
                 (n, c) => n + c.english_positions,
                 0,
             ),
-            country_count: group.length,
+            // Regions (Europe) are not countries, so they don't count towards "N countries".
+            country_count: group.filter(
+                (c) => !countriesById.get(c.country_id)!.is_region,
+            ).length,
             updated_at: group.reduce(
                 (latest, c) => (c.updated_at > latest ? c.updated_at : latest),
                 group[0].updated_at,

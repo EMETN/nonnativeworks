@@ -139,3 +139,14 @@ test('reserves every slug-shaped top-level route, public entry and redirect sour
         expect(RESERVED_SLUGS, name).toContain(name);
     }
 });
+
+test('a region is not counted as a country on company pages', () => {
+    const europe = { ...country('eu', 'Europe'), is_region: true };
+    const pages = buildDetailPages(
+        [country('pl', 'Poland'), europe],
+        [company('a', 'Acme', 'pl'), company('b', 'Acme', 'eu')],
+        [],
+    );
+    const acme = pages.find((p) => p.slug === 'acme') as CompanyPage;
+    expect(acme.country_count).toBe(1);
+});

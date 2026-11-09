@@ -7,8 +7,14 @@ export interface CountryInfo {
     slug: string;
 }
 
+const EUROPE: CountryInfo = { name: 'Europe', code: 'EU', slug: 'europe' };
+
 // Keyed by lowercase, trimmed country name or common abbreviation.
 const COUNTRY_MAP: Record<string, CountryInfo> = {
+    // Region, not a country: remote positions open across Europe (see 002_europe_region.sql).
+    europe: EUROPE,
+    'european union': EUROPE,
+    eu: EUROPE,
     // Nordics
     finland: { name: 'Finland', code: 'FI', slug: 'finland' },
     suomi: { name: 'Finland', code: 'FI', slug: 'finland' },
@@ -1668,7 +1674,6 @@ const SKIP_LOCATION_PATTERNS = [
     /^work from home$/i,
     /^wfh$/i,
     /^home office$/i,
-    /^europe$/i,
     /^emea$/i,
     /^apac$/i,
     /^latam$/i,
@@ -2058,6 +2063,12 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
                 results.push(info);
             }
         }
+    }
+    // Europe only stands in for postings that name no country of their own — "Poland;
+    // Europe" is a Polish position, not also one in the Europe-wide remote bucket.
+    if (results.length > 1) {
+        const countriesOnly = results.filter((r) => r.code !== EUROPE.code);
+        if (countriesOnly.length > 0) return countriesOnly;
     }
     if (results.length > 0) return results;
 

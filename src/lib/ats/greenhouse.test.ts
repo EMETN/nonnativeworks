@@ -158,15 +158,21 @@ describe('fetchGreenhouseJobs', () => {
         ]);
     });
 
-    it.each(['Remote - Europe', 'Europe', 'Remote – EMEA'])(
+    it.each([
+        ['Remote - Europe', ['EU']],
+        ['Europe', ['EU']],
+        ['Remote – EMEA', []],
+    ])(
         'keeps the region %s instead of narrowing it to an office',
-        async (location) => {
+        async (location, expectedCodes) => {
             stubBoardJob(location, ['Amsterdam']);
 
             const [job] = await fetchGreenhouseJobs('acme');
 
             expect(job.location).toBe(location);
-            expect(lookupCountryFromLocation(job.location!)).toEqual([]);
+            expect(
+                lookupCountryFromLocation(job.location!).map((c) => c.code),
+            ).toEqual(expectedCodes);
         },
     );
 

@@ -71,7 +71,6 @@ describe('lookupCountryFromLocation — n-gram fallback does not disturb other c
             'EMEA',
             'Various',
             'Hybrid',
-            'Remote - Europe',
             'Anywhere',
             'Global',
         ]) {
@@ -549,5 +548,27 @@ describe('isKnownCity', () => {
 
     test('does not recognise a city with no entry', () => {
         expect(isKnownCity('Nowhereville')).toBe(false);
+    });
+});
+
+describe('lookupCountryFromLocation — Europe region', () => {
+    const codes = (location: string) =>
+        lookupCountryFromLocation(location).map((c) => c.code);
+
+    test.each(['Europe', 'European Union', 'EU', 'Remote - Europe'])(
+        '%s is the Europe region',
+        (location) => {
+            expect(codes(location)).toEqual(['EU']);
+        },
+    );
+
+    test('a named country wins over Europe', () => {
+        expect(codes('Poland; Europe')).toEqual(['PL']);
+        expect(codes('Europe, Germany')).toEqual(['DE']);
+    });
+
+    test('EMEA and plain Remote stay unresolved', () => {
+        expect(codes('EMEA')).toEqual([]);
+        expect(codes('Remote')).toEqual([]);
     });
 });

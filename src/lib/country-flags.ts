@@ -18,6 +18,7 @@ export const FLAG_COLORS: Record<string, string[]> = {
     DE: ['#000000', '#DD0000', '#FFCE00'],
     DK: ['#C60C30', '#FFFFFF'],
     EE: ['#0072CE', '#000000', '#FFFFFF'],
+    EU: ['#003399', '#FFCC00'],
     ES: ['#AA151B', '#F1BF00', '#AA151B'],
     FI: ['#003580', '#FFFFFF'],
     FR: ['#002395', '#FFFFFF', '#ED2939'],
