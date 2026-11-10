@@ -191,6 +191,15 @@ export interface CompanyApiConfig {
      */
     locationFromHtml?: string;
     /**
+     * Regex string (one capture group) applied to the fetched job page HTML to read the
+     * work model ("On-site", "Hybrid", "Remote") when the listing API does not carry it.
+     * The captured text is normalised to 'remote' | 'hybrid' | 'on-site' and stored as
+     * job.work_model; unrecognised values are ignored. Implicitly enables per-job HTML
+     * fetching, including for jobs whose classification is cached (the work model is
+     * stored on every run, so the page is needed regardless).
+     */
+    workModelFromHtml?: string;
+    /**
      * Regex string (one capture group) applied to the fetched job page HTML to extract
      * only the description section for language classification. When set, only the
      * matched HTML fragment is stored as descriptionHtml instead of the full page.
@@ -1317,6 +1326,57 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         // Only the ad body; the page also repeats a company blurb in the ad's language.
         descriptionFromHtml:
             '<div class="job-ad-feature-description" id="job-description">([\\s\\S]*?)</div>\\s*(?:</section>|<div class="job-ad-feature-description")',
+    },
+
+    'jobs.danfoss.com': {
+        // SAP SuccessFactors Career Site Builder (same /services/recruiting/v1/jobs API as
+        // Orkla and OP). ~650 jobs worldwide, 10 per page, so the whole board is paged
+        // rather than filtered per country; untracked countries are dropped downstream.
+        url: 'https://jobs.danfoss.com/services/recruiting/v1/jobs',
+        method: 'POST',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Content-Type': 'application/json',
+            Origin: 'https://jobs.danfoss.com',
+        },
+        body: {
+            locale: 'en_GB',
+            sortBy: '',
+            keywords: '',
+            location: '',
+            facetFilters: {},
+            brand: '',
+            skills: [],
+            categoryId: 0,
+            alertId: '',
+            rcmCandidateId: '',
+        },
+        pagination: {
+            type: 'page',
+            param: 'pageNumber',
+            startPage: 0,
+            totalCountPath: 'totalJobs',
+        },
+        itemsPath: 'jobSearchResult',
+        fields: {
+            title: 'response.unifiedStandardTitle',
+            // jobLocationShort lists every office as "City, ST, ISO3" (e.g. "Kolding, DNK");
+            // `locations` joins them so a multi-country posting is resolved per country.
+            locations: 'response.jobLocationShort',
+            id: 'response.id',
+            jobFunction: 'response.filter2',
+        },
+        urlTemplate:
+            'https://jobs.danfoss.com/job/{response.urlTitle}/{response.id}-en_GB',
+        companyName: 'Danfoss',
+        fetchDescription: true,
+        // "Work Location Type: On-site" row on the detail page; the listing API omits it.
+        workModelFromHtml:
+            'Work Location Type:\\s*</span>\\s*<span[^>]*>\\s*([^<]+?)\\s*</span>',
+        // Only the posting body: the full page also carries a language switcher
+        // (Dansk, Deutsch, Polski…) that would read as language requirements.
+        descriptionFromHtml:
+            '<span[^>]*itemprop="description"[^>]*>([\\s\\S]*?)</span>\\s*</div>\\s*</div>\\s*</div>\\s*</div>\\s*<div class="joblayouttoken',
     },
 
     'careers.capgemini.com': {

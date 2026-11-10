@@ -5,6 +5,12 @@ import { test, expect, describe, vi, afterEach } from 'vitest';
 import { fetchCompanyApiJobs } from './company-api-fetcher';
 import { COMPANY_APIS } from './company-apis';
 
+// Job-page fetches go through the SSRF-guarded fetchPublic (DNS lookup); route them
+// to the stubbed global fetch.
+vi.mock('./public-fetch', () => ({
+    fetchPublic: (url: string, init: RequestInit) => fetch(url, init),
+}));
+
 afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
@@ -343,5 +349,67 @@ describe('filtered array paths', () => {
         const jobs = await run('categories[domain=City].term', undefined);
 
         expect(jobs[0].location).toBeUndefined();
+    });
+});
+
+describe('workModelFromHtml', () => {
+    const page = (label: string) =>
+        `<div><span class="joblayouttoken-label">Work Location Type: </span>` +
+        `<span lang="en-GB">${label} </span></div>`;
+
+    const run = async (workModelFromHtml: string | undefined) => {
+        const pages: Record<string, string> = {
+            'https://careers.example.com/job/1': page('Hybrid'),
+            'https://careers.example.com/job/2': page('On-site'),
+            'https://careers.example.com/job/3': page('Field-based'),
+        };
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                const body = pages[url];
+                return {
+                    ok: true,
+                    status: 200,
+                    headers: new Headers(),
+                    url,
+                    json: async () => ({
+                        jobs: [1, 2, 3].map((n) => ({
+                            name: `Job ${n}`,
+                            link: `https://careers.example.com/job/${n}`,
+                        })),
+                    }),
+                    text: async () => body ?? '',
+                };
+            }),
+        );
+        return fetchCompanyApiJobs({
+            url: 'https://careers.example.com/api/jobs',
+            pagination: { type: 'none' as const },
+            itemsPath: 'jobs',
+            fields: { title: 'name', url: 'link', location: 'name' },
+            workModelFromHtml,
+        });
+    };
+
+    test('reads the work model from each job page and normalises it', async () => {
+        const jobs = await run(
+            'Work Location Type:\\s*</span>\\s*<span[^>]*>\\s*([^<]+?)\\s*</span>',
+        );
+
+        expect(jobs.map((j) => j.work_model)).toEqual([
+            'hybrid',
+            'on-site',
+            undefined, // "Field-based" names none of the three
+        ]);
+    });
+
+    test('leaves the work model unset when the option is not configured', async () => {
+        const jobs = await run(undefined);
+
+        expect(jobs.map((j) => j.work_model)).toEqual([
+            undefined,
+            undefined,
+            undefined,
+        ]);
     });
 });

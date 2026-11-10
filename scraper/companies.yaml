@@ -135,6 +135,10 @@ companies:
       url: https://www.cognite.com/en/company/careers
       min_positions: 5
 
+    - name: Danfoss
+      url: https://jobs.danfoss.com/
+      min_positions: 20
+
     - name: Danske Bank
       url: https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001/jobs
       min_positions: 10

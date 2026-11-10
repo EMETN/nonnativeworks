@@ -551,18 +551,21 @@ export async function enrichDescriptions(
     locationRegex?: RegExp,
     descriptionRegex?: RegExp,
     skipUrls?: CachedTitleHashes,
+    workModelRegex?: RegExp,
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
         // skipUrls only caches classification, not location — so a cached URL still
         // missing its location must be fetched, or location-from-HTML companies hit 0.
         const wantsLocation = !!locationRegex && !j.location;
+        // Same for the work model: it is stored on every run, cached or not.
+        const wantsWorkModel = !!workModelRegex && !j.work_model;
         const wantsDescription =
             !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
-        return wantsDescription || wantsLocation;
+        return wantsDescription || wantsLocation || wantsWorkModel;
     });
 
     const noUrl = jobs.length - targets.length;
@@ -571,6 +574,7 @@ export async function enrichDescriptions(
     );
 
     let locationsSet = 0;
+    let workModelsSet = 0;
     let htmlFailed = 0;
     let goneCount = 0;
     let regexMissed = 0;
@@ -600,6 +604,14 @@ export async function enrichDescriptions(
                         job.descriptionHtml = html;
                     }
                 }
+                if (workModelRegex && !job.work_model) {
+                    const wm = html.match(workModelRegex)?.[1];
+                    const model = wm ? normaliseWorkModel(wm) : undefined;
+                    if (model) {
+                        job.work_model = model;
+                        workModelsSet++;
+                    }
+                }
                 if (locationRegex && !job.location) {
                     const m = html.match(locationRegex);
                     if (m?.[1]) {
@@ -627,6 +639,11 @@ export async function enrichDescriptions(
     if (goneCount) {
         console.log(
             `[enrichDescriptions] ${goneCount} jobs marked gone (404/410)`,
+        );
+    }
+    if (workModelRegex) {
+        console.log(
+            `[enrichDescriptions] work model extraction: ${workModelsSet} set of ${targets.length} pages`,
         );
     }
     if (locationRegex) {
@@ -1543,18 +1560,26 @@ export async function fetchCompanyApiJobs(
           })
         : primaryJobs;
 
-    if (config.fetchDescription || config.locationFromHtml) {
+    if (
+        config.fetchDescription ||
+        config.locationFromHtml ||
+        config.workModelFromHtml
+    ) {
         const locationRegex = config.locationFromHtml
             ? new RegExp(config.locationFromHtml)
             : undefined;
         const descriptionRegex = config.descriptionFromHtml
             ? new RegExp(config.descriptionFromHtml, 's')
             : undefined;
+        const workModelRegex = config.workModelFromHtml
+            ? new RegExp(config.workModelFromHtml)
+            : undefined;
         await enrichDescriptions(
             enrichmentTargets,
             locationRegex,
             descriptionRegex,
             skipUrls,
+            workModelRegex,
         );
     }
 

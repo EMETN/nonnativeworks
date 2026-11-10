@@ -28,6 +28,7 @@
 - CGI (local script)
 - Citi
 - Cognite
+- Danfoss
 - Danske Bank
 - Deel
 - Delivery Hero
@@ -181,6 +182,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                                                                                                                                                       |
 | Accenture          | `accenture.com`                              | Custom API                                                                                                                                                                                         |
 | Booking.com        | `jobs.booking.com`                           | Custom API                                                                                                                                                                                         |
+| Danfoss            | `jobs.danfoss.com`                           | Custom API (POST)                                                                                                                                                                                  |
 | Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                                                                                                                                                  |
 | Capgemini          | `capgemini.com/careers`                      | Custom API                                                                                                                                                                                         |
 | Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                                                                                                                                                         |

@@ -572,3 +572,21 @@ describe('lookupCountryFromLocation — Europe region', () => {
         expect(codes('Remote')).toEqual([]);
     });
 });
+
+describe('lookupCountryFromLocation — ISO alpha-3 country codes', () => {
+    test('resolves untracked countries named by alpha-3 code (SuccessFactors style)', () => {
+        expect(codes('Queretaro, MEX    ')).toEqual(['MX']);
+        expect(codes('Haiyan, CHN')).toEqual(['CN']);
+        expect(codes('Oragadam, IND')).toEqual(['IN']);
+        expect(codes('Osasco, BRA')).toEqual(['BR']);
+    });
+
+    test('an explicit code beats a city-name guess', () => {
+        expect(codes('Santiago De Queretaro, MEX')).toEqual(['MX']);
+    });
+
+    test('tracked alpha-3 codes still resolve', () => {
+        expect(codes('Kolding, DNK')).toEqual(['DK']);
+        expect(codes('Offenbach Am Main, DEU')).toEqual(['DE']);
+    });
+});
