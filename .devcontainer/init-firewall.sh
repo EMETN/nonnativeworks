@@ -227,7 +227,9 @@ company_domains=(
     "careers.carlsberg.com"  # Carlsberg
     "careers.celonis.com"  # Celonis
     "cgi.njoyn.com"  # CGI
+    "jobs.citi.com"  # Citi
     "www.cognite.com"  # Cognite
+    "jobs.danfoss.com"  # Danfoss
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
     "deel.com"  # Deel
     "careers.deliveryhero.com"  # Delivery Hero
@@ -306,6 +308,7 @@ company_domains=(
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
+    "www.ramboll.com"  # Ramboll
     "www.randstad.com"  # Randstad
     "www.relexsolutions.com"  # RELEX Solutions
     "www.reorbit.space" # Reorbit
@@ -313,6 +316,8 @@ company_domains=(
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
     "careers.sap.com"  # SAP
+    "careers.se.com"  # Schneider Electric
+    "careers-se.icims.com" # Schneider Electric
     "scout24.com"  # Scout24
     "sebgroup.com"  # SEB
     "jobs.siemens.com"  # Siemens
