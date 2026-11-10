@@ -1704,7 +1704,18 @@ export function detectNativeLanguage(
                     `knowledge\\s+of\\s+(?:\\w+\\s+or\\s+)?${LANG_GROUP_RE.source}\\s+languages?\\s+${ADVANTAGE_SUFFIX_RE.source}`,
                 ),
             );
-        const nordicAdvMatch = nordicOrOtherMatch ?? nordicGroupMatch;
+        // "Baltic languages and an existing industry network are an advantage" — the
+        // group name is the (first) subject; the rest of the sentence may add more.
+        const nordicSubjectMatch =
+            !nordicOrOtherMatch &&
+            !nordicGroupMatch &&
+            combined.match(
+                new RegExp(
+                    `\\b${LANG_GROUP_RE.source}\\s+languages?\\b[^.]{0,60}?\\b(?:is|are|would\\s+be)(?:\\s+(?:considered|seen\\s+as))?\\s+(?:a(?:n)?\\s+)?(?:advantage|plus|bonus|asset|benefit)\\b`,
+                ),
+            );
+        const nordicAdvMatch =
+            nordicOrOtherMatch ?? nordicGroupMatch ?? nordicSubjectMatch;
         if (nordicAdvMatch) {
             return {
                 value: false,

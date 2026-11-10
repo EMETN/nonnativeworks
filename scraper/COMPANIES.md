@@ -36,6 +36,7 @@
 - E.ON
 - Edenred
 - Elekta
+- Elisa
 - ElevenLabs
 - Enpal
 - Equinor
@@ -190,6 +191,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                                                                                                                                              |
 | Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                                                                                                                                                |
 | Barona             | `barona.fi`                                  | WordPress AJAX feed (1-based pages, inline descriptions, ISO2 country); no per-job language data, classifier decides                                                                               |
+| Elisa              | `elisa.com`                                  | Talentadore JSON feed (URL and `businessUnits` filter taken from the page's `careers.js`); city read from `categories[domain=City_custom]`; descriptions fetched from each apply page              |
 | Personio           | `personio.com`                               | First-party JSON list (`/api/careers/jobs/list/`, no pagination); job pages are behind a bot checkpoint, so no descriptions — title-only classification                                            |
 | Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions)                                                                                                                          |
 | Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)                                                                                                                                |     |

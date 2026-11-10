@@ -171,6 +171,10 @@ companies:
       url: https://jobs.eon.com
       min_positions: 10
 
+    - name: Elisa
+      url: https://elisa.com/corporate/careers/openjobs/
+      min_positions: 3
+
     - name: ElevenLabs
       url: https://elevenlabs.io/careers/positions
       min_positions: 30

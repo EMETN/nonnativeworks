@@ -294,3 +294,54 @@ describe('Autodesk (Eightfold PCSX)', () => {
         expect(job.location).toBe('US; CA; Berlin, BE, DE');
     });
 });
+
+describe('filtered array paths', () => {
+    const run = (location: string, categories: unknown) => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    jobs: [
+                        {
+                            name: 'Sales Executive',
+                            link: 'https://careers.example.com/apply/1',
+                            categories,
+                        },
+                    ],
+                }),
+            })),
+        );
+        return fetchCompanyApiJobs({
+            url: 'https://careers.example.com/api/jobs',
+            pagination: { type: 'none' as const },
+            itemsPath: 'jobs',
+            fields: { title: 'name', url: 'link', location },
+        });
+    };
+
+    test('reads the term of the entry whose domain matches, whatever its position', async () => {
+        const jobs = await run('categories[domain=City].term', [
+            { domain: 'language', term: 'en' },
+            { domain: 'Country', term: 'Estonia' },
+            { domain: 'City', term: 'Tallinn' },
+        ]);
+
+        expect(jobs[0].location).toBe('Tallinn');
+    });
+
+    test('leaves the location unset when no entry matches', async () => {
+        const jobs = await run('categories[domain=City].term', [
+            { domain: 'language', term: 'en' },
+        ]);
+
+        expect(jobs[0].location).toBeUndefined();
+    });
+
+    test('leaves the location unset when the array is missing', async () => {
+        const jobs = await run('categories[domain=City].term', undefined);
+
+        expect(jobs[0].location).toBeUndefined();
+    });
+});

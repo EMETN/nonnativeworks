@@ -1296,6 +1296,29 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         fetchDescription: true,
     },
 
+    'elisa.com': {
+        // Elisa's open-jobs page loads this Talentadore feed client-side (the URL and
+        // businessUnits filter come from its careers.js; dropping the filter adds other
+        // business units the page does not list). The feed carries no descriptions, so
+        // they are read from each apply page. City and language live in `categories` as
+        // unordered {domain, term} pairs, hence the filter paths.
+        url: 'https://ats.talentadore.com/positions/bdXi6SM/json?v=2&language=fi,en,sv&tags=&notTags=Hidden%20recruitment&businessUnits=8oe8%7CV078%7CnAeb%7CQBkK%7C6928%7Cxwv8%7CM18M%7CvOpg%7C8o2o%7CdGNl%7C4n2B%7CqN6w%7Covka&notBusinessUnits=&display_description=job_title&categories=tags_and_extras',
+        method: 'GET',
+        pagination: { type: 'none' },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'name',
+            id: 'id',
+            url: 'link',
+            location: 'categories[domain=City_custom].term',
+        },
+        companyName: 'Elisa',
+        fetchDescription: true,
+        // Only the ad body; the page also repeats a company blurb in the ad's language.
+        descriptionFromHtml:
+            '<div class="job-ad-feature-description" id="job-description">([\\s\\S]*?)</div>\\s*(?:</section>|<div class="job-ad-feature-description")',
+    },
+
     'careers.capgemini.com': {
         // Capgemini's internal job-stream API. The country_code query param is a comma-separated
         // list of locale/ISO codes covering all tracked countries. Each returned item also carries

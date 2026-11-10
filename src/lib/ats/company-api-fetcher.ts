@@ -30,10 +30,47 @@ function decodeHtmlEntities(str: string): string {
         );
 }
 
-/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object. */
+const FILTER_SEGMENT_RE = /^([^[\]]+)\[([^=\]]+)=([^\]]*)\]$/;
+
+/**
+ * Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object.
+ *
+ * A segment may filter an array by a field's value: "categories[domain=City].term" keeps the
+ * elements of `categories` whose `domain` is "City", then reads `term` from each (so the result
+ * is an array, and getString/getStringArray take it from there). Use it for APIs that list
+ * facets as `{domain, term}` pairs in no fixed order, where a numeric index would misalign.
+ * Values cannot contain "." or "]".
+ */
 function getPath(obj: unknown, path: string): unknown {
     if (!path) return obj;
+    let filtered = false;
     return path.split('.').reduce((cur: unknown, key) => {
+        // After a filter the current value is a list of matches: pluck the key from each.
+        if (filtered && Array.isArray(cur)) {
+            return cur
+                .map((el) =>
+                    el !== null && typeof el === 'object'
+                        ? (el as Record<string, unknown>)[key]
+                        : undefined,
+                )
+                .filter((v) => v !== undefined);
+        }
+        const filter = FILTER_SEGMENT_RE.exec(key);
+        if (filter) {
+            const [, name, field, value] = filter;
+            const list =
+                cur !== null && typeof cur === 'object'
+                    ? (cur as Record<string, unknown>)[name]
+                    : undefined;
+            if (!Array.isArray(list)) return undefined;
+            filtered = true;
+            return list.filter(
+                (el) =>
+                    el !== null &&
+                    typeof el === 'object' &&
+                    String((el as Record<string, unknown>)[field]) === value,
+            );
+        }
         if (cur !== null && typeof cur === 'object' && key in (cur as object)) {
             return (cur as Record<string, unknown>)[key];
         }
