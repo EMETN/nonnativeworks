@@ -86,6 +86,12 @@
 #                         location as "Hybrid - City", which the TypeScript side
 #                         turns into the job's work model. Labels that name none of
 #                         the three are ignored.
+#   detail_location_selector  CSS selector for the per-location elements on the
+#                         detail page, used to resolve cards that read "Multiple
+#                         Locations" (one entry per country is created).
+#   detail_locations_jsonld   true: resolve "Multiple Locations" cards from the
+#                         detail page's JSON-LD jobLocation list instead, for
+#                         sites that print the offices as one joined string.
 #   url_selector          CSS selector for the job link when it is NOT on the
 #                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
@@ -736,6 +742,38 @@ scrapers:
       # The default `.job-description` matches the page's top banner (English UI
       # text: "Save", "Apply"...), not the posting, so every job looked English.
       description_selector: '.jd-desc-section__ats-description'
+
+    # ── Citi ───────────────────────────────────────────────────────────────────
+    # TalentBrew /results endpoint, unfiltered (~3,000 jobs worldwide, 100 per
+    # request); untracked countries are dropped downstream. Locations read
+    # "City, Region, Country".
+    - match: 'jobs.citi.com'
+      name: Citi
+      list_url: https://jobs.citi.com/search-jobs/results
+      extra_params:
+          RecordsPerPage: 100
+          SearchResultsModuleName: 'Search Results'
+          SearchFiltersModuleName: 'Search Filters'
+          SortCriteria: 0
+          SortDirection: 0
+          SearchType: 5
+          ResultsType: 0
+      json_html_key: results
+      pagination:
+          type: page
+          param: CurrentPage
+          page_size: 100
+      card_selector: 'li.sr-job-item'
+      title_selector: 'a.sr-job-item__link'
+      location_selector: 'span.sr-job-location'
+      # The card's "Hybrid" / "On-Site" / "Remote" label is the work model.
+      work_model_selector: 'span.sr-job-type'
+      # ~11% of cards read "Multiple Locations"; the detail page's JSON-LD lists
+      # every office, fanned out into one entry per country.
+      detail_locations_jsonld: true
+      # `.job-description` also matches the page's wrapper/buttons; the posting
+      # body itself is `.ats-description`.
+      description_selector: '.ats-description'
 
     # ── Carlsberg ──────────────────────────────────────────────────────────────
     # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no

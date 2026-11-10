@@ -32,6 +32,36 @@ TRACKED_CODES = {
     "CZ",
 }
 
+# Display name for each tracked ISO code, for sources that mix codes and names
+# (e.g. JSON-LD addressCountry "PL" on one location, "Poland" on the next).
+COUNTRY_NAME_BY_CODE = {
+    "FI": "Finland",
+    "SE": "Sweden",
+    "NO": "Norway",
+    "DK": "Denmark",
+    "IS": "Iceland",
+    "NL": "Netherlands",
+    "DE": "Germany",
+    "EE": "Estonia",
+    "LV": "Latvia",
+    "LT": "Lithuania",
+    "PL": "Poland",
+    "FR": "France",
+    "BE": "Belgium",
+    "LU": "Luxembourg",
+    "CH": "Switzerland",
+    "ES": "Spain",
+    "PT": "Portugal",
+    "AT": "Austria",
+    "IT": "Italy",
+    "HU": "Hungary",
+    "HR": "Croatia",
+    "RO": "Romania",
+    "BG": "Bulgaria",
+    "GR": "Greece",
+    "CZ": "Czechia",
+}
+
 TRACKED_NAMES = {
     "finland",
     "sweden",

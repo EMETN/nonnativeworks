@@ -1080,6 +1080,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     łódź: { name: 'Poland', code: 'PL', slug: 'poland' },
     lodz: { name: 'Poland', code: 'PL', slug: 'poland' },
     lublin: { name: 'Poland', code: 'PL', slug: 'poland' },
+    olsztyn: { name: 'Poland', code: 'PL', slug: 'poland' },
     ostrołęka: { name: 'Poland', code: 'PL', slug: 'poland' },
     piaseczno: { name: 'Poland', code: 'PL', slug: 'poland' },
     poznań: { name: 'Poland', code: 'PL', slug: 'poland' },

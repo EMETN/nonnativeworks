@@ -574,3 +574,67 @@ def test_card_work_model():
     assert _card_work_model("Fully Remote") == "Remote"
     assert _card_work_model("Baden") is None
     assert _card_work_model(None) is None
+
+
+def test_jsonld_locations_lists_every_office_with_country_names():
+    from platforms.generic_paginated import _jsonld_locations
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":['
+        '{"address":{"addressLocality":"Krakow","addressRegion":"77","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+        '{"address":{"addressLocality":"Pune","addressCountry":"India"}},'
+        '{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"","addressCountry":"PL"}}'
+        "]}</script>"
+    )
+    assert _jsonld_locations(html) == [
+        "Krakow - Poland",
+        "Katowice - Poland",
+        "Pune - India",
+    ]
+
+
+def test_multi_location_card_with_work_model_prefix_is_expanded(monkeypatch):
+    import platforms.generic_paginated as gp
+
+    card = (
+        '<li class="c"><span class="t">Hybrid</span><a href="/job/1">Analyst</a>'
+        '<span class="l">Multiple Locations</span></li>'
+    )
+    detail = (
+        '<div class="d">Great role</div><script type="application/ld+json">'
+        '{"jobLocation":[{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+        '{"address":{"addressLocality":"Pune","addressCountry":"India"}}]}</script>'
+    )
+
+    class Resp:
+        status_code = 200
+        ok = True
+
+        def __init__(self, text):
+            self.text = text
+            self.content = text.encode()
+
+        def raise_for_status(self):
+            pass
+
+    def fake_get(session, url, cfg, **kwargs):
+        return Resp(detail if "/job/" in url else f"<ul>{card}</ul>")
+
+    monkeypatch.setattr(gp, "_get", fake_get)
+    cfg = {
+        "name": "T",
+        "card_selector": "li.c",
+        "title_selector": "a",
+        "location_selector": "span.l",
+        "work_model_selector": "span.t",
+        "description_selector": "div.d",
+        "detail_locations_jsonld": True,
+        "pagination": {"type": "none"},
+    }
+    jobs = gp.scrape_generic("https://example.com/jobs", cfg)
+    by_loc = {j["location"]: j for j in jobs}
+    assert set(by_loc) == {"Hybrid - Krakow - Poland", "Hybrid - Pune - India"}
+    assert by_loc["Hybrid - Krakow - Poland"]["cities"] == ["Krakow", "Katowice"]

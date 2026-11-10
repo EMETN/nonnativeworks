@@ -26,6 +26,7 @@
 - Carlsberg
 - Celonis
 - CGI (local script)
+- Citi
 - Cognite
 - Danske Bank
 - Deel
@@ -258,6 +259,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
 | Munich Re | `careers.munichre.com/en/search-jobs` | `css_cards - json_html_key` | Paginated; CurrentPage |
 | IKEA | `jobs.ikea.com/en/search-jobs` | `css_cards - json_html_key` | TalentBrew `/results`, unfiltered; CurrentPage, 100 per page |
+| Citi | `jobs.citi.com/search-jobs` | `css_cards - json_html_key` | TalentBrew `/results`, unfiltered; CurrentPage, 100 per page; description in `.ats-description`; work model from the card's `.sr-job-type` label; "Multiple Locations" cards resolved from the detail page's JSON-LD (`detail_locations_jsonld`) and fanned out per country |
 | Carlsberg | `careers.carlsberg.com/search` | `css_cards` | SuccessFactors; fetches and merges every site locale (each serves a distinct slice of jobs) |
 | Sweco Group | `swecogroup.com/careers/vacancies` | `css_cards` | Recruitee-backed; per-country facet IDs read live from the country `<select>`; `description_selector` avoids local-language form fields |
 | Klarna | `jobs.deel.com/klarna` | `script_json` | Deel-hosted board; no pagination; descriptions read from the listing's RSC text rows (detail pages render client-side) |

@@ -79,7 +79,7 @@ from extract import (
     job_key,
 )
 from title_language import _title_appears_non_english_excluding_cities
-from tracked_countries import TRACKED_NAMES, is_tracked_location
+from tracked_countries import COUNTRY_NAME_BY_CODE, TRACKED_NAMES, is_tracked_location
 
 _HEADERS = {
     "User-Agent": (
@@ -1256,6 +1256,48 @@ def _jsonld_location(html: str) -> str | None:
     return None
 
 
+def _jsonld_locations(html: str) -> list[str]:
+    """Every JobPosting jobLocation as "City - Country" (tracked ISO codes become names).
+
+    For postings that list several offices, where the card only says "Multiple
+    Locations". The " - " form is what _country_key/_city_of group by. Region is
+    left out: it is sometimes a code ("77") rather than a name.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    found: list[str] = []
+    for tag in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json_mod.loads(tag.string or "")
+        except ValueError:
+            continue
+        for item in data if isinstance(data, list) else [data]:
+            if not isinstance(item, dict):
+                continue
+            places = item.get("jobLocation") or []
+            for place in places if isinstance(places, list) else [places]:
+                addr = place.get("address") if isinstance(place, dict) else None
+                if not isinstance(addr, dict):
+                    continue
+                city = addr.get("addressLocality")
+                country = addr.get("addressCountry")
+                if isinstance(country, dict):
+                    country = country.get("name")
+                if not (isinstance(city, str) and city.strip()):
+                    continue
+                if not (isinstance(country, str) and country.strip()):
+                    continue
+                country = country.strip()
+                if len(country) == 2:
+                    country = COUNTRY_NAME_BY_CODE.get(country.upper(), country)
+                loc = f"{city.strip()} - {country}"
+                if loc not in found:
+                    found.append(loc)
+    return found
+
+
+_WORK_MODEL_PREFIX_RE = re.compile(r"^(hybrid|remote|on-?site) - ", re.IGNORECASE)
+
+
 def _card_work_model(label: str | None) -> str | None:
     """ "Hybrid" / "Remote" when a list-card location label is a work model."""
     lowered = (label or "").lower()
@@ -1407,6 +1449,8 @@ def _fetch_detail_page(
                 locations = [
                     t.get_text(strip=True) for t in loc_tags if t.get_text(strip=True)
                 ]
+        elif cfg.get("detail_locations_jsonld"):
+            locations = _jsonld_locations(raw_html) or None
 
         return desc_html, job_function, locations, False
     except Exception as e:
@@ -1464,6 +1508,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     desc_sel = cfg.get("description_selector")
     jf_sel = cfg.get("job_function_selector")
     detail_loc_sel = cfg.get("detail_location_selector")
+    # Multi-location resolution is on when locations come from a CSS selector or
+    # from the detail page's JSON-LD.
+    detail_locs_on = bool(detail_loc_sel or cfg.get("detail_locations_jsonld"))
     json_desc_key = cfg.get("description_json_key")
     list_url = cfg.get("list_url", url)
     extra_params: dict = cfg.get("extra_params", {})
@@ -1636,8 +1683,8 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     _MULTI_LOC_MARKERS = {"multiple locations", "multiple cities", "various locations"}
 
     def _is_multi_location(job: dict) -> bool:
-        loc = (job.get("location") or "").lower().strip()
-        return loc in _MULTI_LOC_MARKERS
+        loc = _WORK_MODEL_PREFIX_RE.sub("", (job.get("location") or "").strip())
+        return loc.lower().strip() in _MULTI_LOC_MARKERS
 
     # A job's country is already known and trustworthy when it came from a
     # country_filter_param pass (country_code set explicitly per-request) —
@@ -1669,9 +1716,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
         and (j.get("country_code") or is_tracked_location(j.get("location")))
     ]
     multi_loc_jobs = (
-        [j for j in all_jobs if detail_loc_sel and _is_multi_location(j)]
-        if detail_loc_sel
-        else []
+        [j for j in all_jobs if _is_multi_location(j)] if detail_locs_on else []
     )
 
     # Skip the detail fetch for jobs whose outcome the Node server has cached — the
@@ -1741,7 +1786,7 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
     # side uses verbatim instead of re-deriving them from the location string.
     # Locations whose country can't be identified keep the old one-row-each
     # behaviour, since there is nothing to group them by.
-    if detail_loc_sel:
+    if detail_locs_on:
         expanded: list[dict] = []
         for job in all_jobs:
             if not _is_multi_location(job):
@@ -1759,7 +1804,9 @@ def scrape_generic(url: str, cfg: dict) -> list[dict]:
                 grouped.setdefault(_country_key(loc), []).append(loc)
             for locs in grouped.values():
                 copy = dict(job)
-                copy["location"] = locs[0]
+                # Keep a "Hybrid - " work-model prefix from the card label.
+                prefix = _WORK_MODEL_PREFIX_RE.match(job.get("location") or "")
+                copy["location"] = (prefix.group(0) if prefix else "") + locs[0]
                 cities = [c for c in (_city_of(loc) for loc in locs) if c]
                 if cities:
                     copy["cities"] = cities

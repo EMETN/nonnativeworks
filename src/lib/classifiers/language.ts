@@ -263,6 +263,10 @@ const NORDIC_LANGUAGE_REQUIREMENT_PHRASES = [
     'proficiency in english and one of the scandinavian languages',
     'fluency in english and a nordic language',
     'fluency in english and a scandinavian language',
+    'fluent in english and a nordic language',
+    'fluent in english and a scandinavian language',
+    'proficient in english and a nordic language',
+    'proficient in english and a scandinavian language',
     'in english and in one nordic language',
     'in english and in one scandinavian language',
     'a nordic language is mandatory',
@@ -624,7 +628,12 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
         // The gap words must not include "speaker"/"speaking": in "Swedish speaker
         // (plus English required)" the "plus" opens a new clause, it doesn't rate Swedish.
         `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantages?|assets?|plus|bonus|merit|benefit)\\b`;
-    return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
+    // Verb-form ratings: "(German, Italian, Spanish, or French) is highly desired".
+    const ratedSuffix = `\\s+(?:is|are)\\s+(?:(?:highly|strongly)\\s+)?(?:desired|desirable|preferred|welcome|appreciated)\\b`;
+    return new RegExp(
+        `\\b${escaped}${listTail}\\)?(?:${advantageSuffix}|${ratedSuffix})`,
+        'i',
+    );
 }
 
 /**
@@ -668,6 +677,10 @@ function buildAdvantageSignals(lang: string): string[] {
         ' is desirable',
         ' are desirable',
         ' is highly desirable',
+        ' is desired',
+        ' are desired',
+        ' is highly desired',
+        ' are highly desired',
         ' are highly desirable',
         ' is nice to have',
         ' is beneficial',
