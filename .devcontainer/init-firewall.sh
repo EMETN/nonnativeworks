@@ -158,6 +158,7 @@ ats_domains=(
     "api.lever.co"  # Lever
     "career2.successfactors.eu"  # SuccessFactors
     "api.smartrecruiters.com"  # SmartRecruiters
+    "ats.talentadore.com"  # Talentadore
     "apply.workable.com"  # Workable
     "wd3.myworkdaysite.com"  # Workday
 )
