@@ -459,6 +459,10 @@ companies:
       min_positions: 5
 
     # 111 positions across 13 tracked countries once the country facet was
+    - name: Sensofusion
+      url: https://careers.sensofusion.com/jobs
+      min_positions: 4
+
     # widened from 9 countries to all 25; it was 41 before, hence the old floor of 5.
     - name: Siemens Healthineers
       url: https://careers.siemens-healthineers.com/global/en/search-results

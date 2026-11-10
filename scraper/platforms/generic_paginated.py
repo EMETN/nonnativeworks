@@ -669,6 +669,14 @@ def _extract_teamtailor_card(card, base_url: str, cfg: dict) -> dict | None:
             cleaned = ", ".join(stripped_parts)
             location = cleaned or location
 
+    # Office labels that name no place ("Headquarters") → a real one, per config.
+    if location and (aliases := cfg.get("location_aliases")):
+        by_label = {k.lower(): v for k, v in aliases.items()}
+        location = ", ".join(
+            by_label.get(part.strip().lower(), part.strip())
+            for part in location.split(",")
+        )
+
     job = build_job(title, job_url, location)
     if department:
         job["jobFunction"] = department

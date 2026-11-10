@@ -160,8 +160,13 @@
 # middots. No additional selectors needed — the mode handles parsing internally.
 # Pagination uses ?page=1,2,3… and stops when fewer than page_size jobs return.
 #
-# Only shared fields + pagination are used; card/title/location selectors are
-# ignored.
+#   location_aliases      Map of office label → place, for sites whose office names
+#                         name no place (e.g. "Headquarters: Vantaa, Finland").
+#                         Matched case-insensitively against each comma-separated
+#                         location after the company-name prefix is stripped.
+#
+# Otherwise only shared fields + pagination are used; card/title/location
+# selectors are ignored.
 
 # ── extract_mode: xml_feed ───────────────────────────────────────────────────
 #
@@ -549,6 +554,19 @@ scrapers:
     - match: 'career.nordnetab.com'
       name: Nordnet
       extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 25
+
+    # ── Sensofusion (TeamTailor) ────────────────────────────────────────────────
+    - match: 'careers.sensofusion.com'
+      name: Sensofusion
+      extract_mode: teamtailor
+      # The office is labelled "Headquarters"; the Koivuhaka office is in Vantaa.
+      location_aliases:
+          Headquarters: Vantaa, Finland
       description_selector: 'div.prose'
       pagination:
           type: page

@@ -104,6 +104,7 @@
 - SAP
 - Scout24
 - SEB
+- Sensofusion
 - Siemens (local script)
 - Siemens Healthineers
 - Smartly
@@ -245,6 +246,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
 | Axpo Group | `careers.axpo.com/jobs` | teamtailor | Board aggregates the group's Teamtailor sites (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...); 20 per page. CKW pages redirect to `ckw.ch` |
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |
+| Sensofusion | `careers.sensofusion.com/jobs` | teamtailor | Office label "Headquarters" has no place, so `location_aliases` maps it to Vantaa, Finland; UK and Canada offices are untracked. Postings are written in Finnish |
 | Bending Spoons | `jobs.bendingspoons.com` | `next_data` | All postings and their full text are in the page's `__NEXT_DATA__`; no detail fetches. One job per office country |
 | GE Healthcare | `careers.gehealthcare.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Job links use `url_template` (applyUrl points at Workday) |
 | DHL | `careers.dhl.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. ~5,200 postings, ~85% in Germany; descriptions are fetched for the ~840 English-titled ones, so a run takes ~8 min. Job links use `url_template` (applyUrl points at Avature) |

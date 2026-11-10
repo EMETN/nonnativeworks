@@ -426,6 +426,32 @@ class ExtractTeamtailorCardTest(unittest.TestCase):
 
         self.assertEqual(job["location"], "Stockholm")
 
+    def test_location_alias_replaces_a_label_that_names_no_place(self):
+        cfg = {"name": "Acme", "location_aliases": {"Headquarters": "Vantaa, Finland"}}
+
+        job = _extract_teamtailor_card(
+            self._card("<span>Acme Headquarters</span>"),
+            "https://careers.example.com/jobs",
+            cfg,
+        )
+
+        self.assertEqual(job["location"], "Vantaa, Finland")
+
+    def test_location_alias_is_case_insensitive_and_leaves_other_places(self):
+        cfg = {"location_aliases": {"headquarters": "Vantaa, Finland"}}
+
+        hq = _extract_teamtailor_card(
+            self._card("<span>HEADQUARTERS</span>"),
+            "https://careers.example.com/jobs",
+            cfg,
+        )
+        other = _extract_teamtailor_card(
+            self._card("<span>Canada</span>"), "https://careers.example.com/jobs", cfg
+        )
+
+        self.assertEqual(hq["location"], "Vantaa, Finland")
+        self.assertEqual(other["location"], "Canada")
+
 
 class ExtractCardTest(unittest.TestCase):
     BASE = "https://careers.example.com/en/careers"
