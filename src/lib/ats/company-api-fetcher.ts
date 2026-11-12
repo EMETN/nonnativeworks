@@ -30,10 +30,47 @@ function decodeHtmlEntities(str: string): string {
         );
 }
 
-/** Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object. */
+const FILTER_SEGMENT_RE = /^([^[\]]+)\[([^=\]]+)=([^\]]*)\]$/;
+
+/**
+ * Resolve a dot-path like "response.unifiedStandardTitle" into a nested value. Empty path returns the root object.
+ *
+ * A segment may filter an array by a field's value: "categories[domain=City].term" keeps the
+ * elements of `categories` whose `domain` is "City", then reads `term` from each (so the result
+ * is an array, and getString/getStringArray take it from there). Use it for APIs that list
+ * facets as `{domain, term}` pairs in no fixed order, where a numeric index would misalign.
+ * Values cannot contain "." or "]".
+ */
 function getPath(obj: unknown, path: string): unknown {
     if (!path) return obj;
+    let filtered = false;
     return path.split('.').reduce((cur: unknown, key) => {
+        // After a filter the current value is a list of matches: pluck the key from each.
+        if (filtered && Array.isArray(cur)) {
+            return cur
+                .map((el) =>
+                    el !== null && typeof el === 'object'
+                        ? (el as Record<string, unknown>)[key]
+                        : undefined,
+                )
+                .filter((v) => v !== undefined);
+        }
+        const filter = FILTER_SEGMENT_RE.exec(key);
+        if (filter) {
+            const [, name, field, value] = filter;
+            const list =
+                cur !== null && typeof cur === 'object'
+                    ? (cur as Record<string, unknown>)[name]
+                    : undefined;
+            if (!Array.isArray(list)) return undefined;
+            filtered = true;
+            return list.filter(
+                (el) =>
+                    el !== null &&
+                    typeof el === 'object' &&
+                    String((el as Record<string, unknown>)[field]) === value,
+            );
+        }
         if (cur !== null && typeof cur === 'object' && key in (cur as object)) {
             return (cur as Record<string, unknown>)[key];
         }
@@ -179,6 +216,7 @@ function mapItem(
         url: url || undefined,
         department: getString(item, fields.department),
         jobFunction: getString(item, fields.jobFunction),
+        work_model: normaliseWorkModel(getString(item, fields.workModel) ?? ''),
         sourceId: fields.id ? getString(item, fields.id) : undefined,
         descriptionText,
     };
@@ -466,25 +504,40 @@ async function fetchPage(
 const GONE_SENTINEL = '\x00GONE';
 
 async function fetchPageHtml(url: string): Promise<string | undefined> {
-    try {
-        const res = await fetchPublic(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-        });
-        if (res.status === 404 || res.status === 410) {
-            console.warn(
-                `[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`,
-            );
-            return GONE_SENTINEL;
-        }
-        if (!res.ok) {
-            console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
+    // 429 is retried with Retry-After / exponential backoff, mirroring fetchPage —
+    // otherwise a rate-limited job page silently loses its description.
+    for (let attempt = 0; attempt < THROTTLED_FETCH_ATTEMPTS; attempt++) {
+        try {
+            const res = await fetchPublic(url, {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+            });
+            if (res.status === 404 || res.status === 410) {
+                console.warn(
+                    `[fetchPageHtml] HTTP ${res.status} (gone) for ${url}`,
+                );
+                return GONE_SENTINEL;
+            }
+            if (res.status === 429 && attempt < THROTTLED_FETCH_ATTEMPTS - 1) {
+                const waitMs =
+                    parseRetryAfterMs(res.headers.get('retry-after')) ??
+                    THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500;
+                console.warn(
+                    `[fetchPageHtml] 429 for ${url}, retrying in ${Math.round(waitMs)}ms`,
+                );
+                await sleep(waitMs);
+                continue;
+            }
+            if (!res.ok) {
+                console.warn(`[fetchPageHtml] HTTP ${res.status} for ${url}`);
+                return undefined;
+            }
+            return await res.text();
+        } catch (err) {
+            console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
             return undefined;
         }
-        return await res.text();
-    } catch (err) {
-        console.warn(`[fetchPageHtml] fetch failed for ${url}: ${err}`);
-        return undefined;
     }
+    return undefined;
 }
 
 /**
@@ -499,18 +552,21 @@ export async function enrichDescriptions(
     locationRegex?: RegExp,
     descriptionRegex?: RegExp,
     skipUrls?: CachedTitleHashes,
+    workModelRegex?: RegExp,
 ): Promise<void> {
     const targets = jobs.filter((j) => {
         if (!j.url) return false;
         // skipUrls only caches classification, not location — so a cached URL still
         // missing its location must be fetched, or location-from-HTML companies hit 0.
         const wantsLocation = !!locationRegex && !j.location;
+        // Same for the work model: it is stored on every run, cached or not.
+        const wantsWorkModel = !!workModelRegex && !j.work_model;
         const wantsDescription =
             !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&
             !j.descriptionText;
-        return wantsDescription || wantsLocation;
+        return wantsDescription || wantsLocation || wantsWorkModel;
     });
 
     const noUrl = jobs.length - targets.length;
@@ -519,6 +575,7 @@ export async function enrichDescriptions(
     );
 
     let locationsSet = 0;
+    let workModelsSet = 0;
     let htmlFailed = 0;
     let goneCount = 0;
     let regexMissed = 0;
@@ -548,6 +605,14 @@ export async function enrichDescriptions(
                         job.descriptionHtml = html;
                     }
                 }
+                if (workModelRegex && !job.work_model) {
+                    const wm = html.match(workModelRegex)?.[1];
+                    const model = wm ? normaliseWorkModel(wm) : undefined;
+                    if (model) {
+                        job.work_model = model;
+                        workModelsSet++;
+                    }
+                }
                 if (locationRegex && !job.location) {
                     const m = html.match(locationRegex);
                     if (m?.[1]) {
@@ -575,6 +640,11 @@ export async function enrichDescriptions(
     if (goneCount) {
         console.log(
             `[enrichDescriptions] ${goneCount} jobs marked gone (404/410)`,
+        );
+    }
+    if (workModelRegex) {
+        console.log(
+            `[enrichDescriptions] work model extraction: ${workModelsSet} set of ${targets.length} pages`,
         );
     }
     if (locationRegex) {
@@ -1491,18 +1561,26 @@ export async function fetchCompanyApiJobs(
           })
         : primaryJobs;
 
-    if (config.fetchDescription || config.locationFromHtml) {
+    if (
+        config.fetchDescription ||
+        config.locationFromHtml ||
+        config.workModelFromHtml
+    ) {
         const locationRegex = config.locationFromHtml
             ? new RegExp(config.locationFromHtml)
             : undefined;
         const descriptionRegex = config.descriptionFromHtml
             ? new RegExp(config.descriptionFromHtml, 's')
             : undefined;
+        const workModelRegex = config.workModelFromHtml
+            ? new RegExp(config.workModelFromHtml)
+            : undefined;
         await enrichDescriptions(
             enrichmentTargets,
             locationRegex,
             descriptionRegex,
             skipUrls,
+            workModelRegex,
         );
     }
 

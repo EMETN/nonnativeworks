@@ -29,4 +29,8 @@ export const TRACKED_COUNTRY_CODES = new Set([
     'BG', // Bulgaria
     'GR', // Greece
     'CZ', // Czechia
+    'EU', // Europe (region: remote positions open across Europe)
 ]);
+
+/** Codes of `countries` rows that are regions, not single countries (see 002_europe_region.sql). */
+export const REGION_COUNTRY_CODES = new Set(['EU']);

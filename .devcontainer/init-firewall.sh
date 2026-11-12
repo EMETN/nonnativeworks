@@ -158,6 +158,7 @@ ats_domains=(
     "api.lever.co"  # Lever
     "career2.successfactors.eu"  # SuccessFactors
     "api.smartrecruiters.com"  # SmartRecruiters
+    "ats.talentadore.com"  # Talentadore
     "apply.workable.com"  # Workable
     "wd3.myworkdaysite.com"  # Workday
 )
@@ -214,6 +215,8 @@ company_domains=(
     "jobs.arla.com"  # Arla
     "asml.com"  # ASML
     "jobs.autodesk.com"  # Autodesk
+    "careers.axpo.com"  # Axpo Group
+    "ckw.ch"  # Axpo Group (CKW; its Teamtailor pages redirect here)
     "barona.fi"  # Barona
     "bayer.eightfold.ai"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
@@ -224,7 +227,9 @@ company_domains=(
     "careers.carlsberg.com"  # Carlsberg
     "careers.celonis.com"  # Celonis
     "cgi.njoyn.com"  # CGI
+    "jobs.citi.com"  # Citi
     "www.cognite.com"  # Cognite
+    "jobs.danfoss.com"  # Danfoss
     "ejqi.fa.ocs.oraclecloud.eu"  # Danske Bank
     "deel.com"  # Deel
     "careers.deliveryhero.com"  # Delivery Hero
@@ -236,7 +241,9 @@ company_domains=(
     "careers.doctolib.fr"  # Doctolib
     "edenred.com"  # Edenred
     "elekta.wd3.myworkdayjobs.com"  # Elekta
+    "elevenlabs.io"  # ElevenLabs
     "elisa.com"  # Elisa
+    "www.jobs.enpal.com"  # Enpal
     "equinor.wd3.myworkdayjobs.com"  # Equinor
     "jobs.ericsson.com"  # Ericsson
     "careers.feedzai.com"  # Feedzai
@@ -286,18 +293,22 @@ company_domains=(
     "jobs.nokia.com"  # Nokia
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
+    "nordsecurity.com"  # Nord Security
     "jobs.nvidia.com"  # Nvidia
-    "nxp.wd3.myworkdayjobs.com"  # NXP
+    "nxp.wd116.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI
     "careers.orkla.com"  # Orkla
     "fa-esaq-saasfaprod1.fa.ocs.oraclecloud.com"  # Orion
+    "www.perk.com"  # Perk
+    "www.personio.com"  # Personio
     "philips.wd3.myworkdayjobs.com"  # Philips
     "jobs.picnic.app"  # Picnic
     "posti.wd3.myworkdayjobs.com"  # Posti
     "proton.me"  # Proton
     "careers.publicisgroupe.com"  # Publicis Groupe
+    "www.ramboll.com"  # Ramboll
     "www.randstad.com"  # Randstad
     "www.relexsolutions.com"  # RELEX Solutions
     "www.reorbit.space" # Reorbit
@@ -305,6 +316,8 @@ company_domains=(
     "rovio.com"  # Rovio
     "sanoma.wd3.myworkdayjobs.com"  # Sanoma
     "careers.sap.com"  # SAP
+    "careers.se.com"  # Schneider Electric
+    "careers-se.icims.com" # Schneider Electric
     "scout24.com"  # Scout24
     "sebgroup.com"  # SEB
     "jobs.siemens.com"  # Siemens

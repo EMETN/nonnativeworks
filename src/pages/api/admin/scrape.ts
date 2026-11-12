@@ -54,7 +54,10 @@ import {
     fetchCompanyApiJobs,
     enrichDescriptions,
 } from '../../../lib/ats/company-api-fetcher';
-import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
+import {
+    REGION_COUNTRY_CODES,
+    TRACKED_COUNTRY_CODES,
+} from '../../../lib/tracked-countries';
 import {
     loadSkills,
     extractSkills,
@@ -401,9 +404,12 @@ function buildScrapeResult(
             for (const city of cities) {
                 if (!isKnownCity(city)) unknownCities.add(city);
             }
-            const workModel =
-                job.work_model ??
-                extractWorkModelFromLocation(job.location ?? '');
+            // Positions in the Europe region are remote by definition: that is the
+            // only way a posting can belong to Europe without naming a country.
+            const workModel = REGION_COUNTRY_CODES.has(countryInfo.code)
+                ? 'remote'
+                : (job.work_model ??
+                  extractWorkModelFromLocation(job.location ?? ''));
 
             if (!groups.has(countryInfo.code)) {
                 groups.set(countryInfo.code, {

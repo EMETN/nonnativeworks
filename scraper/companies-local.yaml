@@ -34,6 +34,14 @@ companies:
       url: https://cgi.njoyn.com
       min_positions: 10
 
+    # The listing is an open JSON API, but Personio's job pages (descriptions) sit
+    # behind a Vercel bot checkpoint that blocks scripted clients, so without a
+    # description only the title is classified. Kept out of the scheduled run;
+    # review its Germany entries by hand before uploading.
+    - name: Personio
+      url: https://www.personio.com/about-personio/careers/
+      min_positions: 30
+
     # Here for volume, not for a residential IP. ~1,270 postings across the 25
     # tracked-country facets, served 6 to a page, so a full run is ~212 listing
     # pages plus a detail fetch per English-titled job — ~45 minutes serially,

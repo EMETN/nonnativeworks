@@ -59,6 +59,15 @@ const MS_ENGLISH_INTRO =
 const MS_PAY_RANGE_LINE = // tinyld: "lt" 0.58
     'Customer Experience Engineering IC4 - The typical base pay range for this role across Czechia is Kč 1,338,000.00 - Kč 2,448,000.00 per year. Certain roles may be eligible for benefits and other compensation.';
 
+// Kraken's English intro: tinyld reads "Kraken Security Labs" as Latvian ("lv" 0.66, just
+// over the trust cutoff) although the paragraph has no Latvian letters.
+const KRAKEN_SECURITY_LABS_PARAGRAPH =
+    'We are seeking a skilled & hands-on Senior Security Architect for Kraken Security Labs. Kraken Security Labs provides boutique-style, deeply technical internal security consulting on current and future products.';
+
+// A genuine Latvian paragraph (a job ad), full of Latvian letters.
+const LATVIAN_PARAGRAPH =
+    'Mēs meklējam pieredzējušu pārdošanas vadītāju, kas palīdzēs attīstīt mūsu klientu portfeli un veidot ilgtermiņa attiecības ar sadarbības partneriem. Jūs būsiet atbildīgs par tirdzniecības piedāvājumu sagatavošanu, sarunām ar klientiem un komandas darba koordinēšanu. Nepieciešamas teicamas latviešu valodas zināšanas, jo ikdienā sazināsieties ar vietējiem uzņēmumiem.';
+
 // A genuine French paragraph: tinyld is confident about it (well above the trust threshold).
 const FRENCH_PARAGRAPH =
     'Nous recherchons un ingénieur commercial expérimenté pour renforcer notre équipe en pleine croissance. Vous serez responsable du développement de notre portefeuille de clients, de la préparation des offres commerciales et du suivi des relations avec nos partenaires. Une excellente maîtrise du français, à l’oral comme à l’écrit, est indispensable pour ce poste, car vous échangerez quotidiennement avec des clients francophones.';
@@ -125,6 +134,30 @@ export const CASES: FixtureCase[] = [
         title: 'AI Architect',
         desc: 'Fluent Finnish and English language skills are considered advantages, as we have clients both domestically and internationally.',
         country: 'FI',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Fluent English; French and/or Spanish is an advantage" (FR)',
+        title: 'Engineer',
+        desc: 'Fluent English; French and/or Spanish is an advantage.',
+        country: 'FR',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Fluent English; French and/or Spanish is an advantage" (ES)',
+        title: 'Engineer',
+        desc: 'Fluent English; French and/or Spanish is an advantage.',
+        country: 'ES',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — "Fluent English; French and/or Spanish is an advantage" (DE)',
+        title: 'Engineer',
+        desc: 'Fluent English; French and/or Spanish is an advantage.',
+        country: 'DE',
         requires: false,
         advantage: true,
     },
@@ -394,6 +427,70 @@ export const CASES: FixtureCase[] = [
         country: 'FI',
         requires: false,
         advantage: true,
+    },
+    {
+        label: '1b — regex: "Baltic languages and an existing industry network are an advantage" (LT)',
+        title: 'Account Manager',
+        desc: 'Baltic languages and an existing industry network are an advantage.',
+        country: 'LT',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — regex: "Baltic languages and an existing industry network are an advantage" (LV)',
+        title: 'Account Manager',
+        desc: 'Sales experience required. Baltic languages and an existing industry network are an advantage.',
+        country: 'LV',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — regex: "Baltic languages and an existing industry network are an advantage" (EE)',
+        title: 'Account Manager',
+        desc: 'Sales experience required. Baltic languages and an existing industry network are an advantage.',
+        country: 'EE',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — regex: "Nordic languages and customer-facing experience are a plus"',
+        title: 'Account Manager',
+        desc: 'Sales experience required. Nordic languages and customer-facing experience are a plus.',
+        country: 'SE',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — regex: "Scandinavian languages would be an asset"',
+        title: 'Account Manager',
+        desc: 'Sales experience required. Scandinavian languages would be an asset.',
+        country: 'NO',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '2d — "Baltic languages are spoken across our markets" is not an advantage signal',
+        title: 'Account Manager',
+        desc: 'Sales experience required. Baltic languages are spoken across our markets.',
+        country: 'LT',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '2d — an advantage in the next sentence is not attributed to "Baltic languages"',
+        title: 'Account Manager',
+        desc: 'We operate in the Baltic languages market. Sales experience is an advantage.',
+        country: 'LT',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '2a — an explicit "Lithuanian required" still wins over a "Baltic languages are an advantage" phrase',
+        title: 'Account Manager',
+        desc: 'Fluent English and Lithuanian required. Baltic languages are an advantage.',
+        country: 'LT',
+        requires: true,
+        advantage: false,
     },
     {
         label: '1b — regex: "Finnish or other Nordic languages are a plus"',
@@ -1118,9 +1215,33 @@ export const CASES: FixtureCase[] = [
         advantage: false,
     },
     {
+        label: '1b — "Proficiency in another language (German, Italian, Spanish, or French) is highly desired" (Citi)',
+        title: 'Analyst',
+        desc: 'You are fluent in English. Proficiency in another language (German, Italian, Spanish, or French) is highly desired.',
+        country: 'DE',
+        requires: false,
+        advantage: true,
+    },
+    {
+        label: '1b — parenthetical language list "is highly desired" on a Spanish listing',
+        title: 'Analyst',
+        desc: 'You are fluent in English. Proficiency in another language (German, Italian, Spanish, or French) is highly desired.',
+        country: 'ES',
+        requires: false,
+        advantage: true,
+    },
+    {
         label: '2a-nordic — "fluency in English and a Scandinavian language"',
         title: 'Head of Sales',
         desc: 'We expect fluency in English and a Scandinavian language.',
+        country: 'DK',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a-nordic — "fluent in English and a Nordic language (Norwegian, Danish, ...)" (Citi)',
+        title: 'Corporate Banking Placement Analyst',
+        desc: 'You have an interest in business. You are fluent in English and a Nordic language (Norwegian, Danish, Swedish, Finnish)',
         country: 'DK',
         requires: true,
         advantage: false,
@@ -1642,6 +1763,130 @@ export const CASES: FixtureCase[] = [
         desc: MS_ENGLISH_INTRO + MS_PAY_RANGE_LINE + '\n' + FRENCH_PARAGRAPH,
         country: 'DE',
         requires: true,
+        advantage: false,
+    },
+    {
+        label: '1c-any — English Kraken ad whose "Kraken Security Labs" paragraph scores "lv" (0.66) but has no Latvian letters → not required',
+        title: 'Staff Security Architect',
+        desc:
+            MS_ENGLISH_INTRO +
+            KRAKEN_SECURITY_LABS_PARAGRAPH +
+            '\n' +
+            MS_ENGLISH_INTRO,
+        country: 'SE',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '2a — "copywriting in German and/or localization/translation experience into German" (Nord Security copywriter)',
+        title: 'Copywriter · German · Junior',
+        desc: '1+ years of full-time copywriting in German and/or localization/translation experience into German (freelance or employed) with a portfolio or content links. Fluent English skills.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Proofread German content"',
+        title: 'Content Editor',
+        desc: 'Your impact: proofread German content before publication and keep the tone consistent.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "proofreading German" (gerund)',
+        title: 'Content Editor',
+        desc: 'Experience with proofreading German marketing material is expected.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "translate into German"',
+        title: 'Marketing Specialist',
+        desc: 'You will translate into German our campaign copy and landing pages.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "translation into German"',
+        title: 'Marketing Specialist',
+        desc: 'Proven translation into German of technical product copy.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "localization into German"',
+        title: 'Localization Specialist',
+        desc: 'Hands-on experience with localization into German for software products.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "localisation into German" (British spelling)',
+        title: 'Localisation Specialist',
+        desc: 'Hands-on experience with localisation into German for software products.',
+        country: 'DE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a-cross — "copywriting in German" on a Lithuanian listing → German required',
+        title: 'Copywriter',
+        desc: '2+ years of copywriting in German for consumer brands. Fluent English skills.',
+        country: 'LT',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2d — "our app is translated into German" (no phrase match) → not required',
+        title: 'Product Designer',
+        desc: 'Our app is translated into German, French and Spanish. You will design flows in English.',
+        country: 'DE',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '2d — "German content" alone is not a requirement signal',
+        title: 'Marketing Analyst',
+        desc: 'You will report on traffic to our German content pages. Fluent English skills.',
+        country: 'DE',
+        requires: false,
+        advantage: false,
+    },
+    {
+        label: '1c-any — a genuine Latvian paragraph on a Swedish listing is still flagged (has Latvian letters)',
+        title: 'Sales Manager',
+        desc: LATVIAN_PARAGRAPH,
+        country: 'SE',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Spanish (mandatory)": parentheses are stripped, so "spanish mandatory" is a requirement (Schneider)',
+        title: 'Sales Engineer',
+        desc: 'You have a degree in engineering. Languages: English (fluent), Spanish (mandatory).',
+        country: 'ES',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Spanish (essential)" is a requirement',
+        title: 'Project Manager',
+        desc: 'Project management experience. Spanish (essential) and English.',
+        country: 'ES',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Spanish (not mandatory)" is not a requirement',
+        title: 'Project Manager',
+        desc: 'Project management experience. Fluent English is required. Spanish (not mandatory).',
+        country: 'ES',
+        requires: false,
         advantage: false,
     },
 ];

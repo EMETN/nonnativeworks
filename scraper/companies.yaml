@@ -87,6 +87,10 @@ companies:
       url: https://jobs.autodesk.com/careers
       min_positions: 10
 
+    - name: Axpo Group
+      url: https://careers.axpo.com/jobs
+      min_positions: 30
+
     - name: Barona
       url: https://www.barona.fi/en/jobs/
       min_positions: 10
@@ -123,9 +127,17 @@ companies:
       url: https://careers.celonis.com/join-us/open-positions
       min_positions: 30
 
+    - name: Citi
+      url: https://jobs.citi.com/search-jobs
+      min_positions: 10
+
     - name: Cognite
       url: https://www.cognite.com/en/company/careers
       min_positions: 5
+
+    - name: Danfoss
+      url: https://jobs.danfoss.com/
+      min_positions: 20
 
     - name: Danske Bank
       url: https://ejqi.fa.ocs.oraclecloud.eu/hcmUI/CandidateExperience/en/sites/CX_1001/jobs
@@ -166,6 +178,18 @@ companies:
     - name: E.ON
       url: https://jobs.eon.com
       min_positions: 10
+
+    - name: Elisa
+      url: https://elisa.com/corporate/careers/openjobs/
+      min_positions: 3
+
+    - name: ElevenLabs
+      url: https://elevenlabs.io/careers/positions
+      min_positions: 30
+
+    - name: Enpal
+      url: https://www.jobs.enpal.com/jobs
+      min_positions: 30
 
     - name: Equinor
       url: https://equinor.wd3.myworkdayjobs.com/EQNR
@@ -259,6 +283,10 @@ companies:
       url: https://konecranes.careers/jobs
       min_positions: 10
 
+    - name: Kraken/Payward
+      url: https://jobs.ashbyhq.com/kraken.com
+      min_positions: 10
+
     - name: Legora
       url: https://legora.com/careers
       min_positions: 10
@@ -348,8 +376,12 @@ companies:
       min_positions: 5
 
     - name: NXP
-      url: https://nxp.wd3.myworkdayjobs.com/careers?Location_Country=d004c0d1a6c84511ab048669fcdf9fd7&Location_Country=dcc5b7608d8644b3a93716604e78e995&Location_Country=f2e609fe92974a55a05fc1cdc2852122&Location_Country=9696868b09c64d52a62ee13b052383cc&Location_Country=54c5b6971ffb4bf0b116fe7651ec789a&Location_Country=8cd04a563fd94da7b06857a79faaf815&Location_Country=a04ea128f43a42e59b1e6a19e8f0b374&Location_Country=fc078443155c4ad294201ecf5a61a499&Location_Country=bd34c524a6a04ae6915f5d96fa086199&Location_Country=9db257f5937e4421b2fac64eec6832f8&Location_Country=1face6f426c14de9979a134697da0db3
+      url: https://nxp.wd116.myworkdayjobs.com/careers?Location_Country=d004c0d1a6c84511ab048669fcdf9fd7&Location_Country=dcc5b7608d8644b3a93716604e78e995&Location_Country=f2e609fe92974a55a05fc1cdc2852122&Location_Country=9696868b09c64d52a62ee13b052383cc&Location_Country=54c5b6971ffb4bf0b116fe7651ec789a&Location_Country=8cd04a563fd94da7b06857a79faaf815&Location_Country=a04ea128f43a42e59b1e6a19e8f0b374&Location_Country=fc078443155c4ad294201ecf5a61a499&Location_Country=bd34c524a6a04ae6915f5d96fa086199&Location_Country=9db257f5937e4421b2fac64eec6832f8&Location_Country=1face6f426c14de9979a134697da0db3
       min_positions: 10
+
+    - name: Nvidia
+      url: https://jobs.nvidia.com/careers
+      min_positions: 30
 
     - name: Ogilvy
       url: https://www.ogilvy.com/work-with-us
@@ -375,6 +407,10 @@ companies:
       url: https://boards.greenhouse.io/oura
       min_positions: 2
 
+    - name: Perk
+      url: https://www.perk.com/careers
+      min_positions: 50
+
     - name: Philips
       url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers/?locationHierarchy1=6e1b2a934716103c2ade3949f7af011c&locationHierarchy1=6e1b2a934716103c2ade35de0967011a&locationHierarchy1=6e1b2a934716103c2add8d0d702f00ba&locationHierarchy1=6e1b2a934716103c2addbef8087f00d6&locationHierarchy1=6e1b2a934716103c2ade3245ee870118&locationHierarchy1=6e1b2a934716103c2ade2ef2897f0116
       min_positions: 10
@@ -398,6 +434,10 @@ companies:
     - name: Publicis Groupe
       url: https://careers.publicisgroupe.com/jobs
       min_positions: 5
+
+    - name: Ramboll
+      url: https://jobs.smartrecruiters.com/Ramboll3
+      min_positions: 50
 
     - name: Randstad
       url: https://www.randstad.com/jobs/careers-at-randstad
@@ -435,6 +475,10 @@ companies:
       min_positions: 5
 
     # 111 positions across 13 tracked countries once the country facet was
+    - name: Sensofusion
+      url: https://careers.sensofusion.com/jobs
+      min_positions: 4
+
     # widened from 9 countries to all 25; it was 41 before, hence the old floor of 5.
     - name: Siemens Healthineers
       url: https://careers.siemens-healthineers.com/global/en/search-results
@@ -569,6 +613,10 @@ companies:
     - name: Zalando
       url: https://jobs.zalando.com/en/jobs
       min_positions: 10
+
+    - name: Zühlke
+      url: https://zuehlke.wd3.myworkdayjobs.com/Zuhlke-Careers
+      min_positions: 3
 
 # Examples — uncomment and fill in real values:
 #

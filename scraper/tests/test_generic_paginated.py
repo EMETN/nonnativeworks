@@ -426,6 +426,32 @@ class ExtractTeamtailorCardTest(unittest.TestCase):
 
         self.assertEqual(job["location"], "Stockholm")
 
+    def test_location_alias_replaces_a_label_that_names_no_place(self):
+        cfg = {"name": "Acme", "location_aliases": {"Headquarters": "Vantaa, Finland"}}
+
+        job = _extract_teamtailor_card(
+            self._card("<span>Acme Headquarters</span>"),
+            "https://careers.example.com/jobs",
+            cfg,
+        )
+
+        self.assertEqual(job["location"], "Vantaa, Finland")
+
+    def test_location_alias_is_case_insensitive_and_leaves_other_places(self):
+        cfg = {"location_aliases": {"headquarters": "Vantaa, Finland"}}
+
+        hq = _extract_teamtailor_card(
+            self._card("<span>HEADQUARTERS</span>"),
+            "https://careers.example.com/jobs",
+            cfg,
+        )
+        other = _extract_teamtailor_card(
+            self._card("<span>Canada</span>"), "https://careers.example.com/jobs", cfg
+        )
+
+        self.assertEqual(hq["location"], "Vantaa, Finland")
+        self.assertEqual(other["location"], "Canada")
+
 
 class ExtractCardTest(unittest.TestCase):
     BASE = "https://careers.example.com/en/careers"
@@ -456,6 +482,159 @@ class ExtractCardTest(unittest.TestCase):
 
         self.assertEqual(job["location"], "Oulu")
 
+    def test_work_model_selector_prefixes_the_location(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Warsaw</i>'
+            '<i class="wm"> Hybrid </i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "Hybrid - Warsaw")
+
+    def test_work_model_selector_reads_on_site(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Berlin</i>'
+            '<i class="wm">On-site</i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "On-site - Berlin")
+
+    def test_work_model_selector_ignores_a_label_that_is_not_a_work_model(self):
+        card = self._card(
+            '<a href="/j/1"><h3>Dev</h3><i class="loc">Warsaw</i>'
+            '<i class="wm">Finance</i></a>'
+        )
+        cfg = {"location_selector": ".loc", "work_model_selector": ".wm"}
+
+        job = _extract_card(card, self.BASE, cfg)
+
+        self.assertEqual(job["location"], "Warsaw")
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_jsonld_location_reads_address():
+    from platforms.generic_paginated import _jsonld_location
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+        '"address":{"addressLocality":"Madrid","addressCountry":"ES"}}]}</script>'
+    )
+    assert _jsonld_location(html) == "Madrid, ES"
+
+
+def test_jsonld_location_empty_address_is_none():
+    from platforms.generic_paginated import _jsonld_location
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+        '"address":{}}]}</script>'
+    )
+    assert _jsonld_location(html) is None
+
+
+def test_new_session_upgrades_http_redirect():
+    from unittest import mock
+
+    import requests
+
+    from platforms.generic_paginated import _new_session
+
+    hop = requests.Response()
+    hop.status_code = 301
+    hop.headers["location"] = "http://ckw.ch/careers/jobs/1"
+    hop.url = "https://ckw.teamtailor.com/jobs/1"
+    final = requests.Response()
+    final.status_code = 200
+    final.url = "https://ckw.ch/careers/jobs/1"
+    seen = []
+
+    def fake_send(self, request, **kw):
+        seen.append(request.url)
+        resp = hop if len(seen) == 1 else final
+        resp.request = request
+        return resp
+
+    with mock.patch.object(requests.adapters.HTTPAdapter, "send", fake_send):
+        _new_session().get("https://ckw.teamtailor.com/jobs/1")
+    assert seen[1] == "https://ckw.ch/careers/jobs/1"
+
+
+def test_card_work_model():
+    from platforms.generic_paginated import _card_work_model
+
+    assert _card_work_model("Hybrid") == "Hybrid"
+    assert _card_work_model("Fully Remote") == "Remote"
+    assert _card_work_model("Baden") is None
+    assert _card_work_model(None) is None
+
+
+def test_jsonld_locations_lists_every_office_with_country_names():
+    from platforms.generic_paginated import _jsonld_locations
+
+    html = (
+        '<script type="application/ld+json">{"jobLocation":['
+        '{"address":{"addressLocality":"Krakow","addressRegion":"77","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+        '{"address":{"addressLocality":"Pune","addressCountry":"India"}},'
+        '{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"","addressCountry":"PL"}}'
+        "]}</script>"
+    )
+    assert _jsonld_locations(html) == [
+        "Krakow - Poland",
+        "Katowice - Poland",
+        "Pune - India",
+    ]
+
+
+def test_multi_location_card_with_work_model_prefix_is_expanded(monkeypatch):
+    import platforms.generic_paginated as gp
+
+    card = (
+        '<li class="c"><span class="t">Hybrid</span><a href="/job/1">Analyst</a>'
+        '<span class="l">Multiple Locations</span></li>'
+    )
+    detail = (
+        '<div class="d">Great role</div><script type="application/ld+json">'
+        '{"jobLocation":[{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+        '{"address":{"addressLocality":"Pune","addressCountry":"India"}}]}</script>'
+    )
+
+    class Resp:
+        status_code = 200
+        ok = True
+
+        def __init__(self, text):
+            self.text = text
+            self.content = text.encode()
+
+        def raise_for_status(self):
+            pass
+
+    def fake_get(session, url, cfg, **kwargs):
+        return Resp(detail if "/job/" in url else f"<ul>{card}</ul>")
+
+    monkeypatch.setattr(gp, "_get", fake_get)
+    cfg = {
+        "name": "T",
+        "card_selector": "li.c",
+        "title_selector": "a",
+        "location_selector": "span.l",
+        "work_model_selector": "span.t",
+        "description_selector": "div.d",
+        "detail_locations_jsonld": True,
+        "pagination": {"type": "none"},
+    }
+    jobs = gp.scrape_generic("https://example.com/jobs", cfg)
+    by_loc = {j["location"]: j for j in jobs}
+    assert set(by_loc) == {"Hybrid - Krakow - Poland", "Hybrid - Pune - India"}
+    assert by_loc["Hybrid - Krakow - Poland"]["cities"] == ["Krakow", "Katowice"]

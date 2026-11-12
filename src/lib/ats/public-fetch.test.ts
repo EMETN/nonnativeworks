@@ -87,3 +87,19 @@ test('follows a redirect to another public host', async () => {
         expect.objectContaining({ redirect: 'manual' }),
     );
 });
+
+test('upgrades an http redirect hop to https', async () => {
+    lookup.mockResolvedValue([{ address: '93.184.215.14', family: 4 }]);
+    const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+            new Response(null, {
+                status: 301,
+                headers: { location: 'http://example.com/careers/1' },
+            }),
+        )
+        .mockResolvedValueOnce(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchPublic('https://jobs.example.com/1');
+    expect(fetchMock.mock.calls[1][0]).toBe('https://example.com/careers/1');
+});

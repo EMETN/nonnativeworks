@@ -80,6 +80,18 @@
 #                         the ISO country_code. Ignored without country_filter_param.
 #   default_location      Location used for cards that yield none, e.g. "Finland" for
 #                         a single-country company whose listing has no location field.
+#   work_model_selector   CSS selector for a card element holding the work model
+#                         ("Hybrid", "Remote", "On-site"), for sites that show it
+#                         separately from the location. It is prepended to the
+#                         location as "Hybrid - City", which the TypeScript side
+#                         turns into the job's work model. Labels that name none of
+#                         the three are ignored.
+#   detail_location_selector  CSS selector for the per-location elements on the
+#                         detail page, used to resolve cards that read "Multiple
+#                         Locations" (one entry per country is created).
+#   detail_locations_jsonld   true: resolve "Multiple Locations" cards from the
+#                         detail page's JSON-LD jobLocation list instead, for
+#                         sites that print the offices as one joined string.
 #   url_selector          CSS selector for the job link when it is NOT on the
 #                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
@@ -154,8 +166,13 @@
 # middots. No additional selectors needed — the mode handles parsing internally.
 # Pagination uses ?page=1,2,3… and stops when fewer than page_size jobs return.
 #
-# Only shared fields + pagination are used; card/title/location selectors are
-# ignored.
+#   location_aliases      Map of office label → place, for sites whose office names
+#                         name no place (e.g. "Headquarters: Vantaa, Finland").
+#                         Matched case-insensitively against each comma-separated
+#                         location after the company-name prefix is stripped.
+#
+# Otherwise only shared fields + pagination are used; card/title/location
+# selectors are ignored.
 
 # ── extract_mode: xml_feed ───────────────────────────────────────────────────
 #
@@ -524,10 +541,38 @@ scrapers:
       description_selector: '#section1__content .article__content__view__field__value'
       detail_location_selector: 'ul.list--locations li'
 
+    # ── Nord Security ───────────────────────────────────────────────────────────
+    # Every role is one <a data-role-card> in the static page. Its badges are
+    # [product, city, work model, area]: the second is the location, the third
+    # the work model.
+    # (The "Apply for role" carousel buttons have no data-role-card; skip them.)
+    - match: 'nordsecurity.com/careers'
+      name: Nord Security
+      card_selector: 'a[data-role-card="true"]'
+      title_selector: 'p.heading-sm'
+      location_selector: 'div[data-size]:nth-of-type(2)'
+      work_model_selector: 'div[data-size]:nth-of-type(3)'
+      description_selector: 'main'
+      pagination:
+          type: none
+
     # ── Nordnet (TeamTailor) ────────────────────────────────────────────────────
     - match: 'career.nordnetab.com'
       name: Nordnet
       extract_mode: teamtailor
+      description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 25
+
+    # ── Sensofusion (TeamTailor) ────────────────────────────────────────────────
+    - match: 'careers.sensofusion.com'
+      name: Sensofusion
+      extract_mode: teamtailor
+      # The office is labelled "Headquarters"; the Koivuhaka office is in Vantaa.
+      location_aliases:
+          Headquarters: Vantaa, Finland
       description_selector: 'div.prose'
       pagination:
           type: page
@@ -560,6 +605,21 @@ scrapers:
       name: Tekever
       extract_mode: teamtailor
       description_selector: 'div.prose'
+      pagination:
+          type: page
+          param: page
+          page_size: 20
+
+    # ── Axpo Group (TeamTailor) ────────────────────────────────────────────────────────
+    # page_size must be 20 (Teamtailor's page length). The board aggregates the whole
+    # group (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...), all under one company.
+    # Cards often show "Hybrid"/"Fully Remote"/an entity name instead of a place, so
+    # detail_location_jsonld reads the real address from each job page's JSON-LD.
+    - match: 'careers.axpo.com'
+      name: Axpo Group
+      extract_mode: teamtailor
+      description_selector: 'div.prose'
+      detail_location_jsonld: true
       pagination:
           type: page
           param: page
@@ -682,6 +742,38 @@ scrapers:
       # The default `.job-description` matches the page's top banner (English UI
       # text: "Save", "Apply"...), not the posting, so every job looked English.
       description_selector: '.jd-desc-section__ats-description'
+
+    # ── Citi ───────────────────────────────────────────────────────────────────
+    # TalentBrew /results endpoint, unfiltered (~3,000 jobs worldwide, 100 per
+    # request); untracked countries are dropped downstream. Locations read
+    # "City, Region, Country".
+    - match: 'jobs.citi.com'
+      name: Citi
+      list_url: https://jobs.citi.com/search-jobs/results
+      extra_params:
+          RecordsPerPage: 100
+          SearchResultsModuleName: 'Search Results'
+          SearchFiltersModuleName: 'Search Filters'
+          SortCriteria: 0
+          SortDirection: 0
+          SearchType: 5
+          ResultsType: 0
+      json_html_key: results
+      pagination:
+          type: page
+          param: CurrentPage
+          page_size: 100
+      card_selector: 'li.sr-job-item'
+      title_selector: 'a.sr-job-item__link'
+      location_selector: 'span.sr-job-location'
+      # The card's "Hybrid" / "On-Site" / "Remote" label is the work model.
+      work_model_selector: 'span.sr-job-type'
+      # ~11% of cards read "Multiple Locations"; the detail page's JSON-LD lists
+      # every office, fanned out into one entry per country.
+      detail_locations_jsonld: true
+      # `.job-description` also matches the page's wrapper/buttons; the posting
+      # body itself is `.ats-description`.
+      description_selector: '.ats-description'
 
     # ── Carlsberg ──────────────────────────────────────────────────────────────
     # SuccessFactors Career Site Builder (tile theme). Server-rendered HTML, no

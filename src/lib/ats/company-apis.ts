@@ -145,6 +145,12 @@ export interface CompanyApiConfig {
         department?: string;
         jobFunction?: string;
         /**
+         * Dot-path to a work model label in each item ("Hybrid", "On-site", "Remote").
+         * Normalised to 'remote' | 'hybrid' | 'on-site' and stored as job.work_model;
+         * unrecognised values are ignored. Arrays use their first element.
+         */
+        workModel?: string;
+        /**
          * Dot-path to an ISO alpha-2 country code (or country name) in each item.
          * When set, the value is stored as job.country_code and used as the primary
          * country signal — bypassing city→country lookup for that job.
@@ -190,6 +196,15 @@ export interface CompanyApiConfig {
      * Only applied to jobs that have no location from the API response.
      */
     locationFromHtml?: string;
+    /**
+     * Regex string (one capture group) applied to the fetched job page HTML to read the
+     * work model ("On-site", "Hybrid", "Remote") when the listing API does not carry it.
+     * The captured text is normalised to 'remote' | 'hybrid' | 'on-site' and stored as
+     * job.work_model; unrecognised values are ignored. Implicitly enables per-job HTML
+     * fetching, including for jobs whose classification is cached (the work model is
+     * stored on every run, so the page is needed regardless).
+     */
+    workModelFromHtml?: string;
     /**
      * Regex string (one capture group) applied to the fetched job page HTML to extract
      * only the description section for language classification. When set, only the
@@ -426,6 +441,27 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             id: 'id',
         },
         descriptionFields: ['description'],
+    },
+
+    // Personio's own careers page is a Next.js app that reads one first-party JSON
+    // endpoint (/api/careers/jobs/list/, trailing slash required — without it a 308
+    // redirects). It answers ordinary clients, but the HTML pages (job details
+    // included) sit behind a Vercel bot checkpoint, so no description is fetched:
+    // classification works from the title alone. allOffices lists every office a
+    // posting is open in ("Remote Germany" resolves to Germany by prefix).
+    'personio.com': {
+        url: 'https://www.personio.com/api/careers/jobs/list/',
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        pagination: { type: 'none' },
+        companyName: 'Personio',
+        fields: {
+            title: 'name',
+            locations: 'allOffices',
+            department: 'department',
+            id: 'id',
+        },
+        urlTemplate: 'https://www.personio.com/careers/{id}/',
     },
 
     // Stellantis runs on a Madgex/CWS career site whose search widget calls Google
@@ -1154,6 +1190,71 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         descriptionApiWorkModelField: 'workLocationOption',
     },
 
+    // Nvidia's Eightfold PCSX API (~2,700 postings worldwide, 10 per page), queried one
+    // tracked country at a time like Ericsson and Microsoft. The `location` filter is a
+    // fuzzy geo search that also matches postings listing several countries
+    // (Finland returns jobs also in Germany and Sweden), so fields.locations joins every
+    // location of a posting and the country is resolved from that, not from the query.
+    // A posting found under several queries is deduplicated by id.
+    'jobs.nvidia.com': {
+        url: 'https://jobs.nvidia.com/api/pcsx/search?domain=nvidia.com&query=&sort_by=hot',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: 'application/json',
+            Referer: 'https://jobs.nvidia.com/careers',
+        },
+        repeatFor: {
+            body: [
+                { location: 'Austria' },
+                { location: 'Belgium' },
+                { location: 'Bulgaria' },
+                { location: 'Croatia' },
+                { location: 'Czech Republic' },
+                { location: 'Denmark' },
+                { location: 'Estonia' },
+                { location: 'Finland' },
+                { location: 'France' },
+                { location: 'Germany' },
+                { location: 'Greece' },
+                { location: 'Hungary' },
+                { location: 'Iceland' },
+                { location: 'Italy' },
+                { location: 'Latvia' },
+                { location: 'Lithuania' },
+                { location: 'Luxembourg' },
+                { location: 'Netherlands' },
+                { location: 'Norway' },
+                { location: 'Poland' },
+                { location: 'Portugal' },
+                { location: 'Romania' },
+                { location: 'Spain' },
+                { location: 'Sweden' },
+                { location: 'Switzerland' },
+            ],
+        },
+        pagination: {
+            type: 'offset',
+            param: 'start',
+            pageSize: 10,
+            totalCountPath: 'data.count',
+        },
+        itemsPath: 'data.positions',
+        fields: {
+            title: 'name',
+            locations: 'locations',
+            id: 'id',
+            department: 'department',
+        },
+        urlTemplate: 'https://jobs.nvidia.com{positionUrl}',
+        companyName: 'Nvidia',
+        descriptionApiUrl:
+            'https://jobs.nvidia.com/api/pcsx/position_details?position_id={sourceId}&domain=nvidia.com&hl=en',
+        descriptionApiItemsPath: 'data',
+        descriptionApiFields: ['jobDescription'],
+        descriptionApiWorkModelField: 'workLocationOption',
+    },
+
     'teliacompany.com': {
         url: 'https://www.teliacompany.com/api/job',
         method: 'GET',
@@ -1208,6 +1309,80 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         urlTemplate: '{field_ad_url}',
         companyName: 'Nordea',
         fetchDescription: true,
+    },
+
+    'elisa.com': {
+        // Elisa's open-jobs page loads this Talentadore feed client-side (the URL and
+        // businessUnits filter come from its careers.js; dropping the filter adds other
+        // business units the page does not list). The feed carries no descriptions, so
+        // they are read from each apply page. City and language live in `categories` as
+        // unordered {domain, term} pairs, hence the filter paths.
+        url: 'https://ats.talentadore.com/positions/bdXi6SM/json?v=2&language=fi,en,sv&tags=&notTags=Hidden%20recruitment&businessUnits=8oe8%7CV078%7CnAeb%7CQBkK%7C6928%7Cxwv8%7CM18M%7CvOpg%7C8o2o%7CdGNl%7C4n2B%7CqN6w%7Covka&notBusinessUnits=&display_description=job_title&categories=tags_and_extras',
+        method: 'GET',
+        pagination: { type: 'none' },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'name',
+            id: 'id',
+            url: 'link',
+            location: 'categories[domain=City_custom].term',
+        },
+        companyName: 'Elisa',
+        fetchDescription: true,
+        // Only the ad body; the page also repeats a company blurb in the ad's language.
+        descriptionFromHtml:
+            '<div class="job-ad-feature-description" id="job-description">([\\s\\S]*?)</div>\\s*(?:</section>|<div class="job-ad-feature-description")',
+    },
+
+    'jobs.danfoss.com': {
+        // SAP SuccessFactors Career Site Builder (same /services/recruiting/v1/jobs API as
+        // Orkla and OP). ~650 jobs worldwide, 10 per page, so the whole board is paged
+        // rather than filtered per country; untracked countries are dropped downstream.
+        url: 'https://jobs.danfoss.com/services/recruiting/v1/jobs',
+        method: 'POST',
+        headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Content-Type': 'application/json',
+            Origin: 'https://jobs.danfoss.com',
+        },
+        body: {
+            locale: 'en_GB',
+            sortBy: '',
+            keywords: '',
+            location: '',
+            facetFilters: {},
+            brand: '',
+            skills: [],
+            categoryId: 0,
+            alertId: '',
+            rcmCandidateId: '',
+        },
+        pagination: {
+            type: 'page',
+            param: 'pageNumber',
+            startPage: 0,
+            totalCountPath: 'totalJobs',
+        },
+        itemsPath: 'jobSearchResult',
+        fields: {
+            title: 'response.unifiedStandardTitle',
+            // jobLocationShort lists every office as "City, ST, ISO3" (e.g. "Kolding, DNK");
+            // `locations` joins them so a multi-country posting is resolved per country.
+            locations: 'response.jobLocationShort',
+            id: 'response.id',
+            jobFunction: 'response.filter2',
+        },
+        urlTemplate:
+            'https://jobs.danfoss.com/job/{response.urlTitle}/{response.id}-en_GB',
+        companyName: 'Danfoss',
+        fetchDescription: true,
+        // "Work Location Type: On-site" row on the detail page; the listing API omits it.
+        workModelFromHtml:
+            'Work Location Type:\\s*</span>\\s*<span[^>]*>\\s*([^<]+?)\\s*</span>',
+        // Only the posting body: the full page also carries a language switcher
+        // (Dansk, Deutsch, Polski…) that would read as language requirements.
+        descriptionFromHtml:
+            '<span[^>]*itemprop="description"[^>]*>([\\s\\S]*?)</span>\\s*</div>\\s*</div>\\s*</div>\\s*</div>\\s*<div class="joblayouttoken',
     },
 
     'careers.capgemini.com': {
@@ -1584,6 +1759,46 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         companyName: 'AMD',
     },
 
+    // iCIMS/Jibe, like AMD, but postings can span countries ("Spain; Germany" in
+    // full_location), so `country` is deliberately not mapped: it would pin each job
+    // to its first country and drop the rest. The listing carries the whole posting,
+    // so no job pages are fetched. tags7 is Schneider's own "Hybrid" / "On-site" /
+    // "Remote" tag. NOTE: careers.se.com sits behind Akamai, which answers a plain
+    // `Mozilla/5.0` client with 403 — confirm the fetch works before registering this
+    // company in companies.yaml.
+    'careers.se.com': {
+        url: 'https://careers.se.com/api/jobs?sortBy=relevance&descending=false&internal=false&limit=100',
+        headers: {
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0',
+            Accept: 'application/json, text/plain, */*',
+            Referer: 'https://careers.se.com/jobs',
+        },
+        pagination: {
+            type: 'page',
+            param: 'page',
+            startPage: 1,
+            totalCountPath: 'totalCount',
+        },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'data.title',
+            location: 'data.full_location',
+            jobFunction: 'data.category',
+            workModel: 'data.tags7',
+            id: 'data.req_id',
+        },
+        // data.apply_url is the iCIMS login page, not the public posting.
+        urlTemplate: 'https://careers.se.com/jobs/{data.req_id}?lang=en-us',
+        keepQueryParams: true,
+        descriptionFields: [
+            'data.description',
+            'data.responsibilities',
+            'data.qualifications',
+        ],
+        companyName: 'Schneider Electric',
+    },
+
     // Lufthansa Group's own job board (milch & zucker "Global Job Board"). The page
     // at apply.lufthansagroup.careers renders nothing server-side — the listing is a
     // DataTable widget that GETs/POSTs an HR-XML search request to api-apply. The
@@ -1696,6 +1911,15 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     // capgemini.com is the main site; job detail pages live on careers.capgemini.com.
     'capgemini.com': 'https://careers.capgemini.com/',
     'careers.deliveryhero.com': 'https://careers.deliveryhero.com/jobs',
+    // elevenlabs.io/careers/positions renders client-side; the jobs live on Ashby.
+    'elevenlabs.io': 'https://jobs.ashbyhq.com/elevenlabs',
+    // jobs.enpal.com is a Webflow page that reads Ashby through its own proxy.
+    'jobs.enpal.com': 'https://jobs.ashbyhq.com/enpal',
+    // perk.com/careers lists Ashby postings (ashby_jid links) on Perk's own site.
+    'perk.com': 'https://jobs.ashbyhq.com/perk',
+    // ramboll.com/careers only links out to SmartRecruiters (company slug Ramboll3);
+    // the page itself lists no jobs.
+    'ramboll.com': 'https://jobs.smartrecruiters.com/Ramboll3',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────
@@ -1735,7 +1959,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'jobs.bendingspoons.com', name: 'Bending Spoons' },
     { urlSubstring: 'careers.gehealthcare.com', name: 'GE Healthcare' },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
-    { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
+    { urlSubstring: 'nxp.wd116.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
     { urlSubstring: 'dentsuaegis.wd3.myworkdayjobs.com', name: 'Dentsu' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },
@@ -1745,4 +1969,12 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'theheinekencompany.com', name: 'Heineken' },
     { urlSubstring: 'jobs.deel.com/klarna', name: 'Klarna' },
     { urlSubstring: 'mistral.ai', name: 'Mistral' },
+    { urlSubstring: 'jobs.ashbyhq.com/kraken.com', name: 'Kraken/Payward' },
+    { urlSubstring: 'jobs.ashbyhq.com/elevenlabs', name: 'ElevenLabs' },
+    { urlSubstring: 'jobs.ashbyhq.com/enpal', name: 'Enpal' },
+    { urlSubstring: 'jobs.ashbyhq.com/perk', name: 'Perk' },
+    { urlSubstring: 'careers.sensofusion.com', name: 'Sensofusion' },
+    { urlSubstring: 'careers.axpo.com', name: 'Axpo Group' },
+    { urlSubstring: 'nordsecurity.com', name: 'Nord Security' },
+    { urlSubstring: 'zuehlke.wd3.myworkdayjobs.com', name: 'Zühlke' },
 ];

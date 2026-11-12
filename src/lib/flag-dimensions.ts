@@ -17,6 +17,7 @@ const FLAG_WIDTHS: Record<string, number> = {
     dk: 106,
     ee: 126,
     es: 120,
+    eu: 120,
     fi: 131,
     fo: 110,
     fr: 120,

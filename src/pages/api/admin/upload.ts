@@ -8,6 +8,7 @@ import type { CompanyEntry } from '../../../lib/validation';
 import { getFlagColors, nameToSlug } from '../../../lib/country-flags';
 import { recordChange, changedBy, hashState } from '../../../lib/admin-changes';
 import { mapWithConcurrency } from '../../../lib/pagination';
+import { REGION_COUNTRY_CODES } from '../../../lib/tracked-countries';
 
 /** Order-independent canonical form of a company's positions, so a re-scrape
  *  that returns identical data (in any order) hashes the same. */
@@ -205,6 +206,7 @@ async function ensureCountry(
             slug,
             code: entry.country_code,
             flag_colors: getFlagColors(entry.country_code),
+            is_region: REGION_COUNTRY_CODES.has(entry.country_code),
             sort_order: sortOrder,
         })
         .select('id')

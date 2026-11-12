@@ -687,6 +687,9 @@ function CountryGroup({
                                 City
                             </th>
                             <th class="text-left px-4 py-2 font-medium text-gray-500">
+                                Work
+                            </th>
+                            <th class="text-left px-4 py-2 font-medium text-gray-500">
                                 Category
                             </th>
                             <th class="text-left px-4 py-2 font-medium text-gray-500 whitespace-nowrap">
@@ -698,7 +701,7 @@ function CountryGroup({
                         {displayed.length === 0 ? (
                             <tr>
                                 <td
-                                    colSpan={4}
+                                    colSpan={5}
                                     class="px-4 py-3 text-center text-xs text-gray-500"
                                 >
                                     No positions match this filter.
@@ -772,6 +775,9 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
                 )}
             </td>
             <td class="px-4 py-2 text-gray-600">{job.city?.join(', ')}</td>
+            <td class="px-4 py-2 text-gray-600 capitalize whitespace-nowrap">
+                {job.work_model ?? '–'}
+            </td>
             <td class="px-4 py-2">
                 <select
                     name="category"

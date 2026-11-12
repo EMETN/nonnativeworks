@@ -71,7 +71,6 @@ describe('lookupCountryFromLocation — n-gram fallback does not disturb other c
             'EMEA',
             'Various',
             'Hybrid',
-            'Remote - Europe',
             'Anywhere',
             'Global',
         ]) {
@@ -98,6 +97,40 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
         expect(codes('Wuppertal')).toEqual(['DE']);
         expect(codes('Ile-de-France')).toEqual(['FR']);
         expect(codes('Île-de-France')).toEqual(['FR']);
+    });
+});
+
+describe('lookupCountryFromLocation — Axpo Group sites', () => {
+    test('Swiss towns resolve, with or without a parenthesised site name', () => {
+        expect(codes('Baden')).toEqual(['CH']);
+        expect(codes('Luzern (Reussbühl)')).toEqual(['CH']);
+        expect(codes('Emmen (Rathausen)')).toEqual(['CH']);
+        expect(codes('Küssnacht am Rigi')).toEqual(['CH']);
+        expect(codes('Domat/Ems')).toEqual(['CH']);
+        expect(codes('Kernkraftwerk Leibstadt AG')).toEqual(['CH']);
+    });
+
+    test('a multi-site list resolves to Switzerland once', () => {
+        expect(codes('Lupfig, Emmen (Rathausen), Risch-Rotkreuz')).toEqual([
+            'CH',
+        ]);
+    });
+
+    test('towns outside Switzerland resolve to their own country', () => {
+        expect(codes('Genova')).toEqual(['IT']);
+        expect(codes('Jerez de la Frontera')).toEqual(['ES']);
+        expect(codes('Volkswind GmbH, Ganderkesee')).toEqual(['DE']);
+        expect(codes('Volkswind France, Limoges')).toEqual(['FR']);
+    });
+
+    test('Baden-Württemberg is not mistaken for Baden', () => {
+        expect(codes('Baden-Württemberg, Germany')).toEqual(['DE']);
+    });
+
+    test('names shared with a place in another tracked country stay unresolved', () => {
+        expect(codes('Zell am See')).toEqual([]);
+        expect(codes('Rothenburg ob der Tauber')).toEqual([]);
+        expect(codes('Birr')).toEqual([]);
     });
 });
 
@@ -515,5 +548,126 @@ describe('isKnownCity', () => {
 
     test('does not recognise a city with no entry', () => {
         expect(isKnownCity('Nowhereville')).toBe(false);
+    });
+});
+
+describe('lookupCountryFromLocation — Europe region', () => {
+    const codes = (location: string) =>
+        lookupCountryFromLocation(location).map((c) => c.code);
+
+    test.each(['Europe', 'European Union', 'EU', 'Remote - Europe'])(
+        '%s is the Europe region',
+        (location) => {
+            expect(codes(location)).toEqual(['EU']);
+        },
+    );
+
+    test('a named country wins over Europe', () => {
+        expect(codes('Poland; Europe')).toEqual(['PL']);
+        expect(codes('Europe, Germany')).toEqual(['DE']);
+    });
+
+    test('EMEA and plain Remote stay unresolved', () => {
+        expect(codes('EMEA')).toEqual([]);
+        expect(codes('Remote')).toEqual([]);
+    });
+});
+
+describe('lookupCountryFromLocation — ISO alpha-3 country codes', () => {
+    test('resolves untracked countries named by alpha-3 code (SuccessFactors style)', () => {
+        expect(codes('Queretaro, MEX    ')).toEqual(['MX']);
+        expect(codes('Haiyan, CHN')).toEqual(['CN']);
+        expect(codes('Oragadam, IND')).toEqual(['IN']);
+        expect(codes('Osasco, BRA')).toEqual(['BR']);
+    });
+
+    test('an explicit code beats a city-name guess', () => {
+        expect(codes('Santiago De Queretaro, MEX')).toEqual(['MX']);
+    });
+
+    test('tracked alpha-3 codes still resolve', () => {
+        expect(codes('Kolding, DNK')).toEqual(['DK']);
+        expect(codes('Offenbach Am Main, DEU')).toEqual(['DE']);
+    });
+});
+
+describe('resolveJobCities — Schneider Electric labels', () => {
+    test('normalises spelling variants to one canonical city', () => {
+        const city = (raw: string, cc: string) =>
+            resolveJobCities({ cities: [raw] }, cc);
+
+        expect(city('St Priest', 'FR')).toEqual(['Saint-Priest']);
+        expect(city('Rueil Malmaison', 'FR')).toEqual(['Rueil-Malmaison']);
+        expect(city('La Coruña', 'ES')).toEqual(['A Coruña']);
+        expect(city('Rigas', 'LV')).toEqual(['Riga']);
+        expect(city('Grad-Sofia', 'BG')).toEqual(['Sofia']);
+    });
+
+    test('regions are not cities', () => {
+        for (const [region, cc] of [
+            ['Stockholms län', 'SE'],
+            ['Catalonia', 'ES'],
+            ['Community of Madrid', 'ES'],
+            ['Baden-Württemberg', 'DE'],
+            ['Oulu Province', 'FI'],
+        ]) {
+            expect(resolveJobCities({ cities: [region] }, cc)).toEqual([]);
+        }
+    });
+
+    test('a region next to a city leaves just the city', () => {
+        expect(
+            extractCitiesForCountry('Barcelona, Catalonia, Spain', 'ES'),
+        ).toEqual(['Barcelona']);
+    });
+
+    test('ambiguous English names are known without mapping to a country', () => {
+        for (const city of ['Florence', 'Athens', 'Syracuse', 'Mâcon']) {
+            expect(isKnownCity(city)).toBe(true);
+        }
+        expect(lookupCountryFromLocation('Florence')).toEqual([]);
+    });
+});
+
+describe('Ramboll cities', () => {
+    test('resolve to their country and are known cities', () => {
+        for (const [city, code] of [
+            ['Vaulx-en-Velin', 'FR'],
+            ['Bad Kreuznach', 'DE'],
+            ['Kelkheim', 'DE'],
+            ['Arendal', 'NO'],
+            ['Lillehammer', 'NO'],
+            ['Drammen', 'NO'],
+            ['Porsgrunn', 'NO'],
+            ['Sandnes', 'NO'],
+            ['Roskilde', 'DK'],
+            ['Ylivieska', 'FI'],
+            ['Luopioinen', 'FI'],
+        ]) {
+            expect(lookupCountryFromLocation(city).map((c) => c.code)).toEqual([
+                code,
+            ]);
+            expect(isKnownCity(city)).toBe(true);
+        }
+    });
+
+    test('Norwegian letters get one canonical spelling', () => {
+        const city = (raw: string) => resolveJobCities({ cities: [raw] }, 'NO');
+
+        expect(city('Bodø')).toEqual(['Bodø']);
+        expect(city('Bodo')).toEqual(['Bodø']);
+        expect(city('Tonsberg')).toEqual(['Tønsberg']);
+        expect(city('Krakeroy')).toEqual(['Kråkerøy']);
+    });
+
+    test('Altmarkt is a Dresden square, not a city', () => {
+        expect(canonicalCityNames(['Altmarkt, Dresden'])).toEqual(['Dresden']);
+        expect(
+            resolveJobCities({ cities: ['Altmarkt, Dresden'] }, 'DE'),
+        ).toEqual(['Dresden']);
+    });
+
+    test('Alta is not mapped: it is a common word in other tracked languages', () => {
+        expect(lookupCountryFromLocation('Alta Badia')).toEqual([]);
     });
 });

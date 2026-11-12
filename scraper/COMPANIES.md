@@ -14,6 +14,7 @@
 - Arla
 - ASML
 - Autodesk
+- Axpo Group
 - Barona
 - Bayer
 - Bending Spoons
@@ -25,7 +26,9 @@
 - Carlsberg
 - Celonis
 - CGI (local script)
+- Citi
 - Cognite
+- Danfoss
 - Danske Bank
 - Deel
 - Delivery Hero
@@ -35,6 +38,9 @@
 - E.ON
 - Edenred
 - Elekta
+- Elisa
+- ElevenLabs
+- Enpal
 - Equinor
 - Ericsson
 - Feedzai
@@ -57,6 +63,7 @@
 - Klarna
 - Kone
 - Konecranes
+- Kraken/Payward
 - Legora
 - Lovable
 - Lufthansa Group
@@ -76,6 +83,7 @@
 - Nordea
 - Nordnet
 - Novo Nordisk
+- Nvidia
 - NXP
 - Ogilvy
 - OP Financial Group
@@ -83,6 +91,8 @@
 - Orion
 - Orkla
 - Oura
+- Perk
+- Personio (local script)
 - Philips
 - Picnic
 - Posti
@@ -97,6 +107,7 @@
 - SAP
 - Scout24
 - SEB
+- Sensofusion
 - Siemens (local script)
 - Siemens Healthineers
 - Smartly
@@ -132,6 +143,7 @@
 - Wärtsilä
 - Yousician
 - Zalando
+- Zühlke
 
 ## Companies by Scraping Layer
 
@@ -147,9 +159,9 @@ Detected automatically from the career page URL. No per-company config needed �
 | --------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Greenhouse      | `boards.greenhouse.io/{slug}`                       | Wolt, Oura, Smartly, Yousician, Proton, AlphaSense, DEPT, Solita, Thoughtworks, Trustpilot, VML (`wundermanthompson`), Anthropic, Cognite, GetYourGuide, Ogilvy, Vinted (`vinteden` + language boards), Monks, SumUp, GitLab, Adyen, Nebius, Picnic (`teampicnic`, plus driver and warehouse pages from its own site), RELEX Solutions (`relex`, plus cities from its own site), Supermetrics (`supermetricsoy`), Celonis, Mews (`mewssystems`), Feedzai, Talkdesk (`talkdesk2`), N26, Cabify, Truecaller |
 | Lever           | `jobs.lever.co/{slug}`                              | SEB                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), Hoxhunt, OpenAI, Supercell, Mapbox, Mistral (`mistral.ai`), Doctolib                                                                                                                                                                                                                                                                                                                                                            |
+| Ashby           | `jobs.ashbyhq.com/{slug}`                           | Reaktor, Prosus, Lovable, Legora, ICEYE, Tandem Health (`tandem-health`), Hoxhunt, OpenAI, Supercell, Mapbox, Mistral (`mistral.ai`), Kraken/Payward (`kraken.com`), ElevenLabs (`elevenlabs`, via `elevenlabs.io` alias), Enpal (`enpal`, via `jobs.enpal.com` alias), Perk (`perk`, via `perk.com` alias), Doctolib                                                                                                                                                                                     |
 | Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}`  | — (none currently tracked)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Equinor, Dentsu (per-country facets)                                                                                                                                                                                                                               |
+| Workday         | `{slug}.wd3.myworkdayjobs.com/wday/cxs/{slug}/jobs` | Posti, ABB, Stora Enso, SOK, Airbus, If, Maersk, Kone, Edenred (myworkdaysite), Finnair, Sanoma, Fiskars, Elekta, Thales, ING, NXP, Philips, Siemens Healthineers (per-country facets, via `extra_urls`), ASML (via `asml.com` alias), Equinor, Dentsu (per-country facets), Zühlke                                                                                                                                                                                                                       |
 | Recruitee       | `{slug}.recruitee.com`                              | Happeo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | SmartRecruiters | `jobs.smartrecruiters.com/{company}`                | SAP (with `careers.sap.com` as `extra_urls` during SAP's migration), Wise (via `wise.jobs` override)                                                                                                                                                                                                                                                                                                                                                                                                      |
 
@@ -170,6 +182,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | Telia              | `teliacompany.com`                           | Custom JSON API (`/api/job`)                                                                                                                                                                       |
 | Accenture          | `accenture.com`                              | Custom API                                                                                                                                                                                         |
 | Booking.com        | `jobs.booking.com`                           | Custom API                                                                                                                                                                                         |
+| Danfoss            | `jobs.danfoss.com`                           | Custom API (POST)                                                                                                                                                                                  |
 | Orkla              | `careers.orkla.com`                          | Custom API (POST)                                                                                                                                                                                  |
 | Capgemini          | `capgemini.com/careers`                      | Custom API                                                                                                                                                                                         |
 | Publicis Groupe    | `careers.publicisgroupe.com/jobs`            | Custom API                                                                                                                                                                                         |
@@ -181,6 +194,8 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | E.ON               | `jobs.eon.com`                               | Careers platform `/api/filter/query` (same as Uniper)                                                                                                                                              |
 | Uniper             | `careers.uniper.energy`                      | Careers platform `/api/filter/query` (same as E.ON)                                                                                                                                                |
 | Barona             | `barona.fi`                                  | WordPress AJAX feed (1-based pages, inline descriptions, ISO2 country); no per-job language data, classifier decides                                                                               |
+| Elisa              | `elisa.com`                                  | Talentadore JSON feed (URL and `businessUnits` filter taken from the page's `careers.js`); city read from `categories[domain=City_custom]`; descriptions fetched from each apply page              |
+| Personio           | `personio.com`                               | First-party JSON list (`/api/careers/jobs/list/`, no pagination); job pages are behind a bot checkpoint, so no descriptions — title-only classification                                            |
 | Bayer              | `bayer.eightfold.ai`                         | Eightfold (num capped at 10; per-job endpoint fills missing descriptions)                                                                                                                          |
 | Lufthansa Group    | `apply.lufthansagroup.careers`               | milch & zucker HR-XML search API (POST, whole board in one request)                                                                                                                                |     |
 | Spotify            | `lifeatspotify.com`                          | WordPress jobs API (single response)                                                                                                                                                               |
@@ -190,6 +205,7 @@ Manually configured in `src/lib/ats/company-apis.ts`, keyed by career page hostn
 | ABN AMRO           | `werkenbijabnamro.nl`                        | Custom vacancy API (needs `X-Requested-With` header)                                                                                                                                               |
 | AMD                | `careers.amd.com`                            | Jibe jobs API                                                                                                                                                                                      |
 | Ericsson           | `jobs.ericsson.com`                          | Eightfold PCSX search API                                                                                                                                                                          |
+| Nvidia             | `jobs.nvidia.com`                            | Eightfold PCSX search API, one query per tracked country                                                                                                                                           |
 
 ---
 
@@ -233,7 +249,9 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Nitor | `nitor.com/en/careers` | `css_cards` | Contentful page, all postings on one page (no pagination). Card is the link itself; no location on the cards, so `default_location: Finland` (offices in Helsinki and Tampere). Includes an "Open Application" entry |
 | NestAI | `careers.nestai.com/jobs` | teamtailor | Marketing page `nestai.com/open-positions` is a Webflow list of the same jobs; 20 per page |
 | Tekever | `careers.tekever.com/jobs` | teamtailor |
+| Axpo Group | `careers.axpo.com/jobs` | teamtailor | Board aggregates the group's Teamtailor sites (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...); 20 per page. CKW pages redirect to `ckw.ch` |
 | IQM | `iqm.teamtailor.com/jobs` | teamtailor | Career page `iqm.tech/careers/join-us/` embeds the Teamtailor board; 20 per page |
+| Sensofusion | `careers.sensofusion.com/jobs` | teamtailor | Office label "Headquarters" has no place, so `location_aliases` maps it to Vantaa, Finland; UK and Canada offices are untracked. Postings are written in Finnish |
 | Bending Spoons | `jobs.bendingspoons.com` | `next_data` | All postings and their full text are in the page's `__NEXT_DATA__`; no detail fetches. One job per office country |
 | GE Healthcare | `careers.gehealthcare.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. Job links use `url_template` (applyUrl points at Workday) |
 | DHL | `careers.dhl.com/global/en/search-results` | `phenom_api` | One `/widgets` query per tracked country (from the country facet), 100 rows per page. ~5,200 postings, ~85% in Germany; descriptions are fetched for the ~840 English-titled ones, so a run takes ~8 min. Job links use `url_template` (applyUrl points at Avature) |
@@ -243,6 +261,7 @@ Declarative YAML config — no code changes needed to add a company. Two extract
 | Volvo Group | `jobs.volvogroup.com/feed/361555` | `xml_feed` | no pagination |
 | Munich Re | `careers.munichre.com/en/search-jobs` | `css_cards - json_html_key` | Paginated; CurrentPage |
 | IKEA | `jobs.ikea.com/en/search-jobs` | `css_cards - json_html_key` | TalentBrew `/results`, unfiltered; CurrentPage, 100 per page |
+| Citi | `jobs.citi.com/search-jobs` | `css_cards - json_html_key` | TalentBrew `/results`, unfiltered; CurrentPage, 100 per page; description in `.ats-description`; work model from the card's `.sr-job-type` label; "Multiple Locations" cards resolved from the detail page's JSON-LD (`detail_locations_jsonld`) and fanned out per country |
 | Carlsberg | `careers.carlsberg.com/search` | `css_cards` | SuccessFactors; fetches and merges every site locale (each serves a distinct slice of jobs) |
 | Sweco Group | `swecogroup.com/careers/vacancies` | `css_cards` | Recruitee-backed; per-country facet IDs read live from the country `<select>`; `description_selector` avoids local-language form fields |
 | Klarna | `jobs.deel.com/klarna` | `script_json` | Deel-hosted board; no pagination; descriptions read from the listing's RSC text rows (detail pages render client-side) |
