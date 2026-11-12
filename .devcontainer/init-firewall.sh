@@ -295,7 +295,7 @@ company_domains=(
     "career.nordnetab.com"  # Nordnet
     "nordsecurity.com"  # Nord Security
     "jobs.nvidia.com"  # Nvidia
-    "nxp.wd3.myworkdayjobs.com"  # NXP
+    "nxp.wd116.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI
