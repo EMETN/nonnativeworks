@@ -1917,6 +1917,9 @@ export const CAREER_URL_ALIASES: Record<string, string> = {
     'jobs.enpal.com': 'https://jobs.ashbyhq.com/enpal',
     // perk.com/careers lists Ashby postings (ashby_jid links) on Perk's own site.
     'perk.com': 'https://jobs.ashbyhq.com/perk',
+    // ramboll.com/careers only links out to SmartRecruiters (company slug Ramboll3);
+    // the page itself lists no jobs.
+    'ramboll.com': 'https://jobs.smartrecruiters.com/Ramboll3',
 };
 
 // ─── Python scraper company names ────────────────────────────────────────────

@@ -628,3 +628,46 @@ describe('resolveJobCities — Schneider Electric labels', () => {
         expect(lookupCountryFromLocation('Florence')).toEqual([]);
     });
 });
+
+describe('Ramboll cities', () => {
+    test('resolve to their country and are known cities', () => {
+        for (const [city, code] of [
+            ['Vaulx-en-Velin', 'FR'],
+            ['Bad Kreuznach', 'DE'],
+            ['Kelkheim', 'DE'],
+            ['Arendal', 'NO'],
+            ['Lillehammer', 'NO'],
+            ['Drammen', 'NO'],
+            ['Porsgrunn', 'NO'],
+            ['Sandnes', 'NO'],
+            ['Roskilde', 'DK'],
+            ['Ylivieska', 'FI'],
+            ['Luopioinen', 'FI'],
+        ]) {
+            expect(lookupCountryFromLocation(city).map((c) => c.code)).toEqual([
+                code,
+            ]);
+            expect(isKnownCity(city)).toBe(true);
+        }
+    });
+
+    test('Norwegian letters get one canonical spelling', () => {
+        const city = (raw: string) => resolveJobCities({ cities: [raw] }, 'NO');
+
+        expect(city('Bodø')).toEqual(['Bodø']);
+        expect(city('Bodo')).toEqual(['Bodø']);
+        expect(city('Tonsberg')).toEqual(['Tønsberg']);
+        expect(city('Krakeroy')).toEqual(['Kråkerøy']);
+    });
+
+    test('Altmarkt is a Dresden square, not a city', () => {
+        expect(canonicalCityNames(['Altmarkt, Dresden'])).toEqual(['Dresden']);
+        expect(
+            resolveJobCities({ cities: ['Altmarkt, Dresden'] }, 'DE'),
+        ).toEqual(['Dresden']);
+    });
+
+    test('Alta is not mapped: it is a common word in other tracked languages', () => {
+        expect(lookupCountryFromLocation('Alta Badia')).toEqual([]);
+    });
+});

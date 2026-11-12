@@ -435,6 +435,10 @@ companies:
       url: https://careers.publicisgroupe.com/jobs
       min_positions: 5
 
+    - name: Ramboll
+      url: https://jobs.smartrecruiters.com/Ramboll3
+      min_positions: 50
+
     - name: Randstad
       url: https://www.randstad.com/jobs/careers-at-randstad
       min_positions: 10

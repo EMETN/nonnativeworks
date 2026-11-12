@@ -734,6 +734,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     lempäälä: { name: 'Finland', code: 'FI', slug: 'finland' },
     lempala: { name: 'Finland', code: 'FI', slug: 'finland' },
     lohja: { name: 'Finland', code: 'FI', slug: 'finland' },
+    luopioinen: { name: 'Finland', code: 'FI', slug: 'finland' },
     mikkeli: { name: 'Finland', code: 'FI', slug: 'finland' },
     mäntyharju: { name: 'Finland', code: 'FI', slug: 'finland' },
     nokia: { name: 'Finland', code: 'FI', slug: 'finland' },
@@ -763,6 +764,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     valkeakoski: { name: 'Finland', code: 'FI', slug: 'finland' },
     vantaa: { name: 'Finland', code: 'FI', slug: 'finland' },
     varkaus: { name: 'Finland', code: 'FI', slug: 'finland' },
+    ylivieska: { name: 'Finland', code: 'FI', slug: 'finland' },
     ylöjärvi: { name: 'Finland', code: 'FI', slug: 'finland' },
     ylojarvi: { name: 'Finland', code: 'FI', slug: 'finland' },
     // ── Denmark ──────────────────────────────────────────────────────────────
@@ -788,6 +790,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     nordborg: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     odense: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     ringkøbing: { name: 'Denmark', code: 'DK', slug: 'denmark' },
+    roskilde: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     rødekro: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     rodekro: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     silkeborg: { name: 'Denmark', code: 'DK', slug: 'denmark' },
@@ -804,6 +807,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     vojens: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     // ── Germany ──────────────────────────────────────────────────────────────
     augsburg: { name: 'Germany', code: 'DE', slug: 'germany' },
+    'bad kreuznach': { name: 'Germany', code: 'DE', slug: 'germany' },
     backnang: { name: 'Germany', code: 'DE', slug: 'germany' },
     baierbrunn: { name: 'Germany', code: 'DE', slug: 'germany' },
     beimerstetten: { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -868,6 +872,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     ingolstadt: { name: 'Germany', code: 'DE', slug: 'germany' },
     karlsruhe: { name: 'Germany', code: 'DE', slug: 'germany' },
     kassel: { name: 'Germany', code: 'DE', slug: 'germany' },
+    kelkheim: { name: 'Germany', code: 'DE', slug: 'germany' },
     kiel: { name: 'Germany', code: 'DE', slug: 'germany' },
     kinsau: { name: 'Germany', code: 'DE', slug: 'germany' },
     koblenz: { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -1011,18 +1016,29 @@ const CITY_MAP: Record<string, CountryInfo> = {
     zundert: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     zwolle: { name: 'Netherlands', code: 'NL', slug: 'netherlands' },
     // ── Norway ───────────────────────────────────────────────────────────────
+    arendal: { name: 'Norway', code: 'NO', slug: 'norway' },
     bergen: { name: 'Norway', code: 'NO', slug: 'norway' },
+    bodø: { name: 'Norway', code: 'NO', slug: 'norway' },
+    bodo: { name: 'Norway', code: 'NO', slug: 'norway' },
+    drammen: { name: 'Norway', code: 'NO', slug: 'norway' },
     fornebu: { name: 'Norway', code: 'NO', slug: 'norway' },
     fredrikstad: { name: 'Norway', code: 'NO', slug: 'norway' },
     grimstad: { name: 'Norway', code: 'NO', slug: 'norway' },
     hafrsfjord: { name: 'Norway', code: 'NO', slug: 'norway' },
+    kråkerøy: { name: 'Norway', code: 'NO', slug: 'norway' },
+    krakeroy: { name: 'Norway', code: 'NO', slug: 'norway' },
     kristiansand: { name: 'Norway', code: 'NO', slug: 'norway' },
+    lillehammer: { name: 'Norway', code: 'NO', slug: 'norway' },
     oslo: { name: 'Norway', code: 'NO', slug: 'norway' },
+    porsgrunn: { name: 'Norway', code: 'NO', slug: 'norway' },
     sandefjord: { name: 'Norway', code: 'NO', slug: 'norway' },
+    sandnes: { name: 'Norway', code: 'NO', slug: 'norway' },
     sarpsborg: { name: 'Norway', code: 'NO', slug: 'norway' },
     stavanger: { name: 'Norway', code: 'NO', slug: 'norway' },
     strommen: { name: 'Norway', code: 'NO', slug: 'norway' },
     strømmen: { name: 'Norway', code: 'NO', slug: 'norway' },
+    tønsberg: { name: 'Norway', code: 'NO', slug: 'norway' },
+    tonsberg: { name: 'Norway', code: 'NO', slug: 'norway' },
     tromsø: { name: 'Norway', code: 'NO', slug: 'norway' },
     tromso: { name: 'Norway', code: 'NO', slug: 'norway' },
     trondheim: { name: 'Norway', code: 'NO', slug: 'norway' },
@@ -1273,6 +1289,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     trappes: { name: 'France', code: 'FR', slug: 'france' },
     ussac: { name: 'France', code: 'FR', slug: 'france' },
     valence: { name: 'France', code: 'FR', slug: 'france' },
+    'vaulx-en-velin': { name: 'France', code: 'FR', slug: 'france' },
     vallauris: { name: 'France', code: 'FR', slug: 'france' },
     velaux: { name: 'France', code: 'FR', slug: 'france' },
     'vélizy-villacoublay': { name: 'France', code: 'FR', slug: 'france' },
@@ -2114,7 +2131,9 @@ const SPELLING_BY_KEY = new Map(
 const CITY_NAME_PARENTHESES_RE = /\((saale|oder|rheinland)\)$/i;
 const LOCATION_SEPARATOR_RE = /\s*[/,]\s*|\s[-–]\s+|-\s+/;
 const STREET_ONLY_RE = /^\S*(?:straße|strasse|str\.)(?:\s\d+)?$/i;
-const NON_PLACE_RE = /^(?:\d|flexible location$|home based$|województwo\b)/i;
+// "Altmarkt" is Dresden's central square, listed as "Altmarkt, Dresden".
+const NON_PLACE_RE =
+    /^(?:\d|flexible location$|home based$|altmarkt$|województwo\b)/i;
 // Regions that location labels give in place of a city ("Catalonia", "Stockholms län").
 const REGION_RE =
     /^(?:.+ län|oulu province|community of madrid|basque country|catalonia|andalusia|valencian community|biscay|baden-württemberg|nordrhein-westfalen|niedersachsen|rhein-main-gebiet)$/i;
