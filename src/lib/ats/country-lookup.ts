@@ -1124,6 +1124,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     vilnius: { name: 'Lithuania', code: 'LT', slug: 'lithuania' },
     // ── Austria ──────────────────────────────────────────────────────────────
     graz: { name: 'Austria', code: 'AT', slug: 'austria' },
+    gratkorn: { name: 'Austria', code: 'AT', slug: 'austria' },
     guntramsdorf: { name: 'Austria', code: 'AT', slug: 'austria' },
     innsbruck: { name: 'Austria', code: 'AT', slug: 'austria' },
     leonding: { name: 'Austria', code: 'AT', slug: 'austria' },
@@ -1187,6 +1188,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     'bouc bel ai': { name: 'France', code: 'FR', slug: 'france' },
     bourges: { name: 'France', code: 'FR', slug: 'france' },
     brest: { name: 'France', code: 'FR', slug: 'france' },
+    caen: { name: 'France', code: 'FR', slug: 'france' },
     cannes: { name: 'France', code: 'FR', slug: 'france' },
     carquefou: { name: 'France', code: 'FR', slug: 'france' },
     carros: { name: 'France', code: 'FR', slug: 'france' },
@@ -1268,6 +1270,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     rouen: { name: 'France', code: 'FR', slug: 'france' },
     'rueil-malmaison': { name: 'France', code: 'FR', slug: 'france' },
     rungis: { name: 'France', code: 'FR', slug: 'france' },
+    saclay: { name: 'France', code: 'FR', slug: 'france' },
     'sainghin-en-mélantois': { name: 'France', code: 'FR', slug: 'france' },
     'saint-avertin': { name: 'France', code: 'FR', slug: 'france' },
     'saint-étienne': { name: 'France', code: 'FR', slug: 'france' },
@@ -1314,6 +1317,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     // Italy
     campobasso: { name: 'Italy', code: 'IT', slug: 'italy' },
     casavatore: { name: 'Italy', code: 'IT', slug: 'italy' },
+    catania: { name: 'Italy', code: 'IT', slug: 'italy' },
     conselve: { name: 'Italy', code: 'IT', slug: 'italy' },
     ferrara: { name: 'Italy', code: 'IT', slug: 'italy' },
     firenze: { name: 'Italy', code: 'IT', slug: 'italy' },
@@ -1389,6 +1393,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     bucharest: { name: 'Romania', code: 'RO', slug: 'romania' },
     cluj: { name: 'Romania', code: 'RO', slug: 'romania' },
     'cluj-napoca': { name: 'Romania', code: 'RO', slug: 'romania' },
+    sibiu: { name: 'Romania', code: 'RO', slug: 'romania' },
     // Slovakia
     bratislava: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
     kosice: { name: 'Slovakia', code: 'SK', slug: 'slovakia' },
