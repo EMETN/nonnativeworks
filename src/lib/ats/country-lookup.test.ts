@@ -590,3 +590,41 @@ describe('lookupCountryFromLocation — ISO alpha-3 country codes', () => {
         expect(codes('Offenbach Am Main, DEU')).toEqual(['DE']);
     });
 });
+
+describe('resolveJobCities — Schneider Electric labels', () => {
+    test('normalises spelling variants to one canonical city', () => {
+        const city = (raw: string, cc: string) =>
+            resolveJobCities({ cities: [raw] }, cc);
+
+        expect(city('St Priest', 'FR')).toEqual(['Saint-Priest']);
+        expect(city('Rueil Malmaison', 'FR')).toEqual(['Rueil-Malmaison']);
+        expect(city('La Coruña', 'ES')).toEqual(['A Coruña']);
+        expect(city('Rigas', 'LV')).toEqual(['Riga']);
+        expect(city('Grad-Sofia', 'BG')).toEqual(['Sofia']);
+    });
+
+    test('regions are not cities', () => {
+        for (const [region, cc] of [
+            ['Stockholms län', 'SE'],
+            ['Catalonia', 'ES'],
+            ['Community of Madrid', 'ES'],
+            ['Baden-Württemberg', 'DE'],
+            ['Oulu Province', 'FI'],
+        ]) {
+            expect(resolveJobCities({ cities: [region] }, cc)).toEqual([]);
+        }
+    });
+
+    test('a region next to a city leaves just the city', () => {
+        expect(
+            extractCitiesForCountry('Barcelona, Catalonia, Spain', 'ES'),
+        ).toEqual(['Barcelona']);
+    });
+
+    test('ambiguous English names are known without mapping to a country', () => {
+        for (const city of ['Florence', 'Athens', 'Syracuse', 'Mâcon']) {
+            expect(isKnownCity(city)).toBe(true);
+        }
+        expect(lookupCountryFromLocation('Florence')).toEqual([]);
+    });
+});

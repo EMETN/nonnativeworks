@@ -1841,4 +1841,28 @@ export const CASES: FixtureCase[] = [
         requires: true,
         advantage: false,
     },
+    {
+        label: '2a — "Spanish (mandatory)": parentheses are stripped, so "spanish mandatory" is a requirement (Schneider)',
+        title: 'Sales Engineer',
+        desc: 'You have a degree in engineering. Languages: English (fluent), Spanish (mandatory).',
+        country: 'ES',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Spanish (essential)" is a requirement',
+        title: 'Project Manager',
+        desc: 'Project management experience. Spanish (essential) and English.',
+        country: 'ES',
+        requires: true,
+        advantage: false,
+    },
+    {
+        label: '2a — "Spanish (not mandatory)" is not a requirement',
+        title: 'Project Manager',
+        desc: 'Project management experience. Fluent English is required. Spanish (not mandatory).',
+        country: 'ES',
+        requires: false,
+        advantage: false,
+    },
 ];

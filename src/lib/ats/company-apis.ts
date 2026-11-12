@@ -145,6 +145,12 @@ export interface CompanyApiConfig {
         department?: string;
         jobFunction?: string;
         /**
+         * Dot-path to a work model label in each item ("Hybrid", "On-site", "Remote").
+         * Normalised to 'remote' | 'hybrid' | 'on-site' and stored as job.work_model;
+         * unrecognised values are ignored. Arrays use their first element.
+         */
+        workModel?: string;
+        /**
          * Dot-path to an ISO alpha-2 country code (or country name) in each item.
          * When set, the value is stored as job.country_code and used as the primary
          * country signal — bypassing city→country lookup for that job.
@@ -1751,6 +1757,46 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
         keepQueryParams: true,
         descriptionFields: ['data.description'],
         companyName: 'AMD',
+    },
+
+    // iCIMS/Jibe, like AMD, but postings can span countries ("Spain; Germany" in
+    // full_location), so `country` is deliberately not mapped: it would pin each job
+    // to its first country and drop the rest. The listing carries the whole posting,
+    // so no job pages are fetched. tags7 is Schneider's own "Hybrid" / "On-site" /
+    // "Remote" tag. NOTE: careers.se.com sits behind Akamai, which answers a plain
+    // `Mozilla/5.0` client with 403 — confirm the fetch works before registering this
+    // company in companies.yaml.
+    'careers.se.com': {
+        url: 'https://careers.se.com/api/jobs?sortBy=relevance&descending=false&internal=false&limit=100',
+        headers: {
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0',
+            Accept: 'application/json, text/plain, */*',
+            Referer: 'https://careers.se.com/jobs',
+        },
+        pagination: {
+            type: 'page',
+            param: 'page',
+            startPage: 1,
+            totalCountPath: 'totalCount',
+        },
+        itemsPath: 'jobs',
+        fields: {
+            title: 'data.title',
+            location: 'data.full_location',
+            jobFunction: 'data.category',
+            workModel: 'data.tags7',
+            id: 'data.req_id',
+        },
+        // data.apply_url is the iCIMS login page, not the public posting.
+        urlTemplate: 'https://careers.se.com/jobs/{data.req_id}?lang=en-us',
+        keepQueryParams: true,
+        descriptionFields: [
+            'data.description',
+            'data.responsibilities',
+            'data.qualifications',
+        ],
+        companyName: 'Schneider Electric',
     },
 
     // Lufthansa Group's own job board (milch & zucker "Global Job Board"). The page

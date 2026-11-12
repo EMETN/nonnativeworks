@@ -413,3 +413,50 @@ describe('workModelFromHtml', () => {
         ]);
     });
 });
+
+describe('Schneider Electric (iCIMS Jibe)', () => {
+    const job = (data: Record<string, unknown>) => ({
+        data: {
+            req_id: '137658',
+            title: 'Senior Electric Engineer',
+            description: 'Role purpose',
+            responsibilities: 'Develop designs',
+            qualifications: 'Skills',
+            category: [' Customer Projects, Solutions and Services'],
+            full_location: 'Spain; Germany',
+            country_code: 'ES',
+            tags7: ['Hybrid'],
+            apply_url: 'https://careers-se.icims.com/jobs/137658/login',
+            ...data,
+        },
+    });
+
+    const run = (jobs: unknown[]) => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                status: 200,
+                json: async () => ({ jobs, totalCount: jobs.length }),
+            })),
+        );
+        return fetchCompanyApiJobs(COMPANY_APIS['careers.se.com']);
+    };
+
+    test('keeps every country of a multi-country posting and reads the work model', async () => {
+        const [j] = await run([job({})]);
+
+        expect(j.location).toBe('Spain; Germany');
+        expect(j.country_code).toBeUndefined();
+        expect(j.work_model).toBe('hybrid');
+        expect(j.url).toBe('https://careers.se.com/jobs/137658?lang=en-us');
+        expect(j.sourceId).toBe('137658');
+        expect(j.descriptionText).toBe('Role purpose Develop designs Skills');
+    });
+
+    test('ignores a tags7 value that names no work model', async () => {
+        const [j] = await run([job({ tags7: ['Field-based'] })]);
+
+        expect(j.work_model).toBeUndefined();
+    });
+});

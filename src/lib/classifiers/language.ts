@@ -743,6 +743,10 @@ function _buildRequirementSignals(lang: string): string[] {
         `${lang} is a must`,
         `${lang} is mandatory`,
         `${lang} – mandatory`,
+        // Parentheses are stripped before matching, so "Spanish (mandatory)" reads "spanish mandatory".
+        `${lang} mandatory`,
+        `${lang} compulsory`,
+        `${lang} essential`,
         `mandatory ${lang}`,
         `${lang} is essential`,
         `${lang} is necessary`,

@@ -216,6 +216,7 @@ function mapItem(
         url: url || undefined,
         department: getString(item, fields.department),
         jobFunction: getString(item, fields.jobFunction),
+        work_model: normaliseWorkModel(getString(item, fields.workModel) ?? ''),
         sourceId: fields.id ? getString(item, fields.id) : undefined,
         descriptionText,
     };
