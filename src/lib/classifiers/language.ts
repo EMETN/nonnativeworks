@@ -614,10 +614,10 @@ function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
 function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
-    // The last item may be joined by "or" or "and"; an optional "language skills"
+    // The last item may be joined by "or", "and" or "/" ("and/or" is normalised to "/"); an optional "language skills"
     // noun may follow ("Finnish and English language skills are considered an advantage").
     const listTail =
-        `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+(?:or|and)\\s+[a-z]+)?` +
+        `(?:\\s*[,]\\s*[a-z]+)*(?:(?:\\s*,?\\s+(?:or|and)\\s+|\\s*\\/\\s*)[a-z]+)?` +
         `(?:\\s+(?:language\\s+)?skills?|\\s+language)?`;
     // Leading optional "considered " consumes ellipsis phrasing like "French or
     // German considered a strong advantage" without eating into the {0,2} gap-word
@@ -2175,6 +2175,19 @@ export function detectNativeLanguage(
                                 },
                             ],
                         };
+                    }
+                    // Same as Phase 2a: a signal like "english; french" that is just the
+                    // start of "French/Spanish is an advantage" is part of that advantage.
+                    const sigIdx = combined.indexOf(signal);
+                    const advOverlap = findOverlappingAdvantageMatch(
+                        kw,
+                        combined,
+                        sigIdx,
+                        sigIdx + signal.length,
+                    );
+                    if (advOverlap) {
+                        foundAdvantage ??= advOverlap[0];
+                        continue;
                     }
                     return {
                         value: true,
