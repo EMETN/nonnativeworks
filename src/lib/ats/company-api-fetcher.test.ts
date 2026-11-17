@@ -294,3 +294,52 @@ describe('Autodesk (Eightfold PCSX)', () => {
         expect(job.location).toBe('US; CA; Berlin, BE, DE');
     });
 });
+
+describe('minRequestIntervalMs', () => {
+    test('spaces listing requests to the same host', async () => {
+        vi.useFakeTimers();
+        const api = mockOffsetApi(35, 10);
+        const calledAt: number[] = [];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                calledAt.push(Date.now());
+                return api(url);
+            }),
+        );
+
+        const promise = fetchCompanyApiJobs({
+            ...COMPANY_APIS['explore.jobs.netflix.net'],
+            minRequestIntervalMs: 7000,
+        });
+        await vi.runAllTimersAsync();
+        const jobs = await promise;
+
+        expect(jobs).toHaveLength(35);
+        expect(calledAt).toHaveLength(4);
+        for (let i = 1; i < calledAt.length; i++) {
+            expect(calledAt[i] - calledAt[i - 1]).toBeGreaterThanOrEqual(7000);
+        }
+    });
+
+    test('leaves requests unspaced when not configured', async () => {
+        vi.useFakeTimers();
+        const api = mockOffsetApi(35, 10);
+        const calledAt: number[] = [];
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                calledAt.push(Date.now());
+                return api(url);
+            }),
+        );
+
+        const promise = fetchCompanyApiJobs(
+            COMPANY_APIS['explore.jobs.netflix.net'],
+        );
+        await vi.runAllTimersAsync();
+        await promise;
+
+        expect(calledAt.at(-1)! - calledAt[0]).toBeLessThan(7000);
+    });
+});

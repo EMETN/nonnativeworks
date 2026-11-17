@@ -225,6 +225,7 @@ export interface CompanyApiConfig {
     descriptionApiUrl?: string;
     descriptionApiItemsPath?: string;
     descriptionApiFields?: string[];
+    minRequestIntervalMs?: number;
     /**
      * Dot-path to a location field in the per-job detail API response.
      * When set, the fetched value overwrites job.location with a more granular value
@@ -512,6 +513,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // endpoint, for tracked countries only.
     'apply.careers.microsoft.com': {
         url: 'https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com&query=&sort_by=relevance',
+        minRequestIntervalMs: 7000,
         method: 'GET',
         headers: { Accept: 'application/json' },
         pagination: {

@@ -383,6 +383,7 @@ async function fetchPage(
     body: Record<string, unknown> | undefined,
     headers: Record<string, string>,
     bodyType: 'json' | 'multipart' = 'json',
+    minIntervalMs = 0,
 ): Promise<unknown> {
     const init: RequestInit = {
         method,
@@ -410,6 +411,7 @@ async function fetchPage(
         attempt++
     ) {
         if (attempt > 0) await sleep(retryWaitMs);
+        if (minIntervalMs) await waitForHostSlot(url, minIntervalMs);
         retryWaitMs = 1000 * (attempt + 1);
         let res: Response;
         try {
@@ -768,6 +770,16 @@ function buildFinderOffsetUrl(template: string, offset: number): string {
     return template.replace(/(finder=[^&]*?limit=\d+)/, `$1,offset=${offset}`);
 }
 
+const nextHostSlot = new Map<string, number>();
+
+async function waitForHostSlot(url: string, intervalMs: number) {
+    const host = new URL(url).host;
+    const now = Date.now();
+    const slot = Math.max(now, nextHostSlot.get(host) ?? 0);
+    nextHostSlot.set(host, slot + intervalMs);
+    if (slot > now) await sleep(slot - now);
+}
+
 function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -790,6 +802,7 @@ interface FetchSpec {
     keepQueryParams?: boolean;
     expandSecondaryLocations?: CompanyApiConfig['expandSecondaryLocations'];
     descriptionFields?: string[];
+    minRequestIntervalMs?: number;
 }
 
 export const cleanJobUrl = (
@@ -880,12 +893,20 @@ async function fetchAllJobsRaw(
         keepQueryParams,
         expandSecondaryLocations,
         descriptionFields,
+        minRequestIntervalMs,
     } = spec;
     const jobs: RawJob[] = [];
 
     if (pagination.type === 'none') {
         console.log(`[${label}] fetching (no pagination): ${url}`);
-        const data = await fetchPage(url, method, body, headers, bodyType);
+        const data = await fetchPage(
+            url,
+            method,
+            body,
+            headers,
+            bodyType,
+            minRequestIntervalMs,
+        );
         if (!data) {
             console.warn(`[${label}] empty response`, { url });
             return jobs;
@@ -932,6 +953,7 @@ async function fetchAllJobsRaw(
                 pageBody,
                 headers,
                 bodyType,
+                minRequestIntervalMs,
             );
 
             if (!data) {
@@ -1026,6 +1048,7 @@ async function fetchAllJobsRaw(
             firstSpec.pageBody,
             headers,
             bodyType,
+            minRequestIntervalMs,
         );
         if (!first) {
             console.warn(`[${label}] empty response at offset=0`, {
@@ -1071,6 +1094,7 @@ async function fetchAllJobsRaw(
                                 s.pageBody,
                                 headers,
                                 bodyType,
+                                minRequestIntervalMs,
                             );
                         }),
                     );
@@ -1096,6 +1120,7 @@ async function fetchAllJobsRaw(
                         s.pageBody,
                         headers,
                         bodyType,
+                        minRequestIntervalMs,
                     );
                     if (!data) break;
                     const n = addPage(data);
@@ -1122,6 +1147,7 @@ async function fetchAllJobsRaw(
                 body,
                 headers,
                 bodyType,
+                minRequestIntervalMs,
             );
 
             if (!data) {
@@ -1178,6 +1204,7 @@ async function fetchAllJobsRaw(
                 body,
                 headers,
                 bodyType,
+                minRequestIntervalMs,
             );
             if (!data) break;
 
@@ -1292,6 +1319,7 @@ export async function fetchCompanyApiJobs(
         keepQueryParams: config.keepQueryParams,
         expandSecondaryLocations: config.expandSecondaryLocations,
         descriptionFields: config.descriptionFields,
+        minRequestIntervalMs: config.minRequestIntervalMs,
     };
 
     let primaryJobsRaw: RawJob[];
