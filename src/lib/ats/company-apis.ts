@@ -225,6 +225,7 @@ export interface CompanyApiConfig {
     descriptionApiUrl?: string;
     descriptionApiItemsPath?: string;
     descriptionApiFields?: string[];
+    minRequestIntervalMs?: number;
     /**
      * Dot-path to a location field in the per-job detail API response.
      * When set, the fetched value overwrites job.location with a more granular value
@@ -512,6 +513,7 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
     // endpoint, for tracked countries only.
     'apply.careers.microsoft.com': {
         url: 'https://apply.careers.microsoft.com/api/pcsx/search?domain=microsoft.com&query=&sort_by=relevance',
+        minRequestIntervalMs: 7000,
         method: 'GET',
         headers: { Accept: 'application/json' },
         pagination: {
@@ -562,41 +564,6 @@ export const COMPANY_APIS: Record<string, CompanyApiConfig> = {
             'https://apply.careers.microsoft.com/api/pcsx/position_details?position_id={sourceId}&domain=microsoft.com&hl=en',
         descriptionApiItemsPath: 'data',
         descriptionApiFields: ['jobDescription'],
-    },
-
-    // Bayer's Eightfold API, same num=10 cap as Netflix's — paginate by start offset.
-    // Unlike Netflix's, job_description is populated in the list response for some
-    // countries but empty for others (Poland and Spain return none at all), so
-    // descriptionFields covers the free case and descriptionApiUrl fills the gaps from
-    // the per-job endpoint. enrichDescriptionsFromApi skips jobs that already have a
-    // description and runs only for tracked countries, so the extra calls stay small.
-    // No country filter: one unfiltered pass over ~62 pages is cheaper than a query per
-    // country, and Eightfold's location param is a fuzzy geo search that can bleed
-    // across borders. Only the first of a job's locations is used — no posting today
-    // has a tracked country anywhere but first, so fanning out would add no positions.
-    'bayer.eightfold.ai': {
-        url: 'https://bayer.eightfold.ai/api/apply/v2/jobs?domain=bayer.com&num=10&sort_by=relevance',
-        method: 'GET',
-        pagination: {
-            type: 'offset',
-            param: 'start',
-            pageSize: 10,
-            totalCountPath: 'count',
-        },
-        itemsPath: 'positions',
-        companyName: 'Bayer',
-        fields: {
-            title: 'name',
-            location: 'location',
-            url: 'canonicalPositionUrl',
-            jobFunction: 'department',
-            id: 'id',
-        },
-        descriptionFields: ['job_description'],
-        descriptionApiUrl:
-            'https://bayer.eightfold.ai/api/apply/v2/jobs/{sourceId}?domain=bayer.com',
-        descriptionApiItemsPath: '',
-        descriptionApiFields: ['job_description'],
     },
 
     'op-careers.fi': {
@@ -1735,7 +1702,7 @@ export const COMPANY_NAME_OVERRIDES: Array<{
     { urlSubstring: 'jobs.bendingspoons.com', name: 'Bending Spoons' },
     { urlSubstring: 'careers.gehealthcare.com', name: 'GE Healthcare' },
     { urlSubstring: 'ing.wd3.myworkdayjobs.com', name: 'ING' },
-    { urlSubstring: 'nxp.wd3.myworkdayjobs.com', name: 'NXP' },
+    { urlSubstring: 'nxp.myworkdayjobs.com', name: 'NXP' },
     { urlSubstring: 'asml.wd3.myworkdayjobs.com', name: 'ASML' },
     { urlSubstring: 'dentsuaegis.wd3.myworkdayjobs.com', name: 'Dentsu' },
     { urlSubstring: 'werkenbijabnamro.nl', name: 'ABN AMRO' },

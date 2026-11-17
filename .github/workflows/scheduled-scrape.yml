@@ -56,7 +56,7 @@ jobs:
     # ── Single job: scrape all companies ───────────────────────────────────────
     scrape:
         runs-on: ubuntu-latest
-        timeout-minutes: 45 # njoyn alone can take ~10 min; budget for the full list
+        timeout-minutes: 90 # njoyn alone can take ~10 min; budget for the full list
 
         # strategy:
         #   matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}

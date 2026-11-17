@@ -215,7 +215,7 @@ company_domains=(
     "asml.com"  # ASML
     "jobs.autodesk.com"  # Autodesk
     "barona.fi"  # Barona
-    "bayer.eightfold.ai"  # Bayer
+    "bayer.wd103.myworkdayjobs.com"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
     "cabify.careers"  # Cabify
@@ -287,7 +287,7 @@ company_domains=(
     "www.nordea.com"  # Nordea
     "career.nordnetab.com"  # Nordnet
     "jobs.nvidia.com"  # Nvidia
-    "nxp.wd3.myworkdayjobs.com"  # NXP
+    "nxp.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI

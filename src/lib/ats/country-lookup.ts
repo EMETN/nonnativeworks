@@ -613,6 +613,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     videbæk: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     vojens: { name: 'Denmark', code: 'DK', slug: 'denmark' },
     // ── Germany ──────────────────────────────────────────────────────────────
+    altenkunstadt: { name: 'Germany', code: 'DE', slug: 'germany' },
     augsburg: { name: 'Germany', code: 'DE', slug: 'germany' },
     backnang: { name: 'Germany', code: 'DE', slug: 'germany' },
     baierbrunn: { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -632,6 +633,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     calden: { name: 'Germany', code: 'DE', slug: 'germany' },
     celle: { name: 'Germany', code: 'DE', slug: 'germany' },
     chemnitz: { name: 'Germany', code: 'DE', slug: 'germany' },
+    constance: { name: 'Germany', code: 'DE', slug: 'germany' },
     darmstadt: { name: 'Germany', code: 'DE', slug: 'germany' },
     deggendorf: { name: 'Germany', code: 'DE', slug: 'germany' },
     dingolfing: { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -681,6 +683,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     köln: { name: 'Germany', code: 'DE', slug: 'germany' },
     koeln: { name: 'Germany', code: 'DE', slug: 'germany' },
     koln: { name: 'Germany', code: 'DE', slug: 'germany' },
+    konstanz: { name: 'Germany', code: 'DE', slug: 'germany' },
     cologne: { name: 'Germany', code: 'DE', slug: 'germany' },
     'landsberg am lech': { name: 'Germany', code: 'DE', slug: 'germany' },
     landshut: { name: 'Germany', code: 'DE', slug: 'germany' },
@@ -1069,6 +1072,7 @@ const CITY_MAP: Record<string, CountryInfo> = {
     łódź: { name: 'Poland', code: 'PL', slug: 'poland' },
     lodz: { name: 'Poland', code: 'PL', slug: 'poland' },
     lublin: { name: 'Poland', code: 'PL', slug: 'poland' },
+    magnice: { name: 'Poland', code: 'PL', slug: 'poland' },
     ostrołęka: { name: 'Poland', code: 'PL', slug: 'poland' },
     piaseczno: { name: 'Poland', code: 'PL', slug: 'poland' },
     poznań: { name: 'Poland', code: 'PL', slug: 'poland' },
@@ -1619,6 +1623,8 @@ const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
 
 const HEADQUARTERS_SUFFIX_RE = /\s+HQ$/i;
 
+const MORE_LOCATIONS_SUFFIX_RE = /\s*\+\s*\d+\s*more\s*(?:…|\.\.\.)?\s*$/i;
+
 /**
  * Extract a work model from a raw location string by looking for prefixes like
  * "Hybrid - ", "Remote - ", "On-site - ".
@@ -1913,6 +1919,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         .filter(Boolean);
     const segmentGroups = parts.map((part) => {
         const stripped = part
+            .replace(MORE_LOCATIONS_SUFFIX_RE, '')
             .replace(LOCATION_PREFIX_RE, '')
             .replace(LOCATION_SUFFIX_RE, '');
         const base = stripped
@@ -1970,6 +1977,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     const fullKey = normalizeKey(location);
     const fullMatch = COUNTRY_MAP[fullKey] ?? CITY_MAP[fullKey];
     if (fullMatch) return [fullMatch];
+
+    const unhyphenated = fullKey.replace(/-/g, ' ');
+    const unhyphenatedMatch =
+        COUNTRY_MAP[unhyphenated] ??
+        CITY_MAP[unhyphenated] ??
+        lookupCityByPrefix(unhyphenated);
+    if (unhyphenatedMatch) return [unhyphenatedMatch];
 
     // Try to extract a trailing 2-letter ISO country code, e.g. "Home office DK" → "DK" → Denmark.
     // \b ensures the code is a standalone word, preventing e.g. "bridge" matching "ge".
