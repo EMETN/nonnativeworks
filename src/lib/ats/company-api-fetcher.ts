@@ -5,6 +5,7 @@ import { lookupCountryFromLocation } from './country-lookup';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 import { parseRetryAfterMs } from './workday';
 import { fetchPublic } from './public-fetch';
+import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
 
 // Runaway-loop backstop; high so low server-capped page sizes (e.g. num=10) don't truncate large boards.
 const MAX_PAGES = 200;
@@ -548,6 +549,16 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
     return undefined;
 }
 
+function isOnlyInUntrackedCountries(job: RawJob): boolean {
+    const countries = lookupCountryFromLocation(
+        job.country_code ?? job.location ?? '',
+    );
+    return (
+        countries.length > 0 &&
+        !countries.some((c) => TRACKED_COUNTRY_CODES.has(c.code))
+    );
+}
+
 /**
  * For each job that needs HTML — either for description classification (English title,
  * no existing HTML) or for location extraction (no location yet) — fetch the job page.
@@ -570,6 +581,7 @@ export async function enrichDescriptions(
         // Same for the work model: it is stored on every run, cached or not.
         const wantsWorkModel = !!workModelRegex && !j.work_model;
         const wantsDescription =
+            !isOnlyInUntrackedCountries(j) &&
             !isCachedJob(skipUrls, j.url, j.title) &&
             !titleAppearsNonEnglishExcludingCityNames(j.title) &&
             !j.descriptionHtml &&

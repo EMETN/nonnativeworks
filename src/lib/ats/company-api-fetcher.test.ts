@@ -2,7 +2,7 @@
 // Watch mode: pnpm test:watch
 
 import { test, expect, describe, vi, afterEach } from 'vitest';
-import { fetchCompanyApiJobs } from './company-api-fetcher';
+import { enrichDescriptions, fetchCompanyApiJobs } from './company-api-fetcher';
 import { COMPANY_APIS } from './company-apis';
 
 // Job-page fetches go through the SSRF-guarded fetchPublic (DNS lookup); route them
@@ -590,4 +590,38 @@ describe('minRequestIntervalMs', () => {
 
         expect(calledAt.at(-1)! - calledAt[0]).toBeLessThan(7000);
     });
+});
+
+test('enrichDescriptions skips job pages in untracked countries', async () => {
+    const fetched: string[] = [];
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+            fetched.push(url);
+            return {
+                ok: true,
+                status: 200,
+                headers: new Headers(),
+                url,
+                text: async () => '<p>Role</p>',
+            };
+        }),
+    );
+    const job = (n: number, location: string) => ({
+        title: `Analyst ${n}`,
+        url: `https://jobs.example.com/job/${n}`,
+        location,
+    });
+
+    await enrichDescriptions([
+        job(1, 'New York, New York, United States'),
+        job(2, 'Bangalore, Karnataka, India'),
+        job(3, 'Warsaw, Masovia, Poland'),
+        job(4, 'Somewhere Unmapped'),
+    ]);
+
+    expect(fetched.sort()).toEqual([
+        'https://jobs.example.com/job/3',
+        'https://jobs.example.com/job/4',
+    ]);
 });
