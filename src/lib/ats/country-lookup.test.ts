@@ -94,6 +94,23 @@ describe('lookupCountryFromLocation — bare Workday city names', () => {
         expect(codes('Niort; Niort')).toEqual(['FR']);
     });
 
+    test('Zalando sites resolve', () => {
+        expect(codes('Constance')).toEqual(['DE']);
+        expect(codes('Konstanz')).toEqual(['DE']);
+        expect(codes('Altenkunstadt')).toEqual(['DE']);
+        expect(codes('Magnice')).toEqual(['PL']);
+    });
+
+    test('a hyphenated site name resolves by its spaced form', () => {
+        expect(codes('SOPHIA-ANTIPOLIS VALBONNE')).toEqual(['FR']);
+    });
+
+    test('a "+N more" suffix does not hide the first location', () => {
+        expect(codes('Surgères, FR+1 more…')).toEqual(['FR']);
+        expect(codes('Trieste, IT+3 more…')).toEqual(['IT']);
+        expect(codes('Drunen, NL+1 more...')).toEqual(['NL']);
+    });
+
     test('Doctolib locations resolve', () => {
         expect(codes('Wuppertal')).toEqual(['DE']);
         expect(codes('Ile-de-France')).toEqual(['FR']);
@@ -170,6 +187,7 @@ describe('lookupCountryFromLocation — Czechia', () => {
             'Czech Republic',
             'Prague, Czech Republic',
             'Brno, Czechia',
+            'czech-republic',
         ]) {
             expect(lookupCountryFromLocation(loc)).toEqual([
                 { name: 'Czechia', code: 'CZ', slug: 'czechia' },
