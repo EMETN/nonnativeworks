@@ -669,6 +669,29 @@ function findOverlappingAdvantageMatch(
     return null;
 }
 
+function advantageCoveringAllOccurrences(
+    lang: string,
+    combined: string,
+    signal: string,
+): RegExpExecArray | null {
+    let first: RegExpExecArray | null = null;
+    for (
+        let idx = combined.indexOf(signal);
+        idx !== -1;
+        idx = combined.indexOf(signal, idx + 1)
+    ) {
+        const m = findOverlappingAdvantageMatch(
+            lang,
+            combined,
+            idx,
+            idx + signal.length,
+        );
+        if (!m) return null;
+        first ??= m;
+    }
+    return first;
+}
+
 function buildAdvantageSignals(lang: string): string[] {
     // Only modifiers that don't follow the "is a(n) [adj] advantage/plus/asset/bonus" pattern —
     // those are handled by buildAdvantageRegex above.
@@ -1070,8 +1093,25 @@ function requirementNegatedByContext(
     signal: string,
     lang?: string,
 ): NegationKind {
-    const idx = combined.indexOf(signal);
-    if (idx === -1) return false;
+    let result: NegationKind = false;
+    for (
+        let idx = combined.indexOf(signal);
+        idx !== -1;
+        idx = combined.indexOf(signal, idx + 1)
+    ) {
+        const negation = negationAt(combined, idx, signal, lang);
+        if (!negation) return false;
+        if (result !== 'advantage') result = negation;
+    }
+    return result;
+}
+
+function negationAt(
+    combined: string,
+    idx: number,
+    signal: string,
+    lang?: string,
+): NegationKind {
     // A generic "our teams are proficient in ... the following languages" preamble within
     // the preceding ~120 characters means this is a company-wide capability list, not a
     // requirement for this role — even though the signal (e.g. "english, french") matched.
@@ -1531,12 +1571,10 @@ export function detectNativeLanguage(
                 lang,
             );
             if (negation === 'none' || negation === 'advantage') continue;
-            const sigIdx = combined.indexOf(signal);
-            const advOverlap = findOverlappingAdvantageMatch(
+            const advOverlap = advantageCoveringAllOccurrences(
                 lang,
                 combined,
-                sigIdx,
-                sigIdx + signal.length,
+                signal,
             );
             if (advOverlap) continue;
             return true;
@@ -2054,12 +2092,10 @@ export function detectNativeLanguage(
                 // skills on top of that are preferred", or "German" ending a signal like "english,
                 // german" immediately followed by "or additional European languages are a plus")
                 // — the advantage wins.
-                const sigIdx = combined.indexOf(signal);
-                const advOverlap = findOverlappingAdvantageMatch(
+                const advOverlap = advantageCoveringAllOccurrences(
                     lang,
                     combined,
-                    sigIdx,
-                    sigIdx + signal.length,
+                    signal,
                 );
                 if (advOverlap) {
                     if (!anyGenuineRequirement) {
@@ -2178,12 +2214,10 @@ export function detectNativeLanguage(
                     }
                     // Same as Phase 2a: a signal like "english; french" that is just the
                     // start of "French/Spanish is an advantage" is part of that advantage.
-                    const sigIdx = combined.indexOf(signal);
-                    const advOverlap = findOverlappingAdvantageMatch(
+                    const advOverlap = advantageCoveringAllOccurrences(
                         kw,
                         combined,
-                        sigIdx,
-                        sigIdx + signal.length,
+                        signal,
                     );
                     if (advOverlap) {
                         foundAdvantage ??= advOverlap[0];
