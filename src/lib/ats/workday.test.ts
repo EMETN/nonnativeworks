@@ -76,7 +76,10 @@ const requestedCountries = (fetchMock: ReturnType<typeof stubWorkday>) =>
             JSON.parse(String(init.body)).appliedFacets.locationCountry,
     );
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+});
 
 describe('fetchWorkdayJobs for site-code tenants', () => {
     test('discovers tracked countries and tags postings with them', async () => {
@@ -149,6 +152,7 @@ interface FakeTenant {
     holdDetail?: (path: string) => Promise<void> | undefined;
     holdListing?: (countries?: string[]) => Promise<void> | undefined;
     omitTotal?: boolean;
+    throttledListingCalls?: number;
 }
 
 function fakeWorkday(tenant: FakeTenant) {
@@ -178,6 +182,8 @@ function fakeWorkday(tenant: FakeTenant) {
             );
             await tenant.holdListing?.(ids);
             log.inFlightListing--;
+            if (log.listing.length <= (tenant.throttledListingCalls ?? 0))
+                return { ok: false, status: 429, headers: new Headers() };
             const all = ids
                 ? ids.flatMap((id) => tenant.countries?.[id]?.[1] ?? [])
                 : (tenant.postings ??
@@ -313,6 +319,26 @@ describe('fetchWorkdayJobs default mode (existing tenants)', () => {
         ]);
         expect(log.maxInFlightListing).toBeGreaterThan(1);
         expect(log.maxInFlightListing).toBeLessThanOrEqual(5);
+    });
+
+    test('retries a throttled listing page instead of failing the company', async () => {
+        vi.useFakeTimers();
+        const many = Array.from({ length: 45 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            throttledListingCalls: 2,
+        });
+
+        const promise = fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+        await vi.runAllTimersAsync();
+        const jobs = await promise;
+
+        expect(jobs).toHaveLength(45);
+        expect(log.listing.length).toBeGreaterThan(3);
     });
 
     test('pages one at a time until a short page when the total is missing', async () => {

@@ -613,7 +613,7 @@ async function fetchJobsPage(
 ): Promise<WorkdayResponse> {
     const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
     const origin = `https://${parts.host}`;
-    const res = await curlFetch(endpoint, {
+    const res = await fetchWithBackoff(endpoint, {
         method: 'POST',
         headers: {
             accept: 'application/json',
