@@ -645,6 +645,14 @@ async function fetchPostings(
     parts: WorkdayUrlParts,
     appliedFacets: Record<string, string[]>,
 ): Promise<WorkdayJobPosting[]> {
+    const postings = await fetchAllPostings(parts, appliedFacets);
+    return postings.filter((p) => typeof p.title === 'string' && p.title);
+}
+
+async function fetchAllPostings(
+    parts: WorkdayUrlParts,
+    appliedFacets: Record<string, string[]>,
+): Promise<WorkdayJobPosting[]> {
     const first = await fetchJobsPage(parts, appliedFacets, 0);
     const allPostings = [...(first.jobPostings ?? [])];
     if (allPostings.length < PAGE_SIZE) return allPostings;

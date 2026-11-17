@@ -321,6 +321,24 @@ describe('fetchWorkdayJobs default mode (existing tenants)', () => {
         expect(log.maxInFlightListing).toBeLessThanOrEqual(5);
     });
 
+    test('drops a listed posting that has no title', async () => {
+        fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: [
+                posting('Designer', 'Helsinki, Finland', 'D_1'),
+                {
+                    locationsText: 'Helsinki, Finland',
+                    externalPath: '/job/X_1',
+                } as FakePosting,
+            ],
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs.map((j) => j.title)).toEqual(['Designer']);
+    });
+
     test('retries a throttled listing page instead of failing the company', async () => {
         vi.useFakeTimers();
         const many = Array.from({ length: 45 }, (_, i) =>
