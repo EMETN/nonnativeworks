@@ -215,7 +215,7 @@ company_domains=(
     "asml.com"  # ASML
     "jobs.autodesk.com"  # Autodesk
     "barona.fi"  # Barona
-    "bayer.eightfold.ai"  # Bayer
+    "bayer.wd103.myworkdayjobs.com"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
     "cabify.careers"  # Cabify
