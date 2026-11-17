@@ -92,6 +92,9 @@
 #   detail_locations_jsonld   true: resolve "Multiple Locations" cards from the
 #                         detail page's JSON-LD jobLocation list instead, for
 #                         sites that print the offices as one joined string.
+#   detail_card_location_jsonld  true: replace English-titled cards' locations with the
+#                         detail page's JSON-LD address, for sites whose cards
+#                         show a work model or legal entity instead of a place.
 #   url_selector          CSS selector for the job link when it is NOT on the
 #                         title element itself (href extracted from this element)
 #   job_function_selector CSS selector for the job function/area on the detail page
@@ -615,12 +618,12 @@ scrapers:
     # page_size must be 20 (Teamtailor's page length). The board aggregates the whole
     # group (CKW, Urbasolar, Volkswind, Kernkraftwerk Leibstadt, ...), all under one company.
     # Cards often show "Hybrid"/"Fully Remote"/an entity name instead of a place, so
-    # detail_location_jsonld reads the real address from each job page's JSON-LD.
+    # detail_card_location_jsonld reads the real address from each job page's JSON-LD.
     - match: 'careers.axpo.com'
       name: Axpo Group
       extract_mode: teamtailor
       description_selector: 'div.prose'
-      detail_location_jsonld: true
+      detail_card_location_jsonld: true
       pagination:
           type: page
           param: page

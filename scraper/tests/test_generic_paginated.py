@@ -599,125 +599,262 @@ class PageFetchFailureTest(unittest.TestCase):
             )
 
 
+class JsonLdLocationTest(unittest.TestCase):
+    def test_country_object_is_read_by_both_helpers(self):
+        from platforms.generic_paginated import _jsonld_location, _jsonld_locations
+
+        html = (
+            '<script type="application/ld+json">{"jobLocation":{"address":'
+            '{"addressLocality":"Baden","addressCountry":'
+            '{"@type":"Country","name":"Switzerland"}}}}</script>'
+        )
+        self.assertEqual(_jsonld_location(html), "Baden, Switzerland")
+        self.assertEqual(_jsonld_locations(html), ["Baden - Switzerland"])
+
+    def test_string_country_still_read(self):
+        from platforms.generic_paginated import _jsonld_location
+
+        html = (
+            '<script type="application/ld+json">[{"jobLocation":[{"address":'
+            '{"addressLocality":"Madrid","addressCountry":"ES"}}]}]</script>'
+        )
+        self.assertEqual(_jsonld_location(html), "Madrid, ES")
+
+
+class _HtmlResp:
+    status_code = 200
+    ok = True
+
+    def __init__(self, text):
+        self.text = text
+        self.content = text.encode()
+
+    def raise_for_status(self):
+        pass
+
+
+class DetailCardLocationJsonLdTest(unittest.TestCase):
+    def _scrape(self, detail_jsonld):
+        import platforms.generic_paginated as gp
+
+        card = (
+            '<li class="c"><a href="/job/1">Analyst</a>'
+            '<span class="l">Hybrid</span></li>'
+        )
+        detail = (
+            '<div class="d">Great role</div><script type="application/ld+json">'
+            f"{detail_jsonld}</script>"
+        )
+
+        def fake_get(session, url, cfg, **kwargs):
+            return _HtmlResp(detail if "/job/" in url else f"<ul>{card}</ul>")
+
+        cfg = {
+            "name": "T",
+            "card_selector": "li.c",
+            "title_selector": "a",
+            "location_selector": "span.l",
+            "description_selector": "div.d",
+            "detail_card_location_jsonld": True,
+            "pagination": {"type": "none"},
+        }
+        with (
+            mock.patch.object(gp, "_get", fake_get),
+            mock.patch.object(gp, "is_cached_job", return_value=False),
+        ):
+            return gp.scrape_generic("https://example.com/jobs", cfg)
+
+    def test_single_location_rewrites_card(self):
+        jobs = self._scrape(
+            '{"jobLocation":{"address":{"addressLocality":"Baden",'
+            '"addressCountry":{"@type":"Country","name":"Switzerland"}}}}'
+        )
+        self.assertEqual([j["location"] for j in jobs], ["Hybrid - Baden, Switzerland"])
+
+    def test_several_locations_fan_out_per_country(self):
+        jobs = self._scrape(
+            '{"jobLocation":['
+            '{"address":{"addressLocality":"Pune","addressCountry":"India"}},'
+            '{"address":{"addressLocality":"Baden","addressCountry":"CH"}},'
+            '{"address":{"addressLocality":"Aarau","addressCountry":'
+            '{"@type":"Country","name":"Switzerland"}}}]}'
+        )
+        by_loc = {j["location"]: j for j in jobs}
+        self.assertEqual(
+            set(by_loc), {"Hybrid - Pune - India", "Hybrid - Baden - Switzerland"}
+        )
+        self.assertEqual(
+            by_loc["Hybrid - Baden - Switzerland"]["cities"], ["Baden", "Aarau"]
+        )
+
+
+class UpgradeHttpRedirectTest(unittest.TestCase):
+    def _hook(self, request_url, location):
+        from platforms.generic_paginated import _upgrade_http_redirect
+
+        resp = requests.Response()
+        resp.status_code = 301
+        resp.headers["location"] = location
+        resp.url = request_url
+        resp.request = requests.Request("GET", request_url).prepare()
+        return _upgrade_http_redirect(resp).headers["location"]
+
+    def test_cross_host_http_hop_is_upgraded(self):
+        self.assertEqual(
+            self._hook("https://ckw.teamtailor.com/jobs/1", "http://ckw.ch/jobs/1"),
+            "https://ckw.ch/jobs/1",
+        )
+
+    def test_same_host_downgrade_is_left_alone(self):
+        self.assertEqual(
+            self._hook("https://example.com/jobs", "http://example.com/jobs"),
+            "http://example.com/jobs",
+        )
+
+    def test_same_host_downgrade_does_not_loop(self):
+        from platforms.generic_paginated import _new_session
+
+        seen = []
+
+        def fake_send(self, request, **kw):
+            seen.append(request.url)
+            resp = requests.Response()
+            resp.request = request
+            resp.url = request.url
+            if request.url.startswith("https://"):
+                resp.status_code = 301
+                resp.headers["location"] = "http://example.com/jobs"
+            else:
+                resp.status_code = 200
+            return resp
+
+        with mock.patch.object(requests.adapters.HTTPAdapter, "send", fake_send):
+            _new_session().get("https://example.com/jobs")
+        self.assertEqual(seen, ["https://example.com/jobs", "http://example.com/jobs"])
+
+
+class GenericPaginatedHelpersTest(unittest.TestCase):
+    def test_jsonld_location_reads_address(self):
+        from platforms.generic_paginated import _jsonld_location
+
+        html = (
+            '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+            '"address":{"addressLocality":"Madrid","addressCountry":"ES"}}]}</script>'
+        )
+        self.assertEqual(_jsonld_location(html), "Madrid, ES")
+
+    def test_jsonld_location_empty_address_is_none(self):
+        from platforms.generic_paginated import _jsonld_location
+
+        html = (
+            '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
+            '"address":{}}]}</script>'
+        )
+        self.assertIsNone(_jsonld_location(html))
+
+    def test_new_session_upgrades_http_redirect(self):
+        from platforms.generic_paginated import _new_session
+
+        hop = requests.Response()
+        hop.status_code = 301
+        hop.headers["location"] = "http://ckw.ch/careers/jobs/1"
+        hop.url = "https://ckw.teamtailor.com/jobs/1"
+        final = requests.Response()
+        final.status_code = 200
+        final.url = "https://ckw.ch/careers/jobs/1"
+        seen = []
+
+        def fake_send(self, request, **kw):
+            seen.append(request.url)
+            resp = hop if len(seen) == 1 else final
+            resp.request = request
+            return resp
+
+        with mock.patch.object(requests.adapters.HTTPAdapter, "send", fake_send):
+            _new_session().get("https://ckw.teamtailor.com/jobs/1")
+        self.assertEqual(seen[1], "https://ckw.ch/careers/jobs/1")
+
+    def test_card_work_model(self):
+        from platforms.generic_paginated import _card_work_model
+
+        self.assertEqual(_card_work_model("Hybrid"), "Hybrid")
+        self.assertEqual(_card_work_model("Fully Remote"), "Remote")
+        self.assertIsNone(_card_work_model("Baden"))
+        self.assertIsNone(_card_work_model(None))
+
+    def test_jsonld_locations_lists_every_office_with_country_names(self):
+        from platforms.generic_paginated import _jsonld_locations
+
+        html = (
+            '<script type="application/ld+json">{"jobLocation":['
+            '{"address":{"addressLocality":"Krakow","addressRegion":"77","addressCountry":"PL"}},'
+            '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+            '{"address":{"addressLocality":"Pune","addressCountry":"India"}},'
+            '{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+            '{"address":{"addressLocality":"","addressCountry":"PL"}}'
+            "]}</script>"
+        )
+        self.assertEqual(
+            _jsonld_locations(html),
+            [
+                "Krakow - Poland",
+                "Katowice - Poland",
+                "Pune - India",
+            ],
+        )
+
+    def test_multi_location_card_with_work_model_prefix_is_expanded(self):
+        import platforms.generic_paginated as gp
+
+        card = (
+            '<li class="c"><span class="t">Hybrid</span><a href="/job/1">Analyst</a>'
+            '<span class="l">Multiple Locations</span></li>'
+        )
+        detail = (
+            '<div class="d">Great role</div><script type="application/ld+json">'
+            '{"jobLocation":[{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
+            '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
+            '{"address":{"addressLocality":"Pune","addressCountry":"India"}}]}</script>'
+        )
+
+        class Resp:
+            status_code = 200
+            ok = True
+
+            def __init__(self, text):
+                self.text = text
+                self.content = text.encode()
+
+            def raise_for_status(self):
+                pass
+
+        def fake_get(session, url, cfg, **kwargs):
+            return Resp(detail if "/job/" in url else f"<ul>{card}</ul>")
+
+        cfg = {
+            "name": "T",
+            "card_selector": "li.c",
+            "title_selector": "a",
+            "location_selector": "span.l",
+            "work_model_selector": "span.t",
+            "description_selector": "div.d",
+            "detail_locations_jsonld": True,
+            "pagination": {"type": "none"},
+        }
+
+        with (
+            mock.patch.object(gp, "_get", fake_get),
+            mock.patch.object(gp, "is_cached_job", return_value=False),
+        ):
+            jobs = gp.scrape_generic("https://example.com/jobs", cfg)
+        by_loc = {j["location"]: j for j in jobs}
+        self.assertEqual(
+            set(by_loc), {"Hybrid - Krakow - Poland", "Hybrid - Pune - India"}
+        )
+        self.assertEqual(
+            by_loc["Hybrid - Krakow - Poland"]["cities"], ["Krakow", "Katowice"]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
-
-
-def test_jsonld_location_reads_address():
-    from platforms.generic_paginated import _jsonld_location
-
-    html = (
-        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
-        '"address":{"addressLocality":"Madrid","addressCountry":"ES"}}]}</script>'
-    )
-    assert _jsonld_location(html) == "Madrid, ES"
-
-
-def test_jsonld_location_empty_address_is_none():
-    from platforms.generic_paginated import _jsonld_location
-
-    html = (
-        '<script type="application/ld+json">{"jobLocation":[{"@type":"Place",'
-        '"address":{}}]}</script>'
-    )
-    assert _jsonld_location(html) is None
-
-
-def test_new_session_upgrades_http_redirect():
-    from unittest import mock
-
-    import requests
-
-    from platforms.generic_paginated import _new_session
-
-    hop = requests.Response()
-    hop.status_code = 301
-    hop.headers["location"] = "http://ckw.ch/careers/jobs/1"
-    hop.url = "https://ckw.teamtailor.com/jobs/1"
-    final = requests.Response()
-    final.status_code = 200
-    final.url = "https://ckw.ch/careers/jobs/1"
-    seen = []
-
-    def fake_send(self, request, **kw):
-        seen.append(request.url)
-        resp = hop if len(seen) == 1 else final
-        resp.request = request
-        return resp
-
-    with mock.patch.object(requests.adapters.HTTPAdapter, "send", fake_send):
-        _new_session().get("https://ckw.teamtailor.com/jobs/1")
-    assert seen[1] == "https://ckw.ch/careers/jobs/1"
-
-
-def test_card_work_model():
-    from platforms.generic_paginated import _card_work_model
-
-    assert _card_work_model("Hybrid") == "Hybrid"
-    assert _card_work_model("Fully Remote") == "Remote"
-    assert _card_work_model("Baden") is None
-    assert _card_work_model(None) is None
-
-
-def test_jsonld_locations_lists_every_office_with_country_names():
-    from platforms.generic_paginated import _jsonld_locations
-
-    html = (
-        '<script type="application/ld+json">{"jobLocation":['
-        '{"address":{"addressLocality":"Krakow","addressRegion":"77","addressCountry":"PL"}},'
-        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
-        '{"address":{"addressLocality":"Pune","addressCountry":"India"}},'
-        '{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
-        '{"address":{"addressLocality":"","addressCountry":"PL"}}'
-        "]}</script>"
-    )
-    assert _jsonld_locations(html) == [
-        "Krakow - Poland",
-        "Katowice - Poland",
-        "Pune - India",
-    ]
-
-
-def test_multi_location_card_with_work_model_prefix_is_expanded(monkeypatch):
-    import platforms.generic_paginated as gp
-
-    card = (
-        '<li class="c"><span class="t">Hybrid</span><a href="/job/1">Analyst</a>'
-        '<span class="l">Multiple Locations</span></li>'
-    )
-    detail = (
-        '<div class="d">Great role</div><script type="application/ld+json">'
-        '{"jobLocation":[{"address":{"addressLocality":"Krakow","addressCountry":"PL"}},'
-        '{"address":{"addressLocality":"Katowice","addressCountry":"Poland"}},'
-        '{"address":{"addressLocality":"Pune","addressCountry":"India"}}]}</script>'
-    )
-
-    class Resp:
-        status_code = 200
-        ok = True
-
-        def __init__(self, text):
-            self.text = text
-            self.content = text.encode()
-
-        def raise_for_status(self):
-            pass
-
-    def fake_get(session, url, cfg, **kwargs):
-        return Resp(detail if "/job/" in url else f"<ul>{card}</ul>")
-
-    monkeypatch.setattr(gp, "_get", fake_get)
-    cfg = {
-        "name": "T",
-        "card_selector": "li.c",
-        "title_selector": "a",
-        "location_selector": "span.l",
-        "work_model_selector": "span.t",
-        "description_selector": "div.d",
-        "detail_locations_jsonld": True,
-        "pagination": {"type": "none"},
-    }
-    jobs = gp.scrape_generic("https://example.com/jobs", cfg)
-    by_loc = {j["location"]: j for j in jobs}
-    assert set(by_loc) == {"Hybrid - Krakow - Poland", "Hybrid - Pune - India"}
-    assert by_loc["Hybrid - Krakow - Poland"]["cities"] == ["Krakow", "Katowice"]
