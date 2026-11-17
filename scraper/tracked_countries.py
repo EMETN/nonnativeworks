@@ -4,34 +4,6 @@ Tracked countries — shared by all Python scrapers.
 Keep in sync with src/lib/tracked-countries.ts.
 """
 
-TRACKED_CODES = {
-    "FI",
-    "SE",
-    "NO",
-    "DK",
-    "IS",
-    "NL",
-    "DE",
-    "EE",
-    "LV",
-    "LT",
-    "PL",
-    "FR",
-    "BE",
-    "LU",
-    "CH",
-    "ES",
-    "PT",
-    "AT",
-    "IT",
-    "HU",
-    "HR",
-    "RO",
-    "BG",
-    "GR",
-    "CZ",
-}
-
 # Display name for each tracked ISO code, for sources that mix codes and names
 # (e.g. JSON-LD addressCountry "PL" on one location, "Poland" on the next).
 COUNTRY_NAME_BY_CODE = {
@@ -62,33 +34,10 @@ COUNTRY_NAME_BY_CODE = {
     "CZ": "Czechia",
 }
 
-TRACKED_NAMES = {
-    "finland",
-    "sweden",
-    "norway",
-    "denmark",
-    "iceland",
-    "netherlands",
-    "germany",
-    "estonia",
-    "latvia",
-    "lithuania",
-    "poland",
-    "france",
-    "belgium",
-    "luxembourg",
-    "switzerland",
-    "spain",
-    "portugal",
-    "austria",
-    "italy",
-    "hungary",
-    "croatia",
-    "romania",
-    "bulgaria",
-    "greece",
+TRACKED_CODES = set(COUNTRY_NAME_BY_CODE)
+
+TRACKED_NAMES = {name.lower() for name in COUNTRY_NAME_BY_CODE.values()} | {
     "czech",
-    "czechia",
     "czech republic",
 }
 
