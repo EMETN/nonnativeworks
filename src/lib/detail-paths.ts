@@ -1,5 +1,6 @@
 import { groupBy } from './build-queries';
 import { nameToSlug } from './country-flags';
+import { formatCount } from './text';
 import { DEFAULT_SORT, sortPositions } from './position-filters';
 import type {
     CompanyStats,
@@ -133,4 +134,17 @@ export function buildDetailPages(
     );
 
     return [...countryPages, ...companyPages];
+}
+
+export function companyDescription(
+    name: string,
+    totalPositions: number,
+    englishPositions: number,
+    countryCount: number,
+): string {
+    const where =
+        countryCount === 0
+            ? ', all fully remote across Europe'
+            : ` across ${countryCount} ${countryCount === 1 ? 'country' : 'countries'}`;
+    return `${name} has ${formatCount(totalPositions)} open positions${where}, and ${formatCount(englishPositions)} don't require the local language(s).`;
 }

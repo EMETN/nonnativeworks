@@ -8,7 +8,11 @@ import TimeAgo from '../components/shared/TimeAgo';
 import { getCountryStats } from '../lib/queries';
 import { flagWidth, FLAG_HEIGHT } from '../lib/flag-dimensions';
 import { fetchAllCompanyStats, fetchAllPositions } from '../lib/build-queries';
-import { buildDetailPages, type DetailPage } from '../lib/detail-paths';
+import {
+    buildDetailPages,
+    companyDescription,
+    type DetailPage,
+} from '../lib/detail-paths';
 import { FACET_KEYS, SORT_PARAM } from '../lib/position-filters';
 import { formatCount } from '../lib/text';
 import { cleanPathname } from '../lib/url-path';
@@ -45,7 +49,12 @@ const listHref = isCountry ? '/countries' : '/companies';
 
 const description = isCountry
     ? `Browse ${formatCount(totalPositions)} open positions in ${name}. ${formatCount(englishPositions)} can be done in English without knowing the local language.`
-    : `${name} has ${formatCount(totalPositions)} open positions across ${page.country_count} ${page.country_count === 1 ? 'country' : 'countries'}, and ${formatCount(englishPositions)} don't require the local language(s).`;
+    : companyDescription(
+          name,
+          totalPositions,
+          englishPositions,
+          page.country_count,
+      );
 
 const cleanUrl = new URL(cleanPathname(Astro.url), Astro.url).href;
 const filterParams = [...FACET_KEYS, SORT_PARAM].join(',');
