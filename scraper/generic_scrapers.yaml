@@ -361,6 +361,7 @@ scrapers:
       # ── Vestas ──────────────────────────────────────────────────────────────────
     - match: 'careers.vestas.com/search'
       name: Vestas
+      concurrency: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
