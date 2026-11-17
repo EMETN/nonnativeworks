@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, test, expect } from 'vitest';
+import { curlFetch } from '../src/lib/ats/curl-fetch';
 import { fetchWorkdayJobs, parseWorkdayUrl } from '../src/lib/ats/workday';
 import { lookupCountryFromLocation } from '../src/lib/ats/country-lookup';
 import { TRACKED_COUNTRY_CODES } from '../src/lib/tracked-countries';
@@ -41,7 +42,7 @@ describe.runIf(LIVE)('Workday tenants (live)', () => {
     test('Dentsu matches the site count for every tracked country', async () => {
         const { url } = workdayCompanies.find((c) => c.name === 'Dentsu')!;
         const parts = parseWorkdayUrl(url)!;
-        const res = await fetch(
+        const res = await curlFetch(
             `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`,
             {
                 method: 'POST',

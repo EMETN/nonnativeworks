@@ -7,6 +7,10 @@ import {
 import type { RawJob } from './types';
 import { titleHash } from '../outcome-cache';
 
+vi.mock('./curl-fetch', () => ({
+    curlFetch: (url: string, init?: RequestInit) => fetch(url, init),
+}));
+
 const FINLAND = '0afb2fa656da42e8bfb6d47bd24a26fa';
 const SPAIN = 'bd34c524a6a04ae6915f5d96fa086199';
 const USA = 'bc33aa3152ec42d4995f4791a106ed09';

@@ -89,6 +89,7 @@
  */
 
 import type { RawJob } from './types';
+import { curlFetch } from './curl-fetch';
 import { titleAppearsNonEnglishExcludingCityNames } from './title-language';
 import { isCachedJob, type CachedTitleHashes } from '../outcome-cache';
 import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
@@ -220,7 +221,7 @@ export function parseRetryAfterMs(header: string | null): number | null {
 const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
 
 /**
- * fetch() wrapper that retries on 429/502/503/504 and on thrown network errors,
+ * curlFetch() wrapper that retries on 429/502/503/504 and on thrown network errors,
  * with exponential backoff + jitter, honoring a Retry-After header when the
  * server sends one. Workday throttles bursts of concurrent detail-page requests
  * (common for large companies like ABB and Thales with hundreds of postings),
@@ -236,7 +237,7 @@ async function fetchWithBackoff(
     for (let attempt = 0; ; attempt++) {
         let res: Response;
         try {
-            res = await fetch(url, init);
+            res = await curlFetch(url, init);
         } catch (e) {
             if (attempt < MAX_BACKOFF_RETRIES) {
                 await delay(
@@ -612,7 +613,7 @@ async function fetchJobsPage(
 ): Promise<WorkdayResponse> {
     const endpoint = `https://${parts.host}/wday/cxs/${parts.company}/${parts.site}/jobs`;
     const origin = `https://${parts.host}`;
-    const res = await fetch(endpoint, {
+    const res = await curlFetch(endpoint, {
         method: 'POST',
         headers: {
             accept: 'application/json',
