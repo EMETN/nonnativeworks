@@ -35,6 +35,7 @@ export type Database = {
                     code: string;
                     flag_colors: string[];
                     sort_order: number;
+                    is_region: boolean;
                     created_at: string;
                 };
                 Insert: {
@@ -44,6 +45,7 @@ export type Database = {
                     code: string;
                     flag_colors: string[];
                     sort_order?: number;
+                    is_region?: boolean;
                     created_at?: string;
                 };
                 Update: {
@@ -53,6 +55,7 @@ export type Database = {
                     code?: string;
                     flag_colors?: string[];
                     sort_order?: number;
+                    is_region?: boolean;
                     created_at?: string;
                 };
                 Relationships: [];
@@ -384,6 +387,7 @@ export type Database = {
                     english_positions: number;
                     english_percentage: number;
                     last_updated: string | null;
+                    is_region: boolean;
                 };
                 Relationships: [];
             };

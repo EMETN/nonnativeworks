@@ -1,5 +1,6 @@
 import { groupBy } from './build-queries';
 import { nameToSlug } from './country-flags';
+import { formatCount } from './text';
 import { DEFAULT_SORT, sortPositions } from './position-filters';
 import type {
     CompanyStats,
@@ -117,7 +118,10 @@ export function buildDetailPages(
                 (n, c) => n + c.english_positions,
                 0,
             ),
-            country_count: group.length,
+            // Regions (Europe) are not countries, so they don't count towards "N countries".
+            country_count: group.filter(
+                (c) => !countriesById.get(c.country_id)!.is_region,
+            ).length,
             updated_at: group.reduce(
                 (latest, c) => (c.updated_at > latest ? c.updated_at : latest),
                 group[0].updated_at,
@@ -130,4 +134,17 @@ export function buildDetailPages(
     );
 
     return [...countryPages, ...companyPages];
+}
+
+export function companyDescription(
+    name: string,
+    totalPositions: number,
+    englishPositions: number,
+    countryCount: number,
+): string {
+    const where =
+        countryCount === 0
+            ? ', all fully remote across Europe'
+            : ` across ${countryCount} ${countryCount === 1 ? 'country' : 'countries'}`;
+    return `${name} has ${formatCount(totalPositions)} open positions${where}, and ${formatCount(englishPositions)} don't require the local language(s).`;
 }

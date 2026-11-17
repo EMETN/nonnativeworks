@@ -2,6 +2,7 @@ import { test, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import {
     buildDetailPages,
+    companyDescription,
     RESERVED_SLUGS,
     type CompanyPage,
     type CountryPage,
@@ -138,4 +139,28 @@ test('reserves every slug-shaped top-level route, public entry and redirect sour
     for (const name of [...routes, ...publicEntries, ...redirectSources]) {
         expect(RESERVED_SLUGS, name).toContain(name);
     }
+});
+
+test('a region is not counted as a country on company pages', () => {
+    const europe = { ...country('eu', 'Europe'), is_region: true };
+    const pages = buildDetailPages(
+        [country('pl', 'Poland'), europe],
+        [company('a', 'Acme', 'pl'), company('b', 'Acme', 'eu')],
+        [],
+    );
+    const acme = pages.find((p) => p.slug === 'acme') as CompanyPage;
+    expect(acme.country_count).toBe(1);
+});
+
+test('companyDescription says fully remote across Europe when no country is counted', () => {
+    expect(companyDescription('Acme', 12, 12, 0)).toBe(
+        "Acme has 12 open positions, all fully remote across Europe, and 12 don't require the local language(s).",
+    );
+});
+
+test('companyDescription counts countries otherwise', () => {
+    expect(companyDescription('Acme', 1200, 30, 1)).toBe(
+        "Acme has 1.200 open positions across 1 country, and 30 don't require the local language(s).",
+    );
+    expect(companyDescription('Acme', 5, 2, 3)).toContain('across 3 countries');
 });

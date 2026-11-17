@@ -263,6 +263,10 @@ const NORDIC_LANGUAGE_REQUIREMENT_PHRASES = [
     'proficiency in english and one of the scandinavian languages',
     'fluency in english and a nordic language',
     'fluency in english and a scandinavian language',
+    'fluent in english and a nordic language',
+    'fluent in english and a scandinavian language',
+    'proficient in english and a nordic language',
+    'proficient in english and a scandinavian language',
     'in english and in one nordic language',
     'in english and in one scandinavian language',
     'a nordic language is mandatory',
@@ -610,10 +614,10 @@ function buildLangOrGroupAdvantageRegex(lang: string): RegExp {
 function buildLangListAdvantageRegex(lang: string): RegExp {
     const escaped = lang.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Tail: one or more comma/or-separated words after the language
-    // The last item may be joined by "or" or "and"; an optional "language skills"
+    // The last item may be joined by "or", "and" or "/" ("and/or" is normalised to "/"); an optional "language skills"
     // noun may follow ("Finnish and English language skills are considered an advantage").
     const listTail =
-        `(?:\\s*[,]\\s*[a-z]+)*(?:\\s*,?\\s+(?:or|and)\\s+[a-z]+)?` +
+        `(?:\\s*[,]\\s*[a-z]+)*(?:(?:\\s*,?\\s+(?:or|and)\\s+|\\s*\\/\\s*)[a-z]+)?` +
         `(?:\\s+(?:language\\s+)?skills?|\\s+language)?`;
     // Leading optional "considered " consumes ellipsis phrasing like "French or
     // German considered a strong advantage" without eating into the {0,2} gap-word
@@ -624,7 +628,12 @@ function buildLangListAdvantageRegex(lang: string): RegExp {
         // The gap words must not include "speaker"/"speaking": in "Swedish speaker
         // (plus English required)" the "plus" opens a new clause, it doesn't rate Swedish.
         `(?:(?:a|an)\\s+)?(?:(?!speak\\w*\\b)\\w+\\s+){0,2}(?:advantages?|assets?|plus|bonus|merit|benefit)\\b`;
-    return new RegExp(`\\b${escaped}${listTail}${advantageSuffix}`, 'i');
+    // Verb-form ratings: "(German, Italian, Spanish, or French) is highly desired".
+    const ratedSuffix = `\\s+(?:is|are)\\s+(?:(?:highly|strongly)\\s+)?(?:desired|desirable|preferred|welcome|appreciated)\\b`;
+    return new RegExp(
+        `\\b${escaped}${listTail}\\)?(?:${advantageSuffix}|${ratedSuffix})`,
+        'i',
+    );
 }
 
 /**
@@ -660,6 +669,29 @@ function findOverlappingAdvantageMatch(
     return null;
 }
 
+function advantageCoveringAllOccurrences(
+    lang: string,
+    combined: string,
+    signal: string,
+): RegExpExecArray | null {
+    let first: RegExpExecArray | null = null;
+    for (
+        let idx = combined.indexOf(signal);
+        idx !== -1;
+        idx = combined.indexOf(signal, idx + 1)
+    ) {
+        const m = findOverlappingAdvantageMatch(
+            lang,
+            combined,
+            idx,
+            idx + signal.length,
+        );
+        if (!m) return null;
+        first ??= m;
+    }
+    return first;
+}
+
 function buildAdvantageSignals(lang: string): string[] {
     // Only modifiers that don't follow the "is a(n) [adj] advantage/plus/asset/bonus" pattern —
     // those are handled by buildAdvantageRegex above.
@@ -668,6 +700,10 @@ function buildAdvantageSignals(lang: string): string[] {
         ' is desirable',
         ' are desirable',
         ' is highly desirable',
+        ' is desired',
+        ' are desired',
+        ' is highly desired',
+        ' are highly desired',
         ' are highly desirable',
         ' is nice to have',
         ' is beneficial',
@@ -730,6 +766,10 @@ function _buildRequirementSignals(lang: string): string[] {
         `${lang} is a must`,
         `${lang} is mandatory`,
         `${lang} – mandatory`,
+        // Parentheses are stripped before matching, so "Spanish (mandatory)" reads "spanish mandatory".
+        `${lang} mandatory`,
+        `${lang} compulsory`,
+        `${lang} essential`,
         `mandatory ${lang}`,
         `${lang} is essential`,
         `${lang} is necessary`,
@@ -912,6 +952,17 @@ function _buildRequirementSignals(lang: string): string[] {
         `professional proficiency in ${lang}`,
         `full proficiency in ${lang}`,
         `conversational ${lang}`,
+        // Work done in the language (writing / translation roles): "1+ years of
+        // copywriting in German", "localization/translation experience into German".
+        // Deliberately narrow — a bare "into ${lang}" or "${lang} content" would flag
+        // product ads like "our app is translated into German".
+        `copywriting in ${lang}`,
+        `proofread ${lang}`,
+        `proofreading ${lang}`,
+        `translate into ${lang}`,
+        `translation into ${lang}`,
+        `localization into ${lang}`,
+        `localisation into ${lang}`,
     ];
 }
 
@@ -1042,8 +1093,25 @@ function requirementNegatedByContext(
     signal: string,
     lang?: string,
 ): NegationKind {
-    const idx = combined.indexOf(signal);
-    if (idx === -1) return false;
+    let result: NegationKind = false;
+    for (
+        let idx = combined.indexOf(signal);
+        idx !== -1;
+        idx = combined.indexOf(signal, idx + 1)
+    ) {
+        const negation = negationAt(combined, idx, signal, lang);
+        if (!negation) return false;
+        if (result !== 'advantage') result = negation;
+    }
+    return result;
+}
+
+function negationAt(
+    combined: string,
+    idx: number,
+    signal: string,
+    lang?: string,
+): NegationKind {
     // A generic "our teams are proficient in ... the following languages" preamble within
     // the preceding ~120 characters means this is a company-wide capability list, not a
     // requirement for this role — even though the signal (e.g. "english, french") matched.
@@ -1332,6 +1400,21 @@ const SCRIPT_GATED_LANGS: Partial<Record<string, RegExp>> = {
     el: /[\u0370-\u03FF\u1F00-\u1FFF]/, // Greek
 };
 
+// Languages whose alphabet has letters English never uses. Genuine text in them runs
+// to dozens of such letters per paragraph, so a chunk tinyld calls e.g. Latvian with
+// fewer than two of them is a misfire on English — typically a proper noun, like
+// "Kraken Security Labs" scoring "lv" 0.66. Deliberately limited to these: the Nordic,
+// German and French letters also turn up in loanwords and place names inside English
+// ads, so a count of them says little either way.
+const LANG_DISTINCTIVE_CHARS: Partial<Record<string, RegExp>> = {
+    lv: COUNTRY_NATIVE_CHARS.LV!.pattern,
+    lt: COUNTRY_NATIVE_CHARS.LT!.pattern,
+    et: COUNTRY_NATIVE_CHARS.EE!.pattern,
+    pl: COUNTRY_NATIVE_CHARS.PL!.pattern,
+    is: COUNTRY_NATIVE_CHARS.IS!.pattern,
+};
+const MIN_DISTINCTIVE_CHARS = 2;
+
 /**
  * Checks whether any chunk of the text is detected as a non-English language
  * by tinyld. Used as a fallback when the description is written in a language
@@ -1365,6 +1448,12 @@ function findAnyNonEnglishChunk(
             continue;
         const scriptGate = SCRIPT_GATED_LANGS[code];
         if (scriptGate && !scriptGate.test(chunk)) continue;
+        const distinctive = LANG_DISTINCTIVE_CHARS[code];
+        if (
+            distinctive &&
+            (chunk.match(distinctive)?.length ?? 0) < MIN_DISTINCTIVE_CHARS
+        )
+            continue;
         return { chunk, detectedCode: code };
     }
     return null;
@@ -1482,12 +1571,10 @@ export function detectNativeLanguage(
                 lang,
             );
             if (negation === 'none' || negation === 'advantage') continue;
-            const sigIdx = combined.indexOf(signal);
-            const advOverlap = findOverlappingAdvantageMatch(
+            const advOverlap = advantageCoveringAllOccurrences(
                 lang,
                 combined,
-                sigIdx,
-                sigIdx + signal.length,
+                signal,
             );
             if (advOverlap) continue;
             return true;
@@ -1672,7 +1759,18 @@ export function detectNativeLanguage(
                     `knowledge\\s+of\\s+(?:\\w+\\s+or\\s+)?${LANG_GROUP_RE.source}\\s+languages?\\s+${ADVANTAGE_SUFFIX_RE.source}`,
                 ),
             );
-        const nordicAdvMatch = nordicOrOtherMatch ?? nordicGroupMatch;
+        // "Baltic languages and an existing industry network are an advantage" — the
+        // group name is the (first) subject; the rest of the sentence may add more.
+        const nordicSubjectMatch =
+            !nordicOrOtherMatch &&
+            !nordicGroupMatch &&
+            combined.match(
+                new RegExp(
+                    `\\b${LANG_GROUP_RE.source}\\s+languages?\\b[^.]{0,60}?\\b(?:is|are|would\\s+be)(?:\\s+(?:considered|seen\\s+as))?\\s+(?:a(?:n)?\\s+)?(?:advantage|plus|bonus|asset|benefit)\\b`,
+                ),
+            );
+        const nordicAdvMatch =
+            nordicOrOtherMatch ?? nordicGroupMatch ?? nordicSubjectMatch;
         if (nordicAdvMatch) {
             return {
                 value: false,
@@ -1994,12 +2092,10 @@ export function detectNativeLanguage(
                 // skills on top of that are preferred", or "German" ending a signal like "english,
                 // german" immediately followed by "or additional European languages are a plus")
                 // — the advantage wins.
-                const sigIdx = combined.indexOf(signal);
-                const advOverlap = findOverlappingAdvantageMatch(
+                const advOverlap = advantageCoveringAllOccurrences(
                     lang,
                     combined,
-                    sigIdx,
-                    sigIdx + signal.length,
+                    signal,
                 );
                 if (advOverlap) {
                     if (!anyGenuineRequirement) {
@@ -2115,6 +2211,17 @@ export function detectNativeLanguage(
                                 },
                             ],
                         };
+                    }
+                    // Same as Phase 2a: a signal like "english; french" that is just the
+                    // start of "French/Spanish is an advantage" is part of that advantage.
+                    const advOverlap = advantageCoveringAllOccurrences(
+                        kw,
+                        combined,
+                        signal,
+                    );
+                    if (advOverlap) {
+                        foundAdvantage ??= advOverlap[0];
+                        continue;
                     }
                     return {
                         value: true,

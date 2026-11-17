@@ -15,8 +15,9 @@ const [allCountries, stats, topCompanies] = await Promise.all([
     getGlobalStats(undefined, undefined),
     getTopCompanies(undefined, undefined, 5),
 ]);
+// Regions (e.g. Europe) are not countries: they stay out of country counts and grids.
 const countries: CountryStats[] = allCountries.filter(
-    (c) => c.total_positions > 0,
+    (c) => c.total_positions > 0 && !c.is_region,
 );
 
 const totalPositions = stats.total_positions;
