@@ -2,6 +2,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import requests
 
@@ -18,6 +19,7 @@ from platforms.generic_paginated import (  # noqa: E402
     _extract_script_var_json,
     _extract_teamtailor_card,
     _fetch_css_cards_page,
+    _fetch_detail_page,
     _fetch_phenom_api_page,
     _jobs_from_items,
     _phenom_tracked_countries,
@@ -474,13 +476,16 @@ class _StatusResponse:
 
 
 class _GetSession:
-    def __init__(self, outcome):
-        self.outcome = outcome
+    def __init__(self, *outcomes):
+        self.outcomes = list(outcomes)
+        self.calls = 0
 
     def get(self, url, **_):
-        if isinstance(self.outcome, Exception):
-            raise self.outcome
-        return self.outcome
+        outcome = self.outcomes[min(self.calls, len(self.outcomes) - 1)]
+        self.calls += 1
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
 
     def post(self, url, **_):
         return self.get(url)
@@ -490,6 +495,23 @@ CARDS_CFG = {"card_selector": "tr.data-row", "title_selector": "a"}
 
 
 class PageFetchFailureTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch("platforms.generic_paginated.time.sleep")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_listing_page_that_hangs_once_is_retried(self):
+        card = '<table><tr class="data-row"><td><a href="/job/1">Engineer</a></td></tr></table>'
+        session = _GetSession(requests.ReadTimeout("hung"), _StatusResponse(200, card))
+        jobs = _fetch_css_cards_page(session, BASE_URL, {"startrow": 20}, CARDS_CFG)
+        self.assertEqual([j["title"] for j in jobs], ["Engineer"])
+        self.assertEqual(session.calls, 2)
+
+    def test_a_detail_page_is_not_retried_by_default(self):
+        session = _GetSession(requests.ReadTimeout("hung"))
+        _fetch_detail_page(session, "https://careers.example.com/job/1", {}, None, None)
+        self.assertEqual(session.calls, 1)
+
     def test_a_maintenance_503_fails_instead_of_ending_the_list(self):
         session = _GetSession(_StatusResponse(503, "Site Maintenance"))
         with self.assertRaises(PageFetchError):
