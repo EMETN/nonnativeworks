@@ -124,6 +124,24 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
 # Statuses worth a retry: a rate-limit or a transient server/proxy error. A 404
 # or 410 is deliberately absent — that is a deleted posting, not a blip.
 _RETRY_STATUSES = {429, 500, 502, 503, 504}
+_MIN_LISTING_RETRIES = 2
+
+
+def _listing_retries(cfg: dict) -> int:
+    return max(cfg.get("max_retries", 0), _MIN_LISTING_RETRIES)
+
+
+class PageFetchError(RuntimeError):
+    pass
+
+
+def _raise_if_transient(e: Exception, url: str) -> None:
+    status = getattr(getattr(e, "response", None), "status_code", None)
+    if status in _RETRY_STATUSES or (
+        status is None and isinstance(e, requests.RequestException)
+    ):
+        raise PageFetchError(f"{url}: {e}") from e
+
 
 # Ceiling for the retry backoff, so a large max_retries cannot stall a run.
 _MAX_BACKOFF_SECONDS = 60
@@ -158,7 +176,13 @@ def _new_session() -> requests.Session:
     return session
 
 
-def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.Response:
+def _get(
+    session: requests.Session,
+    url: str,
+    cfg: dict,
+    retries: int | None = None,
+    **kwargs,
+) -> requests.Response:
     """``session.get()`` with the config's request_delay and max_retries applied.
 
     request_delay is the minimum gap between the *starts* of two requests, so a
@@ -171,7 +195,8 @@ def _get(session: requests.Session, url: str, cfg: dict, **kwargs) -> requests.R
     """
     global _last_request_at, _last_response
     delay = cfg.get("request_delay", 0)
-    retries = cfg.get("max_retries", 0)
+    if retries is None:
+        retries = cfg.get("max_retries", 0)
 
     for attempt in range(retries + 1):
         if delay:
@@ -343,10 +368,19 @@ def _fetch_css_cards_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
 
     content = resp.content
@@ -451,10 +485,19 @@ def _fetch_attribute_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_attribute_json(resp.text, cfg)
 
@@ -607,10 +650,19 @@ def _fetch_script_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_script_json(resp.text, cfg, list_url)
 
@@ -690,10 +742,19 @@ def _fetch_teamtailor_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
 
     soup = BeautifulSoup(resp.content, "html.parser")
@@ -1023,10 +1084,19 @@ def _fetch_next_data_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_next_data(resp.text, cfg, list_url)
 
@@ -1052,10 +1122,19 @@ def _fetch_script_var_json_page(
     cfg: dict,
 ) -> list[dict]:
     try:
-        resp = _get(session, list_url, cfg, params=params, timeout=20, headers=_HEADERS)
+        resp = _get(
+            session,
+            list_url,
+            cfg,
+            retries=_listing_retries(cfg),
+            params=params,
+            timeout=20,
+            headers=_HEADERS,
+        )
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_script_var_json(resp.text, cfg, list_url)
 
@@ -1083,6 +1162,7 @@ def _phenom_search(
         return resp.json().get("refineSearch", {}).get("data")
     except Exception as e:
         print(f"generic: phenom search error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return None
 
 

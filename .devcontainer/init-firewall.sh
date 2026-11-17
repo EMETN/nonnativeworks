@@ -218,7 +218,7 @@ company_domains=(
     "careers.axpo.com"  # Axpo Group
     "ckw.ch"  # Axpo Group (CKW; its Teamtailor pages redirect here)
     "barona.fi"  # Barona
-    "bayer.eightfold.ai"  # Bayer
+    "bayer.wd103.myworkdayjobs.com"  # Bayer
     "jobs.bendingspoons.com" # Bending Spoons
     "bolt.eu"  # Bolt
     "cabify.careers"  # Cabify
@@ -295,7 +295,7 @@ company_domains=(
     "career.nordnetab.com"  # Nordnet
     "nordsecurity.com"  # Nord Security
     "jobs.nvidia.com"  # Nvidia
-    "nxp.wd116.myworkdayjobs.com"  # NXP
+    "nxp.myworkdayjobs.com"  # NXP
     "www.ogilvy.com"  # Ogilvy
     "op-careers.fi"  # OP Financial Group
     "openai.com"  # OpenAI

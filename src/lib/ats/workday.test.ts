@@ -7,6 +7,10 @@ import {
 import type { RawJob } from './types';
 import { titleHash } from '../outcome-cache';
 
+vi.mock('./curl-fetch', () => ({
+    curlFetch: (url: string, init?: RequestInit) => fetch(url, init),
+}));
+
 const FINLAND = '0afb2fa656da42e8bfb6d47bd24a26fa';
 const SPAIN = 'bd34c524a6a04ae6915f5d96fa086199';
 const USA = 'bc33aa3152ec42d4995f4791a106ed09';
@@ -72,7 +76,10 @@ const requestedCountries = (fetchMock: ReturnType<typeof stubWorkday>) =>
             JSON.parse(String(init.body)).appliedFacets.locationCountry,
     );
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+});
 
 describe('fetchWorkdayJobs for site-code tenants', () => {
     test('discovers tracked countries and tags postings with them', async () => {
@@ -144,6 +151,8 @@ interface FakeTenant {
     html?: Record<string, string>;
     holdDetail?: (path: string) => Promise<void> | undefined;
     holdListing?: (countries?: string[]) => Promise<void> | undefined;
+    omitTotal?: boolean;
+    throttledListingCalls?: number;
 }
 
 function fakeWorkday(tenant: FakeTenant) {
@@ -173,6 +182,8 @@ function fakeWorkday(tenant: FakeTenant) {
             );
             await tenant.holdListing?.(ids);
             log.inFlightListing--;
+            if (log.listing.length <= (tenant.throttledListingCalls ?? 0))
+                return { ok: false, status: 429, headers: new Headers() };
             const all = ids
                 ? ids.flatMap((id) => tenant.countries?.[id]?.[1] ?? [])
                 : (tenant.postings ??
@@ -190,7 +201,7 @@ function fakeWorkday(tenant: FakeTenant) {
                 },
             ];
             return json({
-                total: all.length,
+                ...(!tenant.omitTotal && { total: all.length }),
                 facets,
                 jobPostings: all.slice(body.offset, body.offset + body.limit),
             });
@@ -287,6 +298,83 @@ describe('fetchWorkdayJobs default mode (existing tenants)', () => {
 
         expect(jobs).toHaveLength(45);
         expect(log.listing.map((l) => l.offset)).toEqual([0, 20, 40]);
+    });
+
+    test('fetches the pages after the first concurrently once the total is known', async () => {
+        const many = Array.from({ length: 130 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            holdListing: () => new Promise((r) => setTimeout(r, 5)),
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs.map((j) => j.title)).toEqual(many.map((p) => p.title));
+        expect(log.listing.map((l) => l.offset).sort((a, b) => a - b)).toEqual([
+            0, 20, 40, 60, 80, 100, 120,
+        ]);
+        expect(log.maxInFlightListing).toBeGreaterThan(1);
+        expect(log.maxInFlightListing).toBeLessThanOrEqual(5);
+    });
+
+    test('drops a listed posting that has no title', async () => {
+        fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: [
+                posting('Designer', 'Helsinki, Finland', 'D_1'),
+                {
+                    locationsText: 'Helsinki, Finland',
+                    externalPath: '/job/X_1',
+                } as FakePosting,
+            ],
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs.map((j) => j.title)).toEqual(['Designer']);
+    });
+
+    test('retries a throttled listing page instead of failing the company', async () => {
+        vi.useFakeTimers();
+        const many = Array.from({ length: 45 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            throttledListingCalls: 2,
+        });
+
+        const promise = fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+        await vi.runAllTimersAsync();
+        const jobs = await promise;
+
+        expect(jobs).toHaveLength(45);
+        expect(log.listing.length).toBeGreaterThan(3);
+    });
+
+    test('pages one at a time until a short page when the total is missing', async () => {
+        const many = Array.from({ length: 45 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            omitTotal: true,
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs).toHaveLength(45);
+        expect(log.listing.map((l) => l.offset)).toEqual([0, 20, 40]);
+        expect(log.maxInFlightListing).toBe(1);
     });
 
     test('splits a multi-location posting into one job per country with its cities', async () => {
@@ -784,5 +872,20 @@ describe('per-country listing runs countries in parallel, 5 at a time', () => {
         expect(log.maxInFlightListing).toBe(5);
         // Output order follows the facet order, not completion order.
         expect(jobs.map((j) => j.country_code)).toEqual(names);
+    });
+});
+
+test('parseWorkdayUrl accepts a tenant host without a wdN data-centre segment', () => {
+    expect(
+        parseWorkdayUrl(
+            'https://nxp.myworkdayjobs.com/careers?Location_Country=dcc5b7608d8644b3a93716604e78e995',
+        ),
+    ).toMatchObject({
+        host: 'nxp.myworkdayjobs.com',
+        company: 'nxp',
+        site: 'careers',
+        appliedFacets: {
+            Location_Country: ['dcc5b7608d8644b3a93716604e78e995'],
+        },
     });
 });
