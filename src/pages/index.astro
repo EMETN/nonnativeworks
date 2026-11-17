@@ -19,9 +19,6 @@ const [allCountries, stats, topCompanies] = await Promise.all([
 const countries: CountryStats[] = allCountries.filter(
     (c) => c.total_positions > 0 && !c.is_region,
 );
-const europe = allCountries.find(
-    (c) => c.is_region && c.slug === 'europe' && c.total_positions > 0,
-);
 
 const totalPositions = stats.total_positions;
 const englishPositions = stats.english_positions;
