@@ -1,5 +1,10 @@
 import { CITY_SPELLINGS } from './city-spellings';
 import { foldText } from '../text';
+import {
+    expandCountryGroup,
+    lookupStateCode,
+    lookupWorldPlace,
+} from './world-places';
 
 export interface CountryInfo {
     name: string;
@@ -1983,9 +1988,6 @@ const SKIP_LOCATION_PATTERNS = [
     /^wfh$/i,
     /^home office$/i,
     /^emea$/i,
-    /^apac$/i,
-    /^latam$/i,
-    /^americas$/i,
     /^multiple$/i,
     /^various$/i,
     /^n\/a$/i,
@@ -2390,7 +2392,11 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         ) => candidates.map(find).filter((info): info is CountryInfo => !!info);
         let infos = resolve(names, exact);
         if (infos.length === 0) infos = resolve(names, lookupCityByPrefix);
+        if (infos.length === 0) infos = names.flatMap(expandCountryGroup);
+        if (infos.length === 0) infos = resolve(names, lookupWorldPlace);
         if (infos.length === 0) infos = resolve(codes, exact);
+        if (infos.length === 0 && names.length > 0)
+            infos = resolve(codes, lookupStateCode);
         for (const info of infos) {
             if (!seen.has(info.code)) {
                 seen.add(info.code);

@@ -710,3 +710,26 @@ describe('remote marker in any position', () => {
         expect(codes('Spain, Portugal (Remote)')).toEqual(['ES', 'PT']);
     });
 });
+
+describe('lookupCountryFromLocation: world places and country groups', () => {
+    test.each([
+        ['Remote - Austin, TX', ['US']],
+        ['Remote, Bangalore', ['IN']],
+        ['Toronto, Ontario', ['CA']],
+        ['San Francisco, CA', ['US']],
+        ['Texas', ['US']],
+        ['APAC', ['XX']],
+        ['LATAM', ['XX']],
+        ['Americas', ['XX']],
+        ['North America', ['XX']],
+        ['Asia', ['XX']],
+        ['Africa', ['XX']],
+        ['Remote - Nordics', ['DK', 'FI', 'IS', 'NO', 'SE']],
+        ['DACH', ['AT', 'CH', 'DE']],
+        ['Benelux', ['BE', 'LU', 'NL']],
+        ['Berlin, DE', ['DE']],
+        ['Munich, DE', ['DE']],
+    ])('%s resolves to %j', (loc, expected) => {
+        expect(codes(loc)).toEqual(expected);
+    });
+});
