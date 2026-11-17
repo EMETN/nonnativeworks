@@ -830,3 +830,18 @@ describe('per-country listing runs countries in parallel, 5 at a time', () => {
         expect(jobs.map((j) => j.country_code)).toEqual(names);
     });
 });
+
+test('parseWorkdayUrl accepts a tenant host without a wdN data-centre segment', () => {
+    expect(
+        parseWorkdayUrl(
+            'https://nxp.myworkdayjobs.com/careers?Location_Country=dcc5b7608d8644b3a93716604e78e995',
+        ),
+    ).toMatchObject({
+        host: 'nxp.myworkdayjobs.com',
+        company: 'nxp',
+        site: 'careers',
+        appliedFacets: {
+            Location_Country: ['dcc5b7608d8644b3a93716604e78e995'],
+        },
+    });
+});
