@@ -148,6 +148,7 @@ interface FakeTenant {
     html?: Record<string, string>;
     holdDetail?: (path: string) => Promise<void> | undefined;
     holdListing?: (countries?: string[]) => Promise<void> | undefined;
+    omitTotal?: boolean;
 }
 
 function fakeWorkday(tenant: FakeTenant) {
@@ -194,7 +195,7 @@ function fakeWorkday(tenant: FakeTenant) {
                 },
             ];
             return json({
-                total: all.length,
+                ...(!tenant.omitTotal && { total: all.length }),
                 facets,
                 jobPostings: all.slice(body.offset, body.offset + body.limit),
             });
@@ -291,6 +292,45 @@ describe('fetchWorkdayJobs default mode (existing tenants)', () => {
 
         expect(jobs).toHaveLength(45);
         expect(log.listing.map((l) => l.offset)).toEqual([0, 20, 40]);
+    });
+
+    test('fetches the pages after the first concurrently once the total is known', async () => {
+        const many = Array.from({ length: 130 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            holdListing: () => new Promise((r) => setTimeout(r, 5)),
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs.map((j) => j.title)).toEqual(many.map((p) => p.title));
+        expect(log.listing.map((l) => l.offset).sort((a, b) => a - b)).toEqual([
+            0, 20, 40, 60, 80, 100, 120,
+        ]);
+        expect(log.maxInFlightListing).toBeGreaterThan(1);
+        expect(log.maxInFlightListing).toBeLessThanOrEqual(5);
+    });
+
+    test('pages one at a time until a short page when the total is missing', async () => {
+        const many = Array.from({ length: 45 }, (_, i) =>
+            posting(`Job ${i}`, 'Helsinki, Finland', `J_${i}`),
+        );
+        const log = fakeWorkday({
+            company: 'acme',
+            site: 'ext',
+            postings: many,
+            omitTotal: true,
+        });
+
+        const jobs = await fetchWorkdayJobs(tenantUrl('acme', 'ext'));
+
+        expect(jobs).toHaveLength(45);
+        expect(log.listing.map((l) => l.offset)).toEqual([0, 20, 40]);
+        expect(log.maxInFlightListing).toBe(1);
     });
 
     test('splits a multi-location posting into one job per country with its cities', async () => {

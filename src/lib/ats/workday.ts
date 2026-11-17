@@ -27,8 +27,8 @@
  * Request body (JSON):
  *   { appliedFacets, limit: 20, offset: <n>, searchText: "" }
  *
- * The server caps `limit` at 20. Pagination continues until fewer than 20
- * results are returned.
+ * The server caps `limit` at 20. The first page's `total` lets the remaining
+ * pages be fetched concurrently; without it, paging stops at a short page.
  *
  * Fields extracted from each listing object (`WorkdayJobPosting`):
  *   - `title`         — job title string
@@ -645,21 +645,28 @@ async function fetchPostings(
     parts: WorkdayUrlParts,
     appliedFacets: Record<string, string[]>,
 ): Promise<WorkdayJobPosting[]> {
-    const allPostings: WorkdayJobPosting[] = [];
-    let offset = 0;
-    let total = Infinity;
+    const first = await fetchJobsPage(parts, appliedFacets, 0);
+    const allPostings = [...(first.jobPostings ?? [])];
+    if (allPostings.length < PAGE_SIZE) return allPostings;
 
-    while (offset < total) {
-        const data = await fetchJobsPage(parts, appliedFacets, offset);
-        const postings = data.jobPostings ?? [];
-        allPostings.push(...postings);
-        if (total === Infinity && data.total != null) total = data.total;
-
-        offset += PAGE_SIZE;
-        if (postings.length < PAGE_SIZE) break;
+    if (first.total != null) {
+        const offsets: number[] = [];
+        for (let o = PAGE_SIZE; o < first.total; o += PAGE_SIZE)
+            offsets.push(o);
+        const pages = await mapPool(offsets, CONCURRENCY, (o) =>
+            fetchJobsPage(parts, appliedFacets, o),
+        );
+        for (const page of pages) allPostings.push(...(page.jobPostings ?? []));
+        return allPostings;
     }
 
-    return allPostings;
+    for (let offset = PAGE_SIZE; ; offset += PAGE_SIZE) {
+        const postings =
+            (await fetchJobsPage(parts, appliedFacets, offset)).jobPostings ??
+            [];
+        allPostings.push(...postings);
+        if (postings.length < PAGE_SIZE) return allPostings;
+    }
 }
 
 /** Maps each `locationCountry` facet GUID to its country name, searching nested facet groups. */
