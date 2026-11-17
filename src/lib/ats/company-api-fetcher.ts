@@ -11,8 +11,9 @@ const MAX_PAGES = 200;
 const DESCRIPTION_BATCH = 5; // concurrent page fetches when enriching descriptions
 const PAGE_CONCURRENCY = 5; // concurrent page fetches when a paginated total is known upfront
 const FETCH_ATTEMPTS = 3;
-const THROTTLED_FETCH_ATTEMPTS = 6;
+const THROTTLED_FETCH_ATTEMPTS = 10;
 const THROTTLE_BACKOFF_MS = 2000;
+const MAX_THROTTLE_WAIT_MS = 30_000;
 
 /** Decode common HTML entities in a string (e.g. &amp; → &, &lt; → <). */
 function decodeHtmlEntities(str: string): string {
@@ -442,9 +443,11 @@ async function fetchPage(
         if (res.ok) return res.json();
         lastStatus = res.status;
         if (res.status === 429) {
-            retryWaitMs =
+            retryWaitMs = Math.min(
                 parseRetryAfterMs(res.headers.get('retry-after')) ??
-                THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500;
+                    THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500,
+                MAX_THROTTLE_WAIT_MS,
+            );
         }
         console.warn(
             `[fetchPage] attempt ${attempt + 1} got ${res.status} for ${url}`,
