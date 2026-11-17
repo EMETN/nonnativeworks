@@ -2019,10 +2019,11 @@ function lookupCityByPrefix(key: string): CountryInfo | undefined {
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
 const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
-const WORK_MODE_RE = /^(remote|hybrid|on-?site|in-?office)$/i;
+const WORK_MODE_RE = /^(?:fully\s+)?(remote|hybrid|on-?site|in-?office)$/i;
 
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
-const LOCATION_SUFFIX_RE = /\s*\((remote|hybrid|on-?site|in-?office)\)\s*$/i;
+const LOCATION_SUFFIX_RE =
+    /(?:\s*\((remote|hybrid|on-?site|in-?office)\)|(?<=\S)(?<!^fully)\s+(?:[-–]\s*)?(?:fully\s+)?(remote))\s*$/i;
 
 const HEADQUARTERS_SUFFIX_RE = /\s+HQ$/i;
 
@@ -2046,9 +2047,10 @@ export function extractWorkModelFromLocation(
     for (const part of parts) {
         const match =
             part.match(LOCATION_PREFIX_RE) ??
-            part.split(',')[0].trim().match(WORK_MODE_RE);
+            part.split(',')[0].trim().match(WORK_MODE_RE) ??
+            part.match(LOCATION_SUFFIX_RE);
         if (match) {
-            const raw = match[1].toLowerCase().replace(/-/g, '');
+            const raw = (match[1] ?? match[2]).toLowerCase().replace(/-/g, '');
             if (raw === 'remote') models.add('remote');
             else if (raw === 'hybrid') models.add('hybrid');
             else if (raw === 'onsite' || raw === 'inoffice')

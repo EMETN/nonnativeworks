@@ -689,3 +689,24 @@ describe('Ramboll cities', () => {
         expect(lookupCountryFromLocation('Alta Badia')).toEqual([]);
     });
 });
+
+describe('remote marker in any position', () => {
+    test.each([
+        ['Germany (Remote)', 'remote'],
+        ['Berlin, Germany - Remote', 'remote'],
+        ['Germany Remote', 'remote'],
+        ['EU Remote', 'remote'],
+        ['Fully Remote', 'remote'],
+        ['Spain, Portugal (Remote)', 'remote'],
+        ['Remote - Germany', 'remote'],
+        ['Berlin, Germany', null],
+    ])('%s reads as %s', (loc, model) => {
+        expect(extractWorkModelFromLocation(loc)).toBe(model);
+    });
+
+    test('places the country once the trailing remote word is stripped', () => {
+        expect(codes('Germany Remote')).toEqual(['DE']);
+        expect(codes('EU Remote')).toEqual(['EU']);
+        expect(codes('Spain, Portugal (Remote)')).toEqual(['ES', 'PT']);
+    });
+});
