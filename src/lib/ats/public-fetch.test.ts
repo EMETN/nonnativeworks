@@ -103,3 +103,50 @@ test('upgrades an http redirect hop to https', async () => {
     await fetchPublic('https://jobs.example.com/1');
     expect(fetchMock.mock.calls[1][0]).toBe('https://example.com/careers/1');
 });
+
+test('follows a deliberate same-host https to http redirect as is', async () => {
+    lookup.mockResolvedValue([{ address: '93.184.215.14', family: 4 }]);
+    const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+            new Response(null, {
+                status: 301,
+                headers: { location: 'http://jobs.example.com/careers/1' },
+            }),
+        )
+        .mockResolvedValueOnce(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await fetchPublic('https://jobs.example.com/1');
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toBe(
+        'http://jobs.example.com/careers/1',
+    );
+});
+
+test('upgrades only the cross-host hop in a ckw-style chain', async () => {
+    lookup.mockResolvedValue([{ address: '93.184.215.14', family: 4 }]);
+    const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+            new Response(null, {
+                status: 301,
+                headers: { location: 'http://ckw.ch/' },
+            }),
+        )
+        .mockResolvedValueOnce(
+            new Response(null, {
+                status: 301,
+                headers: { location: 'https://www.ckw.ch/' },
+            }),
+        )
+        .mockResolvedValueOnce(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await fetchPublic('https://ckw.teamtailor.com/jobs');
+    expect(res.status).toBe(200);
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+        'https://ckw.teamtailor.com/jobs',
+        'https://ckw.ch/',
+        'https://www.ckw.ch/',
+    ]);
+});

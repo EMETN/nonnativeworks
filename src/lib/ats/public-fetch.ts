@@ -58,10 +58,13 @@ export async function fetchPublic(
         if (hop >= MAX_REDIRECTS) {
             throw new Error(`Too many redirects from ${url}`);
         }
+        const previousHost = current.host;
         current = new URL(location, current);
         // Some career sites redirect to a plain-http URL that immediately bounces to
         // https (ckw.teamtailor.com -> http://ckw.ch -> https://www.ckw.ch). Go
         // straight to https; port 80 may be firewalled and it is never less safe.
-        if (current.protocol === 'http:') current.protocol = 'https:';
+        if (current.protocol === 'http:' && current.host !== previousHost) {
+            current.protocol = 'https:';
+        }
     }
 }
