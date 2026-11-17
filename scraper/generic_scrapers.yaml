@@ -248,6 +248,7 @@ scrapers:
     # ── Neste ────────────────────────────────────────────────────────────────────
     - match: 'jobs.neste.com'
       name: Neste
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -267,6 +268,7 @@ scrapers:
     # merge results before description enrichment. Not jobs.sap.com: Cloudflare-challenged.
     - match: 'careers.sap.com'
       name: SAP
+      max_retries: 3
       country_filter_param: 'optionsFacetsDD_country'
       countries:
           - FI
@@ -297,6 +299,7 @@ scrapers:
     # ── Vaisala ──────────────────────────────────────────────────────────────────
     - match: 'careers.vaisala.com'
       name: Vaisala
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -313,6 +316,7 @@ scrapers:
     # ── Fortum ──────────────────────────────────────────────────────────────────
     - match: 'jobs.fortum.com'
       name: Fortum
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -329,6 +333,7 @@ scrapers:
     # ── Hiab ──────────────────────────────────────────────────────────────────
     - match: 'careers.hiab.com/search'
       name: Hiab
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -345,6 +350,7 @@ scrapers:
     # ── Wärtsilä ──────────────────────────────────────────────────────────────────
     - match: 'careers.wartsila.com/search'
       name: Wärtsilä
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -361,6 +367,7 @@ scrapers:
       # ── Vestas ──────────────────────────────────────────────────────────────────
     - match: 'careers.vestas.com/search'
       name: Vestas
+      max_retries: 3
       extra_params:
           sortColumn: referencedate
           sortDirection: desc
@@ -694,6 +701,7 @@ scrapers:
     # site's language switcher as of 2026-08.
     - match: 'careers.carlsberg.com'
       name: Carlsberg
+      max_retries: 3
       list_url: https://careers.carlsberg.com/search/
       extra_params:
           createNewAlert: false
