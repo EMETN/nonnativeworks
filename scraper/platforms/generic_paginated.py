@@ -125,6 +125,19 @@ _DESCRIPTION_SELECTOR_FALLBACKS = [
 # or 410 is deliberately absent — that is a deleted posting, not a blip.
 _RETRY_STATUSES = {429, 500, 502, 503, 504}
 
+
+class PageFetchError(RuntimeError):
+    pass
+
+
+def _raise_if_transient(e: Exception, url: str) -> None:
+    status = getattr(getattr(e, "response", None), "status_code", None)
+    if status in _RETRY_STATUSES or (
+        status is None and isinstance(e, requests.RequestException)
+    ):
+        raise PageFetchError(f"{url}: {e}") from e
+
+
 # Ceiling for the retry backoff, so a large max_retries cannot stall a run.
 _MAX_BACKOFF_SECONDS = 60
 
@@ -319,6 +332,7 @@ def _fetch_css_cards_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
 
     content = resp.content
@@ -427,6 +441,7 @@ def _fetch_attribute_json_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_attribute_json(resp.text, cfg)
 
@@ -583,6 +598,7 @@ def _fetch_script_json_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_script_json(resp.text, cfg, list_url)
 
@@ -658,6 +674,7 @@ def _fetch_teamtailor_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url} {params}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
 
     soup = BeautifulSoup(resp.content, "html.parser")
@@ -991,6 +1008,7 @@ def _fetch_next_data_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_next_data(resp.text, cfg, list_url)
 
@@ -1020,6 +1038,7 @@ def _fetch_script_var_json_page(
         resp.raise_for_status()
     except Exception as e:
         print(f"generic: fetch error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return []
     return _extract_script_var_json(resp.text, cfg, list_url)
 
@@ -1047,6 +1066,7 @@ def _phenom_search(
         return resp.json().get("refineSearch", {}).get("data")
     except Exception as e:
         print(f"generic: phenom search error ({list_url}): {e}", file=sys.stderr)
+        _raise_if_transient(e, list_url)
         return None
 
 

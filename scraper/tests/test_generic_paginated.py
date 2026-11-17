@@ -3,17 +3,21 @@ import sys
 import unittest
 from pathlib import Path
 
+import requests
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bs4 import BeautifulSoup  # noqa: E402
 
 from platforms.generic_paginated import (  # noqa: E402
+    PageFetchError,
     _extract_card,
     _extract_next_data,
     _extract_phenom_description,
     _extract_script_json,
     _extract_script_var_json,
     _extract_teamtailor_card,
+    _fetch_css_cards_page,
     _fetch_phenom_api_page,
     _jobs_from_items,
     _phenom_tracked_countries,
@@ -455,6 +459,63 @@ class ExtractCardTest(unittest.TestCase):
         job = _extract_card(card, self.BASE, {"default_location": "Finland"})
 
         self.assertEqual(job["location"], "Oulu")
+
+
+class _StatusResponse:
+    def __init__(self, status: int, text: str = ""):
+        self.status_code = status
+        self.text = text
+        self.content = text.encode()
+        self.headers = {}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(f"{self.status_code} Error", response=self)
+
+
+class _GetSession:
+    def __init__(self, outcome):
+        self.outcome = outcome
+
+    def get(self, url, **_):
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+    def post(self, url, **_):
+        return self.get(url)
+
+
+CARDS_CFG = {"card_selector": "tr.data-row", "title_selector": "a"}
+
+
+class PageFetchFailureTest(unittest.TestCase):
+    def test_a_maintenance_503_fails_instead_of_ending_the_list(self):
+        session = _GetSession(_StatusResponse(503, "Site Maintenance"))
+        with self.assertRaises(PageFetchError):
+            _fetch_css_cards_page(session, BASE_URL, {"startrow": 20}, CARDS_CFG)
+
+    def test_a_connection_error_fails_instead_of_ending_the_list(self):
+        session = _GetSession(requests.ConnectionError("reset"))
+        with self.assertRaises(PageFetchError):
+            _fetch_css_cards_page(session, BASE_URL, {"startrow": 20}, CARDS_CFG)
+
+    def test_a_404_past_the_last_page_still_ends_the_list(self):
+        session = _GetSession(_StatusResponse(404))
+        self.assertEqual(
+            _fetch_css_cards_page(session, BASE_URL, {"startrow": 20}, CARDS_CFG),
+            [],
+        )
+
+    def test_a_failed_phenom_page_fails_instead_of_ending_the_list(self):
+        session = _GetSession(_StatusResponse(503))
+        with self.assertRaises(PageFetchError):
+            _fetch_phenom_api_page(
+                session,
+                BASE_URL,
+                {"from": 100},
+                {"pagination": {"param": "from", "page_size": 100}},
+            )
 
 
 if __name__ == "__main__":
