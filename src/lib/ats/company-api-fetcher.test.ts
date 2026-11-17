@@ -444,6 +444,58 @@ describe('workModelFromHtml', () => {
     });
 });
 
+test('caps a job page Retry-After wait at 30s', async () => {
+    vi.useFakeTimers();
+    let pageCalls = 0;
+    const pageCalledAt: number[] = [];
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+            if (url.endsWith('/api/jobs')) {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        jobs: [
+                            {
+                                name: 'Job 1',
+                                link: 'https://careers.example.com/job/1',
+                            },
+                        ],
+                    }),
+                };
+            }
+            pageCalledAt.push(Date.now());
+            const throttled = pageCalls++ === 0;
+            return {
+                ok: !throttled,
+                status: throttled ? 429 : 200,
+                headers: new Headers(
+                    throttled ? { 'retry-after': '3600' } : {},
+                ),
+                url,
+                text: async () =>
+                    '<span>Work Location Type: </span><span>Hybrid</span>',
+            };
+        }),
+    );
+
+    const promise = fetchCompanyApiJobs({
+        url: 'https://careers.example.com/api/jobs',
+        pagination: { type: 'none' as const },
+        itemsPath: 'jobs',
+        fields: { title: 'name', url: 'link', location: 'name' },
+        workModelFromHtml:
+            'Work Location Type:\\s*</span>\\s*<span[^>]*>\\s*([^<]+?)\\s*</span>',
+    });
+    await vi.runAllTimersAsync();
+    const jobs = await promise;
+
+    expect(jobs[0].work_model).toBe('hybrid');
+    expect(pageCalledAt).toHaveLength(2);
+    expect(pageCalledAt[1] - pageCalledAt[0]).toBeLessThanOrEqual(30_000);
+});
+
 describe('Schneider Electric (iCIMS Jibe)', () => {
     const job = (data: Record<string, unknown>) => ({
         data: {

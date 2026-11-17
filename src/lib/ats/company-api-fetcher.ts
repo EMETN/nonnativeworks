@@ -523,9 +523,12 @@ async function fetchPageHtml(url: string): Promise<string | undefined> {
                 return GONE_SENTINEL;
             }
             if (res.status === 429 && attempt < THROTTLED_FETCH_ATTEMPTS - 1) {
-                const waitMs =
+                const waitMs = Math.min(
                     parseRetryAfterMs(res.headers.get('retry-after')) ??
-                    THROTTLE_BACKOFF_MS * 2 ** attempt + Math.random() * 500;
+                        THROTTLE_BACKOFF_MS * 2 ** attempt +
+                            Math.random() * 500,
+                    MAX_THROTTLE_WAIT_MS,
+                );
                 console.warn(
                     `[fetchPageHtml] 429 for ${url}, retrying in ${Math.round(waitMs)}ms`,
                 );
