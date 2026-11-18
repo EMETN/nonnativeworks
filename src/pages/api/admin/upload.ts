@@ -252,10 +252,15 @@ async function upsertEntry(
     // identical data nets to no change (and never triggers a needless deploy).
     let beforeState: string | null = null;
     if (existingCompany) {
-        const { data: currentPositions } = await supabase
+        const { data: currentPositions, error: stateErr } = await supabase
             .from('positions')
             .select(POSITION_STATE_COLS)
             .eq('company_id', existingCompany.id);
+        if (stateErr) {
+            throw new Error(
+                `Could not read current positions: ${stateErr.message}`,
+            );
+        }
         beforeState = companyStateHash(
             {
                 career_page_url: existingCompany.career_page_url,

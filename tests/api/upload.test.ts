@@ -9,12 +9,14 @@ let inFlight = 0;
 let maxInFlight = 0;
 let queries: { table: string; ops: string[] }[] = [];
 let storedPositions: Record<string, unknown>[] | null = null;
+let positionsSelectError: { message: string } | null = null;
 
 beforeEach(() => {
     inFlight = 0;
     maxInFlight = 0;
     queries = [];
     storedPositions = null;
+    positionsSelectError = null;
 });
 
 function query(table: string) {
@@ -30,7 +32,21 @@ function query(table: string) {
                         maxInFlight = Math.max(maxInFlight, inFlight);
                         setTimeout(() => {
                             inFlight--;
-                            resolve({ data: respond(table, ops), error: null });
+                            const failed =
+                                table === 'positions' &&
+                                ops.includes('select') &&
+                                positionsSelectError;
+                            resolve(
+                                failed
+                                    ? {
+                                          data: null,
+                                          error: positionsSelectError,
+                                      }
+                                    : {
+                                          data: respond(table, ops),
+                                          error: null,
+                                      },
+                            );
                         }, LATENCY_MS);
                     };
                 }
@@ -188,4 +204,21 @@ test('a position that only gains or loses unplaced_location changes the company 
 
     const same = await upload(['finland']);
     expect(same.body.results[0]).toMatchObject({ unchanged: true });
+});
+
+test('a failed positions state read reports an error and deletes nothing', async () => {
+    storedPositions = [];
+    positionsSelectError = {
+        message: 'column positions.unplaced_location does not exist',
+    };
+
+    const { res, body } = await upload(['finland']);
+
+    expect(res.status).toBe(500);
+    expect(body.errors[0]).toMatchObject({ country: 'finland' });
+    expect(
+        queries.some(
+            (q) => q.table === 'positions' && q.ops.includes('delete'),
+        ),
+    ).toBe(false);
 });
