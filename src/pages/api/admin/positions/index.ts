@@ -6,11 +6,12 @@ export const prerender = false;
 const PAGE_SIZE = 1000;
 
 const ENRICHED_SELECT =
-    'id, company_id, title, url, city, requires_native_language, local_language_advantage, required_education, category:categories(id, name, slug), company:companies(name, country:countries(name))';
+    'id, company_id, title, url, city, requires_native_language, local_language_advantage, required_education, unplaced_location, category:categories(id, name, slug), company:companies(name, country:countries(name))';
 
 export const GET: APIRoute = async ({ url }) => {
     const companyIds = url.searchParams.getAll('company_id');
     const countryId = url.searchParams.get('country_id');
+    const unplacedOnly = url.searchParams.get('unplaced') === '1';
     const supabase = createSupabaseServiceClient();
 
     let scopedIds = companyIds.length > 0 ? companyIds : null;
@@ -29,7 +30,10 @@ export const GET: APIRoute = async ({ url }) => {
 
     const select = () => {
         const query = supabase.from('positions').select(ENRICHED_SELECT);
-        return scopedIds ? query.in('company_id', scopedIds) : query;
+        const scoped = scopedIds ? query.in('company_id', scopedIds) : query;
+        return unplacedOnly
+            ? scoped.not('unplaced_location', 'is', null)
+            : scoped;
     };
 
     const positions = [];

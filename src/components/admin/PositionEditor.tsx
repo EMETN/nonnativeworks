@@ -26,6 +26,7 @@ import {
     groupPositions,
     positionSummary,
     resolveScope,
+    updateCompanyRows,
     type PositionGroup,
 } from '../../lib/admin-position-scope';
 
@@ -45,6 +46,7 @@ const lazyCompanyIds = (groups: PositionGroup<PositionRow>[]) =>
     );
 const companyCacheKey = (id: string) =>
     `positions:?company_id=${encodeURIComponent(id)}`;
+const UNPLACED_QUERY = '?unplaced=1';
 
 const EDUCATION_OPTIONS = [
     { value: '', label: '— not specified —' },
@@ -95,8 +97,13 @@ export default function PositionEditor() {
     const [loadingCompanies, setLoadingCompanies] = useState(true);
     const [loadingPositions, setLoadingPositions] = useState(false);
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-    const [toggledGroups, setToggledGroups] = useState<Set<string>>(new Set());
-    const [allExpanded, setAllExpanded] = useState(false);
+    const [catalogToggled, setCatalogToggled] = useState<Set<string>>(
+        new Set(),
+    );
+    const [flatToggled, setFlatToggled] = useState<Set<string>>(new Set());
+    const [catalogExpanded, setCatalogExpanded] = useState(false);
+    const [flatExpanded, setFlatExpanded] = useState(false);
+    const [positionsQuery, setPositionsQuery] = useState<string | null>(null);
     const [visibleCompanies, setVisibleCompanies] =
         useState(COMPANIES_PAGE_SIZE);
     const [positionsByCompany, setPositionsByCompany] = useState<
@@ -107,6 +114,7 @@ export default function PositionEditor() {
     );
     const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
     const [reloadKey, setReloadKey] = useState(0);
+    const [unplacedOnly, setUnplacedOnly] = useState(false);
     const [error, setError] = useState('');
 
     function loadCompanies(force = false) {
@@ -139,42 +147,69 @@ export default function PositionEditor() {
     const scope = resolveScope(companies, selectedCompany, selectedCountryId);
     const scopeQuery = scope?.query ?? null;
     const grouping = scope?.grouping ?? null;
-    const browsingCatalog = grouping === 'company-country';
+    const catalogScope = grouping === 'company-country';
+    const browsingCatalog = catalogScope && !unplacedOnly;
+    const fetchQuery =
+        catalogScope && unplacedOnly ? UNPLACED_QUERY : scopeQuery;
+    const toggledGroups = browsingCatalog ? catalogToggled : flatToggled;
+    const setToggledGroups = browsingCatalog
+        ? setCatalogToggled
+        : setFlatToggled;
+    const allExpanded = browsingCatalog ? catalogExpanded : flatExpanded;
+    const setAllExpanded = browsingCatalog
+        ? setCatalogExpanded
+        : setFlatExpanded;
+    const awaitingPositions =
+        fetchQuery !== null &&
+        !browsingCatalog &&
+        positionsQuery !== fetchQuery;
+    const showLoading = loadingPositions || awaitingPositions;
 
     useEffect(() => {
         setSortDir('asc');
-        setToggledGroups(new Set());
-        setAllExpanded(false);
+        setCatalogToggled(new Set());
+        setFlatToggled(new Set());
+        setCatalogExpanded(false);
+        setFlatExpanded(false);
         setVisibleCompanies(COMPANIES_PAGE_SIZE);
     }, [scopeQuery]);
 
     useEffect(() => {
-        if (scopeQuery === null || browsingCatalog) {
+        setError('');
+        if (fetchQuery === null || browsingCatalog) {
             setPositions([]);
+            setPositionsQuery(null);
             setLoadingPositions(false);
             return;
         }
-        setError('');
 
-        const cacheKey = `positions:${scopeQuery}`;
+        const cacheKey = `positions:${fetchQuery}`;
         const cached = AdminPositionListSchema.safeParse(readCache(cacheKey));
         if (cached.success) {
             setPositions(cached.data);
+            setPositionsQuery(fetchQuery);
             setLoadingPositions(false);
             return;
         }
 
         let superseded = false;
         setLoadingPositions(true);
-        fetch(`/api/admin/positions${scopeQuery}`)
+        fetch(`/api/admin/positions${fetchQuery}`)
             .then((r) => r.json())
             .then((raw) => {
                 const rows = AdminPositionListSchema.parse(raw);
                 writeCache(cacheKey, rows);
-                if (!superseded) setPositions(rows);
+                if (!superseded) {
+                    setPositions(rows);
+                    setPositionsQuery(fetchQuery);
+                }
             })
             .catch(() => {
-                if (!superseded) setError('Could not load positions.');
+                if (!superseded) {
+                    setPositions([]);
+                    setError('Could not load positions.');
+                    setPositionsQuery(fetchQuery);
+                }
             })
             .finally(() => {
                 if (!superseded) setLoadingPositions(false);
@@ -182,15 +217,17 @@ export default function PositionEditor() {
         return () => {
             superseded = true;
         };
-    }, [scopeQuery, browsingCatalog, reloadKey]);
+    }, [fetchQuery, browsingCatalog, reloadKey]);
 
     function refresh() {
         invalidateCache('companies');
         invalidateCachePrefix('positions:');
         loadCompanies(true);
         setPositionsByCompany({});
-        setToggledGroups(new Set());
-        setAllExpanded(false);
+        setCatalogToggled(new Set());
+        setFlatToggled(new Set());
+        setCatalogExpanded(false);
+        setFlatExpanded(false);
         setReloadKey((k) => k + 1);
     }
 
@@ -207,6 +244,11 @@ export default function PositionEditor() {
     function clearFilters() {
         setSelectedCompany('');
         setSelectedCountryId('');
+        setUnplacedOnly(false);
+    }
+
+    function onlyUnplaced(rows: PositionRow[]) {
+        return unplacedOnly ? rows.filter((p) => p.unplaced_location) : rows;
     }
 
     function sortRows(rows: PositionRow[]) {
@@ -217,8 +259,8 @@ export default function PositionEditor() {
     }
 
     const sortedPositions = useMemo(
-        () => sortRows(positions),
-        [positions, sortDir],
+        () => sortRows(onlyUnplaced(positions)),
+        [positions, sortDir, unplacedOnly],
     );
 
     const catalog = useMemo(
@@ -339,27 +381,35 @@ export default function PositionEditor() {
     }
 
     // Optimistic edits also update the cached copy for the current selection.
+    // The catalog and its "Unplaced only" view hold separate copies of the same rows.
     function setPositionsAndCache(
         updater: (prev: PositionRow[]) => PositionRow[],
     ) {
-        if (browsingCatalog) {
-            setPositionsByCompany((prev) =>
-                Object.fromEntries(
-                    Object.entries(prev).map(([id, rows]) => {
-                        const next = updater(rows);
-                        if (next.some((row, i) => row !== rows[i])) {
-                            writeCache(companyCacheKey(id), next);
-                        }
-                        return [id, next];
-                    }),
-                ),
+        if (catalogScope) {
+            setPositionsByCompany((prev) => {
+                const { rows, changedIds } = updateCompanyRows(prev, updater);
+                for (const id of changedIds) {
+                    writeCache(companyCacheKey(id), rows[id]);
+                }
+                return rows;
+            });
+            if (browsingCatalog) {
+                invalidateCache(`positions:${UNPLACED_QUERY}`);
+                return;
+            }
+            const edited = updater(positions).filter(
+                (row, i) => row !== positions[i],
             );
-            return;
+            for (const row of edited) {
+                if (!positionsByCompany[row.company_id]) {
+                    invalidateCache(companyCacheKey(row.company_id));
+                }
+            }
         }
         setPositions((prev) => {
             const next = updater(prev);
-            if (scopeQuery !== null) {
-                writeCache(`positions:${scopeQuery}`, next);
+            if (fetchQuery !== null) {
+                writeCache(`positions:${fetchQuery}`, next);
             }
             return next;
         });
@@ -443,10 +493,10 @@ export default function PositionEditor() {
     const showingCatalog = !scope || browsingCatalog;
     const summary = showingCatalog
         ? catalogSummary(companies)
-        : positionSummary(positions);
+        : positionSummary(sortedPositions);
     const showSummary = showingCatalog
         ? companies.length > 0
-        : !loadingPositions && positions.length > 0;
+        : !showLoading && sortedPositions.length > 0;
 
     function renderRow(pos: PositionRow) {
         const state = saveStates[pos.id] ?? 'idle';
@@ -476,6 +526,17 @@ export default function PositionEditor() {
                     <span class="line-clamp-2" title={location}>
                         {location}
                     </span>
+                    {pos.unplaced_location && (
+                        <span class="mt-1 inline-flex max-w-full items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                            <span class="shrink-0">Unplaced:</span>
+                            <span
+                                class="max-w-[14rem] truncate"
+                                title={pos.unplaced_location}
+                            >
+                                {pos.unplaced_location}
+                            </span>
+                        </span>
+                    )}
                 </td>
 
                 {/* Category */}
@@ -576,7 +637,8 @@ export default function PositionEditor() {
     }
 
     function renderLazyRows(companyId: string, rows?: PositionRow[]) {
-        if (rows) return sortRows(rows).map((pos) => renderRow(pos));
+        if (rows)
+            return sortRows(onlyUnplaced(rows)).map((pos) => renderRow(pos));
         if (!loadingCompanyIds.has(companyId)) return null;
         return (
             <tr>
@@ -801,6 +863,19 @@ export default function PositionEditor() {
                             ))}
                         </select>
                     </div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700 whitespace-nowrap cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={unplacedOnly}
+                            onChange={(e) =>
+                                setUnplacedOnly(
+                                    (e.target as HTMLInputElement).checked,
+                                )
+                            }
+                            class="h-4 w-4 rounded border-gray-500 accent-[#0F7A4F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#12956B]"
+                        />
+                        Unplaced only
+                    </label>
                     <div class="ml-auto flex items-center gap-3 md:max-lg:w-full md:max-lg:justify-end">
                         <button
                             type="button"
@@ -819,7 +894,7 @@ export default function PositionEditor() {
                 </div>
                 {grouping && (
                     <div class="flex h-5 items-center justify-end gap-2 text-sm">
-                        {groups.length > 0 && !loadingPositions && (
+                        {groups.length > 0 && !showLoading && (
                             <>
                                 <button
                                     type="button"
@@ -849,11 +924,12 @@ export default function PositionEditor() {
             {/* Positions table */}
             {scope && (
                 <div>
-                    {loadingPositions ? (
+                    {showLoading ? (
                         <div class="text-sm text-gray-500 py-4">
                             Loading positions…
                         </div>
-                    ) : (browsingCatalog ? groups : positions).length === 0 ? (
+                    ) : (browsingCatalog ? groups : sortedPositions).length ===
+                      0 ? (
                         <div class="text-sm text-gray-500 py-4">
                             {grouping
                                 ? 'No positions found.'

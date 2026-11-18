@@ -152,15 +152,46 @@ test('a region is not counted as a country on company pages', () => {
     expect(acme.country_count).toBe(1);
 });
 
+test('a company with Finland and Europe rows counts one country and has region positions', () => {
+    const europe = { ...country('eu', 'Europe'), is_region: true };
+    const pages = buildDetailPages(
+        [country('fi', 'Finland'), europe],
+        [company('a', 'Acme', 'fi'), company('b', 'Acme', 'eu')],
+        [],
+    );
+    const acme = pages.find((p) => p.slug === 'acme') as CompanyPage;
+    expect(acme.country_count).toBe(1);
+    expect(acme.has_region_positions).toBe(true);
+});
+
+test('a company with no Europe positions has no region positions', () => {
+    const europe = { ...country('eu', 'Europe'), is_region: true };
+    const pages = buildDetailPages(
+        [country('fi', 'Finland'), europe],
+        [company('a', 'Acme', 'fi'), company('b', 'Acme', 'eu', 0)],
+        [],
+    );
+    const acme = pages.find((p) => p.slug === 'acme') as CompanyPage;
+    expect(acme.has_region_positions).toBe(false);
+});
+
+test('companyDescription mentions Europe-wide remote positions alongside countries', () => {
+    expect(companyDescription('Acme', 5, 2, 1, true)).toBe(
+        "Acme has 5 open positions across 1 country plus fully remote positions across Europe, and 2 don't require the local language(s).",
+    );
+});
+
 test('companyDescription says fully remote across Europe when no country is counted', () => {
-    expect(companyDescription('Acme', 12, 12, 0)).toBe(
+    expect(companyDescription('Acme', 12, 12, 0, true)).toBe(
         "Acme has 12 open positions, all fully remote across Europe, and 12 don't require the local language(s).",
     );
 });
 
 test('companyDescription counts countries otherwise', () => {
-    expect(companyDescription('Acme', 1200, 30, 1)).toBe(
+    expect(companyDescription('Acme', 1200, 30, 1, false)).toBe(
         "Acme has 1.200 open positions across 1 country, and 30 don't require the local language(s).",
     );
-    expect(companyDescription('Acme', 5, 2, 3)).toContain('across 3 countries');
+    expect(companyDescription('Acme', 5, 2, 3, false)).toContain(
+        'across 3 countries',
+    );
 });

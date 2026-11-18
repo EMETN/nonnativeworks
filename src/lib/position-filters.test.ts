@@ -236,6 +236,23 @@ test('search finds positions by title or city, ignoring accents', () => {
     ]);
 });
 
+test('search finds positions by work model', () => {
+    const positions = [
+        { title: 'Engineer', city: ['Berlin'], work_model: 'remote' },
+        { title: 'Designer', city: null, work_model: 'hybrid' },
+        { title: 'Remote Sensing Analyst', city: null, work_model: 'on-site' },
+        { title: 'Analyst', city: null, work_model: null },
+    ] as ListedPosition[];
+
+    expect(searchPositions(positions, 'Remote').map((p) => p.title)).toEqual([
+        'Engineer',
+        'Remote Sensing Analyst',
+    ]);
+    expect(searchPositions(positions, 'hybrid').map((p) => p.title)).toEqual([
+        'Designer',
+    ]);
+});
+
 test('an empty search keeps every position', () => {
     const positions = [{ title: 'Engineer', city: null }] as ListedPosition[];
 

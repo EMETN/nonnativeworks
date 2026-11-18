@@ -226,6 +226,23 @@ If a job already has a `country_code` set by the scraper (e.g. from an XML feed 
 5. **Leading ISO code** — extracts a leading 2-letter code from Workday-style venue codes (e.g. `"NLGWV03 - The Hague"` → NL)
 6. **Company fallback** — if all else fails, a per-company default country is used (configured in `getCompanyCountryFallback()`)
 
+### Europe placement
+
+`placeJob()` (`src/lib/ats/placement.ts`) decides where a job goes, using the rules above plus the Europe region row:
+
+| Location text                                                                                                                                     | Placed in                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| A tracked country or city (country groups such as Nordics or DACH fan out to each tracked member)                                                 | That country                         |
+| No place at all (`Remote`, `Worldwide`, `Global`, `Anywhere`, `WFH`) and the company has a home-country fallback                                  | The home country (the fallback wins) |
+| Only a European region (`Europe`, `EU`, `EMEA`, `Eastern Europe`) or a European timezone (`CET`, `EET`, `GMT`, `UTC+0` to `UTC+3`)                | Europe, remote                       |
+| No place at all and no company fallback                                                                                                           | Europe, remote                       |
+| Only a non-European place, region or timezone (`APAC`, `LATAM`, `EST`, `PST`, `IST`, `UTC-5`, `UTC+5:30`; two-letter zones only as `Remote (PT)`) | Skipped as untracked                 |
+| A tracked country plus a European region                                                                                                          | The country only                     |
+| An untracked country plus a European region or timezone (`Remote - US or EU`)                                                                     | Europe, remote                       |
+| Remote text no rule can place, and no company fallback                                                                                            | Europe, with `unplaced_location` set |
+
+Unplaced jobs are listed on an `UNPLACED` line in the scrape log, and flagged in the scrape preview and in `/admin/positions` ("Unplaced only"). The fix is a new rule in `src/lib/ats/country-lookup.ts` or `world-places.ts`, not a row edit, because positions are replaced on every upload.
+
 Jobs matching no tracked country are counted as `skipped_untracked_country` and excluded. Jobs with no resolvable location at all are counted as `skipped_unknown_location`.
 
 ---

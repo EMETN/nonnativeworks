@@ -9,6 +9,7 @@ import {
     groupPositions,
     positionSummary,
     resolveScope,
+    updateCompanyRows,
 } from './admin-position-scope';
 
 const row = (
@@ -350,5 +351,27 @@ describe('catalogGroups', () => {
         const sap = catalogGroups(CATALOG, 2).groups[1];
 
         expect(sap).toMatchObject({ note: 'Germany', companyId: 'sap-de' });
+    });
+});
+
+describe('updateCompanyRows', () => {
+    const a1 = { id: 'a1', title: 'A' };
+    const b1 = { id: 'b1', title: 'B' };
+    const rename = (rows: { id: string; title: string }[]) =>
+        rows.map((r) => (r.id === 'b1' ? { ...r, title: 'Renamed' } : r));
+
+    test('updates only the company holding the edited row', () => {
+        const before = { a: [a1], b: [b1] };
+        const { rows, changedIds } = updateCompanyRows(before, rename);
+        expect(changedIds).toEqual(['b']);
+        expect(rows.a).toBe(before.a);
+        expect(rows.b).toEqual([{ id: 'b1', title: 'Renamed' }]);
+    });
+
+    test('reports no change when no company holds the row', () => {
+        const before = { a: [a1] };
+        const { rows, changedIds } = updateCompanyRows(before, rename);
+        expect(changedIds).toEqual([]);
+        expect(rows.a).toBe(before.a);
     });
 });

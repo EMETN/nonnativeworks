@@ -68,7 +68,6 @@ describe('lookupCountryFromLocation — n-gram fallback does not disturb other c
         for (const label of [
             'Remote',
             'Multiple Locations',
-            'EMEA',
             'Various',
             'Hybrid',
             'Anywhere',
@@ -585,8 +584,11 @@ describe('lookupCountryFromLocation — Europe region', () => {
         expect(codes('Europe, Germany')).toEqual(['DE']);
     });
 
-    test('EMEA and plain Remote stay unresolved', () => {
-        expect(codes('EMEA')).toEqual([]);
+    test('EMEA is the Europe region', () => {
+        expect(codes('EMEA')).toEqual(['EU']);
+    });
+
+    test('plain Remote names no place', () => {
         expect(codes('Remote')).toEqual([]);
     });
 });
@@ -687,5 +689,52 @@ describe('Ramboll cities', () => {
 
     test('Alta is not mapped: it is a common word in other tracked languages', () => {
         expect(lookupCountryFromLocation('Alta Badia')).toEqual([]);
+    });
+});
+
+describe('remote marker in any position', () => {
+    test.each([
+        ['Germany (Remote)', 'remote'],
+        ['Berlin, Germany - Remote', 'remote'],
+        ['Germany Remote', 'remote'],
+        ['EU Remote', 'remote'],
+        ['Fully Remote', 'remote'],
+        ['Spain, Portugal (Remote)', 'remote'],
+        ['Remote - Germany', 'remote'],
+        ['Fully Remote - Germany', 'remote'],
+        ['Berlin, Germany', null],
+    ])('%s reads as %s', (loc, model) => {
+        expect(extractWorkModelFromLocation(loc)).toBe(model);
+    });
+
+    test('places the country once the trailing remote word is stripped', () => {
+        expect(codes('Germany Remote')).toEqual(['DE']);
+        expect(codes('EU Remote')).toEqual(['EU']);
+        expect(codes('Spain, Portugal (Remote)')).toEqual(['ES', 'PT']);
+        expect(codes('Fully Remote - Germany')).toEqual(['DE']);
+    });
+});
+
+describe('lookupCountryFromLocation: world places and country groups', () => {
+    test.each([
+        ['Remote - Austin, TX', ['US']],
+        ['Remote, Bangalore', ['IN']],
+        ['Toronto, Ontario', ['CA']],
+        ['Toronto, ON', ['CA']],
+        ['San Francisco, CA', ['US']],
+        ['Texas', ['US']],
+        ['APAC', ['XX']],
+        ['LATAM', ['XX']],
+        ['Americas', ['XX']],
+        ['North America', ['XX']],
+        ['Asia', ['XX']],
+        ['Africa', ['XX']],
+        ['Remote - Nordics', ['DK', 'FI', 'IS', 'NO', 'SE']],
+        ['DACH', ['AT', 'CH', 'DE']],
+        ['Benelux', ['BE', 'LU', 'NL']],
+        ['Berlin, DE', ['DE']],
+        ['Munich, DE', ['DE']],
+    ])('%s resolves to %j', (loc, expected) => {
+        expect(codes(loc)).toEqual(expected);
     });
 });

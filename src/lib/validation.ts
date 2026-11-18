@@ -18,6 +18,7 @@ export const PositionSchema = z.object({
     url: urlTransform,
     city: z.array(z.string()).optional(),
     work_model: z.enum(['remote', 'hybrid', 'on-site']).optional(),
+    unplaced_location: z.string().min(1).optional(),
     requires_native_language: z.boolean({
         error: 'requires_native_language must be true or false',
     }),

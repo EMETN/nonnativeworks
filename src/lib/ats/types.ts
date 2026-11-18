@@ -63,6 +63,7 @@ export interface ClassifiedJob {
     url?: string;
     city?: string[];
     work_model?: 'remote' | 'hybrid' | 'on-site';
+    unplaced_location?: string;
     category: string;
     requires_native_language: boolean;
     local_language_advantage: boolean;

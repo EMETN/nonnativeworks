@@ -43,7 +43,7 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 Migrations live in `supabase/migrations/`.
 
 - Local: `pnpm db:start` runs the Supabase CLI's native runtime (no Docker; `[experimental] stack = true` in `supabase/config.toml`) and applies every migration. `pnpm db:env` / `pnpm db:env:file` point the app at it. CLI pinned as a devDependency in `package.json`.
-- Prod: still applied manually in the Supabase SQL editor.
+- Prod: still applied manually in the Supabase SQL editor, in order (`002` to `004` for the Europe region, unplaced flag and region counts).
 - `000_full_schema.sql` seeds 13 categories.
 
 ### Key schema points
@@ -51,6 +51,8 @@ Migrations live in `supabase/migrations/`.
 - `companies` has a `UNIQUE(name, country_id)` constraint — upserts on this
 - `positions` are always fully replaced on upload (delete + re-insert per company)
 - `country_stats` and `company_stats` are SQL views used by public pages
+- `positions.unplaced_location` flags jobs filed under Europe that no placement rule could place; shown in the scrape preview, `/admin/positions` ("Unplaced only") and scrape logs
+- Region rows (`countries.is_region`, i.e. Europe) are not counted as countries in company country counts
 - Auto-country creation: upload API creates unknown countries using `country_name` + `country_code` from the uploaded payload
 
 ### Type-checking

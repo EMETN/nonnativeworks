@@ -26,8 +26,6 @@ import {
     enrichSmartRecruitersDescriptions,
 } from '../../../lib/ats/smartrecruiters';
 import {
-    lookupCountryFromLocation,
-    extractWorkModelFromLocation,
     getCompanyCountryFallback,
     isKnownCity,
     resolveJobCities,
@@ -54,10 +52,12 @@ import {
     fetchCompanyApiJobs,
     enrichDescriptions,
 } from '../../../lib/ats/company-api-fetcher';
+import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
 import {
-    REGION_COUNTRY_CODES,
-    TRACKED_COUNTRY_CODES,
-} from '../../../lib/tracked-countries';
+    isLocationPlacedInTrackedCountry,
+    isPlacedInTrackedCountry,
+    placeRawJob,
+} from '../../../lib/ats/placement';
 import {
     loadSkills,
     extractSkills,
@@ -141,6 +141,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         }
     })();
     const careerUrl = CAREER_URL_ALIASES[urlHostname] ?? rawUrl;
+    const companyFallbackCountry = getCompanyCountryFallback(careerUrl);
 
     const detection = detectAts(careerUrl);
 
@@ -195,12 +196,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 rawJobs = await fetchWorkdayJobs(parts);
                 // Only enrich descriptions for tracked-country jobs — avoids fetching HTML for
                 // thousands of untracked jobs when the company has a large global listing (e.g. ABB).
-                const workdayTracked = rawJobs.filter((job) => {
-                    const loc = job.country_code ?? job.location ?? '';
-                    return lookupCountryFromLocation(loc).some((c) =>
-                        TRACKED_COUNTRY_CODES.has(c.code),
-                    );
-                });
+                const workdayTracked = rawJobs.filter((job) =>
+                    isPlacedInTrackedCountry(job, companyFallbackCountry),
+                );
                 await enrichWorkdayDescriptions(
                     workdayTracked,
                     getCachedOutcomes(),
@@ -232,12 +230,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 if (!jobs.length) {
                     throw new Error('Workable returned no jobs');
                 }
-                const trackedJobs = jobs.filter((job) => {
-                    const locationStr = job.country_code ?? job.location ?? '';
-                    return lookupCountryFromLocation(locationStr).some((c) =>
-                        TRACKED_COUNTRY_CODES.has(c.code),
-                    );
-                });
+                const trackedJobs = jobs.filter((job) =>
+                    isPlacedInTrackedCountry(job, companyFallbackCountry),
+                );
                 await enrichWorkableDescriptions(
                     trackedJobs,
                     detection.companySlug,
@@ -262,8 +257,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 rawJobs = await fetchCompanyApiJobs(
                     companyApiConfig,
                     (location) =>
-                        lookupCountryFromLocation(location).some((c) =>
-                            TRACKED_COUNTRY_CODES.has(c.code),
+                        isLocationPlacedInTrackedCountry(
+                            location,
+                            companyFallbackCountry,
                         ),
                     getCachedOutcomes(),
                 );
@@ -364,6 +360,7 @@ function buildScrapeResult(
     let cacheHits = 0;
     const positionLogs: PositionLogEntry[] = [];
     const unknownCities = new Set<string>();
+    const unplacedLocations = new Set<string>();
     const skippedUnknownLocationJobs: Array<{
         title: string;
         location: string;
@@ -375,12 +372,8 @@ function buildScrapeResult(
         // Use country_code when the scraper already resolved it (e.g. njoyn country filter),
         // otherwise fall back to free-text location lookup.
         const locationStr = job.country_code ?? job.location ?? '';
-        let countries = lookupCountryFromLocation(locationStr);
-
-        // If location lookup failed, use the company-level country fallback (e.g. Posti = Finland).
-        if (countries.length === 0 && companyFallbackCountry) {
-            countries = [companyFallbackCountry];
-        }
+        const placement = placeRawJob(job, companyFallbackCountry);
+        const countries = placement.countries;
 
         const trackedCountries = countries.filter((c) =>
             TRACKED_COUNTRY_CODES.has(c.code),
@@ -398,18 +391,16 @@ function buildScrapeResult(
             skippedUntracked++;
             continue;
         }
+        if (placement.unplacedLocation) {
+            unplacedLocations.add(placement.unplacedLocation);
+        }
 
         for (const countryInfo of trackedCountries) {
             const cities = resolveJobCities(job, countryInfo.code);
             for (const city of cities) {
                 if (!isKnownCity(city)) unknownCities.add(city);
             }
-            // Positions in the Europe region are remote by definition: that is the
-            // only way a posting can belong to Europe without naming a country.
-            const workModel = REGION_COUNTRY_CODES.has(countryInfo.code)
-                ? 'remote'
-                : (job.work_model ??
-                  extractWorkModelFromLocation(job.location ?? ''));
+            const workModel = placement.workModel;
 
             if (!groups.has(countryInfo.code)) {
                 groups.set(countryInfo.code, {
@@ -523,6 +514,7 @@ function buildScrapeResult(
                 preferredLanguages,
                 city: cities.length > 0 ? cities : undefined,
                 work_model: workModel ?? undefined,
+                unplaced_location: placement.unplacedLocation,
                 skills: jobSkills.length > 0 ? jobSkills : undefined,
                 required_education: education,
             });
@@ -540,6 +532,7 @@ function buildScrapeResult(
         skippedUnknownLocationJobs,
         skippedUntrackedCountry: skippedUntracked,
         unknownCities: [...unknownCities],
+        unplacedLocations: [...unplacedLocations],
         outcomeCacheHits: cacheHits,
         outcomeCacheTotal: positionLogs.length,
     });

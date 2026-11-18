@@ -3,6 +3,7 @@ import { CATEGORIES } from '../../lib/categories';
 import { isHttpUrl } from '../../lib/safe-url';
 import { atsLabel } from '../../lib/ats/detector';
 import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
+import { buildUploadPayload } from '../../lib/admin-upload-payload';
 import {
     ScrapeResponseSchema,
     UploadResultSchema,
@@ -165,26 +166,7 @@ export default function Scraper() {
             return;
         }
 
-        const payload = data.countries.map((group) => ({
-            company_name: data.company_name.trim(),
-            country: group.country,
-            country_name: group.country_name,
-            country_code: group.country_code,
-            career_page_url: data.career_page_url,
-            is_english_company: data.is_english_company,
-            positions: group.jobs.map((job) => ({
-                country_code: group.country_code,
-                title: job.title,
-                url: job.url,
-                city: job.city,
-                work_model: job.work_model,
-                requires_native_language: job.requires_native_language,
-                local_language_advantage: job.local_language_advantage,
-                required_languages: job.requiredLanguages,
-                preferred_languages: job.preferredLanguages,
-                category: job.category,
-            })),
-        }));
+        const payload = buildUploadPayload(data);
 
         setPhase({ kind: 'uploading' });
 
@@ -595,6 +577,7 @@ function CountryGroup({
         langFilter === 'all'
             ? indexed
             : indexed.filter(({ job }) => jobLangStatus(job) === langFilter);
+    const unplacedCount = group.jobs.filter((j) => j.unplaced_location).length;
     const displayed = sortAlpha
         ? [...filtered].sort((a, b) => a.job.title.localeCompare(b.job.title))
         : filtered;
@@ -668,6 +651,12 @@ function CountryGroup({
                             ))}
                         </div>
                     </>
+                )}
+
+                {unplacedCount > 0 && (
+                    <span class="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                        {unplacedCount} unplaced
+                    </span>
                 )}
 
                 <span class="text-xs text-gray-500 ml-auto">
@@ -774,7 +763,20 @@ function JobRow({ job, onCategory, onLanguage }: JobRowProps) {
                     job.title
                 )}
             </td>
-            <td class="px-4 py-2 text-gray-600">{job.city?.join(', ')}</td>
+            <td class="px-4 py-2 text-gray-600">
+                {job.city?.join(', ')}
+                {job.unplaced_location && (
+                    <span class="mt-1 flex w-fit max-w-full items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                        <span class="shrink-0">Unplaced:</span>
+                        <span
+                            class="max-w-[14rem] truncate"
+                            title={job.unplaced_location}
+                        >
+                            {job.unplaced_location}
+                        </span>
+                    </span>
+                )}
+            </td>
             <td class="px-4 py-2 text-gray-600 capitalize whitespace-nowrap">
                 {job.work_model ?? '–'}
             </td>

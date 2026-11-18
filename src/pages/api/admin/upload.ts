@@ -24,9 +24,10 @@ interface CanonPos {
     preferred_languages: string[];
     skills: string[];
     required_education: string | null;
+    unplaced_location: string | null;
 }
 const POSITION_STATE_COLS =
-    'title, url, city, work_model, category_id, requires_native_language, local_language_advantage, required_languages, preferred_languages, skills, required_education';
+    'title, url, city, work_model, category_id, requires_native_language, local_language_advantage, required_languages, preferred_languages, skills, required_education, unplaced_location';
 function companyStateHash(
     fields: { career_page_url: string | null; is_english_company: boolean },
     rows: CanonPos[],
@@ -44,6 +45,7 @@ function companyStateHash(
             [...r.preferred_languages].sort(),
             [...r.skills].sort(),
             r.required_education,
+            r.unplaced_location,
         ])
         .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
     return hashState([
@@ -250,10 +252,15 @@ async function upsertEntry(
     // identical data nets to no change (and never triggers a needless deploy).
     let beforeState: string | null = null;
     if (existingCompany) {
-        const { data: currentPositions } = await supabase
+        const { data: currentPositions, error: stateErr } = await supabase
             .from('positions')
             .select(POSITION_STATE_COLS)
             .eq('company_id', existingCompany.id);
+        if (stateErr) {
+            throw new Error(
+                `Could not read current positions: ${stateErr.message}`,
+            );
+        }
         beforeState = companyStateHash(
             {
                 career_page_url: existingCompany.career_page_url,
@@ -300,6 +307,7 @@ async function upsertEntry(
         preferred_languages: p.preferred_languages ?? [],
         skills: p.skills ?? [],
         required_education: p.required_education ?? null,
+        unplaced_location: p.unplaced_location ?? null,
         extracted_at: new Date().toISOString(),
     }));
 

@@ -268,3 +268,19 @@ export function catalogGroups<T>(
     });
     return { groups, total: names.length };
 }
+
+export function updateCompanyRows<T>(
+    byCompany: Record<string, T[]>,
+    updater: (rows: T[]) => T[],
+): { rows: Record<string, T[]>; changedIds: string[] } {
+    const changedIds: string[] = [];
+    const rows = Object.fromEntries(
+        Object.entries(byCompany).map(([id, prev]) => {
+            const next = updater(prev);
+            if (!next.some((row, i) => row !== prev[i])) return [id, prev];
+            changedIds.push(id);
+            return [id, next];
+        }),
+    );
+    return { rows, changedIds };
+}

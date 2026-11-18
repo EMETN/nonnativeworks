@@ -625,3 +625,40 @@ test('enrichDescriptions skips job pages in untracked countries', async () => {
         'https://jobs.example.com/job/4',
     ]);
 });
+
+test('enrichDescriptions fetches Europe and placeless job pages but skips outside Europe', async () => {
+    const fetched: string[] = [];
+    vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+            fetched.push(url);
+            return {
+                ok: true,
+                status: 200,
+                headers: new Headers(),
+                url,
+                text: async () => '<p>Role</p>',
+            };
+        }),
+    );
+    const job = (n: number, location: string) => ({
+        title: `Analyst ${n}`,
+        url: `https://jobs.example.com/job/${n}`,
+        location,
+    });
+
+    await enrichDescriptions([
+        job(1, 'Remote (EST)'),
+        job(2, 'Remote (CET)'),
+        job(3, 'EMEA'),
+        job(4, 'Remote'),
+        job(5, 'Remote - Region 4'),
+    ]);
+
+    expect(fetched.sort()).toEqual([
+        'https://jobs.example.com/job/2',
+        'https://jobs.example.com/job/3',
+        'https://jobs.example.com/job/4',
+        'https://jobs.example.com/job/5',
+    ]);
+});

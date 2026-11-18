@@ -161,7 +161,7 @@ describe('fetchGreenhouseJobs', () => {
     it.each([
         ['Remote - Europe', ['EU']],
         ['Europe', ['EU']],
-        ['Remote – EMEA', []],
+        ['Remote – EMEA', ['EU']],
     ])(
         'keeps the region %s instead of narrowing it to an office',
         async (location, expectedCodes) => {

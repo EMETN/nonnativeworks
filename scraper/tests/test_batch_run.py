@@ -3,12 +3,15 @@ import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from batch_run import (  # noqa: E402
+    _build_upload_payload,
     _company_urls,
     _merge_scrape_results,
+    _process_company,
     _run_companies_with_retry,
     _summary_row,
 )
@@ -161,3 +164,64 @@ class SummaryRowTest(unittest.TestCase):
     def test_marks_a_retried_company(self):
         entry = {"url": "https://a", "status": "success", "retried": True}
         self.assertIn("ok (after retry)", _summary_row(entry))
+
+
+class BuildUploadPayloadTest(unittest.TestCase):
+    def _result(self, *jobs: dict) -> dict:
+        return {
+            "company_name": "A",
+            "career_page_url": "https://a",
+            "countries": [
+                {
+                    "country": "finland",
+                    "country_name": "Finland",
+                    "country_code": "FI",
+                    "jobs": list(jobs),
+                }
+            ],
+        }
+
+    def test_payload_keeps_unplaced_location(self):
+        flagged = {**_job("A"), "requires_native_language": False}
+        flagged["unplaced_location"] = "Remote - Region 4"
+        plain = {**_job("B"), "requires_native_language": False}
+        positions = _build_upload_payload(self._result(flagged, plain), True)[0][
+            "positions"
+        ]
+        self.assertEqual(positions[0]["unplaced_location"], "Remote - Region 4")
+        self.assertNotIn("unplaced_location", positions[1])
+
+
+class SummaryUnplacedTest(unittest.TestCase):
+    def test_summary_counts_unplaced_jobs(self):
+        flagged = {**_job("A"), "unplaced_location": "Remote - Region 4"}
+        other = {**_job("B"), "unplaced_location": "Remote (GMT+5:30)"}
+        plain = _job("C")
+        result = _result("greenhouse", {"europe": [flagged, plain], "finland": [other]})
+        company = {"name": "SAP", "url": "https://sap.example"}
+        with mock.patch("batch_run._scrape", return_value=result):
+            _, text = _process_company(company, "http://api", "s", True, 10)
+        self.assertIn("unplaced=2", text)
+
+    def test_summary_entry_has_unplaced_count_and_distinct_texts(self):
+        flagged = {**_job("A"), "unplaced_location": "Remote - Region 4"}
+        again = {**_job("B"), "unplaced_location": "Remote - Region 4"}
+        other = {**_job("C"), "unplaced_location": "Remote (GMT+5:30)"}
+        result = _result(
+            "greenhouse", {"europe": [flagged, again, _job("D")], "finland": [other]}
+        )
+        company = {"name": "SAP", "url": "https://sap.example"}
+        with mock.patch("batch_run._scrape", return_value=result):
+            entry, text = _process_company(company, "http://api", "s", True, 10)
+        self.assertEqual(entry["unplaced"], 3)
+        self.assertIn(
+            "  unplaced_locations=['Remote (GMT+5:30)', 'Remote - Region 4']", text
+        )
+
+    def test_no_unplaced_line_without_unplaced_jobs(self):
+        result = _result("greenhouse", {"finland": [_job("A")]})
+        company = {"name": "SAP", "url": "https://sap.example"}
+        with mock.patch("batch_run._scrape", return_value=result):
+            entry, text = _process_company(company, "http://api", "s", True, 10)
+        self.assertEqual(entry["unplaced"], 0)
+        self.assertNotIn("unplaced_locations", text)

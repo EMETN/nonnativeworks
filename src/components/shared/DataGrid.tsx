@@ -12,6 +12,8 @@ export interface DataGridItem {
     english_percentage: number;
     updated_at: string | null;
     company_count?: number;
+    company_count_label?: string;
+    company_count_description?: string;
     career_page_url?: string | null;
 }
 
@@ -26,6 +28,7 @@ type SortField = 'positions' | 'total' | 'companies';
 type SortDir = 'desc' | 'asc';
 
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
+const countWordSize = 'text-xs sm:text-sm lg:text-base';
 
 // compact: name | companies | non-native | arrow
 const compactGridCols = 'minmax(0, 1fr) auto auto auto';
@@ -76,9 +79,12 @@ function SizingRow({
     const ss = 'text-sm lg:text-base';
     const ys = 'text-sm lg:text-base';
     const as = 'w-4 h-4 lg:w-5 lg:h-5';
-    const maxCompanies = compact
-        ? Math.max(...items.map((i) => i.company_count ?? 0))
-        : 0;
+    const countParts = compact ? items.map(companyCountParts) : [];
+    const widestCount = (word: boolean) =>
+        countParts
+            .filter((p) => p.word === word)
+            .map((p) => p.value)
+            .reduce((a, b) => (b.length > a.length ? b : a), '');
 
     return (
         <li aria-hidden="true" class="h-0 overflow-hidden invisible dg-subgrid">
@@ -90,8 +96,17 @@ function SizingRow({
             {compact ? (
                 <>
                     <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6">
-                        <span class={`${ts} tabular-nums`} style={numFont}>
-                            {formatCount(maxCompanies)}
+                        <span
+                            class={`block ${ts} tabular-nums`}
+                            style={numFont}
+                        >
+                            {widestCount(false)}
+                        </span>
+                        <span
+                            class={`block ${countWordSize} font-semibold`}
+                            style={numFont}
+                        >
+                            {widestCount(true)}
                         </span>
                     </div>
                     <div class="pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6 flex items-baseline gap-0.5 sm:gap-1">
@@ -132,6 +147,14 @@ function SizingRow({
     );
 }
 
+// The "*" hangs outside the cell so starred and plain counts stay aligned.
+function companyCountParts(item: DataGridItem) {
+    const label =
+        item.company_count_label ?? formatCount(item.company_count ?? 0);
+    const [, value, mark] = /^(.*?)(\**)$/.exec(label)!;
+    return { value, mark, word: !/^\d/.test(value) };
+}
+
 function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
     const textSize = 'text-xl lg:text-2xl';
     const slashSize = 'text-sm lg:text-base';
@@ -140,6 +163,7 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
     const rowPy = 'py-3.5 sm:py-4';
 
     const noPositions = item.english_positions === 0;
+    const count = companyCountParts(item);
 
     // A company with no English-friendly positions has no meaningful detail page —
     // link straight out to its careers page (all positions) instead.
@@ -188,11 +212,26 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                             class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
                         >
                             <span
-                                class={`${textSize} font-semibold text-gray-800 leading-none tabular-nums`}
+                                class={`${count.word ? countWordSize : textSize} relative font-semibold text-gray-800 leading-none tabular-nums`}
                                 style={numFont}
+                                aria-hidden={
+                                    item.company_count_description
+                                        ? 'true'
+                                        : undefined
+                                }
                             >
-                                {formatCount(item.company_count ?? 0)}
+                                {count.value}
+                                {count.mark && (
+                                    <span class="absolute left-full">
+                                        {count.mark}
+                                    </span>
+                                )}
                             </span>
+                            {item.company_count_description && (
+                                <span class="sr-only">
+                                    {item.company_count_description}
+                                </span>
+                            )}
                         </div>
                         <div
                             class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
