@@ -3,6 +3,7 @@ import { CATEGORIES } from '../../lib/categories';
 import { isHttpUrl } from '../../lib/safe-url';
 import { atsLabel } from '../../lib/ats/detector';
 import { invalidateCache, invalidateCachePrefix } from '../../lib/admin-cache';
+import { buildUploadPayload } from '../../lib/admin-upload-payload';
 import {
     ScrapeResponseSchema,
     UploadResultSchema,
@@ -165,27 +166,7 @@ export default function Scraper() {
             return;
         }
 
-        const payload = data.countries.map((group) => ({
-            company_name: data.company_name.trim(),
-            country: group.country,
-            country_name: group.country_name,
-            country_code: group.country_code,
-            career_page_url: data.career_page_url,
-            is_english_company: data.is_english_company,
-            positions: group.jobs.map((job) => ({
-                country_code: group.country_code,
-                title: job.title,
-                url: job.url,
-                city: job.city,
-                work_model: job.work_model,
-                unplaced_location: job.unplaced_location,
-                requires_native_language: job.requires_native_language,
-                local_language_advantage: job.local_language_advantage,
-                required_languages: job.requiredLanguages,
-                preferred_languages: job.preferredLanguages,
-                category: job.category,
-            })),
-        }));
+        const payload = buildUploadPayload(data);
 
         setPhase({ kind: 'uploading' });
 
