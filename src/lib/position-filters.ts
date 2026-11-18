@@ -65,23 +65,33 @@ export interface FilterState {
 
 export const EMPTY_FILTERS: FilterState = { selected: {} };
 
-function facetValue(p: ListedPosition, key: FacetKey): FacetOption {
+function facetValues(p: ListedPosition, key: FacetKey): FacetOption[] {
     switch (key) {
         case 'company':
-            return { value: p.company_slug, label: p.company_name };
+            return [{ value: p.company_slug, label: p.company_name }];
         case 'country':
-            return { value: p.country_slug, label: p.country_name };
+            return p.countries.map((c) => ({ value: c.slug, label: c.name }));
         case 'category':
-            return {
-                value: nameToSlug(p.category_name),
-                label: p.category_name,
-            };
+            return [
+                {
+                    value: nameToSlug(p.category_name),
+                    label: p.category_name,
+                },
+            ];
         case 'work-model':
-            return {
-                value: p.work_model ?? '',
-                label: p.work_model ? WORK_MODEL_LABELS[p.work_model] : '',
-            };
+            return p.work_model
+                ? [
+                      {
+                          value: p.work_model,
+                          label: WORK_MODEL_LABELS[p.work_model],
+                      },
+                  ]
+                : [];
     }
+}
+
+export function countryLabel(p: ListedPosition): string {
+    return p.countries.length > 1 ? 'Multiple countries' : p.countries[0].name;
 }
 
 export function facetKeysFor(kind: PageKind): FacetKey[] {
@@ -94,8 +104,9 @@ export function facetOptions(
 ): FacetOption[] {
     const options = new Map<string, string>();
     for (const p of positions) {
-        const { value, label } = facetValue(p, key);
-        if (value && !options.has(value)) options.set(value, label);
+        for (const { value, label } of facetValues(p, key)) {
+            if (!options.has(value)) options.set(value, label);
+        }
     }
     return [...options]
         .map(([value, label]) => ({ value, label }))
@@ -115,7 +126,7 @@ export function buildFacets(
     const facets: Facets = {};
     for (const key of facetKeysFor(kind)) {
         const options = facetOptions(positions, key);
-        const unset = positions.some((p) => !facetValue(p, key).value);
+        const unset = positions.some((p) => facetValues(p, key).length === 0);
         if (options.length >= 2 || (options.length === 1 && unset))
             facets[key] = options;
     }
@@ -150,17 +161,19 @@ export function facetSummary(
     if (selected.length > 1) return count(selected.length);
     if (key === 'category') return 'all categories';
     if (key === 'country') {
+        const places = results.flatMap((p) => p.countries);
         const countries = new Set(
-            results
-                .filter((p) => !p.country_is_region)
-                .map((p) => p.country_slug),
+            places.filter((c) => !c.is_region).map((c) => c.slug),
         );
-        const region = results.find((p) => p.country_is_region);
+        const region = places.find((c) => c.is_region);
         return countries.size === 0 && region
-            ? region.country_name
+            ? region.name
             : count(countries.size);
     }
-    return count(new Set(results.map((p) => facetValue(p, key).value)).size);
+    return count(
+        new Set(results.flatMap((p) => facetValues(p, key).map((o) => o.value)))
+            .size,
+    );
 }
 
 export function parseFilters(search: string, facets: Facets): FilterState {
@@ -195,7 +208,7 @@ const compareText = (a: string, b: string) =>
 const SORT_FIELD: Record<SortKey, (p: ListedPosition) => string> = {
     title: (p) => p.title,
     company: (p) => p.company_name,
-    country: (p) => p.country_name,
+    country: countryLabel,
     category: (p) => p.category_name,
 };
 
@@ -238,7 +251,8 @@ function matches(
     for (const key of FACET_KEYS) {
         const wanted = state.selected[key];
         if (key === skip || !wanted || wanted.length === 0) continue;
-        if (!wanted.includes(facetValue(p, key).value)) return false;
+        if (!facetValues(p, key).some((o) => wanted.includes(o.value)))
+            return false;
     }
     return true;
 }
@@ -272,8 +286,9 @@ export function facetCounts(
     const counts = new Map<string, number>();
     for (const p of positions) {
         if (!matches(p, state, key)) continue;
-        const { value } = facetValue(p, key);
-        counts.set(value, (counts.get(value) ?? 0) + 1);
+        for (const { value } of facetValues(p, key)) {
+            counts.set(value, (counts.get(value) ?? 0) + 1);
+        }
     }
     return counts;
 }

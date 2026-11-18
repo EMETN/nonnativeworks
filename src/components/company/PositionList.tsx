@@ -17,6 +17,7 @@ import {
     buildFacets,
     facetCounts,
     facetOptions,
+    countryLabel,
     facetSummary,
     hasActiveFilters,
     parseFilters,
@@ -42,7 +43,7 @@ interface Props {
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
 function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
-    const context = kind === 'country' ? pos.company_name : pos.country_name;
+    const context = kind === 'country' ? pos.company_name : countryLabel(pos);
     const inner = (
         <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
             <div class="min-w-0 flex-1">

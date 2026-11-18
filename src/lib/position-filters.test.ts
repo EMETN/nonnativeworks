@@ -13,7 +13,23 @@ import {
     sortPositions,
     EMPTY_FILTERS,
 } from './position-filters';
-import type { ListedPosition } from './types';
+import type { ListedCountry, ListedPosition } from './types';
+
+const PORTUGAL: ListedCountry = {
+    name: 'Portugal',
+    slug: 'portugal',
+    is_region: false,
+};
+const NORWAY: ListedCountry = {
+    name: 'Norway',
+    slug: 'norway',
+    is_region: false,
+};
+const EUROPE: ListedCountry = {
+    name: 'Europe',
+    slug: 'europe',
+    is_region: true,
+};
 
 const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
     id: 'id',
@@ -27,9 +43,7 @@ const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
     work_model: null,
     company_name: 'Tekever',
     company_slug: 'tekever',
-    country_name: 'Portugal',
-    country_slug: 'portugal',
-    country_is_region: false,
+    countries: [PORTUGAL],
     ...overrides,
 });
 
@@ -163,14 +177,8 @@ test('a facet with one option is named outright', () => {
 test('country summary leaves Europe out of the country count', () => {
     const spread = [
         pos({ id: '1' }),
-        pos({ id: '2', country_name: 'Norway', country_slug: 'norway' }),
-        pos({
-            id: '3',
-            country_name: 'Europe',
-            country_slug: 'europe',
-            country_is_region: true,
-            work_model: 'remote',
-        }),
+        pos({ id: '2', countries: [NORWAY] }),
+        pos({ id: '3', countries: [EUROPE], work_model: 'remote' }),
     ];
     const options = facetOptions(spread, 'country');
 
@@ -243,6 +251,28 @@ test('work model summary names the one model every position shares', () => {
     );
     expect(facetSummary('work-model', options, ['remote'], remoteOnly)).toBe(
         'remote',
+    );
+});
+
+test('a job in several countries matches, counts and summarises under each', () => {
+    const spread = [
+        pos({ id: '1' }),
+        pos({ id: '2', countries: [NORWAY, PORTUGAL, EUROPE] }),
+    ];
+    const facets = buildFacets(spread, 'company');
+
+    expect(facets.country).toEqual([
+        { value: 'europe', label: 'Europe' },
+        { value: 'norway', label: 'Norway' },
+        { value: 'portugal', label: 'Portugal' },
+    ]);
+    expect(
+        Object.fromEntries(facetCounts(spread, EMPTY_FILTERS, 'country')),
+    ).toEqual({ portugal: 2, norway: 1, europe: 1 });
+    const norway = parseFilters('?country=norway', facets);
+    expect(applyFilters(spread, norway).map((p) => p.id)).toEqual(['2']);
+    expect(facetSummary('country', facets.country!, [], spread)).toBe(
+        '2 countries',
     );
 });
 

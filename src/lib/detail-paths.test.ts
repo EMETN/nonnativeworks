@@ -73,12 +73,47 @@ test('groups a company present in several countries into one page', () => {
     const tekever = pages.find((p) => p.slug === 'tekever') as CompanyPage;
     expect(tekever.kind).toBe('company');
     expect(tekever.country_count).toBe(2);
-    expect(tekever.total_positions).toBe(10);
+    expect(tekever.total_positions).toBe(2);
     expect(tekever.updated_at).toBe('2026-10-03T00:00:00Z');
-    expect(tekever.positions.map((p) => p.country_slug)).toEqual([
-        'portugal',
+    expect(
+        tekever.positions.map((p) => p.countries.map((c) => c.slug)),
+    ).toEqual([['portugal'], ['france']]);
+});
+
+test('a job listed in several countries is one company position with every country', () => {
+    const job = (id: string, companyId: string, city: string) => ({
+        ...position(id, companyId, 'Engineer'),
+        url: 'https://jobs.example/1',
+        city: [city],
+    });
+    const native = {
+        ...position('n', 't1'),
+        url: 'https://jobs.example/2',
+        requires_native_language: true,
+    };
+    const pages = buildDetailPages(
+        countries,
+        [company('t1', 'Tekever', 'pt'), company('t22', 'Tekever', 'fr')],
+        [
+            job('a', 't1', 'Lisbon'),
+            job('b', 't22', 'Paris'),
+            native,
+            { ...native, id: 'n2', company_id: 't22' },
+        ],
+    );
+
+    const tekever = pages.find((p) => p.slug === 'tekever') as CompanyPage;
+    expect(tekever.positions).toHaveLength(1);
+    expect(tekever.positions[0].countries.map((c) => c.slug)).toEqual([
         'france',
+        'portugal',
     ]);
+    expect(tekever.positions[0].city).toEqual(['Lisbon', 'Paris']);
+    expect(tekever.total_positions).toBe(2);
+    expect(tekever.english_positions).toBe(1);
+
+    const portugal = pages.find((p) => p.slug === 'portugal') as CountryPage;
+    expect(portugal.positions.map((p) => p.id)).toEqual(['a']);
 });
 
 test('drops positions that require the native language', () => {
