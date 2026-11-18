@@ -297,6 +297,7 @@ def _process_company(
         "countries": [],
         "skipped_unknown_location": 0,
         "skipped_untracked_country": 0,
+        "unplaced": 0,
         "error": None,
     }
 
@@ -333,17 +334,20 @@ def _process_company(
         f"  company={result.get('company_name')!r}  ats={result.get('ats')}  "
         f"positions={total_positions}  countries={country_names}"
     )
-    unplaced = sum(
-        1
+    unplaced_texts = [
+        job["unplaced_location"]
         for cg in result.get("countries", [])
         for job in cg.get("jobs", [])
         if job.get("unplaced_location")
-    )
+    ]
+    unplaced = len(unplaced_texts)
     out.append(
         f"  skipped_unknown_location={result.get('skipped_unknown_location', 0)}  "
         f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}  "
         f"unplaced={unplaced}"
     )
+    if unplaced_texts:
+        out.append(f"  unplaced_locations={sorted(set(unplaced_texts))}")
 
     summary_entry.update(
         {
@@ -352,6 +356,7 @@ def _process_company(
             "countries": country_names,
             "skipped_unknown_location": result.get("skipped_unknown_location", 0),
             "skipped_untracked_country": result.get("skipped_untracked_country", 0),
+            "unplaced": unplaced,
         }
     )
 
