@@ -95,3 +95,21 @@ test('country_id still filters to the companies in that country', async () => {
         { table: 'positions', method: 'in', args: ['company_id', ['co-1']] },
     ]);
 });
+
+test('unplaced=1 returns only positions with an unplaced_location', async () => {
+    await get('?unplaced=1');
+
+    expect(
+        calls.filter((c) => c.table === 'positions' && c.method === 'not')[0],
+    ).toEqual({
+        table: 'positions',
+        method: 'not',
+        args: ['unplaced_location', 'is', null],
+    });
+});
+
+test('without unplaced the positions are not filtered on unplaced_location', async () => {
+    await get('');
+
+    expect(calls.some((c) => c.method === 'not')).toBe(false);
+});

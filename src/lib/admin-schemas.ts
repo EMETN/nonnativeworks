@@ -35,6 +35,7 @@ export const AdminPositionSchema = z.object({
     requires_native_language: z.boolean(),
     local_language_advantage: z.boolean(),
     required_education: z.string().nullable(),
+    unplaced_location: z.string().nullable(),
     category: CategoryInfoSchema.nullable(),
     company: z
         .object({ name: z.string(), country_name: z.string() })
