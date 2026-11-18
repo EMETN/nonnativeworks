@@ -350,3 +350,26 @@ describe('regression — other Ashby companies stay intact', () => {
         expect(resolvedCodes(posting)).toEqual(['DE', 'FI', 'NL']);
     });
 });
+
+describe('mapAshbyPosting work model', () => {
+    const modelOf = (fields: Record<string, unknown>) =>
+        mapAshbyPosting({ ...base, location: 'Espoo', ...fields })[0]
+            .work_model;
+
+    test('workplaceType wins over isRemote, which Ashby also sets for hybrid jobs', () => {
+        expect(modelOf({ workplaceType: 'Hybrid', isRemote: true })).toBe(
+            'hybrid',
+        );
+        expect(modelOf({ workplaceType: 'OnSite', isRemote: false })).toBe(
+            'on-site',
+        );
+        expect(modelOf({ workplaceType: 'Remote', isRemote: true })).toBe(
+            'remote',
+        );
+    });
+
+    test('isRemote is the fallback when workplaceType is missing', () => {
+        expect(modelOf({ isRemote: true })).toBe('remote');
+        expect(modelOf({})).toBeUndefined();
+    });
+});
