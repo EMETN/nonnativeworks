@@ -83,7 +83,10 @@ export async function getGlobalStats(
             .select('*', { count: 'exact', head: true })
             .eq('requires_native_language', false),
         supabase.rpc('count_distinct_companies'),
-        supabase.from('countries').select('*', { count: 'exact', head: true }),
+        supabase
+            .from('countries')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_region', false),
     ]);
 
     if (posErr) {
@@ -125,6 +128,7 @@ export interface TopCompany {
     primary_country_slug: string;
     primary_company_slug: string;
     career_page_url: string | null;
+    has_region_positions: boolean;
 }
 
 export async function getTopCompanies(
@@ -151,6 +155,7 @@ export async function getTopCompanies(
         primary_country_slug: r.primary_country_slug,
         primary_company_slug: nameToSlug(r.name),
         career_page_url: r.career_page_url ?? null,
+        has_region_positions: r.has_region_positions,
     }));
 }
 

@@ -36,6 +36,7 @@ export interface CompanyPage {
     total_positions: number;
     english_positions: number;
     country_count: number;
+    has_region_positions: boolean;
     updated_at: string;
     positions: ListedPosition[];
 }
@@ -122,6 +123,11 @@ export function buildDetailPages(
             country_count: group.filter(
                 (c) => !countriesById.get(c.country_id)!.is_region,
             ).length,
+            has_region_positions: group.some(
+                (c) =>
+                    countriesById.get(c.country_id)!.is_region &&
+                    c.total_positions > 0,
+            ),
             updated_at: group.reduce(
                 (latest, c) => (c.updated_at > latest ? c.updated_at : latest),
                 group[0].updated_at,
@@ -141,10 +147,14 @@ export function companyDescription(
     totalPositions: number,
     englishPositions: number,
     countryCount: number,
+    hasRegionPositions: boolean,
 ): string {
+    const countries = ` across ${countryCount} ${countryCount === 1 ? 'country' : 'countries'}`;
     const where =
         countryCount === 0
             ? ', all fully remote across Europe'
-            : ` across ${countryCount} ${countryCount === 1 ? 'country' : 'countries'}`;
+            : hasRegionPositions
+              ? `${countries} plus fully remote positions across Europe`
+              : countries;
     return `${name} has ${formatCount(totalPositions)} open positions${where}, and ${formatCount(englishPositions)} don't require the local language(s).`;
 }

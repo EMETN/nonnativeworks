@@ -432,6 +432,7 @@ export type Database = {
                     country_count: number;
                     primary_country_slug: string;
                     career_page_url: string | null;
+                    has_region_positions: boolean;
                 }[];
             };
             admin_change_summary: {

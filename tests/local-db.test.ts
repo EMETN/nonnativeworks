@@ -59,5 +59,72 @@ describe.runIf(process.env.SUPABASE_LOCAL === '1' && isLocal)(
                 .limit(1);
             expect(error).toBeNull();
         });
+
+        test('top_companies_by_english leaves regions out of country_count', async () => {
+            const name = 'Region Count Test Co';
+            const { data: land, error: landErr } = await service
+                .from('countries')
+                .insert({
+                    name: 'Region Test Land',
+                    code: 'ZY',
+                    slug: 'region-test-land',
+                    flag_colors: ['#000000'],
+                })
+                .select('id')
+                .single();
+            expect(landErr).toBeNull();
+
+            try {
+                const [{ data: europe }, { data: category }] =
+                    await Promise.all([
+                        service
+                            .from('countries')
+                            .select('id')
+                            .eq('code', 'EU')
+                            .single(),
+                        service
+                            .from('categories')
+                            .select('id')
+                            .limit(1)
+                            .single(),
+                    ]);
+
+                const { data: companies, error: companyErr } = await service
+                    .from('companies')
+                    .insert(
+                        [land!.id, europe!.id].map((country_id) => ({
+                            name,
+                            country_id,
+                        })),
+                    )
+                    .select('id');
+                expect(companyErr).toBeNull();
+
+                const { error: positionErr } = await service
+                    .from('positions')
+                    .insert(
+                        companies!.map((c) => ({
+                            company_id: c.id,
+                            category_id: category!.id,
+                            title: 'Engineer',
+                            requires_native_language: false,
+                        })),
+                    );
+                expect(positionErr).toBeNull();
+
+                const { data, error } = await anon.rpc(
+                    'top_companies_by_english',
+                    { lim: 0 },
+                );
+                expect(error).toBeNull();
+                const row = data.find((r: { name: string }) => r.name === name);
+                expect(row.country_count).toBe(1);
+                expect(row.has_region_positions).toBe(true);
+                expect(row.primary_country_slug).toBe('region-test-land');
+            } finally {
+                await service.from('companies').delete().eq('name', name);
+                await service.from('countries').delete().eq('id', land!.id);
+            }
+        });
     },
 );
