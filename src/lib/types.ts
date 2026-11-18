@@ -20,11 +20,16 @@ export interface PositionDetail {
     work_model: 'remote' | 'hybrid' | 'on-site' | null;
 }
 
+export interface ListedCountry {
+    name: string;
+    slug: string;
+    is_region: boolean;
+}
+
 export interface ListedPosition extends PositionDetail {
     company_name: string;
     company_slug: string;
-    country_name: string;
-    country_slug: string;
+    countries: ListedCountry[];
 }
 
 export interface GlobalStats {

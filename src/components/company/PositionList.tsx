@@ -17,6 +17,7 @@ import {
     buildFacets,
     facetCounts,
     facetOptions,
+    countryLabel,
     facetSummary,
     hasActiveFilters,
     parseFilters,
@@ -42,7 +43,7 @@ interface Props {
 const numFont = { fontFamily: "'Inter', 'Inter Fallback', sans-serif" };
 
 function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
-    const context = kind === 'country' ? pos.company_name : pos.country_name;
+    const context = kind === 'country' ? pos.company_name : countryLabel(pos);
     const inner = (
         <div class="flex items-center justify-between gap-4 py-3 sm:py-5 md:py-6">
             <div class="min-w-0 flex-1">
@@ -150,6 +151,10 @@ export default function PositionList({ positions, kind, report }: Props) {
         () => facetOptions(positions, 'category'),
         [positions],
     );
+    const workModelOptions = useMemo(
+        () => facetOptions(positions, 'work-model'),
+        [positions],
+    );
 
     // Layout effect: the URL must be parsed before any input event can write a stale one.
     useLayoutEffect(() => {
@@ -221,7 +226,7 @@ export default function PositionList({ positions, kind, report }: Props) {
     const renderFacet = (key: FacetKey, options: FacetOption[]) => {
         const selected = filters.selected[key] ?? [];
         const summary = facetSummary(key, options, selected, filtered);
-        return options.length < 2 ? (
+        return !facets[key] ? (
             summary
         ) : (
             <MultiSelectFilter
@@ -262,8 +267,8 @@ export default function PositionList({ positions, kind, report }: Props) {
                 <input
                     name="search-positions"
                     type="text"
-                    aria-label="Search positions, cities or remote"
-                    placeholder="Search positions, cities or remote"
+                    aria-label="Search positions or cities"
+                    placeholder="Search positions or cities"
                     value={inputValue}
                     onInput={(e) => {
                         const val = (e.target as HTMLInputElement).value;
@@ -321,6 +326,12 @@ export default function PositionList({ positions, kind, report }: Props) {
                     {renderFacet(placeKey, placeOptions)}{' '}
                     {namedCategory ? 'in' : 'across'}{' '}
                     {renderFacet('category', categoryOptions)}
+                    {workModelOptions.length > 0 && (
+                        <>
+                            {' and '}
+                            {renderFacet('work-model', workModelOptions)}
+                        </>
+                    )}
                     {filtersActive && (
                         <>
                             {' '}

@@ -5,16 +5,13 @@ import CompanyGauge from '../../components/company/CompanyGauge.astro';
 import StatsDescription from '../../components/shared/StatsDescription.astro';
 import Breadcrumb from '../../components/shared/Breadcrumb.astro';
 import SuggestCta from '../../components/shared/SuggestCta.astro';
-import { getTopCompanies, getGlobalStats } from '../../lib/queries';
+import { getTopCompanies } from '../../lib/queries';
 import { formatCount } from '../../lib/text';
 
-const [companies, stats] = await Promise.all([
-    getTopCompanies(undefined, undefined, 0),
-    getGlobalStats(undefined, undefined),
-]);
+const companies = await getTopCompanies(undefined, undefined, 0);
 
-const totalPositions = stats.total_positions;
-const englishPositions = stats.english_positions;
+const totalPositions = companies.reduce((n, c) => n + c.total_positions, 0);
+const englishPositions = companies.reduce((n, c) => n + c.english_positions, 0);
 const hasRegionPositions = companies.some((c) => c.has_region_positions);
 ---
 

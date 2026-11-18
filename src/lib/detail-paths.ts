@@ -67,8 +67,13 @@ export function buildDetailPages(
                 ...p,
                 company_name: company.name,
                 company_slug: nameToSlug(company.name),
-                country_name: country.name,
-                country_slug: country.slug,
+                countries: [
+                    {
+                        name: country.name,
+                        slug: country.slug,
+                        is_region: country.is_region,
+                    },
+                ],
             },
         ];
     });
@@ -94,8 +99,12 @@ export function buildDetailPages(
         );
     }
 
-    const positionsByCountry = groupBy(listed, (p) => p.country_slug);
+    const positionsByCountry = groupBy(listed, (p) => p.countries[0].slug);
     const positionsByCompany = groupBy(listed, (p) => p.company_slug);
+    const jobsByCompany = groupBy(
+        positions.filter((p) => companiesById.has(p.company_id)),
+        (p) => nameToSlug(companiesById.get(p.company_id)!.name),
+    );
 
     const countryPages: CountryPage[] = countries
         .filter((country) => country.total_positions > 0)
@@ -114,11 +123,8 @@ export function buildDetailPages(
             kind: 'company',
             slug,
             name: group[0].name,
-            total_positions: group.reduce((n, c) => n + c.total_positions, 0),
-            english_positions: group.reduce(
-                (n, c) => n + c.english_positions,
-                0,
-            ),
+            total_positions: countJobs(jobsByCompany.get(slug) ?? []),
+            english_positions: countJobs(positionsByCompany.get(slug) ?? []),
             // Regions (Europe) are not countries, so they don't count towards "N countries".
             country_count: group.filter(
                 (c) => !countriesById.get(c.country_id)!.is_region,
@@ -133,13 +139,38 @@ export function buildDetailPages(
                 group[0].updated_at,
             ),
             positions: sortPositions(
-                positionsByCompany.get(slug) ?? [],
+                mergeJobs(positionsByCompany.get(slug) ?? []),
                 DEFAULT_SORT,
             ),
         }),
     );
 
     return [...countryPages, ...companyPages];
+}
+
+/** A job filed under several countries is one row per country, all sharing its link. */
+const jobKey = (p: PositionDetail) => p.url ?? p.id;
+
+const countJobs = (positions: PositionDetail[]) =>
+    new Set(positions.map(jobKey)).size;
+
+function mergeJobs(positions: ListedPosition[]): ListedPosition[] {
+    const jobs = new Map<string, ListedPosition>();
+    for (const p of positions) {
+        const job = jobs.get(jobKey(p));
+        if (!job) {
+            jobs.set(jobKey(p), { ...p });
+            continue;
+        }
+        job.countries = [...job.countries, ...p.countries];
+        if (p.city) job.city = [...new Set([...(job.city ?? []), ...p.city])];
+    }
+    return [...jobs.values()].map((job) => ({
+        ...job,
+        countries: [
+            ...new Map(job.countries.map((c) => [c.slug, c])).values(),
+        ].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
 }
 
 export function companyDescription(

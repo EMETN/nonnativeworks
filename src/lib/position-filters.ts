@@ -4,7 +4,12 @@ import type { ListedPosition } from './types';
 
 export type PageKind = 'country' | 'company';
 
-export const FACET_KEYS = ['company', 'country', 'category'] as const;
+export const FACET_KEYS = [
+    'company',
+    'country',
+    'category',
+    'work-model',
+] as const;
 
 export type FacetKey = (typeof FACET_KEYS)[number];
 
@@ -12,13 +17,25 @@ export const FACET_LABELS: Record<FacetKey, string> = {
     company: 'Company',
     country: 'Country',
     category: 'Category',
+    'work-model': 'Work model',
 };
 
 export const FACET_PLURALS: Record<FacetKey, string> = {
     company: 'companies',
     country: 'countries',
     category: 'categories',
+    'work-model': 'work models',
 };
+
+const WORK_MODEL_LABELS: Record<
+    NonNullable<ListedPosition['work_model']>,
+    string
+> = {
+    remote: 'Remote',
+    hybrid: 'Hybrid',
+    'on-site': 'On-site',
+};
+const WORK_MODEL_ORDER = Object.keys(WORK_MODEL_LABELS);
 
 export const SORT_PARAM = 'sort';
 
@@ -48,18 +65,33 @@ export interface FilterState {
 
 export const EMPTY_FILTERS: FilterState = { selected: {} };
 
-function facetValue(p: ListedPosition, key: FacetKey): FacetOption {
+function facetValues(p: ListedPosition, key: FacetKey): FacetOption[] {
     switch (key) {
         case 'company':
-            return { value: p.company_slug, label: p.company_name };
+            return [{ value: p.company_slug, label: p.company_name }];
         case 'country':
-            return { value: p.country_slug, label: p.country_name };
+            return p.countries.map((c) => ({ value: c.slug, label: c.name }));
         case 'category':
-            return {
-                value: nameToSlug(p.category_name),
-                label: p.category_name,
-            };
+            return [
+                {
+                    value: nameToSlug(p.category_name),
+                    label: p.category_name,
+                },
+            ];
+        case 'work-model':
+            return p.work_model
+                ? [
+                      {
+                          value: p.work_model,
+                          label: WORK_MODEL_LABELS[p.work_model],
+                      },
+                  ]
+                : [];
     }
+}
+
+export function countryLabel(p: ListedPosition): string {
+    return p.countries.length > 1 ? 'Multiple countries' : p.countries[0].name;
 }
 
 export function facetKeysFor(kind: PageKind): FacetKey[] {
@@ -72,15 +104,21 @@ export function facetOptions(
 ): FacetOption[] {
     const options = new Map<string, string>();
     for (const p of positions) {
-        const { value, label } = facetValue(p, key);
-        if (value && !options.has(value)) options.set(value, label);
+        for (const { value, label } of facetValues(p, key)) {
+            if (!options.has(value)) options.set(value, label);
+        }
     }
     return [...options]
         .map(([value, label]) => ({ value, label }))
-        .sort((a, b) => a.label.localeCompare(b.label));
+        .sort((a, b) =>
+            key === 'work-model'
+                ? WORK_MODEL_ORDER.indexOf(a.value) -
+                  WORK_MODEL_ORDER.indexOf(b.value)
+                : a.label.localeCompare(b.label),
+        );
 }
 
-/** A facet with a single option can't narrow anything, so it's dropped. */
+/** A facet that can't narrow anything is dropped: one option, and every position has it. */
 export function buildFacets(
     positions: ListedPosition[],
     kind: PageKind,
@@ -88,7 +126,9 @@ export function buildFacets(
     const facets: Facets = {};
     for (const key of facetKeysFor(kind)) {
         const options = facetOptions(positions, key);
-        if (options.length >= 2) facets[key] = options;
+        const unset = positions.some((p) => facetValues(p, key).length === 0);
+        if (options.length >= 2 || (options.length === 1 && unset))
+            facets[key] = options;
     }
     return facets;
 }
@@ -102,12 +142,38 @@ export function facetSummary(
     const count = (n: number) =>
         `${n} ${n === 1 ? FACET_LABELS[key].toLowerCase() : FACET_PLURALS[key]}`;
 
+    if (key === 'work-model') {
+        const shared =
+            selected.length === 0 &&
+            options.length === 1 &&
+            results.every((p) => p.work_model === options[0].value);
+        if (shared) return `all ${options[0].label.toLowerCase()}`;
+        return selected.length === 0
+            ? 'any work model'
+            : options
+                  .filter((o) => selected.includes(o.value))
+                  .map((o) => o.label.toLowerCase())
+                  .join(' or ');
+    }
     if (options.length === 1) return options[0].label;
     if (selected.length === 1)
         return options.find((o) => o.value === selected[0])!.label;
     if (selected.length > 1) return count(selected.length);
     if (key === 'category') return 'all categories';
-    return count(new Set(results.map((p) => facetValue(p, key).value)).size);
+    if (key === 'country') {
+        const places = results.flatMap((p) => p.countries);
+        const countries = new Set(
+            places.filter((c) => !c.is_region).map((c) => c.slug),
+        );
+        const region = places.find((c) => c.is_region);
+        return countries.size === 0 && region
+            ? region.name
+            : count(countries.size);
+    }
+    return count(
+        new Set(results.flatMap((p) => facetValues(p, key).map((o) => o.value)))
+            .size,
+    );
 }
 
 export function parseFilters(search: string, facets: Facets): FilterState {
@@ -142,7 +208,7 @@ const compareText = (a: string, b: string) =>
 const SORT_FIELD: Record<SortKey, (p: ListedPosition) => string> = {
     title: (p) => p.title,
     company: (p) => p.company_name,
-    country: (p) => p.country_name,
+    country: countryLabel,
     category: (p) => p.category_name,
 };
 
@@ -185,7 +251,8 @@ function matches(
     for (const key of FACET_KEYS) {
         const wanted = state.selected[key];
         if (key === skip || !wanted || wanted.length === 0) continue;
-        if (!wanted.includes(facetValue(p, key).value)) return false;
+        if (!facetValues(p, key).some((o) => wanted.includes(o.value)))
+            return false;
     }
     return true;
 }
@@ -219,8 +286,9 @@ export function facetCounts(
     const counts = new Map<string, number>();
     for (const p of positions) {
         if (!matches(p, state, key)) continue;
-        const { value } = facetValue(p, key);
-        counts.set(value, (counts.get(value) ?? 0) + 1);
+        for (const { value } of facetValues(p, key)) {
+            counts.set(value, (counts.get(value) ?? 0) + 1);
+        }
     }
     return counts;
 }

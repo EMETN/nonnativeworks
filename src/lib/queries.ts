@@ -10,7 +10,7 @@ import type {
     PositionDetail,
 } from './types';
 import { nameToSlug } from './country-flags';
-import { fetchAllCompanies } from './build-queries';
+import { fetchAllCompanyStats } from './build-queries';
 
 /**
  * Selects the Supabase client for a query (exported for tests). Dual-mode so a route
@@ -49,20 +49,29 @@ export async function getCountryStats(
     return data ?? [];
 }
 
+export interface CompanyCounts {
+    hiring: number;
+    tracked: number;
+}
+
+export function countCompaniesByCountry(
+    companies: Pick<CompanyStats, 'country_id' | 'english_positions'>[],
+): Record<string, CompanyCounts> {
+    const counts: Record<string, CompanyCounts> = {};
+    for (const { country_id, english_positions } of companies) {
+        const entry = (counts[country_id] ??= { hiring: 0, tracked: 0 });
+        entry.tracked += 1;
+        if (english_positions > 0) entry.hiring += 1;
+    }
+    return counts;
+}
+
 export async function getCompanyCountsByCountry(
     request: Request | undefined,
     cookies: AstroCookies | undefined,
-): Promise<Record<string, number>> {
+): Promise<Record<string, CompanyCounts>> {
     const supabase = resolveClient(request, cookies);
-    const rows = await fetchAllCompanies<{ country_id: string }>(
-        'country_id',
-        supabase,
-    );
-    const counts: Record<string, number> = {};
-    for (const row of rows) {
-        counts[row.country_id] = (counts[row.country_id] || 0) + 1;
-    }
-    return counts;
+    return countCompaniesByCountry(await fetchAllCompanyStats(supabase));
 }
 
 export async function getGlobalStats(

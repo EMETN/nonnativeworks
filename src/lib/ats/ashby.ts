@@ -24,7 +24,7 @@ interface AshbyJobPosting {
     address?: AshbyAddress;
     secondaryLocations?: AshbySecondaryLocation[];
     employmentType?: string;
-    workPlaceType?: string;
+    workplaceType?: string;
     jobUrl: string;
     descriptionHtml?: string;
     isRemote?: boolean | null;
@@ -108,15 +108,17 @@ export function mapAshbyPosting(
     posting: AshbyJobPosting,
     buildUrl?: (posting: AshbyJobPosting) => string,
 ): RawJob[] {
-    const workPlace = posting.workPlaceType?.toLowerCase();
+    const workPlace = posting.workplaceType?.toLowerCase();
     const workModel: RawJob['work_model'] =
-        workPlace === 'remote' || posting.isRemote
+        workPlace === 'remote'
             ? 'remote'
             : workPlace === 'hybrid'
               ? 'hybrid'
               : workPlace === 'on-site' || workPlace === 'onsite'
                 ? 'on-site'
-                : undefined;
+                : posting.isRemote
+                  ? 'remote'
+                  : undefined;
 
     const base = {
         title: posting.title,

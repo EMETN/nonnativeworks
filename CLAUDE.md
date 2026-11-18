@@ -43,7 +43,7 @@ The devcontainer has an intentional outbound firewall (`init-firewall.sh`). Supa
 Migrations live in `supabase/migrations/`.
 
 - Local: `pnpm db:start` runs the Supabase CLI's native runtime (no Docker; `[experimental] stack = true` in `supabase/config.toml`) and applies every migration. `pnpm db:env` / `pnpm db:env:file` point the app at it. CLI pinned as a devDependency in `package.json`.
-- Prod: still applied manually in the Supabase SQL editor, in order (`002` to `004` for the Europe region, unplaced flag and region counts).
+- Prod: still applied manually in the Supabase SQL editor, in order (`002` to `006` for the Europe region, unplaced flag, region counts, English-only country counts and per-job company counts).
 - `000_full_schema.sql` seeds 13 categories.
 
 ### Key schema points
@@ -86,7 +86,7 @@ Company slugs are derived at runtime via `nameToSlug()` — no slug column in th
 
 - Country and company detail pages share the root: `/portugal`, `/tekever` (one route, `src/pages/[slug].astro`, built by `src/lib/detail-paths.ts`). `/countries` and `/companies` are the list pages.
 - A company slug matching a country slug or a `RESERVED_SLUGS` entry fails the build; rename the company in admin.
-- Position filters live in the query string, comma-separated: `/portugal?company=tekever,feedzai&category=engineering-it&sort=company` (`src/lib/position-filters.ts`). `sort` is only written once a visitor picks one.
+- Position filters live in the query string, comma-separated: `/portugal?company=tekever,feedzai&category=engineering-it&work-model=remote&sort=company` (`src/lib/position-filters.ts`). `sort` is only written once a visitor picks one.
 
 ## Potential next improvements
 
