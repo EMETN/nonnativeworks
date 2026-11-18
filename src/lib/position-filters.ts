@@ -204,7 +204,9 @@ export function searchPositions(
     const q = foldText(search).trim();
     if (!q) return positions;
     return positions.filter((p) =>
-        [p.title, ...(p.city ?? [])].some((text) => foldText(text).includes(q)),
+        [p.title, ...(p.city ?? []), p.work_model ?? ''].some((text) =>
+            foldText(text).includes(q),
+        ),
     );
 }
 

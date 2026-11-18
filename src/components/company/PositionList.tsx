@@ -262,8 +262,8 @@ export default function PositionList({ positions, kind, report }: Props) {
                 <input
                     name="search-positions"
                     type="text"
-                    aria-label="Search positions or cities"
-                    placeholder="Search positions or cities"
+                    aria-label="Search positions, cities or remote"
+                    placeholder="Search positions, cities or remote"
                     value={inputValue}
                     onInput={(e) => {
                         const val = (e.target as HTMLInputElement).value;
