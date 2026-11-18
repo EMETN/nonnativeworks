@@ -6,6 +6,7 @@ import {
     type CountryInfo,
 } from './country-lookup';
 import type { WorkModel } from '../database.types';
+import type { RawJob } from './types';
 
 export type { WorkModel };
 
@@ -54,4 +55,17 @@ export function placeJob(
         };
     }
     return { countries: [], workModel: ownModel };
+}
+
+export function placeRawJob(
+    job: RawJob,
+    companyFallback: CountryInfo | null,
+): Placement {
+    return placeJob(
+        job.country_code ?? job.location ?? '',
+        job.work_model ??
+            extractWorkModelFromLocation(job.location ?? '') ??
+            undefined,
+        companyFallback,
+    );
 }

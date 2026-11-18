@@ -1,6 +1,7 @@
 import { test, expect } from 'vitest';
 import type { CountryInfo } from './country-lookup';
-import { placeJob, type WorkModel } from './placement';
+import type { RawJob } from './types';
+import { placeJob, placeRawJob, type WorkModel } from './placement';
 
 const at = (loc: string, ats?: WorkModel, fb: CountryInfo | null = null) => {
     const p = placeJob(loc, ats, fb);
@@ -194,4 +195,30 @@ test('a named untracked place keeps its own work model', () => {
         model: 'remote',
         flag: undefined,
     });
+});
+
+const rawAt = (job: Omit<RawJob, 'title'>) => {
+    const p = placeRawJob({ title: 'Engineer', ...job }, null);
+    return { codes: p.countries.map((c) => c.code), model: p.workModel };
+};
+
+test('a country_code job keeps the work model written in its location', () => {
+    expect(
+        rawAt({ country_code: 'FI', location: 'Remote - Helsinki' }),
+    ).toEqual({ codes: ['FI'], model: 'remote' });
+});
+test('a hybrid location text sets the work model', () => {
+    expect(rawAt({ location: 'Hybrid - Berlin, Germany' })).toEqual({
+        codes: ['DE'],
+        model: 'hybrid',
+    });
+});
+test('an ATS work model wins over the location text', () => {
+    expect(
+        rawAt({
+            country_code: 'FI',
+            location: 'Helsinki',
+            work_model: 'on-site',
+        }),
+    ).toEqual({ codes: ['FI'], model: 'on-site' });
 });

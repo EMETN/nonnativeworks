@@ -3,6 +3,7 @@ import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -10,6 +11,7 @@ from batch_run import (  # noqa: E402
     _build_upload_payload,
     _company_urls,
     _merge_scrape_results,
+    _process_company,
     _run_companies_with_retry,
     _summary_row,
 )
@@ -188,3 +190,15 @@ class BuildUploadPayloadTest(unittest.TestCase):
         ]
         self.assertEqual(positions[0]["unplaced_location"], "Remote - Region 4")
         self.assertNotIn("unplaced_location", positions[1])
+
+
+class SummaryUnplacedTest(unittest.TestCase):
+    def test_summary_counts_unplaced_jobs(self):
+        flagged = {**_job("A"), "unplaced_location": "Remote - Region 4"}
+        other = {**_job("B"), "unplaced_location": "Remote (GMT+5:30)"}
+        plain = _job("C")
+        result = _result("greenhouse", {"europe": [flagged, plain], "finland": [other]})
+        company = {"name": "SAP", "url": "https://sap.example"}
+        with mock.patch("batch_run._scrape", return_value=result):
+            _, text = _process_company(company, "http://api", "s", True, 10)
+        self.assertIn("unplaced=2", text)

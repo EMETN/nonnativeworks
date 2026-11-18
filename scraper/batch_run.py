@@ -333,9 +333,16 @@ def _process_company(
         f"  company={result.get('company_name')!r}  ats={result.get('ats')}  "
         f"positions={total_positions}  countries={country_names}"
     )
+    unplaced = sum(
+        1
+        for cg in result.get("countries", [])
+        for job in cg.get("jobs", [])
+        if job.get("unplaced_location")
+    )
     out.append(
         f"  skipped_unknown_location={result.get('skipped_unknown_location', 0)}  "
-        f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}"
+        f"skipped_untracked_country={result.get('skipped_untracked_country', 0)}  "
+        f"unplaced={unplaced}"
     )
 
     summary_entry.update(

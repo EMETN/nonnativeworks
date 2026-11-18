@@ -27,7 +27,6 @@ import {
 } from '../../../lib/ats/smartrecruiters';
 import {
     lookupCountryFromLocation,
-    extractWorkModelFromLocation,
     getCompanyCountryFallback,
     isKnownCity,
     resolveJobCities,
@@ -54,10 +53,8 @@ import {
     fetchCompanyApiJobs,
     enrichDescriptions,
 } from '../../../lib/ats/company-api-fetcher';
-import {
-    REGION_COUNTRY_CODES,
-    TRACKED_COUNTRY_CODES,
-} from '../../../lib/tracked-countries';
+import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
+import { placeRawJob } from '../../../lib/ats/placement';
 import {
     loadSkills,
     extractSkills,
@@ -364,6 +361,7 @@ function buildScrapeResult(
     let cacheHits = 0;
     const positionLogs: PositionLogEntry[] = [];
     const unknownCities = new Set<string>();
+    const unplacedLocations = new Set<string>();
     const skippedUnknownLocationJobs: Array<{
         title: string;
         location: string;
@@ -375,12 +373,8 @@ function buildScrapeResult(
         // Use country_code when the scraper already resolved it (e.g. njoyn country filter),
         // otherwise fall back to free-text location lookup.
         const locationStr = job.country_code ?? job.location ?? '';
-        let countries = lookupCountryFromLocation(locationStr);
-
-        // If location lookup failed, use the company-level country fallback (e.g. Posti = Finland).
-        if (countries.length === 0 && companyFallbackCountry) {
-            countries = [companyFallbackCountry];
-        }
+        const placement = placeRawJob(job, companyFallbackCountry);
+        const countries = placement.countries;
 
         const trackedCountries = countries.filter((c) =>
             TRACKED_COUNTRY_CODES.has(c.code),
@@ -398,18 +392,16 @@ function buildScrapeResult(
             skippedUntracked++;
             continue;
         }
+        if (placement.unplacedLocation) {
+            unplacedLocations.add(placement.unplacedLocation);
+        }
 
         for (const countryInfo of trackedCountries) {
             const cities = resolveJobCities(job, countryInfo.code);
             for (const city of cities) {
                 if (!isKnownCity(city)) unknownCities.add(city);
             }
-            // Positions in the Europe region are remote by definition: that is the
-            // only way a posting can belong to Europe without naming a country.
-            const workModel = REGION_COUNTRY_CODES.has(countryInfo.code)
-                ? 'remote'
-                : (job.work_model ??
-                  extractWorkModelFromLocation(job.location ?? ''));
+            const workModel = placement.workModel;
 
             if (!groups.has(countryInfo.code)) {
                 groups.set(countryInfo.code, {
@@ -523,6 +515,7 @@ function buildScrapeResult(
                 preferredLanguages,
                 city: cities.length > 0 ? cities : undefined,
                 work_model: workModel ?? undefined,
+                unplaced_location: placement.unplacedLocation,
                 skills: jobSkills.length > 0 ? jobSkills : undefined,
                 required_education: education,
             });
@@ -540,6 +533,7 @@ function buildScrapeResult(
         skippedUnknownLocationJobs,
         skippedUntrackedCountry: skippedUntracked,
         unknownCities: [...unknownCities],
+        unplacedLocations: [...unplacedLocations],
         outcomeCacheHits: cacheHits,
         outcomeCacheTotal: positionLogs.length,
     });

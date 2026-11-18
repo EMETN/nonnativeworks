@@ -11,7 +11,10 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-function loggedText(unknownCities?: string[]): string {
+function loggedText(
+    unknownCities?: string[],
+    unplacedLocations?: string[],
+): string {
     const stderr = vi
         .spyOn(process.stderr, 'write')
         .mockImplementation(() => true);
@@ -23,6 +26,7 @@ function loggedText(unknownCities?: string[]): string {
         skippedUnknownLocation: 0,
         skippedUntrackedCountry: 0,
         unknownCities,
+        unplacedLocations,
         alsoToStderr: true,
     });
     return stderr.mock.calls.map(([text]) => String(text)).join('');
@@ -36,4 +40,14 @@ test('lists cities the lookup does not recognise', () => {
 
 test('leaves the line out when every city is recognised', () => {
     expect(loggedText([])).not.toContain('UNKNOWN CITIES');
+});
+
+test('lists unplaced locations on an UNPLACED line', () => {
+    expect(
+        loggedText([], ['Remote - Region 4', 'Remote (GMT+5:30)']),
+    ).toContain('  UNPLACED  Remote - Region 4  ·  Remote (GMT+5:30)');
+});
+
+test('leaves the UNPLACED line out when nothing is flagged', () => {
+    expect(loggedText([], [])).not.toContain('UNPLACED');
 });
