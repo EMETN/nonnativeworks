@@ -77,3 +77,14 @@ test('no footnote when no company has Europe positions', async () => {
     expect(text).not.toContain('2*');
     expect(text).not.toContain(FOOTNOTE);
 });
+
+test('a company with no English-friendly positions shows 0 countries, not Remote', async () => {
+    vi.mocked(queries.getTopCompanies).mockResolvedValue([
+        { ...topCompany('Nativeco', 0, false), english_positions: 0 },
+    ]);
+
+    const html = await container.renderToString(CompaniesPage);
+
+    expect(html).not.toMatch(/>\s*Remote\s*</);
+    expect(visibleText(html)).not.toContain('Fully remote across Europe');
+});

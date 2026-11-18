@@ -25,6 +25,7 @@ beforeAll(async () => {
 
     vi.mocked(queries.getCountryStats).mockResolvedValue([
         {
+            country_id: 'fi',
             name: 'Finland',
             code: 'FI',
             slug: 'finland',
@@ -33,7 +34,7 @@ beforeAll(async () => {
         } as CountryStats,
     ]);
     vi.mocked(queries.getCompanyCountsByCountry).mockResolvedValue({
-        Finland: 1,
+        fi: { hiring: 1, tracked: 1 },
     });
     vi.mocked(queries.getGlobalStats).mockResolvedValue({
         total_positions: 10,

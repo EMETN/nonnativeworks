@@ -14,6 +14,7 @@ export interface DataGridItem {
     company_count?: number;
     company_count_label?: string;
     company_count_description?: string;
+    tracked_company_count?: number;
     career_page_url?: string | null;
 }
 
@@ -164,6 +165,13 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
 
     const noPositions = item.english_positions === 0;
     const count = companyCountParts(item);
+    const companiesLabel =
+        item.company_count_description ??
+        (item.tracked_company_count === undefined
+            ? undefined
+            : `${formatCount(item.company_count ?? 0)} of ${formatCount(item.tracked_company_count)} tracked ${item.tracked_company_count === 1 ? 'company' : 'companies'} hiring without the local language`);
+
+    const positionsLabel = `${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`;
 
     // A company with no English-friendly positions has no meaningful detail page —
     // link straight out to its careers page (all positions) instead.
@@ -210,14 +218,13 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                     <>
                         <div
                             class={`flex items-center justify-end ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
+                            title={companiesLabel}
                         >
                             <span
                                 class={`${count.word ? countWordSize : textSize} relative font-semibold text-gray-800 leading-none tabular-nums`}
                                 style={numFont}
                                 aria-hidden={
-                                    item.company_count_description
-                                        ? 'true'
-                                        : undefined
+                                    companiesLabel ? 'true' : undefined
                                 }
                             >
                                 {count.value}
@@ -227,20 +234,18 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                                     </span>
                                 )}
                             </span>
-                            {item.company_count_description && (
-                                <span class="sr-only">
-                                    {item.company_count_description}
-                                </span>
+                            {companiesLabel && (
+                                <span class="sr-only">{companiesLabel}</span>
                             )}
                         </div>
                         <div
                             class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
-                            title={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
-                            aria-label={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
+                            title={positionsLabel}
                         >
                             <span
                                 class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                                 style={numFont}
+                                aria-hidden="true"
                             >
                                 {formatCount(item.english_positions)}
                             </span>
@@ -254,20 +259,22 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                             <span
                                 class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                                 style={numFont}
+                                aria-hidden="true"
                             >
                                 {formatCount(item.total_positions)}
                             </span>
+                            <span class="sr-only">{positionsLabel}</span>
                         </div>
                     </>
                 ) : (
                     <div
                         class={`flex items-center justify-end gap-0.5 sm:gap-1 ${rowPy} pr-2.5 sm:pr-3 md:pr-4 pl-2 sm:pl-4 md:pl-6`}
-                        title={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
-                        aria-label={`${formatCount(item.english_positions)} English-friendly of ${formatCount(item.total_positions)} total positions`}
+                        title={positionsLabel}
                     >
                         <span
                             class={`${textSize} font-bold ${noPositions ? 'text-[#C0392B]' : 'text-[#0F7A4F]'} leading-none tabular-nums`}
                             style={numFont}
+                            aria-hidden="true"
                         >
                             {formatCount(item.english_positions)}
                         </span>
@@ -281,9 +288,11 @@ function GridRow({ item, compact }: { item: DataGridItem; compact?: boolean }) {
                         <span
                             class={`${totalSize} text-gray-500 leading-none tabular-nums`}
                             style={numFont}
+                            aria-hidden="true"
                         >
                             {formatCount(item.total_positions)}
                         </span>
+                        <span class="sr-only">{positionsLabel}</span>
                     </div>
                 )}
 

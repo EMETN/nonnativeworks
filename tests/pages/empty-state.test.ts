@@ -20,6 +20,7 @@ const SUGGEST_COMPANY = 'https://tally.so/r/xXb80y';
 const SUGGEST_COUNTRY = 'https://tally.so/r/xXb80o';
 
 const country = {
+    country_id: 'fi',
     name: 'Finland',
     code: 'FI',
     slug: 'finland',
@@ -40,7 +41,7 @@ function seed(hasData: boolean) {
         hasData ? [country] : [],
     );
     vi.mocked(queries.getCompanyCountsByCountry).mockResolvedValue(
-        hasData ? { [country.name]: 1 } : {},
+        hasData ? { fi: { hiring: 1, tracked: 1 } } : {},
     );
     vi.mocked(queries.getGlobalStats).mockResolvedValue({
         total_positions: hasData ? 10 : 0,

@@ -1,5 +1,6 @@
 import DataGrid from '../shared/DataGrid';
 import type { DataGridItem } from '../shared/DataGrid';
+import type { CompanyCounts } from '../../lib/queries';
 
 interface CountryData {
     name: string;
@@ -15,7 +16,7 @@ interface CountryData {
 
 interface Props {
     countries: CountryData[];
-    companyCounts: Record<string, number>;
+    companyCounts: Record<string, CompanyCounts>;
 }
 
 export default function InfographicGrid({ countries, companyCounts }: Props) {
@@ -28,7 +29,8 @@ export default function InfographicGrid({ countries, companyCounts }: Props) {
         total_positions: c.total_positions,
         english_percentage: c.english_percentage,
         updated_at: c.last_updated,
-        company_count: companyCounts[c.country_id] ?? 0,
+        company_count: companyCounts[c.country_id]?.hiring ?? 0,
+        tracked_company_count: companyCounts[c.country_id]?.tracked ?? 0,
     }));
 
     return <DataGrid items={items} compact entityName="country" />;

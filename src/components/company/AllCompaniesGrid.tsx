@@ -8,12 +8,12 @@ interface Props {
 }
 
 function countryCountLabel(c: TopCompany) {
+    if (!c.has_region_positions) return {};
     if (c.country_count === 0)
         return {
             company_count_label: 'Remote',
             company_count_description: 'Fully remote across Europe',
         };
-    if (!c.has_region_positions) return {};
     return {
         company_count_label: `${formatCount(c.country_count)}*`,
         company_count_description: `${formatCount(c.country_count)} ${c.country_count === 1 ? 'country' : 'countries'}, includes fully remote positions open across Europe`,

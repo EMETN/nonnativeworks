@@ -128,8 +128,10 @@ export async function fetchAllPositions(): Promise<PositionDetail[]> {
     }));
 }
 
-export async function fetchAllCompanyStats(): Promise<CompanyStats[]> {
-    const supabase = createPublicClient();
+export async function fetchAllCompanyStats(
+    client?: ReturnType<typeof createPublicClient>,
+): Promise<CompanyStats[]> {
+    const supabase = client ?? createPublicClient();
 
     const { count, error: countError } = await supabase
         .from('company_stats')
@@ -150,6 +152,7 @@ export async function fetchAllCompanyStats(): Promise<CompanyStats[]> {
                 .from('company_stats')
                 .select('*')
                 .order('name')
+                .order('company_id')
                 .range(range.from, range.to);
 
             if (error) {
