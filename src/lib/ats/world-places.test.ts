@@ -1,4 +1,5 @@
 import { test, expect } from 'vitest';
+import { lookupCountryFromLocation } from './country-lookup';
 import {
     expandCountryGroup,
     lookupStateCode,
@@ -46,3 +47,12 @@ test.each([
 ])('%s expands to %j', (segment, expected) => {
     expect(expandCountryGroup(segment).map((c) => c.code)).toEqual(expected);
 });
+
+test.each(['Nordics', 'DACH', 'Benelux', 'Baltics'])(
+    '%s members match the country lookup',
+    (group) => {
+        for (const member of expandCountryGroup(group)) {
+            expect(lookupCountryFromLocation(member.name)[0]).toEqual(member);
+        }
+    },
+);
