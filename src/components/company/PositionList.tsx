@@ -57,9 +57,6 @@ function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
                     style={numFont}
                 >
                     <span class="font-medium text-gray-700">{context}</span>
-                    {pos.work_model && (
-                        <span class="capitalize"> · {pos.work_model}</span>
-                    )}
                     {pos.city && pos.city.length > 0 && (
                         <span>
                             {' · '}
@@ -67,6 +64,9 @@ function PositionRow({ pos, kind }: { pos: ListedPosition; kind: PageKind }) {
                                 ? 'Multiple locations'
                                 : pos.city[0]}
                         </span>
+                    )}
+                    {pos.work_model && (
+                        <span class="capitalize"> · {pos.work_model}</span>
                     )}
                 </div>
                 {pos.local_language_advantage && (
