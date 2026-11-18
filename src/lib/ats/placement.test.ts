@@ -305,3 +305,76 @@ test('a leading Remote parenthesis keeps its timezone and country reading', () =
         flag: undefined,
     });
 });
+test('named timezones use their real offsets in ranges', () => {
+    for (const loc of [
+        'Remote, UTC-8 to PST',
+        'Remote, UTC-10 to EST',
+        'Remote, UTC+4 to IST',
+        'Remote, UTC-9 to PT',
+    ]) {
+        expect(at(loc).codes).toEqual(['XX']);
+    }
+    for (const loc of [
+        'Remote, PST to CET',
+        'Remote, EST to UTC+2',
+        'Remote, UTC-1 to WET',
+    ]) {
+        expect(at(loc)).toEqual({
+            codes: ['EU'],
+            model: 'remote',
+            flag: undefined,
+        });
+    }
+});
+test('or and slash alternatives in a Remote parenthesis are each read', () => {
+    expect(at('Remote (CET or EST)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote (Europe/Americas)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote (PST or EST)').codes).toEqual(['XX']);
+    expect(at('Remote (Americas/APAC)').codes).toEqual(['XX']);
+    expect(at('Remote (Germany or Austria)').codes).toEqual(['AT', 'DE']);
+    expect(at('Remote (ET/PT)').codes).toEqual(['XX']);
+    expect(at('Remote (Lisbon, PT)').codes).toEqual(['PT']);
+});
+test('a lowercase timezone alone in a Remote parenthesis is still a timezone', () => {
+    expect(at('remote (est)').codes).toEqual(['XX']);
+    expect(at('Remote (pst)').codes).toEqual(['XX']);
+    expect(at('remote (pt)').codes).toEqual(['XX']);
+    expect(at('remote (cet)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote, est').codes).toEqual(['EE']);
+    expect(at('Tallinn, est').codes).toEqual(['EE']);
+});
+test('an IANA zone in a Remote parenthesis is a timezone', () => {
+    for (const loc of [
+        'Remote (Europe/Berlin)',
+        'Remote (Europe/London)',
+        'Remote (europe/lisbon)',
+        'Remote (Atlantic/Canary)',
+    ]) {
+        expect(at(loc)).toEqual({
+            codes: ['EU'],
+            model: 'remote',
+            flag: undefined,
+        });
+    }
+    expect(at('Remote (America/New_York)').codes).toEqual(['XX']);
+    expect(at('Remote (America/Argentina/Buenos_Aires)').codes).toEqual(['XX']);
+    expect(at('Remote (Asia/Kolkata)').codes).toEqual(['XX']);
+    expect(at('Remote (Atlantic/Bermuda)').codes).toEqual(['XX']);
+    expect(at('Remote (Europe/Americas)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+});

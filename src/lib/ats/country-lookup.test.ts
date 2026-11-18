@@ -720,6 +720,7 @@ describe('lookupCountryFromLocation: world places and country groups', () => {
         ['Remote - Austin, TX', ['US']],
         ['Remote, Bangalore', ['IN']],
         ['Toronto, Ontario', ['CA']],
+        ['Toronto, ON', ['CA']],
         ['San Francisco, CA', ['US']],
         ['Texas', ['US']],
         ['APAC', ['XX']],

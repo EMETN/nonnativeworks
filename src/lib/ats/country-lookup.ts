@@ -2166,52 +2166,83 @@ const REGION_RE =
     /^(?:.+ län|oulu province|community of madrid|basque country|catalonia|andalusia|valencian community|biscay|baden-württemberg|nordrhein-westfalen|niedersachsen|rhein-main-gebiet)$/i;
 const VENUE_CODE_RE = /^[A-Z]{2,4}$/;
 
-const EUROPEAN_TIMEZONES = new Set([
-    'CET',
-    'CEST',
-    'EET',
-    'EEST',
-    'WET',
-    'WEST',
-    'GMT',
-    'BST',
-    'UTC',
-]);
-const OTHER_TIMEZONES = new Set([
-    'EST',
-    'EDT',
-    'PST',
-    'PDT',
-    'CST',
-    'MST',
-    'IST',
-    'JST',
-    'AEST',
-]);
+const TIMEZONE_OFFSETS = new Map(
+    Object.entries({
+        UTC: 0,
+        GMT: 0,
+        WET: 0,
+        WEST: 1,
+        BST: 1,
+        CET: 1,
+        CEST: 2,
+        EET: 2,
+        EEST: 3,
+        EST: -5,
+        ET: -5,
+        EDT: -4,
+        CST: -6,
+        CT: -6,
+        MST: -7,
+        MT: -7,
+        PST: -8,
+        PT: -8,
+        PDT: -7,
+        IST: 5.5,
+        JST: 9,
+        AEST: 10,
+    }),
+);
 const SHORT_TIMEZONES = new Set(['ET', 'PT', 'CT', 'MT']);
 const UTC_OFFSET_RE = /^(?:utc|gmt)\s*([+\-−])\s*(\d{1,2})(?::?(\d{2}))?$/i;
 const EUROPEAN_OFFSETS = { min: 0, max: 3 };
 
 function timezoneOffset(token: string): number | null {
-    if (EUROPEAN_TIMEZONES.has(token)) return EUROPEAN_OFFSETS.min;
-    if (OTHER_TIMEZONES.has(token)) return EUROPEAN_OFFSETS.max + 1;
+    const named = TIMEZONE_OFFSETS.get(token);
+    if (named !== undefined) return named;
     const match = token.match(UTC_OFFSET_RE);
     if (!match) return null;
     const hours = Number(match[2]) + Number(match[3] ?? 0) / 60;
     return match[1] === '+' ? hours : -hours;
 }
 
-/** Two-letter zones (PT, MT, CT) are also country or state codes, so they count only in "Remote (PT)". */
+const IANA_ZONE_RE =
+    /^(europe|america|asia|africa|australia|pacific|indian|atlantic)\/[a-z_]+(?:\/[a-z_]+)?$/i;
+const EUROPEAN_ATLANTIC_ZONES = new Set([
+    'atlantic/reykjavik',
+    'atlantic/canary',
+    'atlantic/madeira',
+    'atlantic/azores',
+    'atlantic/faroe',
+]);
+
+function lookupIanaZone(text: string): CountryInfo | undefined {
+    const match = text.match(IANA_ZONE_RE);
+    if (!match) return undefined;
+    const european =
+        match[1].toLowerCase() === 'europe' ||
+        EUROPEAN_ATLANTIC_ZONES.has(text.toLowerCase());
+    return european ? EUROPE : OUTSIDE_EUROPE;
+}
+
+/** Codes like PT, MT, "est" (Estonia) read as zones only inside a Remote parenthesis. */
 function lookupTimezone(
     segment: string,
     remoteZone: boolean,
 ): CountryInfo | undefined {
-    const text = segment.trim().replace(/\s+/g, ' ');
+    const spaced = segment.trim().replace(/\s+/g, ' ');
+    const text = remoteZone ? spaced.toUpperCase() : spaced;
+    if (remoteZone) {
+        const iana = lookupIanaZone(spaced);
+        if (iana) return iana;
+    }
     if (SHORT_TIMEZONES.has(text)) {
         return remoteZone ? OUTSIDE_EUROPE : undefined;
     }
     const range = text.split(/\s+(?:to|[-–])\s+/i);
     const tokens = range.length === 2 ? range : text.split(/\s*\/\s*/);
+    if (!remoteZone && tokens.every((token) => SHORT_TIMEZONES.has(token))) {
+        return undefined;
+    }
     const offsets = tokens.map(timezoneOffset);
     if (offsets.some((offset) => offset === null)) return undefined;
     const values = offsets as number[];
@@ -2420,7 +2451,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         .map((s) => s.trim())
         .filter(Boolean);
     const segmentGroups = parts.map((part) => {
-        let remoteZone: string | null = null;
+        let remoteZones: string[] = [];
         const stripped = part
             .replace(MORE_LOCATIONS_SUFFIX_RE, '')
             .replace(LOCATION_PREFIX_RE, '')
@@ -2435,9 +2466,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
                 .split(/(?<!\b(?:utc|gmt))\s*[-–]\s*|,/i)
                 .map((s) => s.trim())
                 .filter(Boolean);
-            base.push(...inner);
             if (inner.length === 1 && /\bremote\b/i.test(part)) {
-                remoteZone = inner[0];
+                remoteZones = IANA_ZONE_RE.test(inner[0])
+                    ? inner
+                    : inner[0].split(/\s*\/\s*|\s+or\s+/i).filter(Boolean);
+                base.push(...remoteZones);
+            } else {
+                base.push(...inner);
             }
         }
         // Split on spaced dashes (" - " / " – ") to extract sub-parts like "Germany" from
@@ -2449,7 +2484,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
                 .filter(Boolean);
             base.push(...dashParts);
         }
-        return { segments: base, remoteZone };
+        return { segments: base, remoteZones };
     });
 
     // Collect all unique countries found in any segment — check country map first, then city map,
@@ -2459,7 +2494,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     for (const group of segmentGroups) {
         // Weaker matches need no stronger one: "Porto Seguro, Brazil" isn't Portugal, "SF, CA" isn't Canada.
         const zones = group.segments.map((segment) =>
-            lookupTimezone(segment, segment === group.remoteZone),
+            lookupTimezone(segment, group.remoteZones.includes(segment)),
         );
         const timezones = zones.filter((info): info is CountryInfo => !!info);
         const keys = group.segments
