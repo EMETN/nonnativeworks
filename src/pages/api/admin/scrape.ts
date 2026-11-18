@@ -26,7 +26,6 @@ import {
     enrichSmartRecruitersDescriptions,
 } from '../../../lib/ats/smartrecruiters';
 import {
-    lookupCountryFromLocation,
     getCompanyCountryFallback,
     isKnownCity,
     resolveJobCities,
@@ -54,7 +53,11 @@ import {
     enrichDescriptions,
 } from '../../../lib/ats/company-api-fetcher';
 import { TRACKED_COUNTRY_CODES } from '../../../lib/tracked-countries';
-import { placeRawJob } from '../../../lib/ats/placement';
+import {
+    isLocationPlacedInTrackedCountry,
+    isPlacedInTrackedCountry,
+    placeRawJob,
+} from '../../../lib/ats/placement';
 import {
     loadSkills,
     extractSkills,
@@ -138,6 +141,7 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
         }
     })();
     const careerUrl = CAREER_URL_ALIASES[urlHostname] ?? rawUrl;
+    const companyFallbackCountry = getCompanyCountryFallback(careerUrl);
 
     const detection = detectAts(careerUrl);
 
@@ -192,12 +196,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 rawJobs = await fetchWorkdayJobs(parts);
                 // Only enrich descriptions for tracked-country jobs — avoids fetching HTML for
                 // thousands of untracked jobs when the company has a large global listing (e.g. ABB).
-                const workdayTracked = rawJobs.filter((job) => {
-                    const loc = job.country_code ?? job.location ?? '';
-                    return lookupCountryFromLocation(loc).some((c) =>
-                        TRACKED_COUNTRY_CODES.has(c.code),
-                    );
-                });
+                const workdayTracked = rawJobs.filter((job) =>
+                    isPlacedInTrackedCountry(job, companyFallbackCountry),
+                );
                 await enrichWorkdayDescriptions(
                     workdayTracked,
                     getCachedOutcomes(),
@@ -229,12 +230,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 if (!jobs.length) {
                     throw new Error('Workable returned no jobs');
                 }
-                const trackedJobs = jobs.filter((job) => {
-                    const locationStr = job.country_code ?? job.location ?? '';
-                    return lookupCountryFromLocation(locationStr).some((c) =>
-                        TRACKED_COUNTRY_CODES.has(c.code),
-                    );
-                });
+                const trackedJobs = jobs.filter((job) =>
+                    isPlacedInTrackedCountry(job, companyFallbackCountry),
+                );
                 await enrichWorkableDescriptions(
                     trackedJobs,
                     detection.companySlug,
@@ -259,8 +257,9 @@ async function scrape(rawUrl: string): Promise<ScrapeResult> {
                 rawJobs = await fetchCompanyApiJobs(
                     companyApiConfig,
                     (location) =>
-                        lookupCountryFromLocation(location).some((c) =>
-                            TRACKED_COUNTRY_CODES.has(c.code),
+                        isLocationPlacedInTrackedCountry(
+                            location,
+                            companyFallbackCountry,
                         ),
                     getCachedOutcomes(),
                 );

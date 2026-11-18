@@ -6,6 +6,7 @@ import {
     type CountryInfo,
 } from './country-lookup';
 import type { WorkModel } from '../database.types';
+import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
 import type { RawJob } from './types';
 
 export type { WorkModel };
@@ -67,5 +68,29 @@ export function placeRawJob(
             extractWorkModelFromLocation(job.location ?? '') ??
             undefined,
         companyFallback,
+    );
+}
+
+function landsInTrackedCountry(placement: Placement): boolean {
+    return placement.countries.some((c) => TRACKED_COUNTRY_CODES.has(c.code));
+}
+
+export function isPlacedInTrackedCountry(
+    job: RawJob,
+    companyFallback: CountryInfo | null,
+): boolean {
+    return landsInTrackedCountry(placeRawJob(job, companyFallback));
+}
+
+export function isLocationPlacedInTrackedCountry(
+    location: string,
+    companyFallback: CountryInfo | null,
+): boolean {
+    return landsInTrackedCountry(
+        placeJob(
+            location,
+            extractWorkModelFromLocation(location) ?? undefined,
+            companyFallback,
+        ),
     );
 }

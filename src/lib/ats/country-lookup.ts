@@ -2024,6 +2024,8 @@ const LOCATION_PREFIX_RE =
 
 const WORK_MODE_RE = /^(?:fully\s+)?(remote|hybrid|on-?site|in-?office)$/i;
 
+const REMOTE_PAREN_PREFIX_RE = /^(?:fully\s+)?(remote)\s*\(([^)]*)\)/i;
+
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
 const LOCATION_SUFFIX_RE =
     /(?:\s*\((remote|hybrid|on-?site|in-?office)\)|(?<=\S)(?<!^fully)\s+(?:[-–]\s*)?(?:fully\s+)?(remote))\s*$/i;
@@ -2032,6 +2034,7 @@ export function stripWorkModel(location: string): string {
     return location
         .trim()
         .replace(LOCATION_PREFIX_RE, '')
+        .replace(REMOTE_PAREN_PREFIX_RE, '$2')
         .replace(LOCATION_SUFFIX_RE, '')
         .trim();
 }
@@ -2058,6 +2061,7 @@ export function extractWorkModelFromLocation(
     for (const part of parts) {
         const match =
             part.match(LOCATION_PREFIX_RE) ??
+            part.match(REMOTE_PAREN_PREFIX_RE) ??
             part.split(',')[0].trim().match(WORK_MODE_RE) ??
             part.match(LOCATION_SUFFIX_RE);
         if (match) {

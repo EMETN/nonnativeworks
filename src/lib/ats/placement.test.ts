@@ -1,7 +1,13 @@
 import { test, expect } from 'vitest';
 import type { CountryInfo } from './country-lookup';
 import type { RawJob } from './types';
-import { placeJob, placeRawJob, type WorkModel } from './placement';
+import {
+    isLocationPlacedInTrackedCountry,
+    isPlacedInTrackedCountry,
+    placeJob,
+    placeRawJob,
+    type WorkModel,
+} from './placement';
 
 const at = (loc: string, ats?: WorkModel, fb: CountryInfo | null = null) => {
     const p = placeJob(loc, ats, fb);
@@ -221,4 +227,81 @@ test('an ATS work model wins over the location text', () => {
             work_model: 'on-site',
         }),
     ).toEqual({ codes: ['FI'], model: 'on-site' });
+});
+
+const FI = { name: 'Finland', code: 'FI', slug: 'finland' };
+const tracked = (job: Omit<RawJob, 'title'>, fb: CountryInfo | null = null) =>
+    isPlacedInTrackedCountry({ title: 'Engineer', ...job }, fb);
+
+test('a job placed in a tracked country or Europe is tracked', () => {
+    expect(tracked({ location: 'Remote' })).toBe(true);
+    expect(tracked({ location: 'Remote - Region 4' })).toBe(true);
+    expect(tracked({ location: 'Berlin, Germany' })).toBe(true);
+    expect(tracked({ location: 'Region 4', work_model: 'remote' })).toBe(true);
+    expect(tracked({ country_code: 'FI', location: 'Remote - Helsinki' })).toBe(
+        true,
+    );
+});
+test('a job placed outside tracked countries or not placed is not tracked', () => {
+    expect(tracked({ location: 'Austin, TX' })).toBe(false);
+    expect(tracked({ location: 'Remote (EST)' })).toBe(false);
+    expect(tracked({ location: '' })).toBe(false);
+    expect(tracked({})).toBe(false);
+});
+test('a placeless job with a company fallback is tracked', () => {
+    expect(tracked({ location: '', work_model: 'remote' }, FI)).toBe(true);
+    expect(tracked({ location: '' }, FI)).toBe(true);
+});
+test('a location string is tracked when placement lands in a tracked country', () => {
+    const at = isLocationPlacedInTrackedCountry;
+    expect(at('Remote', null)).toBe(true);
+    expect(at('Remote - Region 4', null)).toBe(true);
+    expect(at('Worldwide', null)).toBe(true);
+    expect(at('Berlin, Germany', null)).toBe(true);
+    expect(at('Austin, TX', null)).toBe(false);
+    expect(at('Somewhere Unknown', null)).toBe(false);
+    expect(at('', null)).toBe(false);
+    expect(at('', FI)).toBe(true);
+});
+test('unknown text after a leading Remote parenthesis is flagged under Europe', () => {
+    expect(at('Remote (Unknownville)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: 'Remote (Unknownville)',
+    });
+    expect(at('Remote (Europe/Americas)')).toMatchObject({
+        codes: ['EU'],
+        model: 'remote',
+    });
+    expect(at('Remote (Worldwide)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Fully Remote (Unknownville)')).toMatchObject({
+        codes: ['EU'],
+        model: 'remote',
+    });
+});
+test('a leading Remote parenthesis keeps its timezone and country reading', () => {
+    expect(at('Remote (PT)')).toEqual({
+        codes: ['XX'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote (CET)')).toEqual({
+        codes: ['EU'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote (EST)')).toEqual({
+        codes: ['XX'],
+        model: 'remote',
+        flag: undefined,
+    });
+    expect(at('Remote (Germany)')).toEqual({
+        codes: ['DE'],
+        model: 'remote',
+        flag: undefined,
+    });
 });
