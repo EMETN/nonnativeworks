@@ -68,7 +68,6 @@ describe('lookupCountryFromLocation — n-gram fallback does not disturb other c
         for (const label of [
             'Remote',
             'Multiple Locations',
-            'EMEA',
             'Various',
             'Hybrid',
             'Anywhere',
@@ -585,8 +584,11 @@ describe('lookupCountryFromLocation — Europe region', () => {
         expect(codes('Europe, Germany')).toEqual(['DE']);
     });
 
-    test('EMEA and plain Remote stay unresolved', () => {
-        expect(codes('EMEA')).toEqual([]);
+    test('EMEA is the Europe region', () => {
+        expect(codes('EMEA')).toEqual(['EU']);
+    });
+
+    test('plain Remote names no place', () => {
         expect(codes('Remote')).toEqual([]);
     });
 });
@@ -699,6 +701,7 @@ describe('remote marker in any position', () => {
         ['Fully Remote', 'remote'],
         ['Spain, Portugal (Remote)', 'remote'],
         ['Remote - Germany', 'remote'],
+        ['Fully Remote - Germany', 'remote'],
         ['Berlin, Germany', null],
     ])('%s reads as %s', (loc, model) => {
         expect(extractWorkModelFromLocation(loc)).toBe(model);
@@ -708,6 +711,7 @@ describe('remote marker in any position', () => {
         expect(codes('Germany Remote')).toEqual(['DE']);
         expect(codes('EU Remote')).toEqual(['EU']);
         expect(codes('Spain, Portugal (Remote)')).toEqual(['ES', 'PT']);
+        expect(codes('Fully Remote - Germany')).toEqual(['DE']);
     });
 });
 

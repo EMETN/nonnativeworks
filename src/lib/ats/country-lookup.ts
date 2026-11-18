@@ -4,7 +4,9 @@ import {
     expandCountryGroup,
     lookupStateCode,
     lookupWorldPlace,
+    OUTSIDE_EUROPE,
 } from './world-places';
+import { TRACKED_COUNTRY_CODES } from '../tracked-countries';
 
 export interface CountryInfo {
     name: string;
@@ -12,7 +14,11 @@ export interface CountryInfo {
     slug: string;
 }
 
-const EUROPE: CountryInfo = { name: 'Europe', code: 'EU', slug: 'europe' };
+export const EUROPE: CountryInfo = {
+    name: 'Europe',
+    code: 'EU',
+    slug: 'europe',
+};
 
 // Keyed by lowercase, trimmed country name or common abbreviation.
 const COUNTRY_MAP: Record<string, CountryInfo> = {
@@ -20,6 +26,12 @@ const COUNTRY_MAP: Record<string, CountryInfo> = {
     europe: EUROPE,
     'european union': EUROPE,
     eu: EUROPE,
+    'eastern europe': EUROPE,
+    'central europe': EUROPE,
+    'western europe': EUROPE,
+    'northern europe': EUROPE,
+    'southern europe': EUROPE,
+    emea: EUROPE,
     // Nordics
     finland: { name: 'Finland', code: 'FI', slug: 'finland' },
     suomi: { name: 'Finland', code: 'FI', slug: 'finland' },
@@ -1979,19 +1991,7 @@ export function getCompanyCountryFallback(
 }
 
 // Location strings that should be skipped (not a country)
-const SKIP_LOCATION_PATTERNS = [
-    /^remote$/i,
-    /^worldwide$/i,
-    /^global$/i,
-    /^anywhere$/i,
-    /^work from home$/i,
-    /^wfh$/i,
-    /^home office$/i,
-    /^emea$/i,
-    /^multiple$/i,
-    /^various$/i,
-    /^n\/a$/i,
-];
+const SKIP_LOCATION_PATTERNS = [/^multiple$/i, /^various$/i, /^n\/a$/i];
 
 function normalizeKey(s: string): string {
     return s.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -2019,13 +2019,22 @@ function lookupCityByPrefix(key: string): CountryInfo | undefined {
 }
 
 // Strips work-mode prefixes like "Hybrid - ", "Remote - ", "On-site - " from location segments.
-const LOCATION_PREFIX_RE = /^(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
+const LOCATION_PREFIX_RE =
+    /^(?:fully\s+)?(hybrid|remote|on-?site|in-?office)\s*[-–]\s*/i;
 
 const WORK_MODE_RE = /^(?:fully\s+)?(remote|hybrid|on-?site|in-?office)$/i;
 
 // Strips work-mode suffixes like "(Remote)", "(Hybrid)" appended after a location.
 const LOCATION_SUFFIX_RE =
     /(?:\s*\((remote|hybrid|on-?site|in-?office)\)|(?<=\S)(?<!^fully)\s+(?:[-–]\s*)?(?:fully\s+)?(remote))\s*$/i;
+
+export function stripWorkModel(location: string): string {
+    return location
+        .trim()
+        .replace(LOCATION_PREFIX_RE, '')
+        .replace(LOCATION_SUFFIX_RE, '')
+        .trim();
+}
 
 const HEADQUARTERS_SUFFIX_RE = /\s+HQ$/i;
 
@@ -2152,6 +2161,66 @@ const NON_PLACE_RE =
 const REGION_RE =
     /^(?:.+ län|oulu province|community of madrid|basque country|catalonia|andalusia|valencian community|biscay|baden-württemberg|nordrhein-westfalen|niedersachsen|rhein-main-gebiet)$/i;
 const VENUE_CODE_RE = /^[A-Z]{2,4}$/;
+
+const EUROPEAN_TIMEZONES = new Set([
+    'CET',
+    'CEST',
+    'EET',
+    'EEST',
+    'WET',
+    'WEST',
+    'GMT',
+    'BST',
+    'UTC',
+]);
+const OTHER_TIMEZONES = new Set([
+    'EST',
+    'EDT',
+    'PST',
+    'PDT',
+    'CST',
+    'MST',
+    'IST',
+    'JST',
+    'AEST',
+]);
+const SHORT_TIMEZONES = new Set(['ET', 'PT', 'CT', 'MT']);
+const UTC_OFFSET_RE = /^(?:utc|gmt)\s*([+\-−])\s*(\d{1,2})(?::?(\d{2}))?$/i;
+const EUROPEAN_OFFSETS = { min: 0, max: 3 };
+
+function timezoneOffset(token: string): number | null {
+    if (EUROPEAN_TIMEZONES.has(token)) return EUROPEAN_OFFSETS.min;
+    if (OTHER_TIMEZONES.has(token)) return EUROPEAN_OFFSETS.max + 1;
+    const match = token.match(UTC_OFFSET_RE);
+    if (!match) return null;
+    const hours = Number(match[2]) + Number(match[3] ?? 0) / 60;
+    return match[1] === '+' ? hours : -hours;
+}
+
+/** Two-letter zones (PT, MT, CT) are also country or state codes, so they count only in "Remote (PT)". */
+function lookupTimezone(
+    segment: string,
+    remoteZone: boolean,
+): CountryInfo | undefined {
+    const text = segment.trim().replace(/\s+/g, ' ');
+    if (SHORT_TIMEZONES.has(text)) {
+        return remoteZone ? OUTSIDE_EUROPE : undefined;
+    }
+    const range = text.split(/\s+(?:to|[-–])\s+/i);
+    const tokens = range.length === 2 ? range : text.split(/\s*\/\s*/);
+    const offsets = tokens.map(timezoneOffset);
+    if (offsets.some((offset) => offset === null)) return undefined;
+    const values = offsets as number[];
+    const spans =
+        range.length === 2
+            ? [[Math.min(...values), Math.max(...values)]]
+            : values.map((offset) => [offset, offset]);
+    const european = spans.some(
+        ([low, high]) =>
+            low <= EUROPEAN_OFFSETS.max && high >= EUROPEAN_OFFSETS.min,
+    );
+    return european ? EUROPE : OUTSIDE_EUROPE;
+}
 
 function isBareCountry(segment: string): boolean {
     const key = normalizeKey(segment);
@@ -2347,6 +2416,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         .map((s) => s.trim())
         .filter(Boolean);
     const segmentGroups = parts.map((part) => {
+        let remoteZone: string | null = null;
         const stripped = part
             .replace(MORE_LOCATIONS_SUFFIX_RE, '')
             .replace(LOCATION_PREFIX_RE, '')
@@ -2358,10 +2428,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         const parenMatch = stripped.match(/\(([^)]+)\)/);
         if (parenMatch) {
             const inner = parenMatch[1]
-                .split(/\s*[-–]\s*|,/)
+                .split(/(?<!\b(?:utc|gmt))\s*[-–]\s*|,/i)
                 .map((s) => s.trim())
                 .filter(Boolean);
             base.push(...inner);
+            if (inner.length === 1 && /\bremote\b/i.test(part)) {
+                remoteZone = inner[0];
+            }
         }
         // Split on spaced dashes (" - " / " – ") to extract sub-parts like "Germany" from
         // "Germany - Home Based" — but only add them as extra candidates, not replace the original.
@@ -2372,7 +2445,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
                 .filter(Boolean);
             base.push(...dashParts);
         }
-        return base;
+        return { segments: base, remoteZone };
     });
 
     // Collect all unique countries found in any segment — check country map first, then city map,
@@ -2381,7 +2454,13 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
     const results: CountryInfo[] = [];
     for (const group of segmentGroups) {
         // Weaker matches need no stronger one: "Porto Seguro, Brazil" isn't Portugal, "SF, CA" isn't Canada.
-        const keys = group.map(normalizeKey);
+        const zones = group.segments.map((segment) =>
+            lookupTimezone(segment, segment === group.remoteZone),
+        );
+        const timezones = zones.filter((info): info is CountryInfo => !!info);
+        const keys = group.segments
+            .filter((_, i) => !zones[i])
+            .map(normalizeKey);
         const isCode = (key: string) => /^[a-z]{2}$/.test(key);
         const names = keys.filter((key) => !isCode(key));
         const codes = keys.filter(isCode);
@@ -2397,6 +2476,7 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
         if (infos.length === 0) infos = resolve(codes, exact);
         if (infos.length === 0 && names.length > 0)
             infos = resolve(codes, lookupStateCode);
+        if (infos.length === 0) infos = timezones;
         for (const info of infos) {
             if (!seen.has(info.code)) {
                 seen.add(info.code);
@@ -2404,11 +2484,11 @@ export function lookupCountryFromLocation(location: string): CountryInfo[] {
             }
         }
     }
-    // Europe only stands in for postings that name no country of their own — "Poland;
-    // Europe" is a Polish position, not also one in the Europe-wide remote bucket.
-    if (results.length > 1) {
-        const countriesOnly = results.filter((r) => r.code !== EUROPE.code);
-        if (countriesOnly.length > 0) return countriesOnly;
+    if (results.some((r) => r.code === EUROPE.code)) {
+        const tracked = results.filter(
+            (r) => r.code !== EUROPE.code && TRACKED_COUNTRY_CODES.has(r.code),
+        );
+        return tracked.length > 0 ? tracked : [EUROPE];
     }
     if (results.length > 0) return results;
 
