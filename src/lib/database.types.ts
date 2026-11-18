@@ -133,6 +133,7 @@ export type Database = {
                     work_model: WorkModel | null;
                     skills: string[];
                     required_education: RequiredEducation | null;
+                    unplaced_location: string | null;
                     extracted_at: string;
                 };
                 Insert: {
@@ -149,6 +150,7 @@ export type Database = {
                     work_model?: WorkModel | null;
                     skills?: string[];
                     required_education?: RequiredEducation | null;
+                    unplaced_location?: string | null;
                     extracted_at?: string;
                 };
                 Update: {
@@ -165,6 +167,7 @@ export type Database = {
                     work_model?: WorkModel | null;
                     skills?: string[];
                     required_education?: RequiredEducation | null;
+                    unplaced_location?: string | null;
                     extracted_at?: string;
                 };
                 Relationships: [

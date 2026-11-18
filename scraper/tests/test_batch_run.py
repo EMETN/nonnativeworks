@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from batch_run import (  # noqa: E402
+    _build_upload_payload,
     _company_urls,
     _merge_scrape_results,
     _run_companies_with_retry,
@@ -161,3 +162,29 @@ class SummaryRowTest(unittest.TestCase):
     def test_marks_a_retried_company(self):
         entry = {"url": "https://a", "status": "success", "retried": True}
         self.assertIn("ok (after retry)", _summary_row(entry))
+
+
+class BuildUploadPayloadTest(unittest.TestCase):
+    def _result(self, *jobs: dict) -> dict:
+        return {
+            "company_name": "A",
+            "career_page_url": "https://a",
+            "countries": [
+                {
+                    "country": "finland",
+                    "country_name": "Finland",
+                    "country_code": "FI",
+                    "jobs": list(jobs),
+                }
+            ],
+        }
+
+    def test_payload_keeps_unplaced_location(self):
+        flagged = {**_job("A"), "requires_native_language": False}
+        flagged["unplaced_location"] = "Remote - Region 4"
+        plain = {**_job("B"), "requires_native_language": False}
+        positions = _build_upload_payload(self._result(flagged, plain), True)[0][
+            "positions"
+        ]
+        self.assertEqual(positions[0]["unplaced_location"], "Remote - Region 4")
+        self.assertNotIn("unplaced_location", positions[1])

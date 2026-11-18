@@ -186,6 +186,8 @@ def _build_upload_payload(scrape_result: dict, is_english_company: bool) -> list
                 position["url"] = job["url"]
             if job.get("work_model"):
                 position["work_model"] = job["work_model"]
+            if job.get("unplaced_location"):
+                position["unplaced_location"] = job["unplaced_location"]
             positions.append(position)
         if not positions:
             continue

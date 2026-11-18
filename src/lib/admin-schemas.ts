@@ -58,6 +58,7 @@ export const ReviewJobSchema = z.object({
     url: z.string().optional(),
     city: z.array(z.string()).optional(),
     work_model: z.enum(['remote', 'hybrid', 'on-site']).optional(),
+    unplaced_location: z.string().optional(),
     category: z.string(),
     requires_native_language: z.boolean(),
     local_language_advantage: z.boolean(),

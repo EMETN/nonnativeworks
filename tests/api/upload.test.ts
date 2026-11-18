@@ -79,14 +79,17 @@ const position = (slug: string) => ({
     category: 'other',
 });
 
-async function upload(countries: string[]) {
+async function upload(
+    countries: string[],
+    extra: Record<string, unknown> = {},
+) {
     const payload = countries.map((slug) => ({
         company_name: 'ABB',
         country: slug,
         country_name: slug,
         country_code: slug.slice(0, 2),
         career_page_url: CAREER_URL,
-        positions: [position(slug)],
+        positions: [{ ...position(slug), ...extra }],
     }));
     const request = new Request('https://example.test/api/admin/upload', {
         method: 'POST',
@@ -154,4 +157,35 @@ test('replaces positions when a re-scrape differs', async () => {
         'insert',
     ]);
     expect(writes('admin_changes')).toHaveLength(1);
+});
+
+test('a position that only gains or loses unplaced_location changes the company state hash', async () => {
+    storedPositions = [
+        {
+            title: 'Engineer',
+            url: 'https://careers.abb/finland/1',
+            city: null,
+            work_model: null,
+            category_id: 'cat-other',
+            requires_native_language: false,
+            local_language_advantage: false,
+            required_languages: [],
+            preferred_languages: [],
+            skills: [],
+            required_education: null,
+            unplaced_location: 'Remote - Region 4',
+        },
+    ];
+
+    const cleared = await upload(['finland']);
+    expect(cleared.body.results[0].unchanged).toBeUndefined();
+
+    storedPositions = [{ ...storedPositions[0], unplaced_location: null }];
+    const gained = await upload(['finland'], {
+        unplaced_location: 'Remote - Region 4',
+    });
+    expect(gained.body.results[0].unchanged).toBeUndefined();
+
+    const same = await upload(['finland']);
+    expect(same.body.results[0]).toMatchObject({ unchanged: true });
 });
