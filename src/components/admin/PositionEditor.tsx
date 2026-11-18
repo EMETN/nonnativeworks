@@ -26,6 +26,7 @@ import {
     groupPositions,
     positionSummary,
     resolveScope,
+    updateCompanyRows,
     type PositionGroup,
 } from '../../lib/admin-position-scope';
 
@@ -45,6 +46,7 @@ const lazyCompanyIds = (groups: PositionGroup<PositionRow>[]) =>
     );
 const companyCacheKey = (id: string) =>
     `positions:?company_id=${encodeURIComponent(id)}`;
+const UNPLACED_QUERY = '?unplaced=1';
 
 const EDUCATION_OPTIONS = [
     { value: '', label: '— not specified —' },
@@ -148,7 +150,7 @@ export default function PositionEditor() {
     const catalogScope = grouping === 'company-country';
     const browsingCatalog = catalogScope && !unplacedOnly;
     const fetchQuery =
-        catalogScope && unplacedOnly ? '?unplaced=1' : scopeQuery;
+        catalogScope && unplacedOnly ? UNPLACED_QUERY : scopeQuery;
     const toggledGroups = browsingCatalog ? catalogToggled : flatToggled;
     const setToggledGroups = browsingCatalog
         ? setCatalogToggled
@@ -204,6 +206,7 @@ export default function PositionEditor() {
             })
             .catch(() => {
                 if (!superseded) {
+                    setPositions([]);
                     setError('Could not load positions.');
                     setPositionsQuery(fetchQuery);
                 }
@@ -378,22 +381,30 @@ export default function PositionEditor() {
     }
 
     // Optimistic edits also update the cached copy for the current selection.
+    // The catalog and its "Unplaced only" view hold separate copies of the same rows.
     function setPositionsAndCache(
         updater: (prev: PositionRow[]) => PositionRow[],
     ) {
-        if (browsingCatalog) {
-            setPositionsByCompany((prev) =>
-                Object.fromEntries(
-                    Object.entries(prev).map(([id, rows]) => {
-                        const next = updater(rows);
-                        if (next.some((row, i) => row !== rows[i])) {
-                            writeCache(companyCacheKey(id), next);
-                        }
-                        return [id, next];
-                    }),
-                ),
+        if (catalogScope) {
+            setPositionsByCompany((prev) => {
+                const { rows, changedIds } = updateCompanyRows(prev, updater);
+                for (const id of changedIds) {
+                    writeCache(companyCacheKey(id), rows[id]);
+                }
+                return rows;
+            });
+            if (browsingCatalog) {
+                invalidateCache(`positions:${UNPLACED_QUERY}`);
+                return;
+            }
+            const edited = updater(positions).filter(
+                (row, i) => row !== positions[i],
             );
-            return;
+            for (const row of edited) {
+                if (!positionsByCompany[row.company_id]) {
+                    invalidateCache(companyCacheKey(row.company_id));
+                }
+            }
         }
         setPositions((prev) => {
             const next = updater(prev);
