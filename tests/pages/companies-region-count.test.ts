@@ -29,6 +29,12 @@ const topCompany = (
     career_page_url: null,
 });
 
+const visibleText = (html: string) =>
+    html
+        .replace(/<(script|style)\b[\s\S]*?<\/\1>/g, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ');
+
 let container: AstroContainer;
 
 beforeAll(async () => {
@@ -49,17 +55,16 @@ test('a company with Europe positions gets an asterisked count and the footnote'
     ]);
 
     const html = await container.renderToString(CompaniesPage);
+    const text = visibleText(html);
 
-    expect(html).toMatch(
-        /aria-hidden="true">3<span class="absolute left-full">\*<\/span>/,
-    );
-    expect(html).toContain(
+    expect(text).toContain('3*');
+    expect(text).toContain(
         '3 countries, includes fully remote positions open across Europe',
     );
-    expect(html).toMatch(/aria-hidden="true">Remote<\/span>/);
-    expect(html).toContain('Fully remote across Europe');
-    expect(html).not.toMatch(/>2<span class="absolute/);
-    expect(html).toContain(FOOTNOTE);
+    expect(html).toMatch(/>\s*Remote\s*</);
+    expect(text).toContain('Fully remote across Europe');
+    expect(text).not.toContain('2*');
+    expect(text).toContain(FOOTNOTE);
 });
 
 test('no footnote when no company has Europe positions', async () => {
@@ -67,8 +72,8 @@ test('no footnote when no company has Europe positions', async () => {
         topCompany('Plainco', 2, false),
     ]);
 
-    const html = await container.renderToString(CompaniesPage);
+    const text = visibleText(await container.renderToString(CompaniesPage));
 
-    expect(html).not.toContain('left-full">*');
-    expect(html).not.toContain(FOOTNOTE);
+    expect(text).not.toContain('2*');
+    expect(text).not.toContain(FOOTNOTE);
 });

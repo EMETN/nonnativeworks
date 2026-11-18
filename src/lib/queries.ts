@@ -155,7 +155,7 @@ export async function getTopCompanies(
         primary_country_slug: r.primary_country_slug,
         primary_company_slug: nameToSlug(r.name),
         career_page_url: r.career_page_url ?? null,
-        has_region_positions: r.has_region_positions,
+        has_region_positions: r.has_region_positions ?? false,
     }));
 }
 
