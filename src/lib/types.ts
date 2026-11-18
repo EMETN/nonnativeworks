@@ -25,6 +25,7 @@ export interface ListedPosition extends PositionDetail {
     company_slug: string;
     country_name: string;
     country_slug: string;
+    country_is_region: boolean;
 }
 
 export interface GlobalStats {

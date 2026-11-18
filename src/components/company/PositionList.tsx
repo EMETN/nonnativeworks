@@ -150,6 +150,10 @@ export default function PositionList({ positions, kind, report }: Props) {
         () => facetOptions(positions, 'category'),
         [positions],
     );
+    const workModelOptions = useMemo(
+        () => facetOptions(positions, 'work-model'),
+        [positions],
+    );
 
     // Layout effect: the URL must be parsed before any input event can write a stale one.
     useLayoutEffect(() => {
@@ -221,7 +225,7 @@ export default function PositionList({ positions, kind, report }: Props) {
     const renderFacet = (key: FacetKey, options: FacetOption[]) => {
         const selected = filters.selected[key] ?? [];
         const summary = facetSummary(key, options, selected, filtered);
-        return options.length < 2 ? (
+        return !facets[key] ? (
             summary
         ) : (
             <MultiSelectFilter
@@ -321,6 +325,12 @@ export default function PositionList({ positions, kind, report }: Props) {
                     {renderFacet(placeKey, placeOptions)}{' '}
                     {namedCategory ? 'in' : 'across'}{' '}
                     {renderFacet('category', categoryOptions)}
+                    {workModelOptions.length > 0 && (
+                        <>
+                            {' and '}
+                            {renderFacet('work-model', workModelOptions)}
+                        </>
+                    )}
                     {filtersActive && (
                         <>
                             {' '}

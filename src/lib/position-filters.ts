@@ -4,7 +4,12 @@ import type { ListedPosition } from './types';
 
 export type PageKind = 'country' | 'company';
 
-export const FACET_KEYS = ['company', 'country', 'category'] as const;
+export const FACET_KEYS = [
+    'company',
+    'country',
+    'category',
+    'work-model',
+] as const;
 
 export type FacetKey = (typeof FACET_KEYS)[number];
 
@@ -12,13 +17,25 @@ export const FACET_LABELS: Record<FacetKey, string> = {
     company: 'Company',
     country: 'Country',
     category: 'Category',
+    'work-model': 'Work model',
 };
 
 export const FACET_PLURALS: Record<FacetKey, string> = {
     company: 'companies',
     country: 'countries',
     category: 'categories',
+    'work-model': 'work models',
 };
+
+const WORK_MODEL_LABELS: Record<
+    NonNullable<ListedPosition['work_model']>,
+    string
+> = {
+    remote: 'Remote',
+    hybrid: 'Hybrid',
+    'on-site': 'On-site',
+};
+const WORK_MODEL_ORDER = Object.keys(WORK_MODEL_LABELS);
 
 export const SORT_PARAM = 'sort';
 
@@ -59,6 +76,11 @@ function facetValue(p: ListedPosition, key: FacetKey): FacetOption {
                 value: nameToSlug(p.category_name),
                 label: p.category_name,
             };
+        case 'work-model':
+            return {
+                value: p.work_model ?? '',
+                label: p.work_model ? WORK_MODEL_LABELS[p.work_model] : '',
+            };
     }
 }
 
@@ -77,10 +99,15 @@ export function facetOptions(
     }
     return [...options]
         .map(([value, label]) => ({ value, label }))
-        .sort((a, b) => a.label.localeCompare(b.label));
+        .sort((a, b) =>
+            key === 'work-model'
+                ? WORK_MODEL_ORDER.indexOf(a.value) -
+                  WORK_MODEL_ORDER.indexOf(b.value)
+                : a.label.localeCompare(b.label),
+        );
 }
 
-/** A facet with a single option can't narrow anything, so it's dropped. */
+/** A facet that can't narrow anything is dropped: one option, and every position has it. */
 export function buildFacets(
     positions: ListedPosition[],
     kind: PageKind,
@@ -88,7 +115,9 @@ export function buildFacets(
     const facets: Facets = {};
     for (const key of facetKeysFor(kind)) {
         const options = facetOptions(positions, key);
-        if (options.length >= 2) facets[key] = options;
+        const unset = positions.some((p) => !facetValue(p, key).value);
+        if (options.length >= 2 || (options.length === 1 && unset))
+            facets[key] = options;
     }
     return facets;
 }
@@ -102,11 +131,35 @@ export function facetSummary(
     const count = (n: number) =>
         `${n} ${n === 1 ? FACET_LABELS[key].toLowerCase() : FACET_PLURALS[key]}`;
 
+    if (key === 'work-model') {
+        const shared =
+            selected.length === 0 &&
+            options.length === 1 &&
+            results.every((p) => p.work_model === options[0].value);
+        if (shared) return `all ${options[0].label.toLowerCase()}`;
+        return selected.length === 0
+            ? 'any work model'
+            : options
+                  .filter((o) => selected.includes(o.value))
+                  .map((o) => o.label.toLowerCase())
+                  .join(' or ');
+    }
     if (options.length === 1) return options[0].label;
     if (selected.length === 1)
         return options.find((o) => o.value === selected[0])!.label;
     if (selected.length > 1) return count(selected.length);
     if (key === 'category') return 'all categories';
+    if (key === 'country') {
+        const countries = new Set(
+            results
+                .filter((p) => !p.country_is_region)
+                .map((p) => p.country_slug),
+        );
+        const region = results.find((p) => p.country_is_region);
+        return countries.size === 0 && region
+            ? region.country_name
+            : count(countries.size);
+    }
     return count(new Set(results.map((p) => facetValue(p, key).value)).size);
 }
 

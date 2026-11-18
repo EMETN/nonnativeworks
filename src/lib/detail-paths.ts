@@ -69,6 +69,7 @@ export function buildDetailPages(
                 company_slug: nameToSlug(company.name),
                 country_name: country.name,
                 country_slug: country.slug,
+                country_is_region: country.is_region,
             },
         ];
     });

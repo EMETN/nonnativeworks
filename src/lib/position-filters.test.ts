@@ -29,6 +29,7 @@ const pos = (overrides: Partial<ListedPosition>): ListedPosition => ({
     company_slug: 'tekever',
     country_name: 'Portugal',
     country_slug: 'portugal',
+    country_is_region: false,
     ...overrides,
 });
 
@@ -157,6 +158,92 @@ test('a facet with one option is named outright', () => {
     const options = facetOptions(positions, 'country');
 
     expect(facetSummary('country', options, [], positions)).toBe('Portugal');
+});
+
+test('country summary leaves Europe out of the country count', () => {
+    const spread = [
+        pos({ id: '1' }),
+        pos({ id: '2', country_name: 'Norway', country_slug: 'norway' }),
+        pos({
+            id: '3',
+            country_name: 'Europe',
+            country_slug: 'europe',
+            country_is_region: true,
+            work_model: 'remote',
+        }),
+    ];
+    const options = facetOptions(spread, 'country');
+
+    expect(facetSummary('country', options, [], spread)).toBe('2 countries');
+    expect(facetSummary('country', options, [], spread.slice(1))).toBe(
+        '1 country',
+    );
+    expect(facetSummary('country', options, [], spread.slice(2))).toBe(
+        'Europe',
+    );
+});
+
+test('work model is a facet once any position states one', () => {
+    const mixed = [
+        pos({ id: '1' }),
+        pos({ id: '2', work_model: 'remote' }),
+        pos({ id: '3', work_model: 'on-site' }),
+    ];
+
+    expect(buildFacets(mixed, 'company')['work-model']).toEqual([
+        { value: 'remote', label: 'Remote' },
+        { value: 'on-site', label: 'On-site' },
+    ]);
+    expect(buildFacets(mixed.slice(0, 2), 'company')['work-model']).toEqual([
+        { value: 'remote', label: 'Remote' },
+    ]);
+    expect(buildFacets(positions, 'company')['work-model']).toBeUndefined();
+    expect(
+        buildFacets([pos({ work_model: 'remote' })], 'company')['work-model'],
+    ).toBeUndefined();
+});
+
+test('filtering by work model drops positions without one', () => {
+    const mixed = [pos({ id: '1' }), pos({ id: '2', work_model: 'remote' })];
+    const state = parseFilters(
+        '?work-model=remote',
+        buildFacets(mixed, 'company'),
+    );
+
+    expect(applyFilters(mixed, state).map((p) => p.id)).toEqual(['2']);
+    expect(serializeFilters(state)).toBe('?work-model=remote');
+});
+
+test('work model summary reads as part of the sentence', () => {
+    const options = [
+        { value: 'remote', label: 'Remote' },
+        { value: 'hybrid', label: 'Hybrid' },
+    ];
+
+    expect(facetSummary('work-model', options, [], positions)).toBe(
+        'any work model',
+    );
+    expect(facetSummary('work-model', options, ['hybrid'], positions)).toBe(
+        'hybrid',
+    );
+    expect(
+        facetSummary('work-model', options, ['hybrid', 'remote'], positions),
+    ).toBe('remote or hybrid');
+});
+
+test('work model summary names the one model every position shares', () => {
+    const remoteOnly = [
+        pos({ id: '1', work_model: 'remote' }),
+        pos({ id: '2', work_model: 'remote' }),
+    ];
+    const options = facetOptions(remoteOnly, 'work-model');
+
+    expect(facetSummary('work-model', options, [], remoteOnly)).toBe(
+        'all remote',
+    );
+    expect(facetSummary('work-model', options, ['remote'], remoteOnly)).toBe(
+        'remote',
+    );
 });
 
 test('a page with no listed positions still reads as a sentence', () => {
